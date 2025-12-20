@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { getEntityConfig } from '../../../config/entityConfig';
 import { ArrowRight } from 'lucide-react';
+import { useSmartPosition } from '../useSmartPosition';
 
 const safeParseAttrs = (attrs) => {
 	if (!attrs) return {};
@@ -15,7 +16,6 @@ const safeParseAttrs = (attrs) => {
 
 const getImageUrl = (attrs) => {
 	if (!attrs) return null;
-	// CHANGED: Added 'background_image' and 'background' to the start of the list
 	const keys = ['background_image', 'background', 'image', 'portrait', 'icon', 'Image', 'Icon', 'Portrait'];
 
 	let rawUrl = null;
@@ -52,15 +52,8 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 	const config = getEntityConfig(type);
 	const Icon = config.icon;
 
-	const style = {
-		position: 'fixed',
-		top: `${position.y + 20}px`,
-		left: `${position.x}px`,
-		transform: 'translateX(-50%)',
-		zIndex: 9999,
-		width: '300px',
-		pointerEvents: 'auto',
-	};
+	// Use smart positioning hook
+	const { style, tooltipRef, isPositioned } = useSmartPosition(position, true);
 
 	const handleClick = (e) => {
 		e.stopPropagation();
@@ -70,7 +63,10 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 
 	if (isLoading) {
 		return (
-			<div style={style} className='bg-background p-3 rounded-lg shadow-xl border border-border text-xs text-gray-400'>
+			<div
+				ref={tooltipRef}
+				style={style}
+				className='bg-background p-3 rounded-lg shadow-xl border border-border text-xs text-gray-400'>
 				Loading info...
 			</div>
 		);
@@ -88,12 +84,12 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 
 	return (
 		<div
+			ref={tooltipRef}
 			style={style}
 			onClick={handleClick}
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 			className={clsx(
-				'animate-in fade-in zoom-in-95 duration-150 origin-top',
 				'bg-background rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/10 cursor-pointer group',
 				'hover:ring-amber-500/50 transition-shadow'
 			)}>

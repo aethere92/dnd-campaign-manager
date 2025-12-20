@@ -4,16 +4,16 @@ import { supabase } from '../../lib/supabase';
 import { TooltipCard } from './components/TooltipCard';
 
 export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
-	// 1. PREPARE VARIABLES (Don't return yet!)
+	// 1. PREPARE VARIABLES
 	const targetId = target?.id;
 	const targetType = target?.type;
 	const isValidId = targetId ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId) : false;
 
 	// 2. CALL HOOK UNCONDITIONALLY
 	const { data, isLoading } = useQuery({
-		queryKey: ['tooltip', targetId], // Use variable, handles undefined safely
+		queryKey: ['tooltip', targetId],
 		queryFn: async () => {
-			if (!targetId) return null; // Safety check inside function
+			if (!targetId) return null;
 
 			if (targetType === 'session') {
 				const { data } = await supabase
@@ -36,25 +36,41 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 			if (error) throw error;
 			return data;
 		},
-		// Control execution with 'enabled' instead of conditional return
 		enabled: !!targetId && isValidId,
 		staleTime: 1000 * 60 * 5,
 		retry: false,
 	});
 
-	// 3. NOW it is safe to return null if no target exists
+	// 3. Return null if no target
 	if (!target) return null;
 
+	// Detect if this is a mobile/touch device
+	const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+
 	return createPortal(
-		<TooltipCard
-			data={data}
-			type={target.type}
-			id={target.id}
-			position={target.pos}
-			isLoading={isLoading}
-			onMouseEnter={onMouseEnter}
-			onMouseLeave={onMouseLeave}
-		/>,
+		<>
+			{/* Mobile backdrop - tap outside to close */}
+			{isMobile && target.isPinned && (
+				<div
+					className='fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]'
+					onClick={(e) => {
+						e.stopPropagation();
+						onMouseLeave && onMouseLeave();
+					}}
+					style={{ touchAction: 'none' }} // Prevent scroll
+				/>
+			)}
+
+			<TooltipCard
+				data={data}
+				type={target.type}
+				id={target.id}
+				position={target.pos}
+				isLoading={isLoading}
+				onMouseEnter={onMouseEnter}
+				onMouseLeave={onMouseLeave}
+			/>
+		</>,
 		document.body
 	);
 };

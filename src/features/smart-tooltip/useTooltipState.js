@@ -9,20 +9,14 @@ export function useTooltipState() {
 		// If we are opening a new one, clear any pending close
 		if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-		// If it's pinned (mobile tap), we don't rely on mouse coordinates as much,
-		// but we still need position.
+		// Get position from event
 		let x = e.clientX;
-		const y = e.clientY;
+		let y = e.clientY;
 
-		// Edge detection (Keep on screen)
-		const OFFSET = 150;
-		const SCREEN_PADDING = 20;
-
-		if (x > window.innerWidth - OFFSET - SCREEN_PADDING) {
-			x = window.innerWidth - OFFSET - SCREEN_PADDING;
-		}
-		if (x < OFFSET + SCREEN_PADDING) {
-			x = OFFSET + SCREEN_PADDING;
+		// For touch events on mobile, use touch coordinates
+		if (e.touches && e.touches[0]) {
+			x = e.touches[0].clientX;
+			y = e.touches[0].clientY;
 		}
 
 		setActiveTooltip({ id, type, pos: { x, y }, isPinned });
@@ -35,7 +29,7 @@ export function useTooltipState() {
 		}, 300); // 300ms grace period
 	}, []);
 
-	// NEW: Allows the Tooltip Card to say "I'm being hovered, don't close!"
+	// Allows the Tooltip Card to say "I'm being hovered, don't close!"
 	const cancelClose = useCallback(() => {
 		if (timeoutRef.current) clearTimeout(timeoutRef.current);
 	}, []);
