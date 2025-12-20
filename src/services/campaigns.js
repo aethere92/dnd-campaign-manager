@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export const getCampaigns = async () => {
 	// We fetch campaigns and use a subquery to get names of entities with type 'character'
+	// ARCHITECTURAL UPDATE: Added 'map_data' to check if Atlas should be enabled
 	const { data, error } = await supabase
 		.from('campaigns')
 		.select(
@@ -10,6 +11,7 @@ export const getCampaigns = async () => {
 			campaign_id,
             name, 
             description,
+			map_data,
             characters:entity_complete_view(name)
         `
 		)

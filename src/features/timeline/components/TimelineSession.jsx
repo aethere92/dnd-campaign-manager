@@ -13,7 +13,7 @@ export const TimelineSession = ({ session }) => {
 			<div className='mb-8'>
 				<div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2'>
 					<span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded self-start border border-border'>
-						Session {session.number}
+						Session {session.number - 1}
 					</span>
 					<time className='text-xs text-gray-400 flex items-center gap-1 font-medium'>
 						<Calendar size={12} /> {session.dateLabel}

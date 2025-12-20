@@ -9,17 +9,17 @@ export const Sidebar = ({ vm }) => {
 
 	return (
 		<>
-			{/* Mobile Overlay */}
+			{/* Mobile Overlay - High Z-index to cover Leaflet */}
 			{sidebarOpen && (
-				<div className='fixed inset-0 bg-black/50 z-40 lg:hidden' onClick={() => setSidebarOpen(false)} />
+				<div className='fixed inset-0 bg-black/50 z-[2000] lg:hidden' onClick={() => setSidebarOpen(false)} />
 			)}
 
 			<aside
 				className={clsx(
-					// FIXED: Replaced 'bg-[var(--sidebar-bg)]' with 'bg-muted' to ensure opacity
 					'w-64 bg-muted border-r border-border flex flex-col h-full transition-transform duration-300 lg:translate-x-0',
 					sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-					'fixed lg:relative z-50'
+					// Z-index bumped to 2001 to sit above the overlay and any map elements
+					'fixed lg:relative z-[2001]'
 				)}>
 				{/* Mobile Close Button */}
 				<button

@@ -20,7 +20,7 @@ export const EntityBody = ({ summary, sections, history }) => {
 				// --- RENDERER: LISTS (Features, Traits, Inventory, etc) ---
 				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
 					return (
-						<div key={prop.key} className='mt-5 pt-2 border-t border-slate-100'>
+						<div key={prop.key} className='mt-5 pt-2 border-t border-slate-200'>
 							<h3 className='capitalize text-lg mt-4 font-serif text-amber-800 mb-2 font-bold'>{prop.key}</h3>
 
 							{/* CLEAN LIST DESIGN */}

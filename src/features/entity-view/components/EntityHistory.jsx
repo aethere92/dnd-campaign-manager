@@ -4,11 +4,6 @@ import SmartMarkdown from '../../smart-text/SmartMarkdown';
 export const EntityHistory = ({ events, showSession = true }) => {
 	if (!events || events.length === 0) return null;
 
-	// Debug: Log first event to see what data we have
-	if (events.length > 0) {
-		console.log('First event data:', events[0]);
-	}
-
 	return (
 		<div className='border-l-2 border-slate-200 pl-4 space-y-6 relative my-2'>
 			{events.map((evt, idx) => (

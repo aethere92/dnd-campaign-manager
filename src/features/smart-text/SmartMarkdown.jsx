@@ -1,9 +1,10 @@
 import ReactMarkdown from 'react-markdown';
 import { useSmartText } from './useSmartText';
 import { SmartEntityLink } from './components/SmartEntityLink';
+import { generateId } from '../table-of-contents/utils'; // Import helper
 
 export default function SmartMarkdown({ children, ...props }) {
-	// SAFETY CHECK: Ensure children is string
+	// ... existing safety check code ...
 	let safeText = children;
 	if (Array.isArray(children)) {
 		safeText = children.join('');
@@ -11,17 +12,35 @@ export default function SmartMarkdown({ children, ...props }) {
 		safeText = String(children);
 	}
 
-	// 1. Process the text (inject links)
 	const processedText = useSmartText(safeText);
+
+	// Helper to extract text from children for ID generation
+	const getText = (children) => {
+		if (typeof children === 'string') return children;
+		if (Array.isArray(children)) return children.map(getText).join('');
+		if (children?.props?.children) return getText(children.props.children);
+		return '';
+	};
+
+	const HeadingRenderer = ({ level, children }) => {
+		const text = getText(children);
+		const id = generateId(text);
+		const Tag = `h${level}`;
+		return <Tag id={id}>{children}</Tag>;
+	};
 
 	return (
 		<ReactMarkdown
 			{...props}
 			components={{
 				...props.components,
-				// Custom Renderer for Links
+				// Inject ID generators
+				h1: (props) => <HeadingRenderer level={1} {...props} />,
+				h2: (props) => <HeadingRenderer level={2} {...props} />,
+				h3: (props) => <HeadingRenderer level={3} {...props} />,
+				// Existing link renderer
 				a: ({ href, children }) => {
-					// Check if this is one of our "Smart Links"
+					// ... existing link logic ...
 					if (href && href.startsWith('#entity/')) {
 						const [, id, type] = href.split('/');
 						return (
@@ -30,8 +49,6 @@ export default function SmartMarkdown({ children, ...props }) {
 							</SmartEntityLink>
 						);
 					}
-
-					// Default external link behavior
 					return (
 						<a href={href} className='text-blue-600 hover:underline' target='_blank' rel='noopener noreferrer'>
 							{children}

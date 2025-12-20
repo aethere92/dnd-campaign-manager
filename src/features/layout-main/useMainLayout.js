@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-// FIX: Import from the specific service file
 import { getCampaigns } from '../../services/campaigns';
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
 import { NAV_STRUCTURE } from './navConfig';
@@ -28,6 +27,23 @@ export function useMainLayout() {
 		  }
 		: null;
 
+	// ARCHITECTURAL CHANGE: Dynamic Navigation Logic
+	// We use useMemo to recalculate navigation only when the campaign data changes.
+	const navStructure = useMemo(() => {
+		const hasMapData = !!currentCampaignData?.map_data;
+
+		return NAV_STRUCTURE.map((group) => ({
+			...group,
+			items: group.items.filter((item) => {
+				// If the item is the Atlas, only show it if map_data exists
+				if (item.key === 'atlas') {
+					return hasMapData;
+				}
+				return true;
+			}),
+		})).filter((group) => group.items.length > 0); // Cleanup empty groups if any
+	}, [currentCampaignData]);
+
 	const navigateTo = (path) => {
 		navigate(path);
 		setSidebarOpen(false);
@@ -45,6 +61,6 @@ export function useMainLayout() {
 		navigateTo,
 		campaign,
 		onSwitchCampaign,
-		navStructure: NAV_STRUCTURE,
+		navStructure, // Return the computed structure
 	};
 }

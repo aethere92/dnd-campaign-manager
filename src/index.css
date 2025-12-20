@@ -181,9 +181,89 @@
 }
 [data-theme='dnd'] .prose a:not(:has(svg)) {
 	color: var(--accent);
-	font-weight: 500;
 }
 
 [data-theme='dnd'] .prose a:hover {
 	color: #5f1111;
+}
+
+/* Fix for ToC highlight overlap with sticky headers */
+.scroll-mt-20 {
+	scroll-margin-top: 5rem;
+}
+
+/* Ensure our smart headers in markdown also have margin */
+h1[id],
+h2[id],
+h3[id] {
+	scroll-margin-top: 8rem;
+}
+
+/* Custom scrollbar for ToC to keep it elegant */
+.custom-scrollbar::-webkit-scrollbar {
+	width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: #e2e8f0;
+	border-radius: 10px;
+}
+
+/* 1. Popup Container (The Card) */
+.leaflet-popup-content-wrapper {
+	background: var(--background) !important;
+	color: var(--foreground) !important;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem !important; /* rounded-lg */
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important; /* shadow-xl */
+	font-family: var(--font-sans);
+	padding: 0 !important; /* Remove default padding to let us control it */
+	overflow: hidden;
+}
+
+/* 2. Popup Content (The Text) */
+.leaflet-popup-content {
+	margin: 0 !important;
+	line-height: 1.6;
+}
+
+/* 3. The Little Triangle Tip */
+.leaflet-popup-tip {
+	background: var(--background) !important;
+	box-shadow: none !important;
+	border: 1px solid var(--border); /* Optional: might look weird depending on rotation */
+}
+
+/* 4. Close Button */
+.leaflet-container a.leaflet-popup-close-button {
+	color: var(--muted-foreground) !important;
+	font-size: 1.2rem !important;
+	padding: 4px !important;
+	top: 4px !important;
+	right: 4px !important;
+	background: transparent !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+	color: var(--accent) !important;
+}
+
+/* 5. Tooltips (Area Names) */
+.leaflet-tooltip {
+	background-color: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	color: rgba(255, 255, 255, 0.9); /* Default to light text for map overlay */
+	font-family: var(--font-serif);
+	font-weight: 700;
+	font-size: 1.1rem;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* D&D Theme Specifics for Tooltips (If map background is light, invert this) */
+[data-theme='dnd'] .leaflet-tooltip {
+	/* If your map tiles are dark, keep white text. If light, use var(--accent) */
+	/* text-shadow: 0 0 3px var(--background); */
 }
