@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+
+@theme {
+	--font-sans: 'Inter', sans-serif;
+	--font-serif: 'Inter', serif;
+	--font-display: 'Crimson Text', serif;
+	--color-border: var(--border);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+}
+
+:root {
+	--background: #ffffff;
+	--foreground: #0f172a;
+	--muted: #f8fafc;
+	--border: #e2e8f0;
+	--accent: #d97706;
+}
+
+[data-theme='dark'] {
+	--background: #020617;
+	--foreground: #f1f5f9;
+	--muted: #0f172a;
+	--border: #1e293b;
+	--accent: #f59e0b;
+}
+
+[data-theme='dnd'] {
+	/* D&D BOOK PALETTE */
+	--background: #fdfbf7;
+	--foreground: #1b1b1b;
+	--muted: #f2efe9;
+	--muted-foreground: #5f5a52;
+	--border: #c9c2b8;
+	--accent: #8b1e1e;
+	--accent-foreground: #ffffff;
+	--font-sans: 'Inter', sans-serif;
+	--font-serif: 'Inter', serif;
+}
+
+/* --- HEADER GRADIENT CLASS --- */
+/* Gradient that blends into the page background based on theme */
+.header-gradient {
+	background: linear-gradient(to top, #ffffff 0%, transparent 100%);
+}
+
+[data-theme='dnd'] .header-gradient {
+	background: linear-gradient(to top, #fdfbf7 0%, transparent 100%);
+}
+
+[data-theme='dark'] .header-gradient {
+	background: linear-gradient(to top, #020617 0%, transparent 100%);
+}
+
+/* --- HEADER BACKGROUND --- */
+/* Default dark background for header images */
+.header-bg-fallback {
+	background: linear-gradient(to bottom right, #1e293b, #0f172a);
+}
+
+[data-theme='dnd'] .header-bg-fallback {
+	background: linear-gradient(to bottom right, #8b7355, #5c4a3a);
+}
+
+[data-theme='dark'] .header-bg-fallback {
+	background: linear-gradient(to bottom right, #1e293b, #0f172a);
+}
+
+/* --- D&D TEXTURE OVERRIDE --- */
+/* Applies the texture to any element using bg-background when in D&D mode */
+[data-theme='dnd'] .bg-background {
+	background-color: var(--background); /* Fallback color */
+	background-image: var(--bg-texture); /* Injected via JS */
+	background-repeat: repeat;
+}
+
+[data-theme='dnd'] .prose {
+	font-family: var(--font-sans);
+	color: var(--foreground);
+	line-height: 1.6;
+}
+
+[data-theme='dnd'] .prose h1,
+[data-theme='dnd'] .prose h2,
+[data-theme='dnd'] .prose h3 {
+	font-family: var(--font-serif);
+	font-weight: 700;
+	color: var(--accent);
+	letter-spacing: 0.01em;
+}
+
+[data-theme='dnd'] .prose h1 {
+	border-bottom: 2px solid var(--accent);
+}
+
+[data-theme='dnd'] .prose h2 {
+	border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dnd'] .prose h3 {
+	color: #4a0f0f;
+}
+[data-theme='dnd'] .prose p {
+	font-family: var(--font-sans);
+}
+[data-theme='dnd'] .dnd-sidebar-box {
+	background: var(--muted);
+	border: 1.5px solid var(--border);
+	border-left: 6px solid var(--accent);
+	font-family: var(--font-sans);
+}
+
+[data-theme='dnd'] .dnd-sidebar-box h4 {
+	font-family: var(--font-serif);
+	font-size: 0.95rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--accent);
+}
+[data-theme='dnd'] .dnd-stat-row {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	font-size: 0.9rem;
+}
+
+[data-theme='dnd'] .dnd-stat-row:last-child {
+	border-bottom: none;
+}
+[data-theme='dnd'] .prose table {
+	border-collapse: collapse;
+	width: 100%;
+	font-family: var(--font-sans);
+	font-size: 0.9rem;
+}
+
+[data-theme='dnd'] .prose th {
+	background: var(--accent);
+	color: white;
+	text-align: left;
+	font-weight: 600;
+}
+
+[data-theme='dnd'] .prose td {
+	border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dnd'] .prose tbody tr:nth-child(even) {
+	background: rgba(0, 0, 0, 0.03);
+}
+[data-theme='dnd'] .prose blockquote {
+	border-left: 4px solid var(--accent);
+	color: #4b1c1c;
+	font-style: italic;
+	background: none;
+}
+[data-theme='dnd'] .prose ul {
+	list-style: disc;
+}
+
+[data-theme='dnd'] .prose ol li::marker {
+	color: var(--accent);
+	font-weight: 600;
+}
+[data-theme='dnd'] .prose code {
+	font-family: var(--font-sans);
+	font-size: 0.85em;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 3px;
+}
+[data-theme='dnd'] .prose hr {
+	border: none;
+	border-top: 2px solid var(--border);
+}
+[data-theme='dnd'] .prose a:not(:has(svg)) {
+	color: var(--accent);
+	font-weight: 500;
+}
+
+[data-theme='dnd'] .prose a:hover {
+	color: #5f1111;
+}

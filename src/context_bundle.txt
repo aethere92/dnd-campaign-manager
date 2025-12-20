@@ -1,0 +1,4747 @@
+---- start of file index.css ----
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+
+@theme {
+	--font-sans: 'Inter', sans-serif;
+	--font-serif: 'Inter', serif;
+	--font-display: 'Crimson Text', serif;
+	--color-border: var(--border);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+}
+
+:root {
+	--background: #ffffff;
+	--foreground: #0f172a;
+	--muted: #f8fafc;
+	--border: #e2e8f0;
+	--accent: #d97706;
+}
+
+[data-theme='dark'] {
+	--background: #020617;
+	--foreground: #f1f5f9;
+	--muted: #0f172a;
+	--border: #1e293b;
+	--accent: #f59e0b;
+}
+
+[data-theme='dnd'] {
+	/* D&D BOOK PALETTE */
+	--background: #fdfbf7;
+	--foreground: #1b1b1b;
+	--muted: #f2efe9;
+	--muted-foreground: #5f5a52;
+	--border: #c9c2b8;
+	--accent: #8b1e1e;
+	--accent-foreground: #ffffff;
+	--font-sans: 'Inter', sans-serif;
+	--font-serif: 'Inter', serif;
+}
+
+/* --- HEADER GRADIENT CLASS --- */
+/* Gradient that blends into the page background based on theme */
+.header-gradient {
+	background: linear-gradient(to top, #ffffff 0%, transparent 100%);
+}
+
+[data-theme='dnd'] .header-gradient {
+	background: linear-gradient(to top, #fdfbf7 0%, transparent 100%);
+}
+
+[data-theme='dark'] .header-gradient {
+	background: linear-gradient(to top, #020617 0%, transparent 100%);
+}
+
+/* --- HEADER BACKGROUND --- */
+/* Default dark background for header images */
+.header-bg-fallback {
+	background: linear-gradient(to bottom right, #1e293b, #0f172a);
+}
+
+[data-theme='dnd'] .header-bg-fallback {
+	background: linear-gradient(to bottom right, #8b7355, #5c4a3a);
+}
+
+[data-theme='dark'] .header-bg-fallback {
+	background: linear-gradient(to bottom right, #1e293b, #0f172a);
+}
+
+/* --- D&D TEXTURE OVERRIDE --- */
+/* Applies the texture to any element using bg-background when in D&D mode */
+[data-theme='dnd'] .bg-background {
+	background-color: var(--background); /* Fallback color */
+	background-image: var(--bg-texture); /* Injected via JS */
+	background-repeat: repeat;
+}
+
+[data-theme='dnd'] .prose {
+	font-family: var(--font-sans);
+	color: var(--foreground);
+	line-height: 1.6;
+}
+
+[data-theme='dnd'] .prose h1,
+[data-theme='dnd'] .prose h2,
+[data-theme='dnd'] .prose h3 {
+	font-family: var(--font-serif);
+	font-weight: 700;
+	color: var(--accent);
+	letter-spacing: 0.01em;
+}
+
+[data-theme='dnd'] .prose h1 {
+	border-bottom: 2px solid var(--accent);
+}
+
+[data-theme='dnd'] .prose h2 {
+	border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dnd'] .prose h3 {
+	color: #4a0f0f;
+}
+[data-theme='dnd'] .prose p {
+	font-family: var(--font-sans);
+}
+[data-theme='dnd'] .dnd-sidebar-box {
+	background: var(--muted);
+	border: 1.5px solid var(--border);
+	border-left: 6px solid var(--accent);
+	font-family: var(--font-sans);
+}
+
+[data-theme='dnd'] .dnd-sidebar-box h4 {
+	font-family: var(--font-serif);
+	font-size: 0.95rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--accent);
+}
+[data-theme='dnd'] .dnd-stat-row {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	font-size: 0.9rem;
+}
+
+[data-theme='dnd'] .dnd-stat-row:last-child {
+	border-bottom: none;
+}
+[data-theme='dnd'] .prose table {
+	border-collapse: collapse;
+	width: 100%;
+	font-family: var(--font-sans);
+	font-size: 0.9rem;
+}
+
+[data-theme='dnd'] .prose th {
+	background: var(--accent);
+	color: white;
+	text-align: left;
+	font-weight: 600;
+}
+
+[data-theme='dnd'] .prose td {
+	border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dnd'] .prose tbody tr:nth-child(even) {
+	background: rgba(0, 0, 0, 0.03);
+}
+[data-theme='dnd'] .prose blockquote {
+	border-left: 4px solid var(--accent);
+	color: #4b1c1c;
+	font-style: italic;
+	background: none;
+}
+[data-theme='dnd'] .prose ul {
+	list-style: disc;
+}
+
+[data-theme='dnd'] .prose ol li::marker {
+	color: var(--accent);
+	font-weight: 600;
+}
+[data-theme='dnd'] .prose code {
+	font-family: var(--font-sans);
+	font-size: 0.85em;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 3px;
+}
+[data-theme='dnd'] .prose hr {
+	border: none;
+	border-top: 2px solid var(--border);
+}
+[data-theme='dnd'] .prose a:not(:has(svg)) {
+	color: var(--accent);
+	font-weight: 500;
+}
+
+[data-theme='dnd'] .prose a:hover {
+	color: #5f1111;
+}
+
+
+---- start of file main.jsx ----
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { HashRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import App from './features/app-core/App'; // Importing the Core Feature
+import './index.css';
+import 'leaflet/dist/leaflet.css'; // Leaflet Styles
+
+// 1. Environment Validation
+const validateEnv = () => {
+	const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+	const missing = required.filter((key) => !import.meta.env[key]);
+
+	if (missing.length > 0) {
+		console.error('Missing required environment variables:', missing);
+	}
+};
+validateEnv();
+
+// 2. Query Client Configuration
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 1000 * 60 * 5, // 5 minutes
+			cacheTime: 1000 * 60 * 30, // 30 minutes
+			refetchOnWindowFocus: false,
+			retry: 1,
+		},
+	},
+});
+
+// 3. Mount
+ReactDOM.createRoot(document.getElementById('root')).render(
+	<React.StrictMode>
+		<QueryClientProvider client={queryClient}>
+			<HashRouter>
+				<App />
+			</HashRouter>
+		</QueryClientProvider>
+	</React.StrictMode>
+);
+
+
+---- start of file merge_files.py ----
+import os
+
+def merge_files_in_directory(source_folder, output_filename):
+    """
+    Merges all files in a directory (and subdirectories) into a single text file.
+    """
+    
+    # 1. Open the output file in write mode
+    with open(output_filename, 'w', encoding='utf-8') as outfile:
+        
+        # 2. Walk through the directory tree
+        for root, dirs, files in os.walk(source_folder):
+            
+            # Optional: Skip common hidden/system folders to keep output clean
+            dirs[:] = [d for d in dirs if d not in ['.git', '__pycache__', 'node_modules', 'venv', '.idea', '.vscode']]
+            
+            for file in files:
+                # Get the full path of the file
+                file_path = os.path.join(root, file)
+                
+                # Get the relative path (to match your requested format: folder/subfolder/filename)
+                relative_path = os.path.relpath(file_path, source_folder)
+                
+                # Prevent the script from reading the output file itself if it's saved in the same folder
+                if os.path.abspath(file_path) == os.path.abspath(output_filename):
+                    continue
+
+                try:
+                    # 3. Read the content of the file
+                    with open(file_path, 'r', encoding='utf-8') as infile:
+                        content = infile.read()
+                        
+                        # 4. Write the header
+                        outfile.write(f"---- start of file {relative_path} ----\n")
+                        
+                        # 5. Write the content
+                        outfile.write(content)
+                        
+                        # Add a newline at the end for separation
+                        outfile.write("\n\n")
+                        
+                    print(f"Processed: {relative_path}")
+                    
+                except UnicodeDecodeError:
+                    # Skips binary files (images, executables, pyc files, etc.)
+                    print(f"Skipped (Binary file): {relative_path}")
+                except Exception as e:
+                    print(f"Error reading {relative_path}: {e}")
+
+if __name__ == "__main__":
+    # --- CONFIGURATION ---
+    
+    # The folder you want to scan. '.' means the current folder where this script is located.
+    # You can change this to a specific path like: r"C:\Users\Name\MyProject"
+    TARGET_FOLDER = '.' 
+    
+    # The name of the resulting file
+    OUTPUT_FILE = 'context_bundle.txt'
+    
+    # Run the function
+    print(f"Starting merge of '{TARGET_FOLDER}' into '{OUTPUT_FILE}'...")
+    merge_files_in_directory(TARGET_FOLDER, OUTPUT_FILE)
+    print("Done!")
+
+---- start of file components\ErrorBoundary.jsx ----
+import { Component } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import Button from './ui/Button';
+
+class ErrorBoundary extends Component {
+	constructor(props) {
+		super(props);
+		this.state = { hasError: false, error: null };
+	}
+
+	static getDerivedStateFromError(error) {
+		return { hasError: true, error };
+	}
+
+	componentDidCatch(error, errorInfo) {
+		console.error('Error caught by boundary:', error, errorInfo);
+	}
+
+	handleReset = () => {
+		this.setState({ hasError: false, error: null });
+		window.location.reload();
+	};
+
+	render() {
+		if (this.state.hasError) {
+			return (
+				<div className='min-h-screen flex items-center justify-center bg-muted p-4'>
+					<div className='max-w-md w-full text-center'>
+						<div className='mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100'>
+							<AlertTriangle className='w-8 h-8 text-red-600' />
+						</div>
+						<h1 className='text-2xl font-serif font-bold text-foreground mb-3'>Something went wrong</h1>
+						<p className='text-gray-600 mb-6'>Don't worry, your data is safe. Try refreshing the page to continue.</p>
+						{process.env.NODE_ENV === 'development' && this.state.error && (
+							<details className='mb-6 text-left bg-red-50 border border-red-200 rounded-lg p-4'>
+								<summary className='cursor-pointer font-semibold text-red-900 mb-2'>Error Details</summary>
+								<pre className='text-xs text-red-800 overflow-auto'>{this.state.error.toString()}</pre>
+							</details>
+						)}
+						<Button onClick={this.handleReset} icon={RefreshCw}>
+							Reload Application
+						</Button>
+					</div>
+				</div>
+			);
+		}
+
+		return this.props.children;
+	}
+}
+
+export default ErrorBoundary;
+
+
+---- start of file components\ui\Button.jsx ----
+import { clsx } from 'clsx';
+
+export default function Button({
+	children,
+	variant = 'primary',
+	size = 'md',
+	icon: Icon,
+	fullWidth = false,
+	disabled = false,
+	className,
+	...props
+}) {
+	const baseStyles =
+		'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+
+	const variants = {
+		primary: 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500',
+		secondary: 'bg-gray-100 text-foreground hover:bg-gray-200 focus:ring-gray-500',
+		ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+		danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+	};
+
+	const sizes = {
+		sm: 'px-3 py-1.5 text-sm',
+		md: 'px-4 py-2 text-sm',
+		lg: 'px-6 py-3 text-base',
+	};
+
+	return (
+		<button
+			className={clsx(baseStyles, variants[variant], sizes[size], fullWidth && 'w-full', className)}
+			disabled={disabled}
+			{...props}>
+			{Icon && <Icon size={16} />}
+			{children}
+		</button>
+	);
+}
+
+
+---- start of file components\ui\Card.jsx ----
+import { clsx } from 'clsx';
+
+export function Card({ children, className, padding = true, hover = false, ...props }) {
+	return (
+		<div
+			className={clsx(
+				'bg-[var(--card-bg)] border border-border rounded-lg shadow-sm',
+				padding && 'p-4',
+				hover && 'transition-shadow hover:shadow-md',
+				className
+			)}
+			{...props}>
+			{children}
+		</div>
+	);
+}
+
+export function CardHeader({ children, className }) {
+	return <div className={clsx('border-b border-border pb-3 mb-3', className)}>{children}</div>;
+}
+
+export function CardTitle({ children, className }) {
+	return <h3 className={clsx('text-lg font-serif font-semibold text-foreground', className)}>{children}</h3>;
+}
+
+export function CardContent({ children, className }) {
+	return <div className={className}>{children}</div>;
+}
+
+
+---- start of file components\ui\EmptyState.jsx ----
+import { clsx } from 'clsx';
+
+export default function EmptyState({ icon: Icon, title, description, action, className }) {
+	return (
+		<div className={clsx('flex flex-col items-center justify-center p-8 text-center', className)}>
+			{Icon && (
+				<div className='mb-4 rounded-full bg-gray-100 p-4'>
+					<Icon className='w-8 h-8 text-gray-400' strokeWidth={1.5} />
+				</div>
+			)}
+			{title && <h3 className='text-lg font-serif font-semibold text-foreground mb-2'>{title}</h3>}
+			{description && <p className='text-sm text-gray-500 max-w-sm mb-6'>{description}</p>}
+			{action && <div>{action}</div>}
+		</div>
+	);
+}
+
+
+---- start of file components\ui\LoadingSpinner.jsx ----
+import { Loader2 } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export default function LoadingSpinner({ size = 'md', text = 'Loading...', className }) {
+	const sizes = {
+		sm: 'w-4 h-4',
+		md: 'w-8 h-8',
+		lg: 'w-12 h-12',
+	};
+
+	return (
+		<div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
+			<Loader2 className={clsx(sizes[size], 'animate-spin text-amber-600')} />
+			{text && <p className='text-sm text-gray-500 font-medium'>{text}</p>}
+		</div>
+	);
+}
+
+
+---- start of file config\entityConfig.jsx ----
+import { User, MapPin, Scroll, Sword, Flag, Crown, BookOpen, Skull, Tent, MessageSquare, Calendar } from 'lucide-react';
+
+export const ENTITY_CONFIG = {
+	session: {
+		label: 'Session',
+		icon: Calendar,
+		color: '#64748b', // slate-500
+		tailwind: {
+			text: 'text-slate-700',
+			bg: 'bg-slate-50',
+			border: 'border-slate-500',
+			hover: 'hover:bg-slate-100',
+		},
+	},
+	character: {
+		label: 'Character',
+		icon: User,
+		color: '#ef4444', // red-500
+		tailwind: {
+			text: 'text-red-700',
+			bg: 'bg-red-50',
+			border: 'border-red-500',
+			hover: 'hover:bg-red-50',
+		},
+	},
+	npc: {
+		label: 'NPC',
+		icon: Crown,
+		color: '#d97706', // amber-600
+		tailwind: {
+			text: 'text-amber-700',
+			bg: 'bg-amber-50',
+			border: 'border-amber-500',
+			hover: 'hover:bg-amber-50',
+		},
+	},
+	location: {
+		label: 'Location',
+		icon: MapPin,
+		color: '#10b981', // emerald-500
+		tailwind: {
+			text: 'text-emerald-700',
+			bg: 'bg-emerald-50',
+			border: 'border-emerald-500',
+			hover: 'hover:bg-emerald-50',
+		},
+	},
+	quest: {
+		label: 'Quest',
+		icon: Scroll,
+		color: '#3b82f6', // blue-500
+		tailwind: {
+			text: 'text-blue-700',
+			bg: 'bg-blue-50',
+			border: 'border-blue-500',
+			hover: 'hover:bg-blue-50',
+		},
+	},
+	faction: {
+		label: 'Faction',
+		icon: Flag,
+		color: '#a855f7', // purple-500
+		tailwind: {
+			text: 'text-purple-700',
+			bg: 'bg-purple-50',
+			border: 'border-purple-500',
+			hover: 'hover:bg-purple-50',
+		},
+	},
+	encounter: {
+		label: 'Encounter',
+		icon: Sword,
+		color: '#f97316', // orange-500
+		tailwind: {
+			text: 'text-orange-700',
+			bg: 'bg-orange-50',
+			border: 'border-orange-500',
+			hover: 'hover:bg-orange-50',
+		},
+	},
+	default: {
+		label: 'Entity',
+		icon: BookOpen,
+		color: '#6b7280', // gray-500
+		tailwind: {
+			text: 'text-gray-700',
+			bg: 'bg-muted',
+			border: 'border-gray-400',
+			hover: 'hover:bg-gray-100',
+		},
+	},
+};
+
+export const getEntityConfig = (type) => {
+	const key = type?.toLowerCase().trim() || 'default';
+	return ENTITY_CONFIG[key] || ENTITY_CONFIG.default;
+};
+
+
+---- start of file features\app-core\App.jsx ----
+import { useEffect } from 'react'; // Added useEffect
+import { TooltipProvider } from '../../features/smart-tooltip/TooltipContext';
+import { CampaignProvider } from '../../features/campaign-session/CampaignContext';
+import ErrorBoundary from '../../components/ErrorBoundary';
+import { AppRoutes } from './AppRoutes';
+
+export default function App() {
+	// Set global texture variable on mount, respecting the Base URL
+	useEffect(() => {
+		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.png`;
+		document.documentElement.style.setProperty('--bg-texture', `url('${texturePath}')`);
+	}, []);
+
+	return (
+		<ErrorBoundary>
+			<CampaignProvider>
+				<TooltipProvider>
+					<AppRoutes />
+				</TooltipProvider>
+			</CampaignProvider>
+		</ErrorBoundary>
+	);
+}
+
+
+---- start of file features\app-core\AppRoutes.jsx ----
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import { RouteLoading } from './components/RouteLoading';
+
+// --- Lazy Imports (FIXED PATHS) ---
+
+// 1. Campaign Selection
+const CampaignSelect = lazy(() => import('../../features/campaign-session/components/CampaignSelect'));
+
+// 2. Main Layout
+const MainLayout = lazy(() => import('../../features/layout-main/MainLayout'));
+
+// 3. World Views (Moved from pages to features)
+const MapView = lazy(() => import('../../features/world-map/MapView')); // <--- FIXED
+const TimelineView = lazy(() => import('../../features/timeline/TimelineView'));
+const RelationshipGraph = lazy(() => import('../../features/relationship-graph/RelationshipGraph'));
+
+// 4. Wiki Views
+const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
+const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
+
+export const AppRoutes = () => {
+	const { campaignId } = useCampaign();
+
+	// Guard Clause: No Campaign Selected
+	if (!campaignId) {
+		return (
+			<Suspense fallback={<RouteLoading text='Loading...' />}>
+				<CampaignSelect />
+			</Suspense>
+		);
+	}
+
+	return (
+		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
+			<Routes>
+				<Route path='/' element={<MainLayout />}>
+					{/* World Views */}
+					<Route index element={<MapView />} />
+					<Route path='timeline' element={<TimelineView />} />
+					<Route path='relationships' element={<RelationshipGraph />} />
+
+					{/* Wiki Views */}
+					<Route path='wiki/:type' element={<WikiLayout />}>
+						<Route
+							index
+							element={
+								<div className='h-full flex items-center justify-center text-gray-400 italic'>
+									Select an entry to view details
+								</div>
+							}
+						/>
+						<Route path=':entityId' element={<WikiEntryPage />} />
+					</Route>
+
+					{/* Legacy Redirects */}
+					<Route path='sessions' element={<Navigate to='/wiki/session' replace />} />
+					<Route path='characters' element={<Navigate to='/wiki/character' replace />} />
+					<Route path='npcs' element={<Navigate to='/wiki/npc' replace />} />
+					<Route path='locations' element={<Navigate to='/wiki/location' replace />} />
+					<Route path='quests' element={<Navigate to='/wiki/quest' replace />} />
+					<Route path='encounters' element={<Navigate to='/wiki/encounter' replace />} />
+				</Route>
+			</Routes>
+		</Suspense>
+	);
+};
+
+
+---- start of file features\app-core\components\RouteLoading.jsx ----
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+
+export const RouteLoading = ({ text }) => (
+	<div className='flex items-center justify-center h-full min-h-screen bg-muted'>
+		<LoadingSpinner size='lg' text={text} />
+	</div>
+);
+
+
+---- start of file features\campaign-session\CampaignContext.jsx ----
+import { createContext, useContext } from 'react';
+import { useCampaignPersistence } from './useCampaignPersistence';
+
+const CampaignContext = createContext(null);
+
+export const CampaignProvider = ({ children }) => {
+	const persistence = useCampaignPersistence();
+
+	return <CampaignContext.Provider value={persistence}>{children}</CampaignContext.Provider>;
+};
+
+export const useCampaign = () => {
+	const context = useContext(CampaignContext);
+	if (!context) {
+		throw new Error('useCampaign must be used within CampaignProvider');
+	}
+	return context;
+};
+
+
+---- start of file features\campaign-session\types.js ----
+/**
+ * @typedef {Object} Campaign
+ * @property {string} id
+ * @property {string} name
+ * @property {string} description
+ */
+
+/**
+ * @typedef {Object} CampaignSelectionViewModel
+ * @property {boolean} isLoading
+ * @property {Campaign[]} campaigns
+ * @property {function(string): void} selectCampaign
+ */
+
+export {};
+
+
+---- start of file features\campaign-session\useCampaignPersistence.js ----
+import { useState, useCallback } from 'react';
+
+const STORAGE_KEY = 'campaignId';
+
+// Safe wrapper for environments where localStorage might fail
+const storage = {
+	getItem: (key) => {
+		try {
+			return localStorage.getItem(key) || sessionStorage.getItem(key);
+		} catch {
+			return null;
+		}
+	},
+	setItem: (key, value) => {
+		try {
+			localStorage.setItem(key, value);
+		} catch {
+			sessionStorage.setItem(key, value);
+		}
+	},
+	removeItem: (key) => {
+		try {
+			localStorage.removeItem(key);
+			sessionStorage.removeItem(key);
+		} catch {
+			// ignore
+		}
+	},
+};
+
+export function useCampaignPersistence() {
+	const [campaignId, setCampaignIdState] = useState(() => {
+		return storage.getItem(STORAGE_KEY) || null;
+	});
+
+	const setCampaignId = useCallback((id) => {
+		setCampaignIdState(id);
+		if (id) {
+			storage.setItem(STORAGE_KEY, id);
+		} else {
+			storage.removeItem(STORAGE_KEY);
+		}
+	}, []);
+
+	return { campaignId, setCampaignId };
+}
+
+
+---- start of file features\campaign-session\useCampaignSelection.js ----
+import { useQuery } from '@tanstack/react-query';
+import { getCampaigns } from '../../services/campaigns';
+import { useCampaign } from './CampaignContext';
+import './types';
+
+export function useCampaignSelection() {
+	const { setCampaignId } = useCampaign();
+
+	const { data: campaigns, isLoading } = useQuery({
+		queryKey: ['campaigns'],
+		queryFn: getCampaigns,
+	});
+
+	// Sort by ID as requested
+	const sortedCampaigns = (campaigns || []).sort((a, b) => String(a.campaign_id).localeCompare(String(b.campaign_id)));
+
+	const selectCampaign = (id) => {
+		setCampaignId(id);
+	};
+
+	return {
+		isLoading,
+		campaigns: sortedCampaigns,
+		selectCampaign,
+	};
+}
+
+
+---- start of file features\campaign-session\components\CampaignCard.jsx ----
+import { BookOpen, ArrowRight, Users } from 'lucide-react';
+import Button from '../../../components/ui/Button';
+
+export const CampaignCard = ({ campaign, onSelect }) => {
+	const initial = (campaign.name?.[0] || 'C').toUpperCase();
+
+	return (
+		<div className='bg-background/80 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all p-6 flex flex-col h-full border-t-4 border-t-amber-600'>
+			{/* ID Badge */}
+			<div className='mb-4 flex justify-between items-start'>
+				<div className='w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 font-serif font-bold text-xl border border-amber-200'>
+					{initial}
+				</div>
+				<span className='text-[10px] font-mono text-gray-400 bg-muted px-2 py-1 rounded'>
+					ID: {campaign.id.slice(0, 8)}...
+				</span>
+			</div>
+
+			<div className='flex-1 mb-6'>
+				<h3 className='text-xl font-bold text-foreground font-serif mb-2'>{campaign.name}</h3>
+				<p className='text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed italic'>
+					{campaign.description || 'A journey into the unknown.'}
+				</p>
+
+				{/* Characters Section */}
+				{campaign.characterNames?.length > 0 && (
+					<div className='pt-4 border-t border-border/50'>
+						<div className='flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wider mb-2'>
+							<Users size={12} />
+							Party Members
+						</div>
+						<div className='flex flex-wrap gap-1'>
+							{campaign.characterNames
+								.filter((name) => name !== 'Party')
+								.map((name, i) => (
+									<span
+										key={i}
+										className='text-[11px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full border border-amber-100'>
+										{name}
+									</span>
+								))}
+						</div>
+					</div>
+				)}
+			</div>
+
+			<div className='mt-auto'>
+				<Button onClick={() => onSelect(campaign.id)} fullWidth variant='primary' icon={ArrowRight}>
+					Enter Campaign
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\campaign-session\components\CampaignSelect.jsx ----
+import { useCampaignSelection } from '../useCampaignSelection';
+import { CampaignCard } from './CampaignCard';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+
+export default function CampaignSelect() {
+	const { campaigns, isLoading, selectCampaign } = useCampaignSelection();
+	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
+
+	if (isLoading) {
+		return (
+			<div className='min-h-screen bg-muted flex flex-col items-center justify-center'>
+				<LoadingSpinner size='lg' text='Consulting the Archives...' />
+			</div>
+		);
+	}
+
+	return (
+		<div
+			className='min-h-screen p-6 md:p-12 font-sans flex items-center justify-center'
+			style={{
+				backgroundImage: 'var(--bg-texture)',
+				backgroundRepeat: 'repeat',
+			}}>
+			<div className='max-w-5xl w-full mx-auto'>
+				{/* Header Section */}
+				<div className='text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
+					<img src={logoPath} alt='Logo' className='h-32 md:h-40 mx-auto mb-8 drop-shadow-2xl' />
+					<h1 className='text-4xl md:text-5xl font-serif font-bold text-foreground mb-4'>Select Campaign</h1>
+					<p className='text-gray-600 text-lg max-w-xl mx-auto'>
+						Choose a world to enter. Your adventures, characters, and chronicles await.
+					</p>
+				</div>
+
+				{/* Grid Section - Centered */}
+				<div className='flex flex-wrap justify-center gap-8'>
+					{campaigns.map((campaign) => (
+						<div key={campaign.id} className='w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.33%-1.5rem)] max-w-sm'>
+							<CampaignCard campaign={campaign} onSelect={selectCampaign} />
+						</div>
+					))}
+
+					{campaigns.length === 0 && (
+						<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-background/50 backdrop-blur-sm'>
+							<p className='text-gray-400 font-serif text-xl'>No campaigns found in the library.</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+
+---- start of file features\entity-view\types.js ----
+/**
+ * @typedef {Object} EntityTheme
+ * @property {string} text - Tailwind text color class
+ * @property {string} bg - Tailwind bg color class
+ * @property {string} border - Tailwind border color class
+ * @property {string} hover - Tailwind hover class
+ * @property {Object} Icon - Lucide React Component
+ */
+
+/**
+ * @typedef {Object} EntityViewModel
+ * @property {Object} header
+ * @property {string} header.title
+ * @property {string} header.typeLabel
+ * @property {string} header.imageUrl
+ * @property {Object} header.status - { label: string, isDead: boolean, hasStatus: boolean }
+ * @property {EntityTheme} header.theme
+ *
+ * @property {Object} sidebar
+ * @property {Array<{key: string, value: string}>} sidebar.traits
+ * @property {Array<{id: string, name: string, typeLabel: string, role: string, theme: EntityTheme}>} sidebar.connections
+ *
+ * @property {Object} content
+ * @property {string|null} content.summary
+ * @property {Array<{key: string, value: string}>} content.sections
+ * @property {Array<{id: string, title: string, description: string}>} content.history
+ */
+
+export {}; // Makes this a module
+
+
+---- start of file features\entity-view\useEntityViewModel.js ----
+import { useMemo } from 'react';
+import { getEntityConfig } from '../../config/entityConfig';
+import './types';
+
+const NARRATIVE_KEYS = [
+	'background',
+	'personality',
+	'history',
+	'bio',
+	'biography',
+	'goals',
+	'ideals',
+	'bonds',
+	'flaws',
+	'notes',
+	'gm notes',
+	'description',
+	'appearance',
+	'tactics',
+	'narrative',
+];
+
+// Keys that should ALWAYS be lists in the main body, never in sidebar
+const LIST_KEYS = ['feature', 'features', 'traits', 'inventory', 'loot', 'spells'];
+
+const IGNORED_KEYS = ['image', 'portrait', 'icon', 'token', 'session', 'date', 'summary', 'background_image'];
+
+const parseAbilityScores = (val) => {
+	if (!val || typeof val !== 'string') return [];
+	return val.split(',').map((s) => {
+		const parts = s.trim().split(' ');
+		const name = parts[0];
+		const score = parts.find((p) => /^\d+$/.test(p)) || '';
+		const mod = parts.find((p) => p.includes('('))?.replace(/[()]/g, '') || '';
+		return { name, score, mod };
+	});
+};
+
+const parseTagList = (val) => {
+	if (!val) return [];
+	if (Array.isArray(val)) return val;
+	return String(val)
+		.split(',')
+		.map((s) => s.trim());
+};
+
+const parseAttributeValue = (val, key) => {
+	if (val === null || val === undefined) return null;
+
+	// 1. If it's already an array, clean it
+	if (Array.isArray(val)) {
+		return val.map((item) => (typeof item === 'object' && item.value ? item.value : item));
+	}
+
+	// 2. Split text into array if it belongs to LIST_KEYS
+	if (typeof val === 'string' && LIST_KEYS.includes(key?.toLowerCase())) {
+		return val
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+	}
+
+	// 3. Unwrap objects
+	if (typeof val === 'object' && val.value) return val.value;
+
+	// 4. Fallback to string
+	return String(val);
+};
+
+const getAttributeUrl = (val) => {
+	if (!val) return null;
+
+	let url = '';
+	if (typeof val === 'string') url = val;
+	else if (Array.isArray(val) && val[0]?.value) url = val[0].value;
+	else if (typeof val === 'object' && val.value) url = val.value;
+
+	if (!url) return null;
+	let cleanPath = url.replace(/^(\.\.\/)+/, '');
+	if (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1);
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+const safeParseAttributes = (attrs) => {
+	if (!attrs) return {};
+	if (typeof attrs === 'object') return attrs;
+	try {
+		return JSON.parse(attrs);
+	} catch (e) {
+		return {};
+	}
+};
+
+export function useEntityViewModel(entity) {
+	return useMemo(() => {
+		if (!entity) return null;
+
+		const attributes = safeParseAttributes(entity.attributes);
+		const isSession = entity.type === 'session';
+		const config = getEntityConfig(entity.type);
+
+		const traits = [];
+		const narrativeSections = [];
+
+		Object.entries(attributes).forEach(([key, rawVal]) => {
+			const normalizedKey = key.toLowerCase();
+			if (IGNORED_KEYS.includes(normalizedKey)) return;
+
+			// Special Widgets
+			if (['abilities', 'stats'].includes(normalizedKey)) {
+				const strVal = parseAttributeValue(rawVal);
+				traits.push({ key, value: parseAbilityScores(strVal), displayType: 'stat-grid' });
+				return;
+			}
+			if (['ability score', 'saving throw', 'saves', 'skills', 'languages', 'proficiencies'].includes(normalizedKey)) {
+				const strVal = parseAttributeValue(rawVal);
+				traits.push({ key, value: parseTagList(strVal), displayType: 'tags' });
+				return;
+			}
+
+			// Parse Value
+			const displayVal = parseAttributeValue(rawVal, normalizedKey);
+			if (!displayVal) return;
+			if (normalizedKey === 'description' && displayVal === entity.description) return;
+
+			// --- ROUTING LOGIC ---
+
+			// 1. Force Lists to Main Content (Array Mode)
+			if (LIST_KEYS.includes(normalizedKey) && Array.isArray(displayVal)) {
+				narrativeSections.push({ key, value: displayVal, displayType: 'list' });
+				return;
+			}
+
+			// 2. Prepare Value for Standard Text (Flatten Arrays if they aren't lists)
+			// This FIXES the crash: If it's an array but not in LIST_KEYS, join it into a string.
+			let finalValue = displayVal;
+			if (Array.isArray(finalValue)) {
+				finalValue = finalValue.join('\n\n');
+			}
+
+			// 3. Long text or specific keys -> Main Content (String Mode)
+			if (NARRATIVE_KEYS.includes(normalizedKey) || (typeof finalValue === 'string' && finalValue.length > 100)) {
+				narrativeSections.push({ key, value: finalValue });
+			} else {
+				// 4. Short text -> Sidebar
+				traits.push({ key, value: finalValue, displayType: 'text' });
+			}
+		});
+
+		// --- IMAGE & HEADER LOGIC ---
+		const findBackground = () => {
+			const keys = ['background_image', 'background', 'image', 'Image', 'portrait', 'Portrait'];
+			for (const k of keys) {
+				const url = getAttributeUrl(attributes[k]);
+				if (url) return url;
+			}
+			return null;
+		};
+
+		const findIcon = () => {
+			const keys = ['icon', 'Icon', 'token', 'Token', 'portrait', 'Portrait', 'image', 'Image'];
+			for (const k of keys) {
+				const url = getAttributeUrl(attributes[k]);
+				if (url) return url;
+			}
+			return null;
+		};
+
+		const headerBackgroundUrl = findBackground();
+		const avatarUrl = findIcon();
+
+		// Status Check
+		let statusRaw = parseAttributeValue(attributes.status, 'status');
+		if (Array.isArray(statusRaw)) statusRaw = statusRaw.join(', ');
+		if (statusRaw && typeof statusRaw !== 'string') statusRaw = String(statusRaw);
+
+		const extraTags = [];
+		if (isSession) {
+			if (attributes.Session) extraTags.push(`Session ${attributes.Session}`);
+			if (attributes.Date) extraTags.push(attributes.Date);
+		}
+
+		let relationships = entity.relationships || [];
+		if (typeof relationships === 'string') {
+			try {
+				relationships = JSON.parse(relationships);
+			} catch {}
+		}
+
+		const connections = relationships
+			.map((rel) => {
+				const relConfig = getEntityConfig(rel.entity_type);
+				return {
+					id: rel.entity_id || Math.random().toString(),
+					name: rel.entity_name,
+					typeLabel: rel.entity_type,
+					role: rel.type?.toLowerCase().replace(/_/g, ' '),
+					theme: { ...relConfig.tailwind, Icon: relConfig.icon },
+				};
+			})
+			.slice(0, 8);
+
+		let mainSummary = attributes.Summary || entity.summary;
+		if (!mainSummary && !isSession) {
+			mainSummary = entity.description;
+		}
+
+		return {
+			layoutMode: isSession ? 'tabs' : 'standard',
+			header: {
+				title: entity.name,
+				typeLabel: entity.type?.toUpperCase(),
+				imageUrl: headerBackgroundUrl,
+				avatarUrl: avatarUrl,
+				status: {
+					hasStatus: !!statusRaw,
+					label: statusRaw,
+					isDead: statusRaw?.toLowerCase() === 'dead',
+				},
+				extraTags,
+				theme: { ...config.tailwind, Icon: config.icon },
+			},
+			sidebar: {
+				traits,
+				connections,
+			},
+			content: {
+				narrative: isSession ? entity.description || '' : null,
+				summary: mainSummary || '',
+				sections: narrativeSections,
+				history: Array.isArray(entity.events) ? entity.events : Object.values(entity.events || {}).flat(),
+			},
+		};
+	}, [entity]);
+}
+
+
+---- start of file features\entity-view\WikiEntityView.jsx ----
+import { useState } from 'react';
+import { clsx } from 'clsx';
+import { BookOpen, FileText, History } from 'lucide-react';
+import { useEntityViewModel } from './useEntityViewModel';
+import { EntityHeader } from './components/EntityHeader';
+import { EntitySidebar } from './components/EntitySidebar';
+import { EntityBody, EntityHistory } from './components/EntityBody';
+
+const Tabs = ({ active, onChange }) => {
+	const tabs = [
+		{ id: 'Narrative', icon: BookOpen },
+		{ id: 'Summary', icon: FileText },
+		{ id: 'Events', icon: History },
+	];
+
+	return (
+		<div className='flex justify-center border-b border-border bg-muted/40'>
+			{tabs.map((t) => {
+				const Icon = t.icon;
+				const isActive = active === t.id;
+				return (
+					<button
+						key={t.id}
+						onClick={() => onChange(t.id)}
+						className={clsx(
+							'flex items-center gap-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all',
+							isActive
+								? 'border-amber-600 text-amber-700 bg-amber-50/50'
+								: 'border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+						)}>
+						<Icon size={14} className={isActive ? 'opacity-100' : 'opacity-70'} />
+						{t.id}
+					</button>
+				);
+			})}
+		</div>
+	);
+};
+
+export default function WikiEntityView({ entity }) {
+	const viewModel = useEntityViewModel(entity);
+	const [activeTab, setActiveTab] = useState('Narrative');
+
+	if (!viewModel) return null;
+
+	// Check if sidebar has any content
+	const hasSidebar = viewModel.sidebar.traits.length > 0 || viewModel.sidebar.connections.length > 0;
+
+	// --- LAYOUT STRATEGY: TABS (Sessions) ---
+	if (viewModel.layoutMode === 'tabs') {
+		return (
+			<div className='pb-16 animate-in fade-in duration-300'>
+				<EntityHeader data={viewModel.header} />
+
+				<div className='sticky top-0 z-20 bg-background/95 backdrop-blur shadow-sm'>
+					<Tabs active={activeTab} onChange={setActiveTab} />
+				</div>
+
+				<div className='max-w-6xl mx-auto px-4 py-8 min-h-[50vh]'>
+					{activeTab === 'Narrative' && (
+						<div className='max-w-3xl mx-auto'>
+							<EntityBody summary={viewModel.content.narrative} sections={[]} history={null} />
+						</div>
+					)}
+
+					{activeTab === 'Summary' && (
+						<>
+							{/* Conditional Layout based on Sidebar content */}
+							{!hasSidebar ? (
+								<div className='max-w-3xl mx-auto'>
+									<EntityBody
+										summary={viewModel.content.summary}
+										sections={viewModel.content.sections}
+										history={null}
+									/>
+								</div>
+							) : (
+								<div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
+									<div className='lg:col-span-4 order-2 lg:order-1'>
+										<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+									</div>
+									<div className='lg:col-span-8 order-1 lg:order-2'>
+										<EntityBody
+											summary={viewModel.content.summary}
+											sections={viewModel.content.sections}
+											history={null}
+										/>
+									</div>
+								</div>
+							)}
+						</>
+					)}
+
+					{activeTab === 'Events' && (
+						<div className='max-w-3xl mx-auto pt-2'>
+							<EntityHistory events={viewModel.content.history} />
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	}
+
+	// --- LAYOUT STRATEGY: STANDARD (Entities) ---
+	return (
+		<div className='pb-16 animate-in fade-in duration-300'>
+			<EntityHeader data={viewModel.header} />
+
+			<div className='max-w-6xl mx-auto px-4 py-6'>
+				<div className='grid grid-cols-1 lg:grid-cols-12 gap-6'>
+					{/* Conditional Sidebar Rendering */}
+					{hasSidebar ? (
+						<>
+							<div className='lg:col-span-3'>
+								<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+							</div>
+							<div className='lg:col-span-9'>
+								<EntityBody
+									summary={viewModel.content.summary}
+									sections={viewModel.content.sections}
+									history={viewModel.content.history}
+								/>
+							</div>
+						</>
+					) : (
+						/* No Sidebar: Centered Content */
+						<div className='lg:col-span-12 max-w-4xl mx-auto w-full'>
+							<EntityBody
+								summary={viewModel.content.summary}
+								sections={viewModel.content.sections}
+								history={viewModel.content.history}
+							/>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+
+---- start of file features\entity-view\components\EntityBody.jsx ----
+import { History, Diamond } from 'lucide-react';
+import SmartMarkdown from '../../smart-text/SmartMarkdown';
+import { EntityHistory } from './EntityHistory';
+
+// Re-exporting History for use in tabs if needed by parent
+export { EntityHistory } from './EntityHistory';
+
+export const EntityBody = ({ summary, sections, history }) => {
+	return (
+		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
+			{/* Main Summary */}
+			{summary && (
+				<div className='mb-4'>
+					<SmartMarkdown>{summary}</SmartMarkdown>
+				</div>
+			)}
+
+			{/* Narrative Sections */}
+			{sections.map((prop) => {
+				// --- RENDERER: LISTS (Features, Traits, Inventory, etc) ---
+				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
+					return (
+						<div key={prop.key} className='mt-5 pt-2 border-t border-slate-100'>
+							<h3 className='capitalize text-lg mt-4 font-serif text-amber-800 mb-2 font-bold'>{prop.key}</h3>
+
+							{/* CLEAN LIST DESIGN */}
+							<ul className='grid grid-cols-1 gap-1.5 pl-1 list-none my-0'>
+								{prop.value.map((item, idx) => (
+									<li key={idx} className='flex items-start gap-3 m-0 p-0 text-slate-700 group'>
+										{/* Custom Bullet Point (Subtle Diamond) */}
+										<div className='mt-[0.45rem] shrink-0 text-amber-600/60 group-hover:text-amber-600 transition-colors'>
+											<Diamond size={8} fill='currentColor' />
+										</div>
+
+										{/* The Text */}
+										{/* FIX: components={{ p: 'span' }} removes the <p> tag wrapper so alignment holds */}
+										<span className='text-[11pt] leading-snug'>
+											<SmartMarkdown components={{ p: 'span' }}>{item}</SmartMarkdown>
+										</span>
+									</li>
+								))}
+							</ul>
+						</div>
+					);
+				}
+
+				// --- RENDERER: STANDARD TEXT SECTIONS ---
+				return (
+					<div key={prop.key} className='mt-4 pt-2 border-t border-slate-200'>
+						<h3 className='capitalize text-lg font-serif text-amber-800 mb-1 mt-2 inline-block pb-0.5'>{prop.key}</h3>
+						<div className='mt-0.5'>
+							<SmartMarkdown>{prop.value}</SmartMarkdown>
+						</div>
+					</div>
+				);
+			})}
+
+			{/* History Section (Embedded) */}
+			{history && history.length > 0 && (
+				<div className='mt-4 pt-2 border-t border-slate-200'>
+					<h3 className='font-serif text-lg mt-4 font-bold text-foreground mb-3 flex items-center gap-2'>
+						<History size={16} className='text-amber-600' /> Events
+					</h3>
+					<EntityHistory events={history} />
+				</div>
+			)}
+		</div>
+	);
+};
+
+
+---- start of file features\entity-view\components\EntityHeader.jsx ----
+import { clsx } from 'clsx';
+
+export const EntityHeader = ({ data }) => {
+	const { title, typeLabel, imageUrl, avatarUrl, status, theme, extraTags } = data;
+	const { Icon } = theme;
+
+	return (
+		<div className='h-40 md:h-48 relative group overflow-hidden header-bg-fallback'>
+			{/* 1. BACKGROUND LAYER (Banner) */}
+			{imageUrl && (
+				<img src={imageUrl} alt={title} className='absolute inset-0 w-full h-full object-cover object-top opacity-60' />
+			)}
+
+			{/* Gradient Overlay - Adapts to theme */}
+			<div className='absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-10' />
+			<div className='absolute inset-0 header-gradient translate-y-1' />
+
+			{/* Content Layer */}
+			<div className='absolute bottom-0 left-0 w-full p-4 md:p-6'>
+				<div className='max-w-6xl mx-auto flex items-end gap-4'>
+					{/* 2. AVATAR BOX (Icon vs SVG) */}
+					<div
+						className={clsx(
+							'rounded-lg shadow-md border hidden md:flex items-center justify-center overflow-hidden',
+							// If we have an image, we don't want padding or coloring, just the image
+							avatarUrl ? 'w-16 h-16 bg-white border-white' : `p-2.5 ${theme.bg} ${theme.border} ${theme.text}`
+						)}>
+						{avatarUrl ? <img src={avatarUrl} alt='' className='w-full h-full object-cover' /> : <Icon size={18} />}
+					</div>
+
+					{/* Title & Status */}
+					<div className='flex-1'>
+						<div className='flex items-center flex-wrap gap-2 mb-1.5'>
+							<span className='px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-900 text-white shadow-sm'>
+								{typeLabel}
+							</span>
+
+							{status.hasStatus && (
+								<span
+									className={clsx(
+										'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
+										status.isDead
+											? 'border-red-600 text-red-700 bg-red-50'
+											: 'border-emerald-600 text-emerald-700 bg-emerald-50'
+									)}>
+									{status.label}
+								</span>
+							)}
+
+							{extraTags &&
+								extraTags.map((tag, i) => (
+									<span
+										key={i}
+										className='px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm bg-white/80 border-slate-300 text-slate-700'>
+										{tag}
+									</span>
+								))}
+						</div>
+						<h1 className='text-3xl md:text-4xl font-serif font-bold text-foreground leading-none drop-shadow-sm'>
+							{title}
+						</h1>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\entity-view\components\EntityHistory.jsx ----
+import { History, Calendar } from 'lucide-react';
+import SmartMarkdown from '../../smart-text/SmartMarkdown';
+
+export const EntityHistory = ({ events, showSession = true }) => {
+	if (!events || events.length === 0) return null;
+
+	// Debug: Log first event to see what data we have
+	if (events.length > 0) {
+		console.log('First event data:', events[0]);
+	}
+
+	return (
+		<div className='border-l-2 border-slate-200 pl-4 space-y-6 relative my-2'>
+			{events.map((evt, idx) => (
+				<div key={evt.id || idx} className='relative group'>
+					<div className='absolute -left-[23px] top-1.5 w-3 h-3 rounded-full border border-white bg-slate-300 ring-1 ring-slate-200 group-hover:bg-amber-500 group-hover:ring-amber-200 transition-colors shadow-sm' />
+
+					{/* Title Row with Session Badge */}
+					<div className='flex items-center gap-2 mb-1 flex-wrap'>
+						<h4 className='font-bold text-slate-800 text-sm mt-0.5'>{evt.title}</h4>
+						{showSession && evt.session_number != null && (
+							<span className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200'>
+								<Calendar size={9} />
+								Session {evt.session_number}
+							</span>
+						)}
+					</div>
+
+					<div className='text-sm text-slate-600 leading-relaxed text-justify'>
+						<SmartMarkdown>{evt.description}</SmartMarkdown>
+					</div>
+				</div>
+			))}
+		</div>
+	);
+};
+
+
+---- start of file features\entity-view\components\EntitySidebar.jsx ----
+import { Tag, Network, Shield, Activity } from 'lucide-react';
+import { clsx } from 'clsx';
+
+// --- SUB-COMPONENTS ---
+const AbilityGrid = ({ stats }) => (
+	<div className='grid grid-cols-3 gap-2 mt-2 mb-4'>
+		{stats.map((stat, i) => (
+			<div
+				key={i}
+				className='bg-white border border-slate-200 rounded p-1.5 text-center flex flex-col items-center shadow-sm'>
+				<span className='text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none'>{stat.name}</span>
+				<span className='text-lg font-bold text-slate-800 leading-none my-1'>{stat.score}</span>
+				<span className='text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 rounded-full'>{stat.mod}</span>
+			</div>
+		))}
+	</div>
+);
+
+const TagList = ({ tags }) => (
+	<div className='flex flex-wrap gap-1.5 mt-1 mb-3'>
+		{tags.map((item, i) => (
+			<span
+				key={i}
+				className='inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200'>
+				{item}
+			</span>
+		))}
+	</div>
+);
+
+const StandardTrait = ({ label, value, index }) => (
+	<div
+		className={clsx(
+			'flex justify-between items-start px-2 py-1.5 rounded',
+			index % 2 === 0 ? 'bg-background' : 'bg-transparent'
+		)}>
+		<span className='text-[11px] font-medium text-slate-400 capitalize shrink-0 mr-2 mt-0.5'>{label}</span>
+		<span className='text-xs font-semibold text-slate-700 text-right leading-snug'>{value}</span>
+	</div>
+);
+
+// --- HELPER: Connection Badge Colors ---
+const getRoleStyle = (roleStr) => {
+	const r = roleStr?.toLowerCase() || '';
+
+	if (r.includes('enemy') || r.includes('threat') || r.includes('hostile')) {
+		return 'bg-red-50 text-red-700 border-red-200';
+	}
+	if (r.includes('ally') || r.includes('allied') || r.includes('friend')) {
+		return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+	}
+	if (r.includes('ruled') || r.includes('leader') || r.includes('captain')) {
+		return 'bg-amber-50 text-amber-700 border-amber-200';
+	}
+	// Default
+	return 'bg-slate-100 text-slate-500 border-slate-200';
+};
+
+// --- MAIN COMPONENT ---
+export const EntitySidebar = ({ traits, connections }) => {
+	const textTraits = traits.filter((t) => t.displayType === 'text');
+	const specialTraits = traits.filter((t) => t.displayType !== 'text');
+
+	return (
+		<div className='space-y-6'>
+			{/* 1. Standard Traits Table */}
+			{textTraits.length > 0 && (
+				<div className='bg-muted border border-slate-200 rounded-lg overflow-hidden'>
+					<div className='px-3 py-2 border-b border-slate-200 bg-slate-100/50'>
+						<h3 className='text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2'>
+							<Tag size={10} /> Attributes
+						</h3>
+					</div>
+					<div className='p-1'>
+						{textTraits.map((prop, idx) => (
+							<StandardTrait key={prop.key} label={prop.key} value={prop.value} index={idx} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 2. Special Visual Blocks */}
+			{specialTraits.length > 0 && (
+				<div className='space-y-4 px-1'>
+					{specialTraits.map((prop) => {
+						if (prop.displayType === 'stat-grid') {
+							return (
+								<div key={prop.key}>
+									<h3 className='text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-2'>
+										<Activity size={10} /> {prop.key}
+									</h3>
+									<AbilityGrid stats={prop.value} />
+								</div>
+							);
+						}
+						if (prop.displayType === 'tags') {
+							return (
+								<div key={prop.key}>
+									<h3 className='text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-2'>
+										<Shield size={10} /> {prop.key}
+									</h3>
+									<TagList tags={prop.value} />
+								</div>
+							);
+						}
+						return null;
+					})}
+				</div>
+			)}
+
+			{/* 3. Connections */}
+			{connections.length > 0 && (
+				<div>
+					<h3 className='text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
+						<Network size={10} /> Connections
+					</h3>
+					<div className='space-y-2'>
+						{connections.map((rel, i) => (
+							<div
+								key={i}
+								className={clsx(
+									'group flex items-center justify-between p-2 rounded-lg border bg-background transition-all cursor-pointer',
+									'border-slate-200 hover:border-slate-300 hover:shadow-sm',
+									rel.theme.hover
+								)}>
+								<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+									<div className={clsx('shrink-0', rel.theme.text)}>
+										<rel.theme.Icon size={14} />
+									</div>
+									<span className='text-sm font-bold text-slate-700 truncate group-hover:text-foreground transition-colors'>
+										{rel.name}
+									</span>
+								</div>
+
+								{/* UPDATED: Dynamic Badge Color based on Role */}
+								<span
+									className={clsx(
+										'shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ml-2 max-w-[45%] truncate',
+										getRoleStyle(rel.role)
+									)}>
+									{rel.role}
+								</span>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
+
+
+---- start of file features\entity-view\pages\WikiEntryPage.jsx ----
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getWikiEntry } from '../../../services/entities'; // Fixed import to use service
+import WikiEntityView from '../WikiEntityView';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+
+export default function WikiEntryPage() {
+	// We need both entityId and type (e.g., 'session', 'character')
+	const { type, entityId } = useParams();
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	const {
+		data: entity,
+		isLoading,
+		error,
+	} = useQuery({
+		// Include type in the query key so it refetches if type changes
+		queryKey: ['entry', normalizedType, entityId],
+		queryFn: () => getWikiEntry(entityId, normalizedType),
+		enabled: !!entityId && !!normalizedType,
+		retry: 1,
+	});
+
+	if (isLoading) {
+		return <LoadingSpinner className='h-full min-h-[50vh]' text='Loading Entry...' />;
+	}
+
+	if (error) {
+		return (
+			<div className='h-full min-h-[50vh] flex items-center justify-center'>
+				<div className='text-center'>
+					<p className='text-red-600 mb-2 font-bold'>Failed to load entry</p>
+					<p className='text-sm text-gray-500 max-w-xs mx-auto'>{error.message}</p>
+				</div>
+			</div>
+		);
+	}
+
+	return <WikiEntityView entity={entity} />;
+}
+
+
+---- start of file features\global-search\GlobalSearch.jsx ----
+import { useRef, useEffect } from 'react';
+import { SearchTrigger } from './components/SearchTrigger';
+import { SearchModal } from './components/SearchModal';
+import { useGlobalSearchViewModel } from './useGlobalSearchViewModel';
+
+export default function GlobalSearch() {
+	const vm = useGlobalSearchViewModel();
+	const inputRef = useRef(null);
+
+	// Focus input when opened
+	useEffect(() => {
+		if (vm.isOpen && inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, [vm.isOpen]);
+
+	return (
+		<>
+			<SearchTrigger onClick={() => vm.setIsOpen(true)} />
+			{vm.isOpen && <SearchModal vm={vm} inputRef={inputRef} />}
+		</>
+	);
+}
+
+
+---- start of file features\global-search\types.js ----
+/**
+ * @typedef {Object} SearchResult
+ * @property {string} id
+ * @property {string} name
+ * @property {string} type
+ * @property {string} description
+ * @property {Object} attributes
+ */
+
+/**
+ * @typedef {Object} SearchResultViewModel
+ * @property {string} id
+ * @property {string} name
+ * @property {string} typeLabel
+ * @property {string} description
+ * @property {Object} icon - Lucide Icon Component
+ * @property {Object} theme - Tailwind color classes
+ */
+
+/**
+ * @typedef {Object} GlobalSearchViewModel
+ * @property {boolean} isOpen
+ * @property {function(boolean): void} setIsOpen
+ * @property {string} query
+ * @property {function(string): void} setQuery
+ * @property {SearchResultViewModel[]} results
+ * @property {boolean} isLoading
+ * @property {SearchResultViewModel[]} recentSearches
+ * @property {number} selectedIndex
+ * @property {function(number): void} setSelectedIndex
+ * @property {function(SearchResultViewModel): void} handleSelect
+ * @property {function(): void} clearRecent
+ */
+
+export {};
+
+
+---- start of file features\global-search\useGlobalSearchViewModel.js ----
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useCampaign } from '../campaign-session/CampaignContext';
+import { globalSearch } from '../../services/search';
+import { getEntityConfig } from '../../config/entityConfig';
+import './types';
+
+const STORAGE_KEY = 'recent-searches';
+
+/**
+ * @returns {import('./types').GlobalSearchViewModel}
+ */
+export function useGlobalSearchViewModel() {
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const [isOpen, setIsOpen] = useState(false);
+	const [query, setQuery] = useState('');
+	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [recentSearches, setRecentSearches] = useState(() => {
+		try {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			return stored ? JSON.parse(stored) : [];
+		} catch {
+			return [];
+		}
+	});
+
+	// Fetch search results
+	const { data: rawResults = [], isLoading } = useQuery({
+		queryKey: ['globalSearch', campaignId, query],
+		queryFn: () => globalSearch(campaignId, query),
+		enabled: !!campaignId && query.trim().length > 0,
+		staleTime: 1000 * 30, // 30 seconds
+	});
+
+	// Transform results to view model
+	const results = useMemo(() => {
+		return rawResults.map((result) => {
+			const config = getEntityConfig(result.type);
+			return {
+				id: result.id,
+				name: result.name,
+				type: result.type,
+				typeLabel: result.type.toUpperCase(),
+				description: result.description || '',
+				icon: config.icon,
+				theme: config.tailwind,
+			};
+		});
+	}, [rawResults]);
+
+	// Transform recent searches to view model
+	const recentSearchesViewModel = useMemo(() => {
+		return recentSearches.map((result) => {
+			const config = getEntityConfig(result.type);
+			return {
+				id: result.id,
+				name: result.name,
+				type: result.type,
+				typeLabel: result.type.toUpperCase(),
+				description: result.description || '',
+				icon: config.icon,
+				theme: config.tailwind,
+			};
+		});
+	}, [recentSearches]);
+
+	// Handle selection
+	const handleSelect = (result) => {
+		// Add to recent searches (store raw data)
+		const rawResult = rawResults.find((r) => r.id === result.id);
+		if (rawResult) {
+			const updated = [rawResult, ...recentSearches.filter((r) => r.id !== rawResult.id)].slice(0, 5);
+			setRecentSearches(updated);
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+			} catch {
+				// Ignore storage errors
+			}
+		}
+
+		// Navigate
+		navigate(`/wiki/${result.type}/${result.id}`);
+
+		// Reset state
+		setIsOpen(false);
+		setQuery('');
+		setSelectedIndex(0);
+	};
+
+	// Clear recent searches
+	const clearRecent = () => {
+		setRecentSearches([]);
+		try {
+			localStorage.removeItem(STORAGE_KEY);
+		} catch {
+			// Ignore
+		}
+	};
+
+	// Keyboard shortcuts
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			// ⌘K / Ctrl+K to open
+			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+				e.preventDefault();
+				setIsOpen(true);
+			}
+
+			// ESC to close
+			if (e.key === 'Escape' && isOpen) {
+				setIsOpen(false);
+				setQuery('');
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isOpen]);
+
+	// Arrow key navigation
+	useEffect(() => {
+		if (!isOpen || results.length === 0) return;
+
+		const handleKeyDown = (e) => {
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				setSelectedIndex((prev) => (prev + 1) % results.length);
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
+			} else if (e.key === 'Enter' && results[selectedIndex]) {
+				e.preventDefault();
+				handleSelect(results[selectedIndex]);
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isOpen, results, selectedIndex]);
+
+	return {
+		isOpen,
+		setIsOpen,
+		query,
+		setQuery,
+		results,
+		isLoading,
+		recentSearches: recentSearchesViewModel,
+		selectedIndex,
+		setSelectedIndex,
+		handleSelect,
+		clearRecent,
+	};
+}
+
+
+---- start of file features\global-search\components\SearchFooter.jsx ----
+export const SearchFooter = () => {
+	return (
+		<div className='flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/30 text-[10px] text-gray-500'>
+			<div className='flex items-center gap-4'>
+				<span className='flex items-center gap-1.5'>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↑</kbd>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↓</kbd>
+					<span>navigate</span>
+				</span>
+				<span className='flex items-center gap-1.5'>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↵</kbd>
+					<span>select</span>
+				</span>
+			</div>
+			<span className='flex items-center gap-1.5'>
+				<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>ESC</kbd>
+				<span>close</span>
+			</span>
+		</div>
+	);
+};
+
+
+---- start of file features\global-search\components\SearchModal.jsx ----
+import { createPortal } from 'react-dom'; // 1. Import createPortal
+import { Search, X } from 'lucide-react';
+import { SearchResults } from './SearchResults';
+import { SearchFooter } from './SearchFooter';
+
+export const SearchModal = ({ vm, inputRef }) => {
+	// 2. Wrap the entire modal in createPortal, targeting document.body
+	return createPortal(
+		<div className='fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4'>
+			{/* Backdrop */}
+			<div
+				className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+				onClick={() => {
+					vm.setIsOpen(false);
+					vm.setQuery('');
+				}}
+			/>
+
+			{/* Search Panel */}
+			<div className='relative w-full max-w-2xl bg-background rounded-xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-200'>
+				{/* Search Input */}
+				<div className='flex items-center gap-3 p-4 border-b border-border'>
+					<Search size={18} className='text-gray-400 shrink-0' />
+					<input
+						ref={inputRef}
+						type='text'
+						value={vm.query}
+						onChange={(e) => {
+							vm.setQuery(e.target.value);
+							vm.setSelectedIndex(0);
+						}}
+						placeholder='Search sessions, characters, locations, and more...'
+						className='flex-1 bg-transparent text-sm text-foreground placeholder:text-gray-400 outline-none'
+					/>
+					{vm.query && (
+						<button
+							onClick={() => {
+								vm.setQuery('');
+								inputRef.current?.focus();
+							}}
+							className='p-1 text-gray-400 hover:text-foreground hover:bg-muted rounded transition-colors'>
+							<X size={16} />
+						</button>
+					)}
+					<kbd className='hidden sm:inline-block px-2 py-1 text-[10px] font-semibold text-gray-400 bg-muted border border-border rounded'>
+						ESC
+					</kbd>
+				</div>
+
+				{/* Results Area */}
+				<SearchResults vm={vm} />
+
+				{/* Footer with keyboard shortcuts */}
+				<SearchFooter />
+			</div>
+		</div>,
+		document.body // The target container
+	);
+};
+
+
+---- start of file features\global-search\components\SearchResultItem.jsx ----
+import { clsx } from 'clsx';
+
+export const SearchResultItem = ({ item, isSelected, onSelect, onHover }) => {
+	return (
+		<button
+			onClick={onSelect}
+			onMouseEnter={onHover}
+			className={clsx(
+				'w-full flex items-start gap-3 px-4 py-2.5 transition-colors text-left',
+				isSelected ? 'bg-amber-50' : 'hover:bg-muted'
+			)}>
+			<div
+				className={clsx(
+					'shrink-0 w-9 h-9 rounded-lg border flex items-center justify-center',
+					item.theme.bg,
+					item.theme.border,
+					item.theme.text
+				)}>
+				<item.icon size={16} />
+			</div>
+			<div className='flex-1 min-w-0'>
+				<div className='flex items-center gap-2 mb-0.5'>
+					<span className='text-sm font-semibold text-foreground truncate'>{item.name}</span>
+					<span className='shrink-0 text-[10px] uppercase font-bold tracking-wider text-gray-400 bg-muted px-1.5 py-0.5 rounded'>
+						{item.type}
+					</span>
+				</div>
+				{item.description && <p className='text-xs text-gray-600 line-clamp-2 leading-relaxed'>{item.description}</p>}
+			</div>
+			{isSelected && (
+				<kbd className='shrink-0 text-[10px] font-semibold text-gray-400 bg-muted px-2 py-1 rounded border border-border'>
+					↵
+				</kbd>
+			)}
+		</button>
+	);
+};
+
+
+---- start of file features\global-search\components\SearchResults.jsx ----
+import { Search, Clock } from 'lucide-react';
+import { clsx } from 'clsx';
+import { SearchResultItem } from './SearchResultItem';
+
+export const SearchResults = ({ vm }) => {
+	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent } = vm;
+
+	return (
+		<div className='max-h-[60vh] overflow-y-auto'>
+			{query.trim() === '' ? (
+				// Recent Searches / Empty State
+				<div className='p-4'>
+					{recentSearches.length > 0 ? (
+						<>
+							<div className='flex items-center justify-between mb-3'>
+								<h3 className='text-xs font-semibold uppercase tracking-wider text-gray-400'>Recent Searches</h3>
+								<button onClick={clearRecent} className='text-xs text-gray-400 hover:text-foreground transition-colors'>
+									Clear
+								</button>
+							</div>
+							<div className='space-y-1'>
+								{recentSearches.map((item) => (
+									<button
+										key={item.id}
+										onClick={() => handleSelect(item)}
+										className='w-full flex items-start gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left group'>
+										<div
+											className={clsx(
+												'shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center',
+												item.theme.bg,
+												item.theme.border,
+												item.theme.text
+											)}>
+											<item.icon size={14} />
+										</div>
+										<div className='flex-1 min-w-0'>
+											<div className='flex items-center gap-2 mb-0.5'>
+												<span className='text-sm font-semibold text-foreground truncate'>{item.name}</span>
+												<span className='shrink-0 text-[10px] uppercase font-bold tracking-wider text-gray-400'>
+													{item.type}
+												</span>
+											</div>
+											<p className='text-xs text-gray-500 line-clamp-1'>{item.description}</p>
+										</div>
+										<Clock
+											size={14}
+											className='shrink-0 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity'
+										/>
+									</button>
+								))}
+							</div>
+						</>
+					) : (
+						<div className='text-center py-12'>
+							<Search size={40} className='mx-auto text-gray-300 mb-3' />
+							<p className='text-sm font-medium text-foreground mb-1'>Start typing to search</p>
+							<p className='text-xs text-gray-500'>
+								Search across sessions, characters, locations, quests, NPCs, and more
+							</p>
+						</div>
+					)}
+				</div>
+			) : isLoading ? (
+				<div className='text-center py-12'>
+					<div className='inline-block w-8 h-8 border-2 border-gray-200 border-t-amber-600 rounded-full animate-spin' />
+					<p className='text-sm text-gray-500 mt-3'>Searching...</p>
+				</div>
+			) : results.length > 0 ? (
+				// Search Results
+				<div className='py-2'>
+					{results.map((item, idx) => (
+						<SearchResultItem
+							key={item.id}
+							item={item}
+							isSelected={idx === selectedIndex}
+							onSelect={() => handleSelect(item)}
+							onHover={() => setSelectedIndex(idx)}
+						/>
+					))}
+				</div>
+			) : (
+				// No Results
+				<div className='text-center py-12 px-4'>
+					<Search size={40} className='mx-auto text-gray-300 mb-3' />
+					<p className='text-sm font-medium text-foreground mb-1'>No results found for "{query}"</p>
+					<p className='text-xs text-gray-500'>Try different keywords or check your spelling</p>
+				</div>
+			)}
+		</div>
+	);
+};
+
+
+---- start of file features\global-search\components\SearchTrigger.jsx ----
+import { Search } from 'lucide-react';
+
+export const SearchTrigger = ({ onClick }) => {
+	return (
+		<button
+			onClick={onClick}
+			className='w-full flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-md text-sm text-gray-500 hover:text-foreground hover:border-amber-500/50 transition-all group'>
+			<Search size={14} className='text-gray-400 group-hover:text-amber-600' />
+			<span className='flex-1 text-left text-xs'>Search everything...</span>
+			<kbd className='hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-muted border border-border rounded'>
+				⌘K
+			</kbd>
+		</button>
+	);
+};
+
+
+---- start of file features\hooks\useTheme.js ----
+import { useState, useEffect } from 'react';
+
+export const THEMES = {
+	LIGHT: 'light',
+	// DARK: 'dark',
+	DND: 'dnd',
+};
+
+export function useTheme() {
+	const [theme, setTheme] = useState(() => {
+		const stored = localStorage.getItem('app-theme');
+		return stored || THEMES.LIGHT;
+	});
+
+	useEffect(() => {
+		const root = window.document.documentElement;
+		// Remove old themes
+		Object.values(THEMES).forEach((t) => root.removeAttribute('data-theme'));
+
+		// Apply new theme
+		if (theme !== THEMES.LIGHT) {
+			root.setAttribute('data-theme', theme);
+		}
+
+		localStorage.setItem('app-theme', theme);
+	}, [theme]);
+
+	const cycleTheme = () => {
+		const themes = Object.values(THEMES);
+		const currentIndex = themes.indexOf(theme);
+		const nextIndex = (currentIndex + 1) % themes.length;
+		setTheme(themes[nextIndex]);
+	};
+
+	return { theme, setTheme, cycleTheme };
+}
+
+
+---- start of file features\layout-main\MainLayout.jsx ----
+import { Outlet } from 'react-router-dom';
+import { Menu } from 'lucide-react';
+import { useMainLayout } from './useMainLayout';
+import { Sidebar } from './components/Sidebar';
+
+export default function MainLayout() {
+	const vm = useMainLayout();
+
+	return (
+		<div className='flex h-screen bg-background text-foreground overflow-hidden'>
+			{' '}
+			{/* UPDATED */}
+			<Sidebar vm={vm} />
+			<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col'>
+				{' '}
+				{/* UPDATED */}
+				{/* Mobile Header */}
+				<div className='lg:hidden flex items-center justify-between p-4 border-b border-border bg-background shrink-0'>
+					{' '}
+					{/* UPDATED */}
+					<button
+						onClick={() => vm.setSidebarOpen(true)}
+						className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
+						<Menu size={20} />
+					</button>
+					<h1 className='text-sm font-serif font-bold'>{vm.campaign?.name || 'Campaign'}</h1>
+					<div className='w-9' />
+				</div>
+				<div className='flex-1 overflow-hidden relative'>
+					<Outlet />
+				</div>
+			</main>
+		</div>
+	);
+}
+
+
+---- start of file features\layout-main\navConfig.js ----
+import { Map, History, Network, BookOpen, Users, Scroll, Sword, Shield } from 'lucide-react';
+
+export const NAV_STRUCTURE = [
+	{
+		title: 'World',
+		items: [
+			{ label: 'Atlas', Icon: Map, path: '/' },
+			{ label: 'Timeline', Icon: History, path: '/timeline' },
+			{ label: 'Graph', Icon: Network, path: '/relationships' },
+		],
+	},
+	{
+		title: 'Wiki',
+		items: [
+			{ label: 'Sessions', Icon: BookOpen, path: '/wiki/session' },
+			{ label: 'Characters', Icon: Users, path: '/wiki/character' },
+			{ label: 'NPCs', Icon: Users, path: '/wiki/npc' },
+			{ label: 'Locations', Icon: Map, path: '/wiki/location' },
+			{ label: 'Factions', Icon: Shield, path: '/wiki/faction' },
+			{ label: 'Quests', Icon: Scroll, path: '/wiki/quest' },
+			{ label: 'Encounters', Icon: Sword, path: '/wiki/encounter' },
+		],
+	},
+];
+
+
+---- start of file features\layout-main\types.js ----
+/**
+ * @typedef {Object} NavItemConfig
+ * @property {string} label
+ * @property {Object} Icon - Lucide React Icon
+ * @property {string} path
+ */
+
+/**
+ * @typedef {Object} NavGroupConfig
+ * @property {string} title
+ * @property {NavItemConfig[]} items
+ */
+
+/**
+ * @typedef {Object} LayoutViewModel
+ * @property {boolean} sidebarOpen
+ * @property {function(boolean): void} setSidebarOpen
+ * @property {string} currentPath
+ * @property {function(string): void} navigateTo
+ * @property {Object|null} campaign - { name: string, initial: string }
+ * @property {function(): void} onSwitchCampaign
+ * @property {NavGroupConfig[]} navStructure
+ */
+
+export {};
+
+
+---- start of file features\layout-main\useMainLayout.js ----
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+// FIX: Import from the specific service file
+import { getCampaigns } from '../../services/campaigns';
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import { NAV_STRUCTURE } from './navConfig';
+import './types';
+
+export function useMainLayout() {
+	const navigate = useNavigate();
+	const location = useLocation();
+	const { campaignId, setCampaignId } = useCampaign();
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	const { data: campaigns } = useQuery({
+		queryKey: ['campaigns'],
+		queryFn: getCampaigns,
+		staleTime: 1000 * 60 * 10,
+	});
+
+	const currentCampaignData = campaigns?.find((c) => c.id === campaignId);
+
+	const campaign = currentCampaignData
+		? {
+				name: currentCampaignData.name || 'Campaign',
+				initial: (currentCampaignData.name?.[0] || 'C').toUpperCase(),
+		  }
+		: null;
+
+	const navigateTo = (path) => {
+		navigate(path);
+		setSidebarOpen(false);
+	};
+
+	const onSwitchCampaign = () => {
+		setCampaignId(null);
+	};
+
+	return {
+		sidebarOpen,
+		setSidebarOpen,
+		currentPath: location.pathname,
+		navigateTo,
+		campaign,
+		onSwitchCampaign,
+		navStructure: NAV_STRUCTURE,
+	};
+}
+
+
+---- start of file features\layout-main\components\Sidebar.jsx ----
+import { X } from 'lucide-react';
+import { clsx } from 'clsx';
+import { SidebarHeader } from './SidebarHeader';
+import { SidebarNav } from './SidebarNav';
+import { SidebarFooter } from './SidebarFooter';
+
+export const Sidebar = ({ vm }) => {
+	const { sidebarOpen, setSidebarOpen, campaign, navStructure, currentPath, navigateTo, onSwitchCampaign } = vm;
+
+	return (
+		<>
+			{/* Mobile Overlay */}
+			{sidebarOpen && (
+				<div className='fixed inset-0 bg-black/50 z-40 lg:hidden' onClick={() => setSidebarOpen(false)} />
+			)}
+
+			<aside
+				className={clsx(
+					// FIXED: Replaced 'bg-[var(--sidebar-bg)]' with 'bg-muted' to ensure opacity
+					'w-64 bg-muted border-r border-border flex flex-col h-full transition-transform duration-300 lg:translate-x-0',
+					sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+					'fixed lg:relative z-50'
+				)}>
+				{/* Mobile Close Button */}
+				<button
+					onClick={() => setSidebarOpen(false)}
+					className='lg:hidden absolute top-4 right-4 p-2 text-gray-500 hover:text-foreground hover:bg-gray-100 rounded-md'
+					aria-label='Close sidebar'>
+					<X size={20} />
+				</button>
+
+				<SidebarHeader campaign={campaign} />
+
+				<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
+
+				<SidebarFooter onSwitch={onSwitchCampaign} />
+			</aside>
+		</>
+	);
+};
+
+
+---- start of file features\layout-main\components\SidebarFooter.jsx ----
+import { Moon, Sun, Sword, Settings } from 'lucide-react';
+import { useTheme, THEMES } from '../../hooks/useTheme';
+
+export const SidebarFooter = ({ onSwitch }) => {
+	const { theme, cycleTheme } = useTheme();
+
+	const getThemeIcon = () => {
+		switch (theme) {
+			case THEMES.DARK:
+				return <Moon size={14} className='mr-2' />;
+			case THEMES.DND:
+				return <Sword size={14} className='mr-2' />;
+			default:
+				return <Sun size={14} className='mr-2' />;
+		}
+	};
+
+	const getThemeLabel = () => {
+		switch (theme) {
+			case THEMES.DARK:
+				return 'Dark Mode';
+			case THEMES.DND:
+				return 'D&D PHB';
+			default:
+				return 'Light Mode';
+		}
+	};
+
+	return (
+		<div className='mt-auto p-4 border-t border-border space-y-2 bg-inherit'>
+			<button
+				onClick={cycleTheme}
+				className='flex items-center w-full px-2 py-2 text-xs font-medium text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				{getThemeIcon()}
+				Theme: {getThemeLabel()}
+			</button>
+
+			<button
+				onClick={onSwitch}
+				className='flex items-center w-full px-2 py-2 text-xs text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				<Settings size={14} className='mr-2' />
+				Switch Campaign
+			</button>
+		</div>
+	);
+};
+
+
+---- start of file features\layout-main\components\SidebarHeader.jsx ----
+import GlobalSearch from '../../global-search/GlobalSearch';
+
+export const SidebarHeader = ({ campaign }) => {
+	return (
+		<div className='p-4'>
+			{/* Campaign Card */}
+			<div className='flex items-center gap-3 px-2 py-2 mb-4 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors'>
+				<div className='w-8 h-8 rounded bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center text-white font-serif font-bold shadow-sm'>
+					{campaign?.initial || 'C'}
+				</div>
+				<div className='flex-1 min-w-0'>
+					<h2 className='text-sm font-bold text-foreground font-serif'>{campaign?.name || 'Loading...'}</h2>
+				</div>
+			</div>
+
+			{/* Global Search */}
+			<div className='mb-6'>
+				<GlobalSearch />
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\layout-main\components\SidebarNav.jsx ----
+import { clsx } from 'clsx';
+
+export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
+	return (
+		<div className='flex-1 overflow-y-auto px-4 space-y-6'>
+			{structure.map((group) => (
+				<div key={group.title}>
+					<h3 className='px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2'>{group.title}</h3>
+					<div className='space-y-0.5'>
+						{group.items.map((item) => {
+							const active = currentPath === item.path;
+							const Icon = item.Icon;
+							return (
+								<button
+									key={item.path}
+									onClick={() => onNavigate(item.path)}
+									className={clsx(
+										'flex items-center w-full px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+										active
+											? 'bg-background shadow-sm text-black ring-1 ring-gray-200'
+											: 'text-gray-500 hover:bg-gray-100 hover:text-foreground'
+									)}>
+									<Icon size={16} className={clsx('mr-2', active ? 'text-amber-600' : 'text-gray-400')} />
+									{item.label}
+								</button>
+							);
+						})}
+					</div>
+				</div>
+			))}
+		</div>
+	);
+};
+
+
+---- start of file features\relationship-graph\RelationshipGraph.jsx ----
+import { useGraphViewModel } from './useGraphViewModel';
+import { GraphLegend } from './components/GraphLegend';
+import { CytoscapeCanvas } from './components/CytoscapeCanvas';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+
+export default function RelationshipGraph() {
+	const { elements, isLoading } = useGraphViewModel();
+
+	if (isLoading) {
+		return (
+			<div className='h-full flex items-center justify-center'>
+				<LoadingSpinner text='Analyzing Connections...' />
+			</div>
+		);
+	}
+
+	return (
+		// CHANGED: 'bg-muted' -> 'bg-background' to inherit the D&D texture
+		<div className='h-full w-full relative bg-background overflow-hidden'>
+			{/* Overlay UI */}
+			<GraphLegend />
+
+			{/* The Graph Layer */}
+			<CytoscapeCanvas elements={elements} />
+		</div>
+	);
+}
+
+
+---- start of file features\relationship-graph\types.js ----
+/**
+ * @typedef {Object} GraphNodeData
+ * @property {string} id
+ * @property {string} label
+ * @property {string} color - Hex color
+ * @property {string} image - URL to icon/image
+ * @property {string} type - Entity type
+ */
+
+/**
+ * @typedef {Object} GraphEdgeData
+ * @property {string} id
+ * @property {string} source - Source Node ID
+ * @property {string} target - Target Node ID
+ * @property {string} label - Edge label (relationship type)
+ * @property {string} color - Hex color
+ */
+
+/**
+ * @typedef {Object} CytoscapeElement
+ * @property {string} group - 'nodes' | 'edges'
+ * @property {GraphNodeData | GraphEdgeData} data
+ */
+
+export {};
+
+
+---- start of file features\relationship-graph\useGraphViewModel.js ----
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { getGraphData } from '../../services/entities';
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import { getEntityConfig } from '../../config/entityConfig';
+import './types';
+
+const ICON_BASE_PATH = 'images/icons';
+
+// Helper: Resolve Icon URL
+const resolveIcon = (specificIcon, entityType) => {
+	if (specificIcon) {
+		if (specificIcon.includes('/') || specificIcon.startsWith('http')) return specificIcon;
+		const fileName = specificIcon.endsWith('.png') ? specificIcon : `${specificIcon}.png`;
+		return `${ICON_BASE_PATH}/${fileName}`;
+	}
+	// Fallback to generic type icon
+	return `${ICON_BASE_PATH}/${entityType || 'unknown'}.png`;
+};
+
+// Helper: Get raw image string from attributes
+const getRawAttributeImage = (attributes) => {
+	if (!attributes) return null;
+	const keys = ['Image', 'Portrait', 'Icon', 'image', 'portrait', 'icon'];
+	for (const key of keys) {
+		const val = attributes[key];
+		if (!val) continue;
+		if (Array.isArray(val) && val[0]?.value) return val[0].value;
+		if (typeof val === 'string') return val;
+	}
+	return null;
+};
+
+/**
+ * @returns {{ elements: import('./types').CytoscapeElement[], isLoading: boolean }}
+ */
+export function useGraphViewModel() {
+	const { campaignId } = useCampaign();
+
+	// 1. Fetch Data
+	const { data: entities, isLoading } = useQuery({
+		queryKey: ['graph', campaignId],
+		queryFn: () => getGraphData(campaignId),
+		enabled: !!campaignId,
+	});
+
+	// 2. Transform Data
+	const elements = useMemo(() => {
+		if (!entities || entities.length === 0) return [];
+
+		const nodes = [];
+		const edges = [];
+
+		// Sets for filtering and uniqueness
+		const entityIds = new Set(entities.map((e) => e.id));
+		const connectedNodeIds = new Set();
+		const uniqueEdgeTracker = new Set();
+		const relIcons = new Map();
+
+		// Pre-pass: Collect custom relationship icons
+		entities.forEach((source) => {
+			(source.relationships || []).forEach((rel) => {
+				if (rel.icon) relIcons.set(rel.entity_id, rel.icon);
+			});
+		});
+
+		// Pass 1: Generate Edges first to determine connectivity
+		entities.forEach((entity) => {
+			(entity.relationships || []).forEach((rel) => {
+				if (!entityIds.has(rel.entity_id)) return;
+
+				// Unique Edge Logic: Sort IDs to treat A->B and B->A as the same connection
+				const [id1, id2] = [entity.id, rel.entity_id].sort();
+				const edgeKey = `${id1}-${id2}`;
+
+				if (uniqueEdgeTracker.has(edgeKey)) return; // Skip if connection exists
+				uniqueEdgeTracker.add(edgeKey);
+
+				// Mark nodes as connected
+				connectedNodeIds.add(entity.id);
+				connectedNodeIds.add(rel.entity_id);
+
+				let edgeColor = '#aaa'; // gray-200
+				const t = rel.type?.toLowerCase() || '';
+				if (t.includes('enemy') || t.includes('rival')) edgeColor = '#f44336'; // red
+				else if (t.includes('ally') || t.includes('friend')) edgeColor = '#22c55e'; // green
+
+				edges.push({
+					group: 'edges',
+					data: {
+						id: `e-${edgeKey}`,
+						source: entity.id,
+						target: rel.entity_id,
+						// label: rel.type, // Removed from data payload as it's not needed for display anymore
+						color: edgeColor,
+					},
+				});
+			});
+		});
+
+		// Pass 2: Generate Nodes (Only if they are connected)
+		entities.forEach((entity) => {
+			// FILTER: If node is not in our connected set, skip it
+			if (!connectedNodeIds.has(entity.id)) return;
+
+			const config = getEntityConfig(entity.type);
+			const rawIcon = relIcons.get(entity.id) || getRawAttributeImage(entity.attributes);
+			const finalIconUrl = resolveIcon(rawIcon, entity.type);
+
+			nodes.push({
+				group: 'nodes',
+				data: {
+					id: entity.id,
+					label: entity.name,
+					color: config.color,
+					image: finalIconUrl,
+					type: entity.type,
+				},
+			});
+		});
+
+		return [...nodes, ...edges];
+	}, [entities]);
+
+	return { elements, isLoading };
+}
+
+
+---- start of file features\relationship-graph\components\CytoscapeCanvas.jsx ----
+import { useEffect, useRef } from 'react';
+import cytoscape from 'cytoscape';
+import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '../config/graphStyles';
+
+export const CytoscapeCanvas = ({ elements }) => {
+	const containerRef = useRef(null);
+	const cyRef = useRef(null);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		// 1. Initialize Cytoscape
+		cyRef.current = cytoscape({
+			container: containerRef.current,
+			elements: [],
+			style: CYTOSCAPE_STYLES,
+			layout: LAYOUT_CONFIG,
+			wheelSensitivity: 0.6,
+			minZoom: 0.2,
+			maxZoom: 3,
+			autoungrabify: true, // Prevent moving
+		});
+
+		const cy = cyRef.current;
+
+		// --- EVENT HANDLERS ---
+
+		// 1. Click Node: Highlight Connections
+		cy.on('tap', 'node', (evt) => {
+			const node = evt.target;
+
+			// Clear previous states
+			cy.elements().removeClass('highlighted dimmed');
+
+			// Get connections
+			const connectedEdges = node.connectedEdges();
+			const connectedNodes = connectedEdges.connectedNodes();
+
+			// Dim everything that isn't connected to this node
+			// logic: (All Elements) - (Node + Neighbors + Connecting Edges) -> Add Class Dimmed
+			cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
+
+			// Highlight specific elements
+			node.addClass('highlighted');
+			connectedNodes.addClass('highlighted');
+			connectedEdges.addClass('highlighted');
+		});
+
+		// 2. Click Background: Reset View
+		cy.on('tap', (evt) => {
+			if (evt.target === cy) {
+				cy.elements().removeClass('highlighted dimmed');
+			}
+		});
+
+		// Cleanup
+		return () => {
+			if (cyRef.current) {
+				cyRef.current.destroy();
+				cyRef.current = null;
+			}
+		};
+	}, []);
+
+	// 2. Handle Data Updates
+	useEffect(() => {
+		if (!cyRef.current || !elements) return;
+
+		const cy = cyRef.current;
+
+		cy.batch(() => {
+			cy.elements().remove();
+			cy.add(elements);
+		});
+
+		if (elements.length > 0) {
+			cy.layout(LAYOUT_CONFIG).run();
+			cy.fit(elements, 50);
+		}
+	}, [elements]);
+
+	return <div ref={containerRef} className='absolute inset-0 w-full h-full' />;
+};
+
+
+---- start of file features\relationship-graph\components\GraphLegend.jsx ----
+import { ENTITY_CONFIG } from '../../../config/entityConfig'; // Adjust path
+
+export const GraphLegend = () => {
+	// Filter out the 'default' config to keep legend clean
+	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity');
+
+	return (
+		<div className='absolute top-4 left-4 z-10 bg-background/90 p-3 rounded shadow border border-border backdrop-blur pointer-events-none select-none'>
+			<h2 className='text-xs font-bold uppercase text-gray-400 mb-2'>Legend</h2>
+			<div className='space-y-1.5'>
+				{legendItems.map((config) => (
+					<div key={config.label} className='flex items-center gap-2 text-xs font-medium text-gray-600'>
+						<div className='w-2.5 h-2.5 rounded-full shadow-sm' style={{ backgroundColor: config.color }} />
+						{config.label}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\relationship-graph\config\graphStyles.js ----
+export const CYTOSCAPE_STYLES = [
+	{
+		selector: 'node',
+		style: {
+			label: 'data(label)',
+			'border-color': 'data(color)',
+			'background-image': 'data(image)',
+			'background-fit': 'cover',
+			'border-width': 3,
+			width: 60,
+			height: 60,
+			'font-family': 'Inter, sans-serif',
+			'font-size': 12,
+			'text-valign': 'bottom',
+			'text-margin-y': 8,
+			'text-background-color': '#ffffff',
+			'text-background-opacity': 0.7,
+			'text-background-padding': 2,
+			'text-background-shape': 'roundrectangle',
+			color: '#1f2937', // gray-800
+			'transition-property': 'opacity',
+			'transition-duration': '0.3s',
+		},
+	},
+	{
+		selector: 'edge',
+		style: {
+			'line-color': 'data(color)',
+			'target-arrow-color': 'data(color)',
+			'target-arrow-shape': 'triangle',
+			width: 2,
+			'curve-style': 'bezier',
+			'arrow-scale': 1.2,
+			opacity: 0.6,
+			'transition-property': 'opacity, width',
+			'transition-duration': '0.3s',
+		},
+	},
+	// --- INTERACTION STATES ---
+	{
+		selector: '.dimmed',
+		style: {
+			opacity: 0.1, // Fades out unconnected elements
+			'text-opacity': 0.1,
+			'border-opacity': 0.1,
+		},
+	},
+	{
+		selector: '.highlighted',
+		style: {
+			opacity: 1,
+			'z-index': 9999,
+		},
+	},
+	{
+		selector: 'edge.highlighted',
+		style: {
+			width: 4, // Thicker line for highlighted connections
+			opacity: 1,
+		},
+	},
+	{
+		selector: 'node.highlighted',
+		style: {
+			'border-width': 5, // Thicker border for highlighted nodes
+			'overlay-opacity': 0,
+		},
+	},
+];
+
+export const LAYOUT_CONFIG = {
+	name: 'cose',
+	animate: false,
+	nodeDimensionsIncludeLabels: true,
+	padding: 50,
+	componentSpacing: 100,
+	nodeRepulsion: (node) => 20000,
+	idealEdgeLength: (edge) => 200,
+	edgeElasticity: (edge) => 100,
+	nestingFactor: 5,
+};
+
+
+---- start of file features\smart-text\SmartMarkdown.jsx ----
+import ReactMarkdown from 'react-markdown';
+import { useSmartText } from './useSmartText';
+import { SmartEntityLink } from './components/SmartEntityLink';
+
+export default function SmartMarkdown({ children, ...props }) {
+	// SAFETY CHECK: Ensure children is string
+	let safeText = children;
+	if (Array.isArray(children)) {
+		safeText = children.join('');
+	} else if (typeof children !== 'string' && children !== null && children !== undefined) {
+		safeText = String(children);
+	}
+
+	// 1. Process the text (inject links)
+	const processedText = useSmartText(safeText);
+
+	return (
+		<ReactMarkdown
+			{...props}
+			components={{
+				...props.components,
+				// Custom Renderer for Links
+				a: ({ href, children }) => {
+					// Check if this is one of our "Smart Links"
+					if (href && href.startsWith('#entity/')) {
+						const [, id, type] = href.split('/');
+						return (
+							<SmartEntityLink id={id} type={type}>
+								{children}
+							</SmartEntityLink>
+						);
+					}
+
+					// Default external link behavior
+					return (
+						<a href={href} className='text-blue-600 hover:underline' target='_blank' rel='noopener noreferrer'>
+							{children}
+						</a>
+					);
+				},
+			}}>
+			{processedText}
+		</ReactMarkdown>
+	);
+}
+
+
+---- start of file features\smart-text\types.js ----
+/**
+ * @typedef {Object} EntityIndexItem
+ * @property {string} id
+ * @property {string} name
+ * @property {string} type
+ */
+
+/**
+ * @typedef {Object} TextMatch
+ * @property {number} start
+ * @property {number} end
+ * @property {string} text
+ * @property {EntityIndexItem} entity
+ */
+
+export {};
+
+
+---- start of file features\smart-text\useEntityIndex.js ----
+import { useQuery } from '@tanstack/react-query';
+import { getEntityIndex } from '../../services/entities';
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import './types';
+
+// Duplicated helper (ideally move to a utils file, but keeping self-contained here)
+const getImageUrl = (attrs) => {
+	if (!attrs) return null;
+	const parsed = typeof attrs === 'string' ? JSON.parse(attrs) : attrs;
+
+	// Prioritize small icons for the index
+	const keys = ['icon', 'token', 'portrait', 'image'];
+
+	let rawUrl = null;
+	for (const key of keys) {
+		const val = parsed[key] || parsed[key.toLowerCase()];
+		if (!val) continue;
+		if (Array.isArray(val) && val[0]?.value) rawUrl = val[0].value;
+		else if (typeof val === 'string') rawUrl = val;
+		if (rawUrl) break;
+	}
+
+	if (!rawUrl) return null;
+	rawUrl = rawUrl.trim();
+	let cleanPath = rawUrl.replace(/^(\.\.\/)+/, '');
+	if (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1);
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+export function useEntityIndex() {
+	const { campaignId } = useCampaign();
+
+	const { data } = useQuery({
+		queryKey: ['entityIndex', campaignId],
+		queryFn: async () => {
+			const rawData = await getEntityIndex(campaignId);
+			// Pre-process the icon URL so components don't have to parse JSON 50 times
+			return rawData.map((entity) => ({
+				...entity,
+				iconUrl: getImageUrl(entity.attributes),
+			}));
+		},
+		staleTime: 1000 * 60 * 30,
+		enabled: !!campaignId,
+	});
+
+	return data || [];
+}
+
+
+---- start of file features\smart-text\useSmartText.js ----
+import { useMemo } from 'react';
+import { useEntityIndex } from './useEntityIndex';
+
+/**
+ * Parses text and injects markdown links for known entities.
+ * @param {string} text
+ * @returns {string} The processed markdown string
+ */
+export function useSmartText(text) {
+	const entityIndex = useEntityIndex();
+
+	return useMemo(() => {
+		// 1. Guard Clauses
+		if (!text || typeof text !== 'string') return text || '';
+		if (!entityIndex || entityIndex.length === 0) return text;
+		if (text.length < 3) return text;
+
+		try {
+			// 2. Build Regex
+			// Escape special regex characters in names (e.g., "Grog's Axe" -> "Grog\'s Axe")
+			const escapedNames = entityIndex.map((e) => e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+			const pattern = new RegExp(`\\b(${escapedNames.join('|')})\\b`, 'gi');
+
+			// 3. Find Matches
+			const matches = [];
+			let match;
+			while ((match = pattern.exec(text)) !== null) {
+				const entity = entityIndex.find((e) => e.name.toLowerCase() === match[0].toLowerCase());
+				if (entity) {
+					matches.push({
+						start: match.index,
+						end: match.index + match[0].length,
+						text: match[0],
+						entity,
+					});
+				}
+			}
+
+			// 4. Filter Overlaps (Simple strategy: greedy sort was done in fetch)
+			// Since we process linearly, we just need to reconstruct the string
+			if (matches.length === 0) return text;
+
+			let result = '';
+			let lastIndex = 0;
+
+			// Sort matches by position to ensure correct string reconstruction
+			matches.sort((a, b) => a.start - b.start);
+
+			for (const m of matches) {
+				// Prevent overlapping matches (e.g. nested words)
+				if (m.start < lastIndex) continue;
+
+				// Add text before match
+				result += text.slice(lastIndex, m.start);
+
+				// Add the "Smart Link" markdown syntax
+				// Format: [Name](#entity/UUID/type)
+				result += `[${m.text}](#entity/${m.entity.id}/${m.entity.type})`;
+
+				lastIndex = m.end;
+			}
+
+			// Add remaining text
+			result += text.slice(lastIndex);
+
+			return result;
+		} catch (err) {
+			console.error('SmartMarkdown processing error:', err);
+			return text; // Fallback to original
+		}
+	}, [text, entityIndex]);
+}
+
+
+---- start of file features\smart-text\components\SmartEntityLink.jsx ----
+import { useNavigate } from 'react-router-dom';
+import { useTooltip } from '../../smart-tooltip/TooltipContext';
+import { getEntityConfig } from '../../../config/entityConfig';
+import { useEntityIndex } from '../useEntityIndex';
+import { clsx } from 'clsx';
+
+export const SmartEntityLink = ({ id, type, children }) => {
+	const navigate = useNavigate();
+	const { openTooltip, closeTooltip } = useTooltip();
+
+	const config = getEntityConfig(type);
+	const DefaultIcon = config.icon;
+
+	const entityIndex = useEntityIndex();
+	const entity = entityIndex.find((e) => e.id === id);
+	const customIconUrl = entity?.iconUrl;
+
+	const handleMouseEnter = (e) => {
+		openTooltip(e, id, type);
+	};
+
+	const handleClick = (e) => {
+		const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024;
+		if (isMobile) {
+			e.preventDefault();
+			e.stopPropagation();
+			openTooltip(e, id, type, true);
+		} else {
+			e.preventDefault();
+			navigate(`/wiki/${type}/${id}`);
+			closeTooltip();
+		}
+	};
+
+	return (
+		<a
+			href={`/wiki/${type}/${id}`}
+			onClick={handleClick}
+			className={clsx(
+				// CHANGED:
+				// 1. 'align-middle' instead of 'align-baseline' helps the flex container sit better in prose
+				// 2. 'inline-flex' + 'items-center' keeps the icon and text centered relative to each other
+				'inline-flex items-center gap-1.5 font-semibold no-underline transition-colors border-b border-dashed border-transparent hover:border-current cursor-pointer align-middle',
+				config.tailwind.text,
+				config.tailwind.hover
+			)}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={closeTooltip}>
+			{customIconUrl ? (
+				<img
+					src={customIconUrl}
+					alt=''
+					// TWEAK: Added 'shadow-sm' and ensured strict sizing
+					className='!m-0 !w-4 !h-4 rounded-[3px] object-cover bg-black/10 shadow-sm self-center'
+				/>
+			) : (
+				DefaultIcon && <DefaultIcon className='w-3.5 h-3.5 self-center opacity-80' strokeWidth={2.5} />
+			)}
+			<span className='leading-snug'>{children}</span>
+		</a>
+	);
+};
+
+
+---- start of file features\smart-tooltip\TooltipContainer.jsx ----
+import { createPortal } from 'react-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabase';
+import { TooltipCard } from './components/TooltipCard';
+
+export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
+	// 1. PREPARE VARIABLES (Don't return yet!)
+	const targetId = target?.id;
+	const targetType = target?.type;
+	const isValidId = targetId ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId) : false;
+
+	// 2. CALL HOOK UNCONDITIONALLY
+	const { data, isLoading } = useQuery({
+		queryKey: ['tooltip', targetId], // Use variable, handles undefined safely
+		queryFn: async () => {
+			if (!targetId) return null; // Safety check inside function
+
+			if (targetType === 'session') {
+				const { data } = await supabase
+					.from('sessions')
+					.select('title, session_number, session_date, summary')
+					.eq('id', targetId)
+					.single();
+				return {
+					name: data.title,
+					type: 'session',
+					description: data.summary,
+					attributes: { Session: data.session_number, Date: data.session_date },
+				};
+			}
+			const { data, error } = await supabase
+				.from('entity_complete_view')
+				.select('name, type, description, attributes')
+				.eq('id', targetId)
+				.single();
+			if (error) throw error;
+			return data;
+		},
+		// Control execution with 'enabled' instead of conditional return
+		enabled: !!targetId && isValidId,
+		staleTime: 1000 * 60 * 5,
+		retry: false,
+	});
+
+	// 3. NOW it is safe to return null if no target exists
+	if (!target) return null;
+
+	return createPortal(
+		<TooltipCard
+			data={data}
+			type={target.type}
+			id={target.id}
+			position={target.pos}
+			isLoading={isLoading}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
+		/>,
+		document.body
+	);
+};
+
+
+---- start of file features\smart-tooltip\TooltipContext.jsx ----
+import { createContext, useContext } from 'react';
+import { useTooltipState } from './useTooltipState';
+import { TooltipContainer } from './TooltipContainer';
+
+const TooltipContext = createContext(null);
+
+export const TooltipProvider = ({ children }) => {
+	const { activeTooltip, openTooltip, closeTooltip, cancelClose } = useTooltipState();
+
+	return (
+		<TooltipContext.Provider value={{ openTooltip, closeTooltip, cancelClose }}>
+			{children}
+
+			{/* Pass interaction handlers to the Overlay Layer */}
+			<TooltipContainer target={activeTooltip} onMouseEnter={cancelClose} onMouseLeave={closeTooltip} />
+		</TooltipContext.Provider>
+	);
+};
+
+export const useTooltip = () => {
+	const context = useContext(TooltipContext);
+	if (!context) {
+		throw new Error('useTooltip must be used within a TooltipProvider');
+	}
+	return context;
+};
+
+
+---- start of file features\smart-tooltip\types.js ----
+/**
+ * @typedef {Object} TooltipPosition
+ * @property {number} x - Client X coordinate
+ * @property {number} y - Client Y coordinate
+ */
+
+/**
+ * @typedef {Object} TooltipTarget
+ * @property {string} id - Entity UUID
+ * @property {string} type - Entity Type
+ * @property {TooltipPosition} pos
+ */
+
+/**
+ * @typedef {Object} TooltipContextValue
+ * @property {function(React.MouseEvent, string, string): void} openTooltip
+ * @property {function(): void} closeTooltip
+ */
+
+export {};
+
+
+---- start of file features\smart-tooltip\useTooltipState.js ----
+import { useState, useRef, useCallback } from 'react';
+import './types';
+
+export function useTooltipState() {
+	const [activeTooltip, setActiveTooltip] = useState(null);
+	const timeoutRef = useRef(null);
+
+	const openTooltip = useCallback((e, id, type, isPinned = false) => {
+		// If we are opening a new one, clear any pending close
+		if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+		// If it's pinned (mobile tap), we don't rely on mouse coordinates as much,
+		// but we still need position.
+		let x = e.clientX;
+		const y = e.clientY;
+
+		// Edge detection (Keep on screen)
+		const OFFSET = 150;
+		const SCREEN_PADDING = 20;
+
+		if (x > window.innerWidth - OFFSET - SCREEN_PADDING) {
+			x = window.innerWidth - OFFSET - SCREEN_PADDING;
+		}
+		if (x < OFFSET + SCREEN_PADDING) {
+			x = OFFSET + SCREEN_PADDING;
+		}
+
+		setActiveTooltip({ id, type, pos: { x, y }, isPinned });
+	}, []);
+
+	const closeTooltip = useCallback(() => {
+		// Add a delay so the user can move their mouse from the link TO the tooltip
+		timeoutRef.current = setTimeout(() => {
+			setActiveTooltip(null);
+		}, 300); // 300ms grace period
+	}, []);
+
+	// NEW: Allows the Tooltip Card to say "I'm being hovered, don't close!"
+	const cancelClose = useCallback(() => {
+		if (timeoutRef.current) clearTimeout(timeoutRef.current);
+	}, []);
+
+	return {
+		activeTooltip,
+		openTooltip,
+		closeTooltip,
+		cancelClose,
+	};
+}
+
+
+---- start of file features\smart-tooltip\components\TooltipCard.jsx ----
+import { useNavigate } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { getEntityConfig } from '../../../config/entityConfig';
+import { ArrowRight } from 'lucide-react';
+
+const safeParseAttrs = (attrs) => {
+	if (!attrs) return {};
+	if (typeof attrs === 'object') return attrs;
+	try {
+		return JSON.parse(attrs);
+	} catch (e) {
+		return {};
+	}
+};
+
+const getImageUrl = (attrs) => {
+	if (!attrs) return null;
+	// CHANGED: Added 'background_image' and 'background' to the start of the list
+	const keys = ['background_image', 'background', 'image', 'portrait', 'icon', 'Image', 'Icon', 'Portrait'];
+
+	let rawUrl = null;
+	for (const key of keys) {
+		const val = attrs[key] || attrs[key.toLowerCase()];
+		if (!val) continue;
+		if (Array.isArray(val) && val[0]?.value) rawUrl = val[0].value;
+		else if (typeof val === 'string') rawUrl = val;
+		if (rawUrl) break;
+	}
+
+	if (!rawUrl) return null;
+	rawUrl = rawUrl.trim();
+
+	let cleanPath = rawUrl.replace(/(\.\.\/)+/g, '');
+	if (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1);
+
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+const getTextAttr = (attrs, keys) => {
+	if (!attrs) return null;
+	for (const key of keys) {
+		const val = attrs[key] || attrs[key.toLowerCase()];
+		if (!val) continue;
+		if (Array.isArray(val) && val[0]?.value) return val[0].value;
+		if (typeof val === 'string') return val;
+	}
+	return null;
+};
+
+export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
+	const navigate = useNavigate();
+	const config = getEntityConfig(type);
+	const Icon = config.icon;
+
+	const style = {
+		position: 'fixed',
+		top: `${position.y + 20}px`,
+		left: `${position.x}px`,
+		transform: 'translateX(-50%)',
+		zIndex: 9999,
+		width: '300px',
+		pointerEvents: 'auto',
+	};
+
+	const handleClick = (e) => {
+		e.stopPropagation();
+		navigate(`/wiki/${type}/${id}`);
+		onMouseLeave && onMouseLeave();
+	};
+
+	if (isLoading) {
+		return (
+			<div style={style} className='bg-background p-3 rounded-lg shadow-xl border border-border text-xs text-gray-400'>
+				Loading info...
+			</div>
+		);
+	}
+
+	if (!data) return null;
+
+	const attributes = safeParseAttrs(data.attributes);
+	const image = getImageUrl(attributes);
+	const status = getTextAttr(attributes, ['status', 'disposition']);
+	const race = getTextAttr(attributes, ['race', 'ancestry']);
+	const classJob = getTextAttr(attributes, ['class', 'occupation', 'role']);
+
+	const tags = [status, race, classJob].filter(Boolean).join(' • ');
+
+	return (
+		<div
+			style={style}
+			onClick={handleClick}
+			onMouseEnter={onMouseEnter}
+			onMouseLeave={onMouseLeave}
+			className={clsx(
+				'animate-in fade-in zoom-in-95 duration-150 origin-top',
+				'bg-background rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/10 cursor-pointer group',
+				'hover:ring-amber-500/50 transition-shadow'
+			)}>
+			{/* IMAGE BANNER */}
+			{image ? (
+				<div className='h-24 w-full relative bg-gray-900 overflow-hidden'>
+					<img
+						src={image}
+						alt={data.name}
+						onError={(e) => {
+							e.target.style.display = 'none';
+							e.target.parentElement.classList.add('bg-amber-900');
+						}}
+						className='w-full h-full object-cover object-top opacity-80 group-hover:scale-105 transition-transform duration-500'
+					/>
+					<div className='absolute inset-0 bg-gradient-to-t from-background to-transparent' />
+				</div>
+			) : (
+				<div
+					className={clsx(
+						'h-1.5 w-full',
+						config.tailwind.bg.replace(
+							'bg-',
+							'bg-gradient-to-r from-transparent via-current to-transparent opacity-50'
+						),
+						config.tailwind.text
+					)}
+				/>
+			)}
+
+			<div className={clsx('px-4', image ? '-mt-6 relative z-10' : 'pt-3')}>
+				<div className='flex items-start justify-between'>
+					<div>
+						<span
+							className={clsx(
+								'text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5 block',
+								config.tailwind.text
+							)}>
+							{data.type}
+						</span>
+						<h3 className='font-serif font-bold text-lg leading-none text-foreground group-hover:text-amber-700 transition-colors'>
+							{data.name}
+						</h3>
+					</div>
+					<div
+						className={clsx(
+							'p-1.5 rounded-lg shadow-sm border bg-background',
+							config.tailwind.border,
+							config.tailwind.text
+						)}>
+						<Icon size={16} />
+					</div>
+				</div>
+				{tags && <p className='text-[11px] font-medium text-gray-500 mt-1.5 pb-2 border-b border-border/50'>{tags}</p>}
+			</div>
+
+			<div className='p-4 pt-3'>
+				<p className='text-xs text-gray-600 overflow-auto h-full max-h-32 leading-relaxed'>
+					{data.description || 'No overview available.'}
+				</p>
+			</div>
+
+			<div className='bg-muted/50 p-2 border-t border-border flex justify-end'>
+				<span className='text-[10px] font-semibold text-gray-400 flex items-center gap-1 group-hover:text-amber-600 transition-colors'>
+					View Details <ArrowRight size={10} />
+				</span>
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\timeline\TimelineView.jsx ----
+import { useTimelineViewModel } from './useTimelineViewModel';
+import { TimelineSession } from './components/TimelineSession';
+
+export default function TimelineView() {
+	const { sessions, isLoading } = useTimelineViewModel();
+
+	if (isLoading) {
+		return <div className='p-8 text-gray-400 flex justify-center'>Loading timeline...</div>;
+	}
+
+	return (
+		<div className='h-full overflow-y-auto bg-background p-6 md:p-12'>
+			<div className='max-w-4xl mx-auto'>
+				<h1 className='text-3xl font-serif font-bold text-foreground mb-10'>Campaign History</h1>
+
+				{/* Continuous vertical line for the whole campaign */}
+				<div className='relative border-l-2 border-gray-100 ml-4 space-y-16 pb-20'>
+					{sessions.map((session) => (
+						<TimelineSession key={session.id} session={session} />
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+
+---- start of file features\timeline\types.js ----
+/**
+ * @typedef {Object} EventStyle
+ * @property {Object} Icon - Lucide React Component
+ * @property {string} container - Tailwind classes for the bubble (bg, border, text)
+ * @property {string} line - Tailwind classes for the connector line
+ */
+
+/**
+ * @typedef {Object} TimelineEventModel
+ * @property {string} id
+ * @property {string} title
+ * @property {string} typeLabel
+ * @property {string} description
+ * @property {Object|null} location - { name: string }
+ * @property {Object|null} npc - { name: string }
+ * @property {EventStyle} style
+ */
+
+/**
+ * @typedef {Object} TimelineSessionModel
+ * @property {string} id
+ * @property {number} number
+ * @property {string} dateLabel
+ * @property {string} title
+ * @property {TimelineEventModel[]} events
+ */
+
+export {};
+
+
+---- start of file features\timeline\useTimelineViewModel.js ----
+import { useQuery } from '@tanstack/react-query';
+import { getTimeline } from '../../services/timeline'; // Adjust path based on your root
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import { getEventStyle } from './utils/eventStyles';
+import './types';
+
+/**
+ * @returns {{ sessions: import('./types').TimelineSessionModel[], isLoading: boolean }}
+ */
+export function useTimelineViewModel() {
+	const { campaignId } = useCampaign();
+
+	const { data, isLoading } = useQuery({
+		queryKey: ['timeline', campaignId],
+		queryFn: () => getTimeline(campaignId),
+		enabled: !!campaignId,
+	});
+
+	const sessions = (data || []).map((session) => {
+		// Sort events safely
+		const sortedEvents = (session.events || []).sort((a, b) => a.event_order - b.event_order);
+
+		// Map events to View Model
+		const events = sortedEvents.map((event) => ({
+			id: event.id,
+			title: event.title,
+			typeLabel: event.event_type?.replace(/_/g, ' ') || 'Event',
+			description: event.description,
+			location: event.location ? { name: event.location.name } : null,
+			npc: event.npc ? { name: event.npc.name } : null,
+			style: getEventStyle(event.event_type),
+		}));
+
+		return {
+			id: session.id,
+			number: session.session_number,
+			dateLabel: session.session_date || 'Unknown Date',
+			title: session.title,
+			events,
+		};
+	});
+
+	return { sessions, isLoading };
+}
+
+
+---- start of file features\timeline\components\TimelineEvent.jsx ----
+import { clsx } from 'clsx';
+import { MapPin, User } from 'lucide-react';
+import SmartMarkdown from '../../smart-text/SmartMarkdown';
+
+export const TimelineEvent = ({ event }) => {
+	const { Icon, container } = event.style;
+
+	return (
+		<div className='relative flex gap-4 group'>
+			{/* Colored Icon Bubble */}
+			<div
+				className={clsx(
+					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110',
+					container
+				)}>
+				<Icon size={14} strokeWidth={2.5} />
+			</div>
+
+			{/* Content Card */}
+			<div className='flex-1 -mt-1 pb-2'>
+				<h4 className='text-sm font-bold text-gray-800 mb-1 flex items-center gap-2'>
+					{event.title}
+					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-400 border border-border px-1.5 rounded-sm bg-muted'>
+						{event.typeLabel}
+					</span>
+				</h4>
+
+				{event.description && (
+					<div className='text-sm text-gray-600 leading-relaxed text-pretty'>
+						<SmartMarkdown>{event.description}</SmartMarkdown>
+					</div>
+				)}
+
+				{/* Tags */}
+				<div className='flex flex-wrap gap-2 mt-2'>
+					{event.location && (
+						<span className='inline-flex items-center gap-1 text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 cursor-default'>
+							<MapPin size={10} /> {event.location.name}
+						</span>
+					)}
+					{event.npc && (
+						<span className='inline-flex items-center gap-1 text-[10px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 cursor-default'>
+							<User size={10} /> {event.npc.name}
+						</span>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\timeline\components\TimelineSession.jsx ----
+import { Calendar } from 'lucide-react';
+import { TimelineEvent } from './TimelineEvent';
+
+export const TimelineSession = ({ session }) => {
+	return (
+		<div className='relative pl-8 md:pl-12'>
+			{/* Session Marker (Circle on the main line) */}
+			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-gray-300 shadow-sm z-10'>
+				<div className='w-2 h-2 rounded-full bg-gray-400' />
+			</div>
+
+			{/* Session Header */}
+			<div className='mb-8'>
+				<div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2'>
+					<span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded self-start border border-border'>
+						Session {session.number}
+					</span>
+					<time className='text-xs text-gray-400 flex items-center gap-1 font-medium'>
+						<Calendar size={12} /> {session.dateLabel}
+					</time>
+				</div>
+				<h2 className='text-2xl font-serif font-bold text-foreground mb-3'>{session.title}</h2>
+			</div>
+
+			{/* Events List */}
+			<div className='space-y-6 relative'>
+				{/* Connector Line for events */}
+				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-gray-100 -z-10' />
+
+				{session.events.map((event) => (
+					<TimelineEvent key={event.id} event={event} />
+				))}
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\timeline\utils\eventStyles.js ----
+import { Calendar, MapPin, User, Sword, Scroll, Flag, MessageSquare, Skull, Crown, Tent } from 'lucide-react';
+
+/**
+ * Determines the visual style of an event based on its type string.
+ * @param {string} eventType
+ * @returns {import('../types').EventStyle}
+ */
+export const getEventStyle = (eventType) => {
+	const type = eventType?.toLowerCase() || '';
+
+	// 1. COMBAT (Red)
+	if (type.match(/combat|fight|kill/)) {
+		return {
+			Icon: Sword,
+			container: 'border-red-500 bg-red-50 text-red-600',
+			line: 'bg-red-200',
+		};
+	}
+
+	// 2. DANGER/ENCOUNTER (Orange)
+	if (type.includes('encounter')) {
+		return {
+			Icon: Skull,
+			container: 'border-orange-500 bg-orange-50 text-orange-600',
+			line: 'bg-orange-200',
+		};
+	}
+
+	// 3. SOCIAL (Amber)
+	if (type.match(/npc|social|meet/)) {
+		return {
+			Icon: User,
+			container: 'border-amber-500 bg-amber-50 text-amber-600',
+			line: 'bg-amber-200',
+		};
+	}
+
+	// 4. TRAVEL (Emerald)
+	if (type.match(/location|travel|visit|arrive/)) {
+		return {
+			Icon: MapPin,
+			container: 'border-emerald-500 bg-emerald-50 text-emerald-600',
+			line: 'bg-emerald-200',
+		};
+	}
+
+	// 5. REST (Emerald/Green)
+	if (type.match(/camp|rest/)) {
+		return {
+			Icon: Tent,
+			container: 'border-emerald-600 bg-emerald-100 text-emerald-700',
+			line: 'bg-emerald-300',
+		};
+	}
+
+	// 6. QUESTS (Blue)
+	if (type.match(/quest|mission/)) {
+		return {
+			Icon: Scroll,
+			container: 'border-blue-500 bg-blue-50 text-blue-600',
+			line: 'bg-blue-200',
+		};
+	}
+
+	// 7. FACTIONS (Purple)
+	if (type.includes('faction')) {
+		return {
+			Icon: Flag,
+			container: 'border-purple-500 bg-purple-50 text-purple-600',
+			line: 'bg-purple-200',
+		};
+	}
+
+	// Default
+	return {
+		Icon: MessageSquare,
+		container: 'border-gray-400 bg-muted text-gray-500',
+		line: 'bg-gray-200',
+	};
+};
+
+
+---- start of file features\wiki-layout\types.js ----
+/**
+ * @typedef {Object} WikiConfig
+ * @property {string} label - Pluralized label (e.g., "Characters")
+ * @property {Object} Icon - Lucide React Icon
+ * @property {string} textClass - Tailwind text color class
+ */
+
+/**
+ * @typedef {Object} WikiNavItem
+ * @property {string} id
+ * @property {string} name
+ * @property {string} path - The relative path for the link
+ */
+
+/**
+ * @typedef {Object} WikiNavigationModel
+ * @property {WikiConfig} config
+ * @property {boolean} isLoading
+ * @property {boolean} hasItems - True if any items exist (ignoring filter)
+ * @property {WikiNavItem[]} items - The filtered list to display
+ * @property {string} search - Current search term
+ * @property {function(string): void} setSearch - Search setter
+ */
+
+export {};
+
+
+---- start of file features\wiki-layout\useWikiNavigation.js ----
+import { useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getEntities } from '../../services/entities';
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import { getEntityConfig } from '../../config/entityConfig';
+import { GROUPING_CONFIG } from './config/groupingConfig';
+import './types';
+
+// Helper to extract clean string from messy JSON attributes
+const getAttributeValue = (attributes, keys) => {
+	if (!attributes) return null;
+
+	for (const key of keys) {
+		const val = attributes[key] || attributes[key.toLowerCase()];
+		if (!val) continue;
+
+		if (typeof val === 'string') return val;
+		if (Array.isArray(val) && val[0]?.value) return val[0].value;
+		if (typeof val === 'object' && val.value) return val.value;
+	}
+	return null;
+};
+
+export function useWikiNavigation() {
+	const { campaignId } = useCampaign();
+	const { type } = useParams();
+	const [search, setSearch] = useState('');
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// 1. Resolve Config
+	const entityConfig = getEntityConfig(normalizedType);
+	const config = {
+		label: `${entityConfig.label}s`,
+		Icon: entityConfig.icon,
+		textClass: entityConfig.tailwind.text,
+	};
+
+	// 2. Fetch Data
+	const { data: entities, isLoading } = useQuery({
+		queryKey: ['entities', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: !!campaignId && !!normalizedType,
+	});
+
+	// 3. Filter Data
+	const filteredEntities = useMemo(() => {
+		if (!entities) return [];
+		if (!search) return entities;
+
+		const lowerSearch = search.toLowerCase();
+		return entities.filter((e) => e.name.toLowerCase().includes(lowerSearch));
+	}, [entities, search]);
+
+	// 4. Map & Group Data
+	const groups = useMemo(() => {
+		if (!filteredEntities) return [];
+
+		// A. Map to View Model
+		const items = filteredEntities.map((entity) => {
+			const statusRaw = getAttributeValue(entity.attributes, ['status']);
+			const affinityRaw = getAttributeValue(entity.attributes, ['affinity']);
+
+			return {
+				id: entity.id,
+				name: entity.name,
+				path: entity.id,
+				type: normalizedType,
+				status: statusRaw ? statusRaw.toLowerCase() : 'unknown',
+				affinity: affinityRaw ? affinityRaw.toLowerCase() : 'unknown',
+				attributes: entity.attributes, // Pass attributes for grouping
+				relationships: entity.relationships, // Pass relationships for NPC location grouping
+			};
+		});
+
+		// B. Check for Grouping Strategy
+		const strategy = GROUPING_CONFIG[normalizedType];
+
+		if (!strategy) {
+			// Default: Single "All" group, sorted by name
+			return [
+				{
+					id: 'all',
+					title: null, // No header needed
+					items: items.sort((a, b) => a.name.localeCompare(b.name)),
+				},
+			];
+		}
+
+		// C. Apply Grouping
+		const grouped = {};
+		items.forEach((item) => {
+			const groupKey = strategy.groupBy(item);
+			if (!grouped[groupKey]) grouped[groupKey] = [];
+			grouped[groupKey].push(item);
+		});
+
+		// D. Sort Groups
+		let groupKeys = Object.keys(grouped);
+		if (Array.isArray(strategy.sortGroups)) {
+			// Custom order (e.g., Ally -> Neutral -> Enemy)
+			groupKeys.sort((a, b) => {
+				const idxA = strategy.sortGroups.indexOf(a);
+				const idxB = strategy.sortGroups.indexOf(b);
+				// If not found in custom list, push to end
+				const valA = idxA === -1 ? 999 : idxA;
+				const valB = idxB === -1 ? 999 : idxB;
+				return valA - valB || a.localeCompare(b);
+			});
+		} else if (strategy.sortGroups === 'alpha') {
+			groupKeys.sort();
+		}
+
+		// E. Sort Items inside Groups & Return structure
+		return groupKeys.map((key) => {
+			const groupItems = grouped[key];
+
+			if (typeof strategy.sortItems === 'function') {
+				groupItems.sort(strategy.sortItems);
+			} else {
+				// Default alpha sort
+				groupItems.sort((a, b) => a.name.localeCompare(b.name));
+			}
+
+			return {
+				id: key,
+				title: key,
+				items: groupItems,
+			};
+		});
+	}, [filteredEntities, normalizedType]);
+
+	return {
+		config,
+		isLoading,
+		hasItems: groups.length > 0 && groups.some((g) => g.items.length > 0),
+		groups,
+		search,
+		setSearch,
+	};
+}
+
+
+---- start of file features\wiki-layout\WikiLayout.jsx ----
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useWikiNavigation } from './useWikiNavigation';
+import { WikiSidebar } from './components/WikiSidebar';
+
+export default function WikiLayout() {
+	const navigation = useWikiNavigation();
+	const navigate = useNavigate();
+	const { type, entityId } = useParams();
+
+	// Auto-select first item if on index route and items exist
+	useEffect(() => {
+		// Only run if:
+		// 1. We're on the index route (no entityId)
+		// 2. Data has loaded
+		// 3. We have groups with items
+		if (!entityId && !navigation.isLoading && navigation.groups.length > 0) {
+			// Find the first item across all groups
+			const firstGroup = navigation.groups[0];
+			if (firstGroup && firstGroup.items.length > 0) {
+				const firstItem = firstGroup.items[0];
+				// Navigate to the first item
+				navigate(`/wiki/${type}/${firstItem.path}`, { replace: true });
+			}
+		}
+	}, [entityId, navigation.isLoading, navigation.groups, navigate, type]);
+
+	return (
+		<div className='relative flex flex-col lg:flex-row h-full bg-background overflow-hidden'>
+			<WikiSidebar navigation={navigation} className='lg:w-72 lg:order-2 lg:border-l lg:border-border lg:h-full z-30' />
+
+			<div className='flex-1 lg:order-1 overflow-y-auto bg-background relative z-0'>
+				<Outlet />
+			</div>
+		</div>
+	);
+}
+
+
+---- start of file features\wiki-layout\components\SidebarEmptyState.jsx ----
+import { BookOpen } from 'lucide-react';
+import EmptyState from '../../../components/ui/EmptyState'; // Adjust path
+
+export const SidebarEmptyState = ({ label }) => {
+	// Remove 's' from end for singular usage if needed, or just use as is
+	const singular = label.endsWith('s') ? label.slice(0, -1) : label;
+
+	return (
+		<EmptyState
+			icon={BookOpen}
+			title={`No ${label} Yet`}
+			description={`Create your first ${singular.toLowerCase()} to get started.`}
+			className='py-8'
+		/>
+	);
+};
+
+
+---- start of file features\wiki-layout\components\WikiSidebar.jsx ----
+import { useState, useRef, useEffect } from 'react';
+import { clsx } from 'clsx';
+import { WikiSidebarHeader } from './WikiSidebarHeader';
+import { WikiSidebarList } from './WikiSidebarList';
+
+export const WikiSidebar = ({ navigation, className }) => {
+	const [mobileOpen, setMobileOpen] = useState(false);
+	const containerRef = useRef(null);
+
+	const toggleOpen = () => setMobileOpen(!mobileOpen);
+	const close = () => setMobileOpen(false);
+
+	// Click outside to close (UX improvement)
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (containerRef.current && !containerRef.current.contains(event.target)) {
+				setMobileOpen(false);
+			}
+		};
+		if (mobileOpen) document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, [mobileOpen]);
+
+	return (
+		<div
+			ref={containerRef}
+			className={clsx(
+				// Base styling matching the app's sidebar aesthetic
+				'bg-muted border-b border-border flex flex-col transition-all',
+				// Mobile: sticky top
+				'sticky top-0 w-full',
+				// Desktop: static height, reset sticky
+				'lg:static lg:border-b-0',
+				className
+			)}>
+			{/* HEADER: Always visible */}
+			<WikiSidebarHeader
+				config={navigation.config}
+				search={navigation.search}
+				onSearchChange={navigation.setSearch}
+				onToggle={toggleOpen}
+				isOpen={mobileOpen}
+			/>
+
+			{/* LIST CONTAINER */}
+			<div
+				className={clsx(
+					// Mobile: Absolute dropdown floating over content
+					'absolute top-full left-0 right-0 bg-muted border-b border-border shadow-xl',
+					'max-h-[60vh] overflow-y-auto',
+					// Desktop: Static flex column taking remaining height
+					'lg:static lg:shadow-none lg:border-0 lg:max-h-full lg:flex-1 lg:flex lg:flex-col',
+					// Visibility Toggle
+					mobileOpen ? 'block' : 'hidden lg:flex'
+				)}>
+				<WikiSidebarList
+					groups={navigation.groups}
+					isLoading={navigation.isLoading}
+					hasItems={navigation.hasItems}
+					config={navigation.config}
+					onItemClick={close} // Ensures clicking a link closes the dropdown
+				/>
+			</div>
+
+			{/* Mobile Backdrop (Visual Dimming only, click handling done via Ref) */}
+			{mobileOpen && <div className='fixed inset-0 bg-black/20 z-[-1] lg:hidden' />}
+		</div>
+	);
+};
+
+
+---- start of file features\wiki-layout\components\WikiSidebarHeader.jsx ----
+import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, isOpen }) => {
+	const { Icon, label, textClass } = config;
+
+	return (
+		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
+			{/* Title Row */}
+			<div
+				className='flex items-center justify-between cursor-pointer lg:cursor-default select-none'
+				onClick={onToggle}>
+				<div className='flex items-center gap-2.5'>
+					{Icon && <Icon size={16} className={textClass} />}
+					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide'>{label}</h1>
+				</div>
+
+				{/* Mobile Toggle Indicator */}
+				<button className='lg:hidden text-gray-500 hover:text-foreground hover:bg-black/5 p-1 rounded transition-colors'>
+					{isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+				</button>
+			</div>
+
+			{/* Search Bar - Hidden on mobile unless expanded to save space, visible on desktop */}
+			<div className={clsx('mt-3 relative', !isOpen && 'hidden lg:block')}>
+				<Search className='absolute left-2.5 top-2 text-gray-400' size={13} />
+				<input
+					type='text'
+					placeholder='Filter list...'
+					value={search}
+					onChange={(e) => onSearchChange(e.target.value)}
+					// Prevent closing when clicking input
+					onClick={(e) => e.stopPropagation()}
+					className='w-full bg-background border border-border rounded-md pl-8 pr-2 py-1.5 text-xs focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 outline-none transition-shadow shadow-sm'
+				/>
+			</div>
+		</div>
+	);
+};
+
+
+---- start of file features\wiki-layout\components\WikiSidebarList.jsx ----
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { Shield, Sword, Circle, HelpCircle, ChevronRight, ChevronDown } from 'lucide-react';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { SidebarEmptyState } from './SidebarEmptyState';
+
+const getStatusIcon = (status) => {
+	const s = status?.toLowerCase() || 'unknown';
+	if (['enemy', 'hostile', 'villain', 'rival'].some((k) => s.includes(k))) {
+		return <Sword size={12} className='text-red-500 fill-red-500/10' />;
+	}
+	if (['ally', 'friendly', 'friend', 'helpful'].some((k) => s.includes(k))) {
+		return <Shield size={12} className='text-emerald-500 fill-emerald-500/10' />;
+	}
+	if (['neutral', 'indifferent'].some((k) => s.includes(k))) {
+		return <Circle size={10} className='text-gray-400' />;
+	}
+	return <HelpCircle size={12} className='text-gray-300' />;
+};
+
+const CollapsibleGroup = ({ group, onItemClick }) => {
+	const [isOpen, setIsOpen] = useState(true);
+	const showStatus = group.items.some((item) => ['npc', 'faction'].includes(item.type));
+
+	return (
+		<div className='select-none'>
+			{/* Group Header - Collapsible */}
+			<button
+				onClick={() => setIsOpen(!isOpen)}
+				className='w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:bg-black/5 transition-colors'>
+				{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+				<span className='truncate'>{group.title}</span>
+				<span className='ml-auto text-[10px] font-normal text-gray-400'>{group.items.length}</span>
+			</button>
+
+			{/* Items */}
+			{isOpen && (
+				<div className='space-y-0.5 pb-1'>
+					{group.items.map((item) => {
+						const displayStatus = item.affinity && item.affinity !== 'unknown' ? item.affinity : item.status;
+
+						return (
+							<NavLink
+								key={item.id}
+								to={item.path}
+								onClick={onItemClick}
+								className={({ isActive }) =>
+									clsx(
+										'group flex items-center w-full text-left pl-6 pr-2 py-1 text-[13px] transition-colors',
+										isActive
+											? 'bg-accent/10 text-accent font-medium'
+											: 'text-gray-700 hover:bg-black/5 hover:text-foreground'
+									)
+								}>
+								{showStatus && (
+									<span className='mr-2 flex-shrink-0 flex items-center justify-center opacity-70'>
+										{getStatusIcon(displayStatus)}
+									</span>
+								)}
+								<span className='truncate flex-1'>{item.name}</span>
+							</NavLink>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
+};
+
+export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemClick }) => {
+	if (isLoading) {
+		return (
+			<div className='p-8 flex justify-center'>
+				<LoadingSpinner size='sm' text='Loading...' />
+			</div>
+		);
+	}
+
+	if (!hasItems) {
+		return <SidebarEmptyState label={config.label} />;
+	}
+
+	// Flatten check for empty search results
+	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
+	if (totalItems === 0) {
+		return <div className='p-6 text-center text-xs text-gray-400 italic'>No matches found.</div>;
+	}
+
+	// Check if we have grouped data (multiple groups with titles)
+	const isGrouped = groups.length > 1 || (groups.length === 1 && groups[0].title !== null);
+
+	return (
+		<div className='lg:overflow-y-auto lg:h-full bg-muted py-1'>
+			{isGrouped ? (
+				// VS Code Style: Collapsible Groups
+				<div className='space-y-1'>
+					{groups.map((group) => (
+						<CollapsibleGroup key={group.id} group={group} onItemClick={onItemClick} />
+					))}
+				</div>
+			) : (
+				// Flat List (No Grouping)
+				<div className='px-2 space-y-0.5'>
+					{groups[0].items.map((item) => {
+						const showStatus = ['npc', 'faction'].includes(item.type);
+						const displayStatus = item.affinity && item.affinity !== 'unknown' ? item.affinity : item.status;
+
+						return (
+							<NavLink
+								key={item.id}
+								to={item.path}
+								onClick={onItemClick}
+								className={({ isActive }) =>
+									clsx(
+										'group flex items-center w-full text-left px-2 py-1 text-[13px] rounded transition-colors',
+										isActive
+											? 'bg-accent/10 text-accent font-medium'
+											: 'text-gray-700 hover:bg-black/5 hover:text-foreground'
+									)
+								}>
+								{showStatus && (
+									<span className='mr-2 flex-shrink-0 flex items-center justify-center opacity-70'>
+										{getStatusIcon(displayStatus)}
+									</span>
+								)}
+								<span className='truncate'>{item.name}</span>
+							</NavLink>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
+};
+
+
+---- start of file features\wiki-layout\config\groupingConfig.js ----
+// Helper: Normalize affinity text to a numeric rank for sorting
+const getAffinityRank = (item) => {
+	const text = (item.affinity || item.status || '').toLowerCase();
+	if (['ally', 'friend', 'friendly', 'helpful'].some((k) => text.includes(k))) return 1;
+	if (['neutral', 'indifferent'].some((k) => text.includes(k))) return 2;
+	if (['rival', 'enemy', 'hostile', 'villain'].some((k) => text.includes(k))) return 3;
+	return 9; // Unknown/Other
+};
+
+// Helper: Safely get an attribute (case-insensitive)
+const getAttr = (item, key) => {
+	const attrs = item.attributes || {};
+	// Try exact match, then lowercase match
+	const val = attrs[key] || attrs[key.toLowerCase()] || attrs[key.charAt(0).toUpperCase() + key.slice(1)];
+
+	if (!val) return null;
+	// Handle { value: "..." } objects or Arrays
+	if (typeof val === 'object' && val.value) return val.value;
+	if (Array.isArray(val)) return val[0]?.value || val[0];
+	return val;
+};
+
+export const GROUPING_CONFIG = {
+	location: {
+		// Group by 'Region' (or 'Parent Location')
+		groupBy: (item) => getAttr(item, 'region') || getAttr(item, 'parent') || 'Uncharted',
+		// Sort Groups Alphabetically
+		sortGroups: 'alpha',
+		// Sort Items Alphabetically
+		sortItems: 'alpha',
+	},
+	faction: {
+		// Group by Affinity (normalized to simple buckets)
+		groupBy: (item) => {
+			const rank = getAffinityRank(item);
+			if (rank === 1) return 'Allies';
+			if (rank === 2) return 'Neutral';
+			if (rank === 3) return 'Enemies';
+			return 'Unknown';
+		},
+		// Custom Order for Groups
+		sortGroups: ['Allies', 'Neutral', 'Enemies', 'Unknown'],
+		sortItems: 'alpha',
+	},
+	npc: {
+		// Group by Location (from relationships)
+		groupBy: (item) => {
+			// First try direct attribute
+			const directLocation = getAttr(item, 'location') || getAttr(item, 'residence');
+			if (directLocation) return directLocation;
+
+			// Then check relationships for location connections
+			if (item.relationships && Array.isArray(item.relationships)) {
+				const locationRel = item.relationships.find((rel) => rel.entity_type === 'location');
+				if (locationRel) return locationRel.entity_name;
+			}
+
+			return 'Wanderers';
+		},
+		sortGroups: 'alpha',
+		// Sort Items by Affinity Rank, then Name
+		sortItems: (a, b) => getAffinityRank(a) - getAffinityRank(b) || a.name.localeCompare(b.name),
+	},
+};
+
+
+---- start of file features\world-map\mapConfig.js ----
+export const MAP_CONFIG = {
+	defaultCenter: [51.505, -0.09],
+	defaultZoom: 13,
+	tileLayer: {
+		// Dark Matter theme matches your D&D aesthetic
+		url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+		attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+	},
+	style: {
+		height: '100%',
+		width: '100%',
+		background: '#111',
+	},
+};
+
+
+---- start of file features\world-map\MapView.jsx ----
+import { useMapData } from './useMapData';
+import { MapCanvas } from './components/MapCanvas';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import L from 'leaflet'; // ADD THIS
+import 'leaflet/dist/leaflet.css'; // ADD THIS
+
+// ADD THIS FIX BEFORE THE COMPONENT
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+	iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+	iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+	shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+export default function MapView() {
+	const { markers, isLoading } = useMapData();
+
+	if (isLoading) {
+		return (
+			<div className='h-full flex items-center justify-center bg-gray-900'>
+				<LoadingSpinner text='Loading Atlas...' className='text-gray-400' />
+			</div>
+		);
+	}
+
+	return (
+		// Height wrapper is critical for Leaflet
+		<div style={{ height: '100%', width: '100%' }}>
+			<MapCanvas markers={markers} />
+		</div>
+	);
+}
+
+
+---- start of file features\world-map\useMapData.js ----
+import { useQuery } from '@tanstack/react-query';
+import { getEntities } from '../../services/entities'; // Ensure this service exists
+import { useCampaign } from '../../features/campaign-session/CampaignContext';
+import { MAP_CONFIG } from './mapConfig';
+
+export function useMapData() {
+	const { campaignId } = useCampaign();
+
+	// Fetch only 'location' type entities
+	const { data: locations, isLoading } = useQuery({
+		queryKey: ['entities', campaignId, 'location'],
+		queryFn: () => getEntities(campaignId, 'location'),
+		enabled: !!campaignId,
+	});
+
+	// Transform entities into map markers
+	const markers = (locations || []).map((loc) => {
+		// TODO: In the future, parse actual coordinates from loc.attributes
+		// For now, we default to center so the map doesn't crash
+		return {
+			id: loc.id,
+			label: loc.name,
+			position: MAP_CONFIG.defaultCenter,
+			description: loc.type,
+		};
+	});
+
+	// Add a default marker if empty so the map isn't blank
+	if (markers.length === 0) {
+		markers.push({
+			id: 'start',
+			label: `Campaign Start`,
+			position: MAP_CONFIG.defaultCenter,
+			description: 'The adventure begins here.',
+		});
+	}
+
+	return {
+		markers,
+		isLoading,
+	};
+}
+
+
+---- start of file features\world-map\components\MapCanvas.jsx ----
+import { MapContainer, TileLayer } from 'react-leaflet';
+import { MAP_CONFIG } from '../mapConfig';
+import { MapMarker } from './MapMarker';
+import 'leaflet/dist/leaflet.css'; // Critical import for map tiles to appear
+
+export const MapCanvas = ({ markers }) => {
+	return (
+		<div className='h-full w-full relative z-0'>
+			<MapContainer center={MAP_CONFIG.defaultCenter} zoom={MAP_CONFIG.defaultZoom} style={MAP_CONFIG.style}>
+				<TileLayer url={MAP_CONFIG.tileLayer.url} attribution={MAP_CONFIG.tileLayer.attribution} />
+
+				{markers.map((marker) => (
+					<MapMarker key={marker.id} marker={marker} />
+				))}
+			</MapContainer>
+		</div>
+	);
+};
+
+
+---- start of file features\world-map\components\MapMarker.jsx ----
+import { Marker, Popup } from 'react-leaflet';
+import L from 'leaflet'; // ADD THIS
+
+export const MapMarker = ({ marker }) => {
+	return (
+		<Marker position={marker.position}>
+			<Popup>
+				<div className='text-sm'>
+					<strong className='block font-serif text-foreground'>{marker.label}</strong>
+					<span className='text-xs text-gray-500 capitalize'>{marker.description}</span>
+				</div>
+			</Popup>
+		</Marker>
+	);
+};
+
+
+---- start of file lib\supabase.js ----
+import { createClient } from '@supabase/supabase-js';
+
+// 1. Load variables from .env
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// 2. Safety Check (Helps debug if .env is missing)
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+	console.error(
+		'🚨 Supabase Critical Error: Missing environment variables.\n' +
+			'Please check that your .env file exists and contains VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+	);
+}
+
+// 3. Initialize and Export the Client
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+---- start of file services\campaigns.js ----
+import { supabase } from '../lib/supabase';
+
+export const getCampaigns = async () => {
+	// We fetch campaigns and use a subquery to get names of entities with type 'character'
+	const { data, error } = await supabase
+		.from('campaigns')
+		.select(
+			`
+            id,
+			campaign_id,
+            name, 
+            description,
+            characters:entity_complete_view(name)
+        `
+		)
+		.eq('entity_complete_view.type', 'character');
+
+	if (error) throw error;
+
+	// Clean up the nested character structure
+	return data.map((campaign) => ({
+		...campaign,
+		characterNames: campaign.characters?.map((c) => c.name) || [],
+	}));
+};
+
+
+---- start of file services\entities.js ----
+import { supabase } from '../lib/supabase';
+
+/**
+ * Fetches a list of entities for a specific type (e.g., all 'npcs').
+ * Used by: WikiSidebar, MapView
+ */
+/**
+ * Fetches sessions separately since they're not in entity_complete_view
+ */
+export const getSessions = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('sessions')
+		.select('id, title, session_number, session_date, summary')
+		.eq('campaign_id', campaignId)
+		.order('session_number', { ascending: true });
+
+	if (error) throw error;
+
+	// Transform to match entity structure
+	return data.map((session) => ({
+		id: session.id,
+		name: session.title,
+		type: 'session',
+		...session,
+	}));
+};
+
+// UPDATE getEntities to handle sessions
+export const getEntities = async (campaignId, type) => {
+	// Special case for sessions
+	if (type === 'session') {
+		return getSessions(campaignId);
+	}
+
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('*')
+		.eq('campaign_id', campaignId)
+		.eq('type', type);
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Fetches only the necessary data for the Network Graph.
+ * Used by: RelationshipGraph
+ */
+export const getGraphData = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, relationships, attributes')
+		.eq('campaign_id', campaignId);
+
+	if (error) {
+		console.error('Graph Fetch Error:', error);
+		return [];
+	}
+	return data || [];
+};
+
+/**
+ * Fetches a lightweight list of names/IDs for auto-linking text.
+ * Used by: SmartMarkdown (via useEntityIndex)
+ */
+export const getEntityIndex = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		// Fetch attributes to parse icons
+		.select('id, name, type, attributes')
+		.eq('campaign_id', campaignId);
+
+	if (error) return [];
+	return data.sort((a, b) => b.name.length - a.name.length);
+};
+
+export const getWikiEntry = async (id, type) => {
+	if (type === 'session') {
+		const { data, error } = await supabase
+			.from('sessions')
+			.select(`*, events:session_events (*)`)
+			.eq('id', id)
+			.single();
+
+		if (error) throw error;
+
+		return {
+			id: data.id,
+			name: data.title,
+			type: 'session',
+			description: data.narrative || data.summary,
+			attributes: {
+				Session: data.session_number,
+				Date: data.session_date,
+				Summary: data.summary,
+			},
+			relationships: [],
+			events: data.events || [],
+		};
+	}
+
+	const { data, error } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
+
+	if (error) throw error;
+
+	// Handle events that come as grouped object or array
+	let events = data.events;
+
+	// If events is an object grouped by type, flatten it
+	if (events && typeof events === 'object' && !Array.isArray(events)) {
+		events = Object.values(events).flat();
+	}
+
+	// If this entity has events, enrich them with session information
+	if (events && Array.isArray(events) && events.length > 0) {
+		// Get unique session IDs from events
+		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
+
+		if (sessionIds.length > 0) {
+			// Fetch session numbers for these session IDs
+			const { data: sessions, error: sessionsError } = await supabase
+				.from('sessions')
+				.select('id, session_number')
+				.in('id', sessionIds);
+
+			if (!sessionsError && sessions) {
+				// Create a lookup map: session_id -> session_number
+				const sessionMap = new Map(sessions.map((s) => [s.id, s.session_number]));
+
+				// Enrich events with session numbers (subtract 1 for display)
+				events = events.map((event) => ({
+					...event,
+					session_number:
+						event.session_id && sessionMap.has(event.session_id) ? sessionMap.get(event.session_id) - 1 : null,
+				}));
+
+				// Sort events by session number (ascending), then by order
+				events.sort((a, b) => {
+					// First sort by session_number
+					if (a.session_number !== b.session_number) {
+						// Handle nulls - put them at the end
+						if (a.session_number == null) return 1;
+						if (b.session_number == null) return -1;
+						return a.session_number - b.session_number;
+					}
+					// Then sort by order within same session
+					return (a.order || 0) - (b.order || 0);
+				});
+
+				// Update the data object with enriched and sorted events
+				data.events = events;
+			}
+		}
+	}
+
+	return data;
+};
+
+
+---- start of file services\search.js ----
+import { supabase } from '../lib/supabase';
+
+export const globalSearch = async (campaignId, query) => {
+	if (!query || query.trim().length === 0) return [];
+
+	const searchTerm = `%${query.trim()}%`;
+
+	// Search entities
+	const { data: entities, error: entitiesError } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, description, attributes')
+		.eq('campaign_id', campaignId)
+		.or(`name.ilike.${searchTerm},description.ilike.${searchTerm}`)
+		.limit(8);
+
+	if (entitiesError) {
+		console.error('Entity search error:', entitiesError);
+	}
+
+	// Search sessions
+	const { data: sessions, error: sessionsError } = await supabase
+		.from('sessions')
+		.select('id, title, summary, narrative, session_number, session_date')
+		.eq('campaign_id', campaignId)
+		.or(`title.ilike.${searchTerm},summary.ilike.${searchTerm},narrative.ilike.${searchTerm}`)
+		.limit(5);
+
+	if (sessionsError) {
+		console.error('Session search error:', sessionsError);
+	}
+
+	// Format sessions to match entity structure
+	const sessionResults = (sessions || []).map((s) => ({
+		id: s.id,
+		name: s.title,
+		type: 'session',
+		description: s.summary || s.narrative?.substring(0, 150) || '',
+		attributes: {
+			Session: s.session_number,
+			Date: s.session_date,
+		},
+	}));
+
+	// Combine results
+	return [...sessionResults, ...(entities || [])];
+};
+
+
+---- start of file services\timeline.js ----
+import { supabase } from '../lib/supabase';
+
+export const getTimeline = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('sessions')
+		.select(
+			`
+			id, title, session_number, session_date, summary, narrative,
+			events:session_events (
+				id, title, description, event_type, event_order,
+				npc_id,
+				location_id
+			)
+		`
+		)
+		.eq('campaign_id', campaignId)
+		.order('session_number', { ascending: true });
+
+	if (error) throw error;
+
+	// Then fetch related entities separately if needed
+	const eventsWithRelations = await Promise.all(
+		(data || []).map(async (session) => {
+			const events = await Promise.all(
+				(session.events || []).map(async (event) => {
+					let npc = null;
+					let location = null;
+
+					if (event.npc_id) {
+						const { data: npcData } = await supabase
+							.from('entity_complete_view')
+							.select('name')
+							.eq('id', event.npc_id)
+							.single();
+						npc = npcData;
+					}
+
+					if (event.location_id) {
+						const { data: locData } = await supabase
+							.from('entity_complete_view')
+							.select('name')
+							.eq('id', event.location_id)
+							.single();
+						location = locData;
+					}
+
+					return { ...event, npc, location };
+				})
+			);
+
+			return { ...session, events };
+		})
+	);
+
+	return eventsWithRelations;
+};
+
+

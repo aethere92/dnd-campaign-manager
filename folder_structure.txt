@@ -1,0 +1,161 @@
+Folder structure for: K:\Custom Tools\React Tools\dnd-campaign-manager\dnd-campaign-manager
+Including files: Yes
+
+dnd-campaign-manager/
+├── public/
+│   ├── images/
+│   │   ├── assets/
+│   │   │   └── character_thumbnails/
+│   │   │       ├── campaign_001/
+│   │   │       │   ├── aenwyn.jpeg
+│   │   │       │   ├── aethere.jpeg
+│   │   │       │   ├── alezander.jpeg
+│   │   │       │   ├── nora.png
+│   │   │       │   ├── samantha.jpeg
+│   │   │       │   └── smasherina.jpg
+│   │   │       └── campaign_002/
+│   │   │           ├── bonnie.jpeg
+│   │   │           ├── kaedin.jpeg
+│   │   │           ├── norr.jpeg
+│   │   │           ├── olek.jpeg
+│   │   │           └── soshi.jpeg
+│   │   ├── icons/
+│   │   │   ├── avian.png
+│   │   │   ├── bonnie.png
+│   │   │   ├── faction.png
+│   │   │   ├── feline.png
+│   │   │   ├── female.png
+│   │   │   ├── gnome.png
+│   │   │   ├── kaedin.png
+│   │   │   ├── kryn_dynasty.png
+│   │   │   ├── location.png
+│   │   │   ├── male.png
+│   │   │   ├── monster.png
+│   │   │   ├── norr.png
+│   │   │   ├── npc.png
+│   │   │   ├── olek.png
+│   │   │   ├── other.png
+│   │   │   ├── party.png
+│   │   │   ├── queen_air_darkness.png
+│   │   │   ├── quest.png
+│   │   │   ├── soshi.png
+│   │   │   ├── titania.png
+│   │   │   └── unknown.png
+│   │   └── background_texture.png
+│   └── vite.svg
+├── src/
+│   ├── components/
+│   │   ├── ui/
+│   │   │   ├── Button.jsx
+│   │   │   ├── Card.jsx
+│   │   │   ├── EmptyState.jsx
+│   │   │   └── LoadingSpinner.jsx
+│   │   └── ErrorBoundary.jsx
+│   ├── config/
+│   │   └── entityConfig.jsx
+│   ├── features/
+│   │   ├── app-core/
+│   │   │   ├── components/
+│   │   │   │   └── RouteLoading.jsx
+│   │   │   ├── App.jsx
+│   │   │   └── AppRoutes.jsx
+│   │   ├── campaign-session/
+│   │   │   ├── components/
+│   │   │   │   ├── CampaignCard.jsx
+│   │   │   │   └── CampaignSelect.jsx
+│   │   │   ├── CampaignContext.jsx
+│   │   │   ├── types.js
+│   │   │   ├── useCampaignPersistence.js
+│   │   │   └── useCampaignSelection.js
+│   │   ├── entity-view/
+│   │   │   ├── components/
+│   │   │   │   ├── EntityBody.jsx
+│   │   │   │   ├── EntityHeader.jsx
+│   │   │   │   ├── EntityHistory.jsx
+│   │   │   │   └── EntitySidebar.jsx
+│   │   │   ├── pages/
+│   │   │   │   └── WikiEntryPage.jsx
+│   │   │   ├── types.js
+│   │   │   ├── useEntityViewModel.js
+│   │   │   └── WikiEntityView.jsx
+│   │   ├── hooks/
+│   │   │   └── useTheme.js
+│   │   ├── layout-main/
+│   │   │   ├── components/
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── SidebarFooter.jsx
+│   │   │   │   ├── SidebarHeader.jsx
+│   │   │   │   └── SidebarNav.jsx
+│   │   │   ├── MainLayout.jsx
+│   │   │   ├── navConfig.js
+│   │   │   ├── types.js
+│   │   │   └── useMainLayout.js
+│   │   ├── relationship-graph/
+│   │   │   ├── components/
+│   │   │   │   ├── CytoscapeCanvas.jsx
+│   │   │   │   └── GraphLegend.jsx
+│   │   │   ├── config/
+│   │   │   │   └── graphStyles.js
+│   │   │   ├── RelationshipGraph.jsx
+│   │   │   ├── types.js
+│   │   │   └── useGraphViewModel.js
+│   │   ├── smart-text/
+│   │   │   ├── components/
+│   │   │   │   └── SmartEntityLink.jsx
+│   │   │   ├── SmartMarkdown.jsx
+│   │   │   ├── types.js
+│   │   │   ├── useEntityIndex.js
+│   │   │   └── useSmartText.js
+│   │   ├── smart-tooltip/
+│   │   │   ├── components/
+│   │   │   │   └── TooltipCard.jsx
+│   │   │   ├── TooltipContainer.jsx
+│   │   │   ├── TooltipContext.jsx
+│   │   │   ├── types.js
+│   │   │   └── useTooltipState.js
+│   │   ├── timeline/
+│   │   │   ├── components/
+│   │   │   │   ├── TimelineEvent.jsx
+│   │   │   │   └── TimelineSession.jsx
+│   │   │   ├── utils/
+│   │   │   │   └── eventStyles.js
+│   │   │   ├── TimelineView.jsx
+│   │   │   ├── types.js
+│   │   │   └── useTimelineViewModel.js
+│   │   ├── wiki-layout/
+│   │   │   ├── components/
+│   │   │   │   ├── SidebarEmptyState.jsx
+│   │   │   │   ├── WikiSidebar.jsx
+│   │   │   │   ├── WikiSidebarHeader.jsx
+│   │   │   │   └── WikiSidebarList.jsx
+│   │   │   ├── types.js
+│   │   │   ├── useWikiNavigation.js
+│   │   │   └── WikiLayout.jsx
+│   │   └── world-map/
+│   │       ├── components/
+│   │       │   ├── MapCanvas.jsx
+│   │       │   └── MapMarker.jsx
+│   │       ├── mapConfig.js
+│   │       ├── MapView.jsx
+│   │       └── useMapData.js
+│   ├── lib/
+│   │   └── supabase.js
+│   ├── services/
+│   │   ├── campaigns.js
+│   │   ├── entities.js
+│   │   └── timeline.js
+│   ├── styles/
+│   ├── context_bundle.txt
+│   ├── index.css
+│   ├── main.jsx
+│   └── merge_files.py
+├── .env
+├── .gitignore
+├── eslint.config.js
+├── folder_structure.txt
+├── index.html
+├── package-lock.json
+├── package.json
+├── print_folder_structure.py
+├── README.md
+└── vite.config.js
