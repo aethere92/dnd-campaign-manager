@@ -19,9 +19,13 @@ function AppContent() {
 	// 2. CRITICAL FIX: Clear cache when campaign changes
 	useEffect(() => {
 		if (campaignId) {
-			// Remove all queries except the 'campaigns' list itself
-			queryClient.removeQueries({
-				predicate: (query) => query.queryKey[0] !== 'campaigns',
+			// Invalidate stale data instead of removing (preserves in-flight requests)
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey[0];
+					// Only invalidate campaign-specific data
+					return ['entities', 'entry', 'timeline', 'graph', 'entityIndex', 'globalSearch'].includes(key);
+				},
 			});
 		}
 	}, [campaignId, queryClient]);

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { Map, BookOpen, MapPin, Image as ImageIcon } from 'lucide-react';
 import L from 'leaflet';
@@ -10,16 +10,25 @@ import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
 import { MapLayerControl } from './MapLayerControl';
 
-const MapController = ({ bounds, minZoom }) => {
+const MapController = ({ bounds, minZoom, config }) => {
 	const map = useMap();
+	const prevConfigRef = useRef();
 
 	useEffect(() => {
 		if (!bounds) return;
+
+		const isNewMap = prevConfigRef.current !== config.path;
+		prevConfigRef.current = config.path;
+
 		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
 		if (minZoom !== undefined) map.setMinZoom(minZoom);
-		// Force the map to fit the bounds of the new image
-		map.fitBounds(bounds, { animate: false });
-	}, [map, bounds, minZoom]);
+
+		// Smooth transition for navigation, instant for new map
+		map.fitBounds(bounds, {
+			animate: !isNewMap,
+			duration: isNewMap ? 0 : 0.5,
+		});
+	}, [map, bounds, minZoom, config.path]);
 
 	return null;
 };
@@ -133,7 +142,7 @@ export const MapCanvas = ({ data, onNavigate }) => {
 				attributionControl={false}
 				zoomControl={false}
 				style={{ height: '100%', width: '100%', background: 'transparent' }}>
-				<MapController bounds={bounds} minZoom={minZoom} />
+				<MapController bounds={bounds} minZoom={minZoom} config={config} />
 				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
 
 				<MapOverlays overlays={visibleOverlays} />

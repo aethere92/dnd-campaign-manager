@@ -1,51 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '../../../config/entityConfig';
+import { getEntityConfig } from '../../../config/entity';
+import { getAttributeValue } from '../../../utils/entity/attributeParser';
 import { ArrowRight } from 'lucide-react';
 import { useSmartPosition } from '../useSmartPosition';
-
-const safeParseAttrs = (attrs) => {
-	if (!attrs) return {};
-	if (typeof attrs === 'object') return attrs;
-	try {
-		return JSON.parse(attrs);
-	} catch (e) {
-		return {};
-	}
-};
-
-const getImageUrl = (attrs) => {
-	if (!attrs) return null;
-	const keys = ['background_image', 'background', 'image', 'portrait', 'icon', 'Image', 'Icon', 'Portrait'];
-
-	let rawUrl = null;
-	for (const key of keys) {
-		const val = attrs[key] || attrs[key.toLowerCase()];
-		if (!val) continue;
-		if (Array.isArray(val) && val[0]?.value) rawUrl = val[0].value;
-		else if (typeof val === 'string') rawUrl = val;
-		if (rawUrl) break;
-	}
-
-	if (!rawUrl) return null;
-	rawUrl = rawUrl.trim();
-
-	let cleanPath = rawUrl.replace(/(\.\.\/)+/g, '');
-	if (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1);
-
-	return `${import.meta.env.BASE_URL}${cleanPath}`;
-};
-
-const getTextAttr = (attrs, keys) => {
-	if (!attrs) return null;
-	for (const key of keys) {
-		const val = attrs[key] || attrs[key.toLowerCase()];
-		if (!val) continue;
-		if (Array.isArray(val) && val[0]?.value) return val[0].value;
-		if (typeof val === 'string') return val;
-	}
-	return null;
-};
+import { resolveImageUrl, parseAttributes } from '../../../utils/image/imageResolver';
 
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
 	const navigate = useNavigate();
@@ -74,11 +33,11 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 
 	if (!data) return null;
 
-	const attributes = safeParseAttrs(data.attributes);
-	const image = getImageUrl(attributes);
-	const status = getTextAttr(attributes, ['status', 'disposition']);
-	const race = getTextAttr(attributes, ['race', 'ancestry']);
-	const classJob = getTextAttr(attributes, ['class', 'occupation', 'role']);
+	const attributes = parseAttributes(data.attributes);
+	const image = resolveImageUrl(attributes, 'background');
+	const status = getAttributeValue(attributes, ['status', 'disposition']);
+	const race = getAttributeValue(attributes, ['race', 'ancestry']);
+	const classJob = getAttributeValue(attributes, ['class', 'occupation', 'role']);
 
 	const tags = [status, race, classJob].filter(Boolean).join(' • ');
 

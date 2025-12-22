@@ -1,10 +1,6 @@
 import { supabase } from '../lib/supabase';
 
 /**
- * Fetches a list of entities for a specific type (e.g., all 'npcs').
- * Used by: WikiSidebar, MapView
- */
-/**
  * Fetches sessions separately since they're not in entity_complete_view
  */
 export const getSessions = async (campaignId) => {
@@ -25,26 +21,68 @@ export const getSessions = async (campaignId) => {
 	}));
 };
 
-// UPDATE getEntities to handle sessions
-export const getEntities = async (campaignId, type) => {
-	// Special case for sessions
-	if (type === 'session') {
-		return getSessions(campaignId);
-	}
-
+/**
+ * Universal fetch using the View.
+ * Returns everything (attributes, relationships) so the UI has full context.
+ */
+const getCompleteEntities = async (campaignId, type) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
-		.select('*')
+		.select('id, name, type, description, attributes, relationships')
 		.eq('campaign_id', campaignId)
-		.eq('type', type);
+		.eq('type', type)
+		.order('name');
 
 	if (error) throw error;
 	return data;
 };
 
 /**
+ * Quests need the specific 'status' column from the quests table,
+ * merged with attributes from the view (for 'Quest Type').
+ */
+const getQuestsWithStatus = async (campaignId) => {
+	// 1. Fetch Entities from View (for attributes/description)
+	const { data: entities, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, description, attributes')
+		.eq('campaign_id', campaignId)
+		.eq('type', 'quest')
+		.order('name');
+
+	if (error) throw error;
+
+	// 2. Fetch Status from Quests table (source of truth for status)
+	const { data: questStatuses } = await supabase.from('quests').select('id, status');
+
+	const statusMap = new Map((questStatuses || []).map((q) => [q.id, q.status]));
+
+	// 3. Merge
+	return entities.map((e) => ({
+		...e,
+		status: statusMap.get(e.id) || 'active',
+	}));
+};
+
+/**
+ * Strategy map
+ */
+const entityStrategies = {
+	session: getSessions,
+	quest: getQuestsWithStatus,
+	// Use the View for everything else (NPC, Location, Faction, etc.)
+	// This ensures we get Attributes AND Relationships for correct grouping.
+	default: getCompleteEntities,
+};
+
+export const getEntities = async (campaignId, type) => {
+	const strategy = entityStrategies[type] || entityStrategies.default;
+	return strategy(campaignId, type);
+};
+
+// ... (Rest of file: getGraphData, getEntityIndex, getWikiEntry - keep as is) ...
+/**
  * Fetches only the necessary data for the Network Graph.
- * Used by: RelationshipGraph
  */
 export const getGraphData = async (campaignId) => {
 	const { data, error } = await supabase
@@ -61,7 +99,6 @@ export const getGraphData = async (campaignId) => {
 
 /**
  * Fetches a lightweight list of names/IDs for auto-linking text.
- * Used by: SmartMarkdown (via useEntityIndex)
  */
 export const getEntityIndex = async (campaignId) => {
 	const { data, error } = await supabase
@@ -84,6 +121,9 @@ export const getWikiEntry = async (id, type) => {
 
 		if (error) throw error;
 
+		// FIX: Explicitly sort events by event_order
+		const sortedEvents = (data.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
+
 		return {
 			id: data.id,
 			name: data.title,
@@ -95,7 +135,7 @@ export const getWikiEntry = async (id, type) => {
 				Summary: data.summary,
 			},
 			relationships: [],
-			events: data.events || [],
+			events: sortedEvents || [],
 		};
 	}
 
@@ -103,51 +143,57 @@ export const getWikiEntry = async (id, type) => {
 
 	if (error) throw error;
 
-	// Handle events that come as grouped object or array
-	let events = data.events;
+	// --- FIX: Fetch Quest Specifics (Status + Objectives) ---
+	if (type === 'quest') {
+		const [statusRes, objectivesRes] = await Promise.all([
+			supabase.from('quests').select('status').eq('id', id).single(),
+			supabase.from('quest_objectives').select('*').eq('quest_id', id).order('order_index', { ascending: true }),
+		]);
 
-	// If events is an object grouped by type, flatten it
+		// Merge Status
+		if (statusRes.data) {
+			data.status = statusRes.data.status;
+		}
+
+		// Merge Objectives
+		if (objectivesRes.data) {
+			data.objectives = objectivesRes.data;
+		}
+	}
+
+	// Handle events formatting
+	let events = data.events;
 	if (events && typeof events === 'object' && !Array.isArray(events)) {
 		events = Object.values(events).flat();
 	}
 
-	// If this entity has events, enrich them with session information
 	if (events && Array.isArray(events) && events.length > 0) {
-		// Get unique session IDs from events
 		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
 
 		if (sessionIds.length > 0) {
-			// Fetch session numbers for these session IDs
 			const { data: sessions, error: sessionsError } = await supabase
 				.from('sessions')
 				.select('id, session_number')
 				.in('id', sessionIds);
 
 			if (!sessionsError && sessions) {
-				// Create a lookup map: session_id -> session_number
 				const sessionMap = new Map(sessions.map((s) => [s.id, s.session_number]));
 
-				// Enrich events with session numbers (subtract 1 for display)
 				events = events.map((event) => ({
 					...event,
 					session_number:
 						event.session_id && sessionMap.has(event.session_id) ? sessionMap.get(event.session_id) - 1 : null,
 				}));
 
-				// Sort events by session number (ascending), then by order
 				events.sort((a, b) => {
-					// First sort by session_number
 					if (a.session_number !== b.session_number) {
-						// Handle nulls - put them at the end
 						if (a.session_number == null) return 1;
 						if (b.session_number == null) return -1;
 						return a.session_number - b.session_number;
 					}
-					// Then sort by order within same session
 					return (a.order || 0) - (b.order || 0);
 				});
 
-				// Update the data object with enriched and sorted events
 				data.events = events;
 			}
 		}

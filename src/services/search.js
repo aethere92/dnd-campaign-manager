@@ -7,8 +7,8 @@ export const globalSearch = async (campaignId, query) => {
 
 	// Search entities
 	const { data: entities, error: entitiesError } = await supabase
-		.from('entity_complete_view')
-		.select('id, name, type, description, attributes')
+		.from('entities')
+		.select('id, name, type, description')
 		.eq('campaign_id', campaignId)
 		.or(`name.ilike.${searchTerm},description.ilike.${searchTerm}`)
 		.limit(8);

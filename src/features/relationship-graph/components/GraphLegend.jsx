@@ -1,4 +1,4 @@
-import { ENTITY_CONFIG } from '../../../config/entityConfig'; // Adjust path
+import { ENTITY_CONFIG } from '../../../config/entity/entityConfig'; // Adjust path
 
 export const GraphLegend = () => {
 	// Filter out the 'default' config to keep legend clean

@@ -13,8 +13,5 @@ export default function MapView() {
 		);
 	}
 
-	return (
-		/* Force re-mount when map changes using key */
-		<MapCanvas key={currentMapKey} data={data} onNavigate={navigateToMap} />
-	);
+	return <MapCanvas data={data} onNavigate={navigateToMap} currentMapKey={currentMapKey} />;
 }

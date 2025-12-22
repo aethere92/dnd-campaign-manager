@@ -2,43 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { getGraphData } from '../../services/entities';
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
-import { getEntityConfig } from '../../config/entityConfig';
+import { getEntityConfig } from '../../config/entity';
+import { resolveImageUrl } from '../../utils/image/imageResolver';
+import { getAffinityRank } from '../../utils/status/statusHelpers';
 import './types';
 
-const ICON_BASE_PATH = 'images/icons';
+const FALLBACK_ICON_PATH = 'images/icons';
 
-// Helper: Resolve Icon URL
-const resolveIcon = (specificIcon, entityType) => {
-	if (specificIcon) {
-		if (specificIcon.includes('/') || specificIcon.startsWith('http')) return specificIcon;
-		const fileName = specificIcon.endsWith('.png') ? specificIcon : `${specificIcon}.png`;
-		return `${ICON_BASE_PATH}/${fileName}`;
-	}
-	// Fallback to generic type icon
-	return `${ICON_BASE_PATH}/${entityType || 'unknown'}.png`;
-};
-
-// Helper: Get raw image string from attributes
-const getRawAttributeImage = (attributes) => {
-	if (!attributes) return null;
-	const keys = ['Image', 'Portrait', 'Icon', 'image', 'portrait', 'icon'];
-	for (const key of keys) {
-		const val = attributes[key];
-		if (!val) continue;
-		if (Array.isArray(val) && val[0]?.value) return val[0].value;
-		if (typeof val === 'string') return val;
-	}
-	return null;
-};
-
-/**
- * @returns {{ elements: import('./types').CytoscapeElement[], isLoading: boolean }}
- */
 export function useGraphViewModel() {
 	const { campaignId } = useCampaign();
 
 	// 1. Fetch Data
-	const { data: entities, isLoading } = useQuery({
+	const { data: rawEntities, isLoading } = useQuery({
 		queryKey: ['graph', campaignId],
 		queryFn: () => getGraphData(campaignId),
 		enabled: !!campaignId,
@@ -46,7 +21,13 @@ export function useGraphViewModel() {
 
 	// 2. Transform Data
 	const elements = useMemo(() => {
-		if (!entities || entities.length === 0) return [];
+		if (!rawEntities || rawEntities.length === 0) return [];
+
+		// --- FILTERING STEP ---
+		const entities = rawEntities.filter((e) => {
+			const type = e.type?.toLowerCase();
+			return type !== 'session_event' && type !== 'event';
+		});
 
 		const nodes = [];
 		const edges = [];
@@ -55,35 +36,31 @@ export function useGraphViewModel() {
 		const entityIds = new Set(entities.map((e) => e.id));
 		const connectedNodeIds = new Set();
 		const uniqueEdgeTracker = new Set();
-		const relIcons = new Map();
-
-		// Pre-pass: Collect custom relationship icons
-		entities.forEach((source) => {
-			(source.relationships || []).forEach((rel) => {
-				if (rel.icon) relIcons.set(rel.entity_id, rel.icon);
-			});
-		});
 
 		// Pass 1: Generate Edges first to determine connectivity
 		entities.forEach((entity) => {
 			(entity.relationships || []).forEach((rel) => {
+				// Filter: Skip if the target entity was filtered out
 				if (!entityIds.has(rel.entity_id)) return;
 
 				// Unique Edge Logic: Sort IDs to treat A->B and B->A as the same connection
 				const [id1, id2] = [entity.id, rel.entity_id].sort();
 				const edgeKey = `${id1}-${id2}`;
 
-				if (uniqueEdgeTracker.has(edgeKey)) return; // Skip if connection exists
+				if (uniqueEdgeTracker.has(edgeKey)) return;
 				uniqueEdgeTracker.add(edgeKey);
 
 				// Mark nodes as connected
 				connectedNodeIds.add(entity.id);
 				connectedNodeIds.add(rel.entity_id);
 
-				let edgeColor = '#aaa'; // gray-200
-				const t = rel.type?.toLowerCase() || '';
-				if (t.includes('enemy') || t.includes('rival')) edgeColor = '#f44336'; // red
-				else if (t.includes('ally') || t.includes('friend')) edgeColor = '#22c55e'; // green
+				// Determine Color based on Relationship Rank (Ally vs Enemy)
+				// Using centralized helper instead of hardcoded strings
+				const rank = getAffinityRank(rel.type);
+				let edgeColor = '#e5e7eb'; // default gray-200
+
+				if (rank === 1) edgeColor = '#22c55e'; // Ally (Green)
+				if (rank === 3) edgeColor = '#ef4444'; // Enemy (Red)
 
 				edges.push({
 					group: 'edges',
@@ -91,7 +68,6 @@ export function useGraphViewModel() {
 						id: `e-${edgeKey}`,
 						source: entity.id,
 						target: rel.entity_id,
-						// label: rel.type, // Removed from data payload as it's not needed for display anymore
 						color: edgeColor,
 					},
 				});
@@ -104,8 +80,9 @@ export function useGraphViewModel() {
 			if (!connectedNodeIds.has(entity.id)) return;
 
 			const config = getEntityConfig(entity.type);
-			const rawIcon = relIcons.get(entity.id) || getRawAttributeImage(entity.attributes);
-			const finalIconUrl = resolveIcon(rawIcon, entity.type);
+
+			// USE CENTRALIZED UTILITY for images
+			const finalIconUrl = resolveImageUrl(entity.attributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
 
 			nodes.push({
 				group: 'nodes',
@@ -120,7 +97,7 @@ export function useGraphViewModel() {
 		});
 
 		return [...nodes, ...edges];
-	}, [entities]);
+	}, [rawEntities]);
 
 	return { elements, isLoading };
 }

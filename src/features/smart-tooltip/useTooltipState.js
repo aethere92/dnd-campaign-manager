@@ -1,9 +1,17 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import './types';
 
 export function useTooltipState() {
 	const [activeTooltip, setActiveTooltip] = useState(null);
 	const timeoutRef = useRef(null);
+
+	useEffect(() => {
+		return () => {
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+			}
+		};
+	}, []);
 
 	const openTooltip = useCallback((e, id, type, isPinned = false) => {
 		// If we are opening a new one, clear any pending close

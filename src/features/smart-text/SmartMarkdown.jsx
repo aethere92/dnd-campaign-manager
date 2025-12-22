@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import { useSmartText } from './useSmartText';
 import { SmartEntityLink } from './components/SmartEntityLink';
-import { generateId } from '../table-of-contents/utils'; // Import helper
+import { generateId, extractText } from '../../utils/text/textProcessing';
 
 export default function SmartMarkdown({ children, ...props }) {
 	// ... existing safety check code ...
@@ -14,16 +14,8 @@ export default function SmartMarkdown({ children, ...props }) {
 
 	const processedText = useSmartText(safeText);
 
-	// Helper to extract text from children for ID generation
-	const getText = (children) => {
-		if (typeof children === 'string') return children;
-		if (Array.isArray(children)) return children.map(getText).join('');
-		if (children?.props?.children) return getText(children.props.children);
-		return '';
-	};
-
 	const HeadingRenderer = ({ level, children }) => {
-		const text = getText(children);
+		const text = extractText(children);
 		const id = generateId(text);
 		const Tag = `h${level}`;
 		return <Tag id={id}>{children}</Tag>;

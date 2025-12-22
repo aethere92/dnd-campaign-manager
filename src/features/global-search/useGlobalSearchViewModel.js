@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '../campaign-session/CampaignContext';
 import { globalSearch } from '../../services/search';
-import { getEntityConfig } from '../../config/entityConfig';
+import { getEntityConfig } from '../../config/entity';
 import './types';
 
 const STORAGE_KEY = 'recent-searches';

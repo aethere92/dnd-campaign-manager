@@ -1,7 +1,6 @@
 import { useTimelineViewModel } from './useTimelineViewModel';
 import { TimelineSession } from './components/TimelineSession';
 import { TableOfContents } from '../table-of-contents/TableOfContents';
-import { generateId } from '../table-of-contents/utils';
 
 export default function TimelineView() {
 	const { sessions, isLoading } = useTimelineViewModel();
@@ -26,8 +25,7 @@ export default function TimelineView() {
 						{/* Column 1: Timeline Content */}
 						<div className='relative border-l-2 border-slate-100 ml-4 space-y-16 pb-20'>
 							{sessions.map((session) => (
-								/* Added scroll-mt to account for sticky headers if any
-								 */
+								/* Added scroll-mt to account for sticky headers if any */
 								<div key={session.id} id={`session-marker-${session.number}`} className='scroll-mt-24'>
 									<TimelineSession session={session} />
 								</div>
@@ -35,7 +33,8 @@ export default function TimelineView() {
 						</div>
 
 						{/* Column 2: ToC */}
-						<TableOfContents items={tocItems} />
+						{/* Sync visibility with the grid breakpoint (xl) */}
+						<TableOfContents items={tocItems} visibilityClass='hidden xl:block' mobileToggleClass='xl:hidden' />
 					</div>
 				</div>
 			</div>

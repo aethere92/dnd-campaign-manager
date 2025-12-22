@@ -1,56 +1,41 @@
 import { supabase } from '../lib/supabase';
 
 export const getTimeline = async (campaignId) => {
+	// We use Supabase relational joins to fetch everything in one network request.
+	// Syntax: alias:foreign_table_name ( columns )
 	const { data, error } = await supabase
 		.from('sessions')
 		.select(
 			`
-			id, title, session_number, session_date, summary, narrative,
-			events:session_events (
-				id, title, description, event_type, event_order,
-				npc_id,
-				location_id
-			)
-		`
+            id, 
+            title, 
+            session_number, 
+            session_date, 
+            summary, 
+            narrative,
+            events:session_events (
+                id, 
+                title, 
+                description, 
+                event_type, 
+                event_order,
+                npc:npcs ( name ),
+                location:locations ( name )
+            )
+        `
 		)
 		.eq('campaign_id', campaignId)
 		.order('session_number', { ascending: true });
 
 	if (error) throw error;
 
-	// Then fetch related entities separately if needed
-	const eventsWithRelations = await Promise.all(
-		(data || []).map(async (session) => {
-			const events = await Promise.all(
-				(session.events || []).map(async (event) => {
-					let npc = null;
-					let location = null;
+	// Supabase nested ordering can sometimes be finicky depending on the adapter version,
+	// so we perform a lightweight sort on the events array in JavaScript to guarantee order.
+	data.forEach((session) => {
+		if (session.events && session.events.length > 0) {
+			session.events.sort((a, b) => a.event_order - b.event_order);
+		}
+	});
 
-					if (event.npc_id) {
-						const { data: npcData } = await supabase
-							.from('entity_complete_view')
-							.select('name')
-							.eq('id', event.npc_id)
-							.single();
-						npc = npcData;
-					}
-
-					if (event.location_id) {
-						const { data: locData } = await supabase
-							.from('entity_complete_view')
-							.select('name')
-							.eq('id', event.location_id)
-							.single();
-						location = locData;
-					}
-
-					return { ...event, npc, location };
-				})
-			);
-
-			return { ...session, events };
-		})
-	);
-
-	return eventsWithRelations;
+	return data;
 };

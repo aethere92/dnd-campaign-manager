@@ -1,79 +1,70 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { clsx } from 'clsx';
-import { List, X } from 'lucide-react';
-import { useTocObserver } from './useTocObserver';
+import { List, AlignLeft } from 'lucide-react';
+import { useTocObserver } from './hooks/useTocObserver';
+import { useTocScroll } from './hooks/useTocScroll';
+import { TocItem } from './components/TocItem';
+import { TocMobileDrawer } from './components/TocMobileDrawer';
 
-export const TableOfContents = ({ items, className }) => {
+export const TableOfContents = ({
+	items,
+	className,
+	visibilityClass = 'hidden 2xl:block',
+	mobileToggleClass = '2xl:hidden',
+}) => {
 	const [isOpen, setIsOpen] = useState(false);
+
+	// Hooks
 	const activeId = useTocObserver(items.map((i) => i.id));
+	const { scrollToId } = useTocScroll(() => setIsOpen(false));
 
 	if (!items || items.length === 0) return null;
 
-	const handleScroll = (id) => {
-		const element = document.getElementById(id);
-		if (element) {
-			element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-			setIsOpen(false);
-		}
-	};
-
-	const Content = ({ isMobile = false }) => (
-		<nav className={clsx('space-y-1', !isMobile && 'max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar')}>
+	const renderList = () => (
+		<div className='flex flex-col space-y-0.5'>
 			{items.map((item) => (
-				<button
-					key={item.id}
-					onClick={() => handleScroll(item.id)}
-					className={clsx(
-						'block w-full text-left text-[11px] py-1.5 px-3 border-l-2 transition-all duration-200',
-						activeId === item.id
-							? 'border-accent text-accent font-bold bg-accent/5 translate-x-1'
-							: 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-200'
-					)}>
-					{item.text}
-				</button>
+				<TocItem key={item.id} item={item} isActive={activeId === item.id} onClick={scrollToId} />
 			))}
-		</nav>
+		</div>
 	);
-
-	// Mobile Drawer (Portal)
-	const MobileDrawer = isOpen
-		? createPortal(
-				<div className='fixed inset-0 z-[9999] flex justify-end isolate'>
-					<div
-						className='absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300'
-						onClick={() => setIsOpen(false)}
-					/>
-					<div className='relative w-72 bg-background h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-right duration-300 border-l border-border'>
-						<div className='flex justify-between items-center mb-8 border-b border-border pb-4'>
-							<span className='text-xs font-bold uppercase tracking-widest text-slate-400'>Table of Contents</span>
-							<button onClick={() => setIsOpen(false)} className='p-2 hover:bg-muted rounded-full transition-colors'>
-								<X size={20} />
-							</button>
-						</div>
-						<Content isMobile />
-					</div>
-				</div>,
-				document.body
-		  )
-		: null;
 
 	return (
 		<>
-			{/* DESKTOP SIDEBAR */}
-			<div className={clsx('hidden xl:block sticky top-24 self-start max-h-[calc(100vh-6rem)]', className)}>
-				<Content />
+			{/* --- DESKTOP VIEW --- */}
+			{/* 
+				Sticky Positioning Logic:
+				- top-40 (160px): Increased from top-32 to ensure no overlap with sticky TabContainers or Headers.
+				- self-start: Critical for CSS Grid contexts (like Timeline) to prevent the item from stretching 
+				  to full height, which breaks sticky behavior.
+			*/}
+			<div className={clsx(visibilityClass, 'sticky top-70 w-64 shrink-0 self-start', className)}>
+				<div className='max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pb-10 pr-2'>
+					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-gray-400'>
+						<AlignLeft size={12} />
+						<span>On this Page</span>
+					</div>
+					<nav>{renderList()}</nav>
+				</div>
 			</div>
 
-			{/* MOBILE / TABLET BUTTON */}
-			<div className='xl:hidden'>
+			{/* --- MOBILE/TABLET TOGGLE --- */}
+			<div className={clsx('fixed bottom-6 right-6 z-40', mobileToggleClass)}>
 				<button
 					onClick={() => setIsOpen(true)}
-					className='fixed bottom-6 right-6 z-50 w-10 h-10 flex items-center justify-center bg-accent text-white rounded-full shadow-lg hover:scale-110 transition-transform active:scale-95 border-2 border-white'>
-					<List size={18} />
+					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
+					aria-label='Open Table of Contents'>
+					<List size={20} />
 				</button>
-				{MobileDrawer}
 			</div>
+
+			{/* --- MOBILE DRAWER --- */}
+			<TocMobileDrawer
+				isOpen={isOpen}
+				items={items}
+				activeId={activeId}
+				onClose={() => setIsOpen(false)}
+				onScrollTo={scrollToId}
+			/>
 		</>
 	);
 };
