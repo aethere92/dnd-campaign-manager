@@ -15,8 +15,15 @@ export default function RelationshipGraph() {
 	}
 
 	return (
-		// CHANGED: 'bg-muted' -> 'bg-background' to inherit the D&D texture
-		<div className='h-full w-full relative bg-background overflow-hidden'>
+		// IMPLEMENTATION: Constellation Background via CSS radial-gradient
+		<div
+			className='h-full w-full relative bg-background overflow-hidden'
+			style={{
+				backgroundImage:
+					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			{/* Overlay UI */}
 			<GraphLegend />
 

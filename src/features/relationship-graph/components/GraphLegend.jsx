@@ -2,7 +2,8 @@ import { ENTITY_CONFIG } from '../../../config/entity/entityConfig'; // Adjust p
 
 export const GraphLegend = () => {
 	// Filter out the 'default' config to keep legend clean
-	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity');
+	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity' && c.type !== 'session');
+	console.log(ENTITY_CONFIG);
 
 	return (
 		<div className='absolute top-4 left-4 z-10 bg-background/90 p-3 rounded shadow border border-border backdrop-blur pointer-events-none select-none'>

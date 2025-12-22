@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
+import fcose from 'cytoscape-fcose'; // IMPLEMENTATION: fCoSE
 import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '../config/graphStyles';
+
+// Register the layout extension
+cytoscape.use(fcose);
 
 export const CytoscapeCanvas = ({ elements }) => {
 	const containerRef = useRef(null);
 	const cyRef = useRef(null);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!containerRef.current) return;
@@ -15,10 +21,10 @@ export const CytoscapeCanvas = ({ elements }) => {
 			elements: [],
 			style: CYTOSCAPE_STYLES,
 			layout: LAYOUT_CONFIG,
-			wheelSensitivity: 0.6,
+			wheelSensitivity: 3,
 			minZoom: 0.2,
 			maxZoom: 3,
-			autoungrabify: true, // Prevent moving
+			autoungrabify: false, // Allow moving nodes in fCoSE
 		});
 
 		const cy = cyRef.current;
@@ -32,35 +38,41 @@ export const CytoscapeCanvas = ({ elements }) => {
 			// Clear previous states
 			cy.elements().removeClass('highlighted dimmed');
 
-			// Get connections
 			const connectedEdges = node.connectedEdges();
 			const connectedNodes = connectedEdges.connectedNodes();
 
-			// Dim everything that isn't connected to this node
-			// logic: (All Elements) - (Node + Neighbors + Connecting Edges) -> Add Class Dimmed
+			// Dim everything else
 			cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
 
-			// Highlight specific elements
+			// Highlight selection
 			node.addClass('highlighted');
 			connectedNodes.addClass('highlighted');
 			connectedEdges.addClass('highlighted');
 		});
 
-		// 2. Click Background: Reset View
+		// 2. Click Background: Reset
 		cy.on('tap', (evt) => {
 			if (evt.target === cy) {
 				cy.elements().removeClass('highlighted dimmed');
 			}
 		});
 
-		// Cleanup
+		// 3. IMPLEMENTATION: Double Click to Navigate
+		cy.on('dblclick', 'node', (evt) => {
+			const node = evt.target;
+			const { id, type } = node.data();
+			if (id && type) {
+				navigate(`/wiki/${type}/${id}`);
+			}
+		});
+
 		return () => {
 			if (cyRef.current) {
 				cyRef.current.destroy();
 				cyRef.current = null;
 			}
 		};
-	}, []);
+	}, [navigate]);
 
 	// 2. Handle Data Updates
 	useEffect(() => {
@@ -74,8 +86,8 @@ export const CytoscapeCanvas = ({ elements }) => {
 		});
 
 		if (elements.length > 0) {
+			// Run fCoSE layout
 			cy.layout(LAYOUT_CONFIG).run();
-			cy.fit(elements, 50);
 		}
 	}, [elements]);
 

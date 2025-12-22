@@ -9,6 +9,13 @@ import './types';
 
 const FALLBACK_ICON_PATH = 'images/icons';
 
+// --- INK THEME PALETTE ---
+const INK_COLORS = {
+	ALLY: '#4d7c0f', // Forest Green Ink
+	ENEMY: '#7f1d1d', // Dried Blood Red
+	NEUTRAL: '#78716c', // Warm Stone/Sepia
+};
+
 export function useGraphViewModel() {
 	const { campaignId } = useCampaign();
 
@@ -36,6 +43,7 @@ export function useGraphViewModel() {
 		const entityIds = new Set(entities.map((e) => e.id));
 		const connectedNodeIds = new Set();
 		const uniqueEdgeTracker = new Set();
+		const degreeMap = new Map(); // Track connection counts
 
 		// Pass 1: Generate Edges first to determine connectivity
 		entities.forEach((entity) => {
@@ -54,13 +62,16 @@ export function useGraphViewModel() {
 				connectedNodeIds.add(entity.id);
 				connectedNodeIds.add(rel.entity_id);
 
-				// Determine Color based on Relationship Rank (Ally vs Enemy)
-				// Using centralized helper instead of hardcoded strings
-				const rank = getAffinityRank(rel.type);
-				let edgeColor = '#e5e7eb'; // default gray-200
+				// Increment Degrees
+				degreeMap.set(entity.id, (degreeMap.get(entity.id) || 0) + 1);
+				degreeMap.set(rel.entity_id, (degreeMap.get(rel.entity_id) || 0) + 1);
 
-				if (rank === 1) edgeColor = '#22c55e'; // Ally (Green)
-				if (rank === 3) edgeColor = '#ef4444'; // Enemy (Red)
+				// Determine Color based on Relationship Rank
+				const rank = getAffinityRank(rel.type);
+				let edgeColor = INK_COLORS.NEUTRAL;
+
+				if (rank === 1) edgeColor = INK_COLORS.ALLY;
+				if (rank === 3) edgeColor = INK_COLORS.ENEMY;
 
 				edges.push({
 					group: 'edges',
@@ -76,22 +87,25 @@ export function useGraphViewModel() {
 
 		// Pass 2: Generate Nodes (Only if they are connected)
 		entities.forEach((entity) => {
-			// FILTER: If node is not in our connected set, skip it
 			if (!connectedNodeIds.has(entity.id)) return;
 
 			const config = getEntityConfig(entity.type);
-
-			// USE CENTRALIZED UTILITY for images
 			const finalIconUrl = resolveImageUrl(entity.attributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
+			const degree = degreeMap.get(entity.id) || 1;
+
+			// THRESHOLD: Nodes with < 3 connections are "minor" (dots)
+			const isMinor = degree < 3;
 
 			nodes.push({
 				group: 'nodes',
+				classes: isMinor ? 'minor' : 'major',
 				data: {
 					id: entity.id,
 					label: entity.name,
 					color: config.color,
 					image: finalIconUrl,
 					type: entity.type,
+					degree: degree, // For dynamic sizing
 				},
 			});
 		});
