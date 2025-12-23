@@ -24,7 +24,7 @@ export const CytoscapeCanvas = ({ elements }) => {
 			wheelSensitivity: 3,
 			minZoom: 0.2,
 			maxZoom: 3,
-			autoungrabify: false, // Allow moving nodes in fCoSE
+			autoungrabify: true, // CHANGED: Set to true to disable node dragging
 		});
 
 		const cy = cyRef.current;

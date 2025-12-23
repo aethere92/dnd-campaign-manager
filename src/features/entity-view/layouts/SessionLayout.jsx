@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
-import { BookOpen, History, Network } from 'lucide-react'; // Added Network icon
+import { useState, useMemo } from 'react';
+import { BookOpen, History, Network } from 'lucide-react';
 import TabContainer from '../../../components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '../components/EntityBody';
-import { SessionMentions } from '../components/SessionMentions'; // Import new component
+import { SessionMentions } from '../components/SessionMentions';
 import { TableOfContents } from '../../table-of-contents/TableOfContents';
 import { extractHeaders } from '../../../utils/text/markdownHelpers';
 import { ThreeColumnLayout } from '../../../components/layout/SplitView';
 
 export default function SessionLayout({ viewModel }) {
+	// 1. Add state to track the active tab
+	const [activeTab, setActiveTab] = useState('narrative');
+
 	if (!viewModel) return null;
 
 	const tocItems = useMemo(() => {
@@ -38,7 +41,6 @@ export default function SessionLayout({ viewModel }) {
 		/>
 	);
 
-	// NEW: Mentions Tab Content
 	const renderMentions = () => (
 		<div className='max-w-7xl mx-auto px-4 sm:px-6 py-10'>
 			<SessionMentions mentions={viewModel.content.mentions} />
@@ -64,7 +66,7 @@ export default function SessionLayout({ viewModel }) {
 					{
 						id: 'mentions',
 						label: 'Mentions',
-						icon: Network, // Using Network icon for relationships
+						icon: Network,
 						content: renderMentions(),
 					},
 					{
@@ -76,9 +78,12 @@ export default function SessionLayout({ viewModel }) {
 				]}
 				defaultTab='narrative'
 				sticky
+				// 2. Hook up the state change
+				onChange={setActiveTab}
 			/>
 
-			{tocItems.length > 0 && (
+			{/* 3. Only render the Mobile ToC if we are on the Narrative tab */}
+			{tocItems.length > 0 && activeTab === 'narrative' && (
 				<div className='xl:hidden'>
 					<TableOfContents items={tocItems} />
 				</div>

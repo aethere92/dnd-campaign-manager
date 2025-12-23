@@ -85,7 +85,7 @@ export const CYTOSCAPE_STYLES = [
 	},
 ];
 
-// PERFORMANCE: Switch to fCoSE layout
+// PERFORMANCE: Switch to fCoSE layout with "High Spacing" profile
 export const LAYOUT_CONFIG = {
 	name: 'fcose',
 	quality: 'default',
@@ -94,15 +94,50 @@ export const LAYOUT_CONFIG = {
 	animationDuration: 1000,
 	fit: true,
 	padding: 50,
+
+	// CRITICAL: Tells the physics engine to treat the node as "Icon + Text Label" size
+	// instead of just "Icon" size.
 	nodeDimensionsIncludeLabels: true,
-	// Physics settings - INCREASED SPACING
-	nodeRepulsion: (node) => 20000 * (node.data('degree') || 1), // Stronger repulsion
-	idealEdgeLength: (edge) => 300, // Longer edges
-	edgeElasticity: (edge) => 0.45,
-	nestingFactor: 0.1,
-	gravity: 0.8,
-	numIter: 2500,
+
+	// --- PHYSICS SETTINGS (Aggressive Spacing) ---
+
+	// 1. REPULSION (The "Personal Space" Force)
+	// Drastically increased. This ensures that even if two nodes are connected,
+	// the text labels push against each other to prevent overlap.
+	nodeRepulsion: (node) => {
+		const degree = node.data('degree') || 0;
+		// Base: 40,000 (was 6,500)
+		// Per Connection: 5,000 (was 1,500)
+		return 40000 + degree * 5000;
+	},
+
+	// 2. EDGE LENGTH (The "Leash" Length)
+	// Increased to ensure hubs with many connections have a wider circumference.
+	idealEdgeLength: (edge) => {
+		const d1 = edge.source().data('degree') || 0;
+		const d2 = edge.target().data('degree') || 0;
+		const maxDegree = Math.max(d1, d2);
+
+		// Base: 150 (was 100)
+		// Per Degree: 30 (was 15)
+		return 150 + maxDegree * 30;
+	},
+
+	// 3. ELASTICITY
+	// Lower = Stretcher edges. Allows Repulsion to win over Edge Length.
+	edgeElasticity: (edge) => 0.1,
+
+	// 4. GRAVITY (The "Centering" Force)
+	// Lowered significantly. This stops the graph from collapsing on itself.
+	gravity: 0.5, // (was 0.25)
+	gravityRange: 3.8,
+
+	// 5. ITERATIONS
+	// More time for the simulation to resolve collisions
+	numIter: 5000,
+
+	// Disconnected components spacing
 	tile: true,
-	tilingPaddingVertical: 20,
-	tilingPaddingHorizontal: 20,
+	tilingPaddingVertical: 100,
+	tilingPaddingHorizontal: 100,
 };
