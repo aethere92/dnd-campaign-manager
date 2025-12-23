@@ -5,3 +5,4 @@
 
 export { default as StandardLayout } from './StandardLayout';
 export { default as SessionLayout } from './SessionLayout';
+export { default as EncounterLayout } from './EncounterLayout';

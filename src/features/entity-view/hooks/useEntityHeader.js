@@ -8,6 +8,7 @@ import { getEntityConfig } from '../../../config/entity';
 import { resolveImageUrl } from '../../../utils/image/imageResolver';
 import { getAttributeValue } from '../../../utils/entity/attributeParser';
 import { extractHeaderTags } from '../transforms/attributeTransform';
+import { capitalize } from '../../../utils/text/textProcessing';
 
 /**
  * Build header view model
@@ -34,6 +35,9 @@ export const useEntityHeader = (entity, attributes) => {
 			statusRaw = String(statusRaw);
 		}
 
+		// Resolve Priority (New)
+		const priorityRaw = getAttributeValue(attributes, ['priority', 'Priority']);
+
 		// Extract extra tags (session-specific)
 		const extraTags = extractHeaderTags(attributes, entity.type);
 
@@ -44,9 +48,10 @@ export const useEntityHeader = (entity, attributes) => {
 			avatarUrl: avatarUrl,
 			status: {
 				hasStatus: !!statusRaw,
-				label: statusRaw,
+				label: statusRaw ? capitalize(statusRaw) : '',
 				isDead: statusRaw?.toLowerCase() === 'dead' || statusRaw?.toLowerCase() === 'failed',
 			},
+			priority: priorityRaw ? capitalize(priorityRaw) : null,
 			extraTags,
 			theme: {
 				...config.tailwind,

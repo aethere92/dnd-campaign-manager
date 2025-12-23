@@ -1,6 +1,43 @@
 import { clsx } from 'clsx';
-import { MapPin, User } from 'lucide-react';
+import { MapPin, User, Flag, Scroll, Skull, Box } from 'lucide-react';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
+
+// Helper to get icon and style for tags based on entity type
+const getTagConfig = (type) => {
+	switch (type) {
+		case 'location':
+			return {
+				Icon: MapPin,
+				className: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+			};
+		case 'npc':
+		case 'character':
+			return {
+				Icon: User,
+				className: 'text-amber-600 bg-amber-50 border-amber-100',
+			};
+		case 'faction':
+			return {
+				Icon: Flag,
+				className: 'text-purple-600 bg-purple-50 border-purple-100',
+			};
+		case 'quest':
+			return {
+				Icon: Scroll,
+				className: 'text-blue-600 bg-blue-50 border-blue-100',
+			};
+		case 'encounter':
+			return {
+				Icon: Skull,
+				className: 'text-orange-600 bg-orange-50 border-orange-100',
+			};
+		default:
+			return {
+				Icon: Box,
+				className: 'text-gray-500 bg-gray-100 border-gray-200',
+			};
+	}
+};
 
 export const TimelineEvent = ({ event }) => {
 	const { Icon, container } = event.style;
@@ -31,19 +68,24 @@ export const TimelineEvent = ({ event }) => {
 					</div>
 				)}
 
-				{/* Tags */}
-				<div className='flex flex-wrap gap-2 mt-2'>
-					{event.location && (
-						<span className='inline-flex items-center gap-1 text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 cursor-default'>
-							<MapPin size={10} /> {event.location.name}
-						</span>
-					)}
-					{event.npc && (
-						<span className='inline-flex items-center gap-1 text-[10px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 cursor-default'>
-							<User size={10} /> {event.npc.name}
-						</span>
-					)}
-				</div>
+				{/* Dynamic Tags from Relationships */}
+				{event.tags && event.tags.length > 0 && (
+					<div className='flex flex-wrap gap-2 mt-2'>
+						{event.tags.map((tag, idx) => {
+							const { Icon: TagIcon, className } = getTagConfig(tag.type);
+							return (
+								<span
+									key={`${tag.name}-${idx}`}
+									className={clsx(
+										'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default',
+										className
+									)}>
+									<TagIcon size={10} /> {tag.name}
+								</span>
+							);
+						})}
+					</div>
+				)}
 			</div>
 		</div>
 	);

@@ -60,161 +60,237 @@ END;
 
 --- Entity Complete View --- 
 
-CREATE OR REPLACE VIEW entity_complete_view AS
-SELECT 
-  -- Core entity info
+create view public.entity_complete_view as
+select
   e.id,
   e.type,
   e.name,
   e.description,
   e.campaign_id,
   e.created_at,
-  
-  -- Aggregate attributes (ONLY regular attributes now)
-  COALESCE(attr.attributes, '{}'::jsonb) AS attributes,
-  
-  -- All relationships (both outgoing and incoming)
-  COALESCE(rels.relationships, '[]'::jsonb) AS relationships,
-  
-  -- Session events grouped by macro event type
-  COALESCE(events.events, '{}'::jsonb) AS events
-
-FROM entities e
-
--- Regular attributes aggregated by name
-LEFT JOIN LATERAL (
-  SELECT 
-    COALESCE(
-      jsonb_object_agg(
-        attr_grouped.name,
-        attr_grouped.values
-      ),
-      '{}'::jsonb
-    ) AS attributes
-  FROM (
-    SELECT 
-      a.name,
-      jsonb_agg(
-        jsonb_build_object(
-          'id', a.id,
-          'value', a.value,
-          'type', a.type,
-          'is_private', a.is_private,
-          'description', a.description,
-          'order', a.default_order
-        )
-        ORDER BY a.default_order, a.id
-      ) AS values
-    FROM attributes a
-    WHERE a.entity_id = e.id
-    GROUP BY a.name
-  ) AS attr_grouped
-  WHERE attr_grouped.name IS NOT NULL
-) AS attr ON true
-
--- Relationships (both outgoing and incoming) - PRE-AGGREGATED
-LEFT JOIN LATERAL (
-  SELECT 
-    COALESCE(
-      jsonb_agg(rel_combined.rel_obj),
-      '[]'::jsonb
-    ) AS relationships
-  FROM (
-    -- Outgoing relationships
-    SELECT 
-      jsonb_build_object(
-        'relationship_id', er_out.id,
-        'direction', 'outgoing',
-        'type', er_out.relationship_type,
-        'entity_id', er_out.to_entity_id,
-        'entity_name', e_to.name,
-        'entity_type', e_to.type,
-        'description', er_out.description,
-        'strength', er_out.strength,
-        'is_bidirectional', er_out.is_bidirectional,
-        'metadata', er_out.metadata,
-        'icon', er_out.target_entity_icon
-        'is_hidden', er_out.is_hidden
-      ) AS rel_obj
-    FROM entity_relationships er_out
-    JOIN entities e_to ON e_to.id = er_out.to_entity_id
-    WHERE er_out.from_entity_id = e.id
-    
-    UNION ALL
-    
-    -- Incoming relationships
-    SELECT 
-      jsonb_build_object(
-        'relationship_id', er_in.id,
-        'direction', 'incoming',
-        'type', er_in.relationship_type,
-        'entity_id', er_in.from_entity_id,
-        'entity_name', e_from.name,
-        'entity_type', e_from.type,
-        'description', er_in.description,
-        'strength', er_in.strength,
-        'is_bidirectional', er_in.is_bidirectional,
-        'metadata', er_in.metadata,
-        'icon', er_in.source_entity_icon,
-        'is_hidden', er_in.is_hidden
-      ) AS rel_obj
-    FROM entity_relationships er_in
-    JOIN entities e_from ON e_from.id = er_in.from_entity_id
-    WHERE er_in.to_entity_id = e.id
-  ) AS rel_combined
-) AS rels ON true
-
--- Session events grouped by macro type (based on event_type prefix)
-LEFT JOIN LATERAL (
-  SELECT 
-    COALESCE(
-      jsonb_object_agg(
-        macro_events.macro_type,
-        macro_events.events_array
-      ),
-      '{}'::jsonb
-    ) AS events
-  FROM (
-    SELECT 
-      macro_events_inner.macro_type,
-      jsonb_agg(
-        macro_events_inner.event_obj
-        ORDER BY macro_events_inner.event_order, macro_events_inner.id
-      ) AS events_array
-    FROM (
-      SELECT 
-        -- Extract macro type from event_type prefix (before first underscore)
-        CASE 
-          WHEN se.event_type LIKE 'npc_%' THEN 'npc'
-          WHEN se.event_type LIKE 'location_%' THEN 'location'
-          WHEN se.event_type LIKE 'quest_%' THEN 'quest'
-          WHEN se.event_type LIKE 'encounter_%' THEN 'encounter'
-          WHEN se.event_type LIKE 'faction_%' THEN 'faction'
-          WHEN se.event_type LIKE 'session_%' THEN 'session'
-          WHEN se.event_type LIKE 'character_%' THEN 'character'
-          ELSE split_part(se.event_type, '_', 1)
-        END AS macro_type,
-        se.id,
-        se.event_order,
-        jsonb_build_object(
-          'id', se.id,
-          'event_type', se.event_type,
-          'title', se.title,
-          'description', se.description,
-          'order', se.event_order,
-          'session_id', se.session_id,
-          'created_at', se.created_at
-        ) AS event_obj
-      FROM session_events se
-      WHERE se.npc_id = e.id
-         OR se.location_id = e.id
-         OR se.quest_id = e.id
-         OR se.encounter_id = e.id
-         OR se.faction_id = e.id
-         OR se.session_id = e.id
-         OR se.character_id = e.id
-    ) AS macro_events_inner
-    GROUP BY macro_events_inner.macro_type
-  ) AS macro_events
-  WHERE macro_events.macro_type IS NOT NULL
-) AS events ON true;
+  COALESCE(attr.attributes, '{}'::jsonb) as attributes,
+  COALESCE(rels.relationships, '[]'::jsonb) as relationships,
+  COALESCE(events.events, '{}'::jsonb) as events
+from
+  entities e
+  left join lateral (
+    select
+      COALESCE(
+        jsonb_object_agg(attr_grouped.name, attr_grouped."values"),
+        '{}'::jsonb
+      ) as attributes
+    from
+      (
+        select
+          a.name,
+          jsonb_agg(
+            jsonb_build_object(
+              'id',
+              a.id,
+              'value',
+              a.value,
+              'is_private',
+              a.is_private
+            )
+            order by
+              a.id
+          ) as "values"
+        from
+          attributes a
+        where
+          a.entity_id = e.id
+        group by
+          a.name
+      ) attr_grouped
+    where
+      attr_grouped.name is not null
+  ) attr on true
+  left join lateral (
+    select
+      COALESCE(jsonb_agg(rel_combined.rel_obj), '[]'::jsonb) as relationships
+    from
+      (
+        select
+          jsonb_build_object(
+            'relationship_id',
+            er_out.id,
+            'direction',
+            'outgoing',
+            'type',
+            er_out.relationship_type,
+            'entity_id',
+            er_out.to_entity_id,
+            'entity_name',
+            e_to.name,
+            'entity_type',
+            e_to.type,
+            'description',
+            er_out.description,
+            'is_bidirectional',
+            false
+          ) as rel_obj
+        from
+          entity_relationships er_out
+          join entities e_to on e_to.id = er_out.to_entity_id
+        where
+          er_out.from_entity_id = e.id
+          and er_out.is_bidirectional = false
+          and e_to.type <> 'event'::text
+        union all
+        select
+          jsonb_build_object(
+            'relationship_id',
+            er_out.id,
+            'direction',
+            'bidirectional',
+            'type',
+            er_out.relationship_type,
+            'entity_id',
+            er_out.to_entity_id,
+            'entity_name',
+            e_to.name,
+            'entity_type',
+            e_to.type,
+            'description',
+            er_out.description,
+            'is_bidirectional',
+            true
+          ) as rel_obj
+        from
+          entity_relationships er_out
+          join entities e_to on e_to.id = er_out.to_entity_id
+        where
+          er_out.from_entity_id = e.id
+          and er_out.is_bidirectional = true
+          and e_to.type <> 'event'::text
+        union all
+        select
+          jsonb_build_object(
+            'relationship_id',
+            er_in.id,
+            'direction',
+            'incoming',
+            'type',
+            er_in.relationship_type,
+            'entity_id',
+            er_in.from_entity_id,
+            'entity_name',
+            e_from.name,
+            'entity_type',
+            e_from.type,
+            'description',
+            er_in.description,
+            'is_bidirectional',
+            false
+          ) as rel_obj
+        from
+          entity_relationships er_in
+          join entities e_from on e_from.id = er_in.from_entity_id
+        where
+          er_in.to_entity_id = e.id
+          and er_in.is_bidirectional = false
+          and e_from.type <> 'event'::text
+      ) rel_combined
+  ) rels on true
+  left join lateral (
+    select
+      COALESCE(
+        jsonb_object_agg(
+          macro_events.macro_type,
+          macro_events.events_array
+        ),
+        '{}'::jsonb
+      ) as events
+    from
+      (
+        select
+          macro_events_inner.macro_type,
+          jsonb_agg(
+            macro_events_inner.event_obj
+            order by
+              macro_events_inner.event_order,
+              macro_events_inner.id
+          ) as events_array
+        from
+          (
+            select
+              'event'::text as macro_type,
+              e_event.id,
+              se_out.event_order,
+              jsonb_build_object(
+                'id',
+                e_event.id,
+                'event_type',
+                COALESCE(
+                  se_out.event_type,
+                  'relationship_'::text || er_event.relationship_type
+                ),
+                'title',
+                e_event.name,
+                'description',
+                e_event.description,
+                'order',
+                se_out.event_order,
+                'session_id',
+                se_out.session_id,
+                'created_at',
+                e_event.created_at,
+                'relationship_id',
+                er_event.id,
+                'relationship_type',
+                er_event.relationship_type,
+                'relationship_direction',
+                'outgoing'
+              ) as event_obj
+            from
+              entity_relationships er_event
+              join entities e_event on e_event.id = er_event.to_entity_id
+              left join session_events se_out on se_out.id = e_event.id
+            where
+              er_event.from_entity_id = e.id
+              and e_event.type = 'event'::text
+            union all
+            select
+              'event'::text as macro_type,
+              e_event.id,
+              se_in.event_order,
+              jsonb_build_object(
+                'id',
+                e_event.id,
+                'event_type',
+                COALESCE(
+                  se_in.event_type,
+                  'relationship_'::text || er_event_in.relationship_type
+                ),
+                'title',
+                e_event.name,
+                'description',
+                e_event.description,
+                'order',
+                se_in.event_order,
+                'session_id',
+                se_in.session_id,
+                'created_at',
+                e_event.created_at,
+                'relationship_id',
+                er_event_in.id,
+                'relationship_type',
+                er_event_in.relationship_type,
+                'relationship_direction',
+                'incoming'
+              ) as event_obj
+            from
+              entity_relationships er_event_in
+              join entities e_event on e_event.id = er_event_in.from_entity_id
+              left join session_events se_in on se_in.id = e_event.id
+            where
+              er_event_in.to_entity_id = e.id
+              and e_event.type = 'event'::text
+              and er_event_in.is_bidirectional = false
+          ) macro_events_inner
+        group by
+          macro_events_inner.macro_type
+      ) macro_events
+    where
+      macro_events.macro_type is not null
+  ) events on true;

@@ -6,12 +6,9 @@ CREATE TABLE public.attributes (
   entity_id uuid,
   name text,
   value text,
-  type text,
   is_private boolean DEFAULT false,
-  default_order bigint,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  description text,
   CONSTRAINT attributes_pkey PRIMARY KEY (id),
   CONSTRAINT attributes_entity_id_fkey FOREIGN KEY (entity_id) REFERENCES public.entities(id)
 );
@@ -20,35 +17,16 @@ CREATE TABLE public.campaigns (
   campaign_id integer NOT NULL UNIQUE,
   name text NOT NULL,
   metadata jsonb DEFAULT '{}'::jsonb,
-  styling jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   description text,
   map_data text,
   CONSTRAINT campaigns_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.character_sessions (
-  character_id uuid NOT NULL,
-  session_id uuid NOT NULL,
-  notes text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT character_sessions_pkey PRIMARY KEY (character_id, session_id),
-  CONSTRAINT character_sessions_character_id_fkey FOREIGN KEY (character_id) REFERENCES public.characters(id),
-  CONSTRAINT character_sessions_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(id)
-);
 CREATE TABLE public.characters (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL,
   name text NOT NULL,
-  race text,
-  class text,
-  level integer DEFAULT 1,
-  icon text,
-  image_bg text,
-  background text,
-  short_description text,
-  stats jsonb DEFAULT '{}'::jsonb,
-  is_active boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT characters_pkey PRIMARY KEY (id),
@@ -72,57 +50,27 @@ CREATE TABLE public.encounter_actions (
   CONSTRAINT encounter_actions_pkey PRIMARY KEY (id),
   CONSTRAINT encounter_actions_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id)
 );
-CREATE TABLE public.encounter_consequences (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  encounter_id uuid NOT NULL,
-  consequence_type text,
-  description text NOT NULL,
-  details jsonb DEFAULT '{}'::jsonb,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT encounter_consequences_pkey PRIMARY KEY (id),
-  CONSTRAINT encounter_consequences_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id)
-);
 CREATE TABLE public.encounter_initiative (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   encounter_id uuid NOT NULL,
   combatant_name text NOT NULL,
-  combatant_type text,
   initiative_roll integer NOT NULL,
-  max_hp integer,
-  current_hp integer,
-  armor_class integer,
-  conditions jsonb DEFAULT '[]'::jsonb,
-  notes text,
   order_index integer NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT encounter_initiative_pkey PRIMARY KEY (id),
   CONSTRAINT encounter_initiative_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id)
-);
-CREATE TABLE public.encounter_rounds (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  encounter_id uuid NOT NULL,
-  round_number integer NOT NULL,
-  round_notes text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT encounter_rounds_pkey PRIMARY KEY (id),
-  CONSTRAINT encounter_rounds_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id)
 );
 CREATE TABLE public.encounters (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL,
   session_id uuid,
   name text NOT NULL,
-  location_id uuid,
   description text,
-  environment jsonb DEFAULT '{}'::jsonb,
-  outcome jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  notes text,
   CONSTRAINT encounters_pkey PRIMARY KEY (id),
   CONSTRAINT encounters_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.campaigns(id),
-  CONSTRAINT encounters_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(id),
-  CONSTRAINT encounters_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id)
+  CONSTRAINT encounters_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(id)
 );
 CREATE TABLE public.entities (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -140,11 +88,7 @@ CREATE TABLE public.entity_relationships (
   to_entity_id uuid NOT NULL,
   relationship_type text NOT NULL,
   description text,
-  strength integer,
-  metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
-  source_entity_icon text,
-  target_entity_icon text,
   is_bidirectional boolean,
   is_hidden boolean DEFAULT false,
   CONSTRAINT entity_relationships_pkey PRIMARY KEY (id),
@@ -155,7 +99,6 @@ CREATE TABLE public.factions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL,
   name text NOT NULL,
-  type text,
   description text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -167,8 +110,6 @@ CREATE TABLE public.items (
   session_id uuid,
   name text,
   description text,
-  rarity text,
-  quantity text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT items_pkey PRIMARY KEY (id),
@@ -178,13 +119,11 @@ CREATE TABLE public.locations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL,
   name text NOT NULL,
-  parent_location_id uuid,
   description text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT locations_pkey PRIMARY KEY (id),
-  CONSTRAINT locations_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.campaigns(id),
-  CONSTRAINT locations_parent_location_id_fkey FOREIGN KEY (parent_location_id) REFERENCES public.locations(id)
+  CONSTRAINT locations_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.campaigns(id)
 );
 CREATE TABLE public.npcs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -193,7 +132,6 @@ CREATE TABLE public.npcs (
   description text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
-  is_active boolean DEFAULT true,
   CONSTRAINT npcs_pkey PRIMARY KEY (id),
   CONSTRAINT npcs_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.campaigns(id)
 );
@@ -203,11 +141,11 @@ CREATE TABLE public.quest_objectives (
   description text NOT NULL,
   status text DEFAULT 'pending'::text,
   order_index integer NOT NULL,
-  details jsonb DEFAULT '{}'::jsonb,
   completed_session_id uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   objective_name text,
+  objective_update text,
   CONSTRAINT quest_objectives_pkey PRIMARY KEY (id),
   CONSTRAINT quest_objectives_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id),
   CONSTRAINT quest_objectives_completed_session_id_fkey FOREIGN KEY (completed_session_id) REFERENCES public.sessions(id)
@@ -216,8 +154,6 @@ CREATE TABLE public.quests (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL,
   title text NOT NULL,
-  status text DEFAULT 'active'::text CHECK (status = ANY (ARRAY['active'::text, 'completed'::text, 'failed'::text, 'on-hold'::text, 'abandoned'::text])),
-  priority text DEFAULT 'medium'::text CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'urgent'::text])),
   description text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -231,33 +167,15 @@ CREATE TABLE public.session_events (
   event_type text NOT NULL,
   title text NOT NULL,
   description text,
-  npc_id uuid,
-  location_id uuid,
-  quest_id uuid,
-  encounter_id uuid,
-  faction_id uuid,
-  character_id uuid,
   created_at timestamp with time zone DEFAULT now(),
-  game_day integer DEFAULT 1,
-  start_time time without time zone DEFAULT '08:00:00'::time without time zone,
-  duration_minutes integer DEFAULT 0,
   CONSTRAINT session_events_pkey PRIMARY KEY (id),
-  CONSTRAINT session_events_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(id),
-  CONSTRAINT session_events_npc_id_fkey FOREIGN KEY (npc_id) REFERENCES public.npcs(id),
-  CONSTRAINT session_events_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id),
-  CONSTRAINT session_events_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id),
-  CONSTRAINT session_events_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id),
-  CONSTRAINT session_events_faction_id_fkey FOREIGN KEY (faction_id) REFERENCES public.factions(id),
-  CONSTRAINT session_events_character_id_fkey FOREIGN KEY (character_id) REFERENCES public.characters(id)
+  CONSTRAINT session_events_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(id)
 );
 CREATE TABLE public.sessions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   campaign_id uuid NOT NULL,
-  session_number integer NOT NULL,
   title text NOT NULL,
-  session_date date NOT NULL,
   narrative text,
-  summary text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT sessions_pkey PRIMARY KEY (id),

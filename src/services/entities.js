@@ -1,30 +1,73 @@
 import { supabase } from '../lib/supabase';
+import { getAttributeValue } from '../utils/entity/attributeParser';
 
-/**
- * Fetches sessions separately since they're not in entity_complete_view
- */
-export const getSessions = async (campaignId) => {
-	const { data, error } = await supabase
-		.from('sessions')
-		.select('id, title, session_number, session_date, summary')
-		.eq('campaign_id', campaignId)
-		.order('session_number', { ascending: true });
+// --- HELPER: Extract Session Meta ---
+const extractSessionMeta = (session, attributes = []) => {
+	let attrs = attributes;
+	if (Array.isArray(attrs)) {
+		attrs = attrs.reduce((acc, curr) => {
+			acc[curr.name] = curr.value;
+			return acc;
+		}, {});
+	}
+	attrs = attrs || {};
 
-	if (error) throw error;
+	const sessionNumber = getAttributeValue(attrs, ['session_number', 'Session', 'session']) || 999;
+	const sessionDate = getAttributeValue(attrs, ['session_date', 'Date', 'date']) || '';
 
-	// Transform to match entity structure
-	return data.map((session) => ({
-		id: session.id,
-		name: session.title,
-		type: 'session',
+	return {
 		...session,
-	}));
+		session_number: Number(sessionNumber),
+		session_date: sessionDate,
+		attributes: attrs,
+	};
 };
 
-/**
- * Universal fetch using the View.
- * Returns everything (attributes, relationships) so the UI has full context.
- */
+// --- API METHODS ---
+
+export const getSessions = async (campaignId) => {
+	// 1. Fetch Sessions (No summary, No join)
+	const { data: sessions, error } = await supabase
+		.from('sessions')
+		.select('id, title, narrative')
+		.eq('campaign_id', campaignId);
+
+	if (error) throw error;
+	if (!sessions.length) return [];
+
+	// 2. Fetch Attributes Separately
+	const sessionIds = sessions.map((s) => s.id);
+	const { data: attributes } = await supabase
+		.from('attributes')
+		.select('entity_id, name, value')
+		.in('entity_id', sessionIds);
+
+	const attrMap = new Map();
+	(attributes || []).forEach((attr) => {
+		if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
+		attrMap.get(attr.entity_id).push(attr);
+	});
+
+	const processed = sessions.map((s) => {
+		const sAttrs = attrMap.get(s.id) || [];
+		const meta = extractSessionMeta(s, sAttrs);
+
+		return {
+			id: meta.id,
+			name: meta.title,
+			type: 'session',
+			session_number: meta.session_number,
+			session_date: meta.session_date,
+			summary: getAttributeValue(meta.attributes, 'Summary') || meta.narrative,
+			narrative: meta.narrative,
+			attributes: meta.attributes,
+		};
+	});
+
+	return processed.sort((a, b) => a.session_number - b.session_number);
+};
+
+// Generic fetcher
 const getCompleteEntities = async (campaignId, type) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
@@ -37,41 +80,9 @@ const getCompleteEntities = async (campaignId, type) => {
 	return data;
 };
 
-/**
- * Quests need the specific 'status' column from the quests table,
- * merged with attributes from the view (for 'Quest Type').
- */
-const getQuestsWithStatus = async (campaignId) => {
-	// 1. Fetch Entities from View (for attributes/description)
-	const { data: entities, error } = await supabase
-		.from('entity_complete_view')
-		.select('id, name, type, description, attributes')
-		.eq('campaign_id', campaignId)
-		.eq('type', 'quest')
-		.order('name');
-
-	if (error) throw error;
-
-	// 2. Fetch Status from Quests table (source of truth for status)
-	const { data: questStatuses } = await supabase.from('quests').select('id, status');
-
-	const statusMap = new Map((questStatuses || []).map((q) => [q.id, q.status]));
-
-	// 3. Merge
-	return entities.map((e) => ({
-		...e,
-		status: statusMap.get(e.id) || 'active',
-	}));
-};
-
-/**
- * Strategy map
- */
 const entityStrategies = {
 	session: getSessions,
-	quest: getQuestsWithStatus,
-	// Use the View for everything else (NPC, Location, Faction, etc.)
-	// This ensures we get Attributes AND Relationships for correct grouping.
+	quest: getCompleteEntities,
 	default: getCompleteEntities,
 };
 
@@ -80,10 +91,6 @@ export const getEntities = async (campaignId, type) => {
 	return strategy(campaignId, type);
 };
 
-// ... (Rest of file: getGraphData, getEntityIndex, getWikiEntry - keep as is) ...
-/**
- * Fetches only the necessary data for the Network Graph.
- */
 export const getGraphData = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
@@ -97,13 +104,9 @@ export const getGraphData = async (campaignId) => {
 	return data || [];
 };
 
-/**
- * Fetches a lightweight list of names/IDs for auto-linking text.
- */
 export const getEntityIndex = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
-		// Fetch attributes to parse icons
 		.select('id, name, type, attributes')
 		.eq('campaign_id', campaignId);
 
@@ -113,6 +116,7 @@ export const getEntityIndex = async (campaignId) => {
 
 export const getWikiEntry = async (id, type) => {
 	if (type === 'session') {
+		// 1. Fetch Session
 		const { data, error } = await supabase
 			.from('sessions')
 			.select(`*, events:session_events (*)`)
@@ -121,47 +125,84 @@ export const getWikiEntry = async (id, type) => {
 
 		if (error) throw error;
 
-		// FIX: Explicitly sort events by event_order
+		// 2. Fetch Attributes Separately
+		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
+
+		const meta = extractSessionMeta(data, attributes || []);
 		const sortedEvents = (data.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
+
+		// 3. Fetch Event Tags (Relationships linked to events)
+		const eventIds = sortedEvents.map((e) => e.id);
+		let eventRelationships = [];
+
+		if (eventIds.length > 0) {
+			const { data: rels } = await supabase
+				.from('entity_relationships')
+				.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
+				.in('from_entity_id', eventIds);
+
+			if (rels) eventRelationships = rels;
+		}
+
+		// Attach relationships to events
+		const relMap = new Map();
+		eventRelationships.forEach((rel) => {
+			if (!relMap.has(rel.from_entity_id)) relMap.set(rel.from_entity_id, []);
+			relMap.get(rel.from_entity_id).push({
+				entity_id: rel.target.id,
+				entity_name: rel.target.name,
+				entity_type: rel.target.type,
+				type: 'mention',
+			});
+		});
+
+		sortedEvents.forEach((evt) => {
+			evt.relationships = relMap.get(evt.id) || [];
+		});
+
+		// 4. NEW: Fetch Direct Session Relationships (Session -> Entity)
+		const { data: directRels } = await supabase
+			.from('entity_relationships')
+			.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
+			.eq('from_entity_id', id);
+
+		const sessionRelationships = (directRels || []).map((rel) => ({
+			entity_id: rel.target.id,
+			entity_name: rel.target.name,
+			entity_type: rel.target.type,
+			type: rel.relationship_type, // e.g. "visited", "discussed"
+		}));
 
 		return {
 			id: data.id,
 			name: data.title,
 			type: 'session',
-			description: data.narrative || data.summary,
+			description: getAttributeValue(meta.attributes, 'Summary') || data.narrative,
 			attributes: {
-				Session: data.session_number,
-				Date: data.session_date,
-				Summary: data.summary,
+				...meta.attributes,
+				Session: meta.session_number,
+				Date: meta.session_date,
 			},
-			relationships: [],
+			relationships: sessionRelationships, // Now populated with direct links
 			events: sortedEvents || [],
 		};
 	}
 
-	const { data, error } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
+	// --- STANDARD ENTITY FETCH ---
+	const { data, error: entityError } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
+	if (entityError) throw entityError;
 
-	if (error) throw error;
-
-	// --- FIX: Fetch Quest Specifics (Status + Objectives) ---
+	// Quest Specifics
 	if (type === 'quest') {
-		const [statusRes, objectivesRes] = await Promise.all([
-			supabase.from('quests').select('status').eq('id', id).single(),
-			supabase.from('quest_objectives').select('*').eq('quest_id', id).order('order_index', { ascending: true }),
-		]);
-
-		// Merge Status
-		if (statusRes.data) {
-			data.status = statusRes.data.status;
-		}
-
-		// Merge Objectives
-		if (objectivesRes.data) {
-			data.objectives = objectivesRes.data;
-		}
+		const { data: objectives } = await supabase
+			.from('quest_objectives')
+			.select('*')
+			.eq('quest_id', id)
+			.order('order_index', { ascending: true });
+		if (objectives) data.objectives = objectives;
 	}
 
-	// Handle events formatting
+	// Event Processing
 	let events = data.events;
 	if (events && typeof events === 'object' && !Array.isArray(events)) {
 		events = Object.values(events).flat();
@@ -169,15 +210,33 @@ export const getWikiEntry = async (id, type) => {
 
 	if (events && Array.isArray(events) && events.length > 0) {
 		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
-
 		if (sessionIds.length > 0) {
 			const { data: sessions, error: sessionsError } = await supabase
 				.from('sessions')
-				.select('id, session_number')
+				.select('id')
 				.in('id', sessionIds);
 
-			if (!sessionsError && sessions) {
-				const sessionMap = new Map(sessions.map((s) => [s.id, s.session_number]));
+			if (!sessionsError && sessions && sessions.length > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, name, value')
+					.in(
+						'entity_id',
+						sessions.map((s) => s.id)
+					);
+
+				const attrMap = new Map();
+				(attrs || []).forEach((a) => {
+					if (!attrMap.has(a.entity_id)) attrMap.set(a.entity_id, []);
+					attrMap.get(a.entity_id).push(a);
+				});
+
+				const sessionMap = new Map();
+				sessions.forEach((s) => {
+					const sAttrs = attrMap.get(s.id) || [];
+					const meta = extractSessionMeta(s, sAttrs);
+					sessionMap.set(s.id, meta.session_number);
+				});
 
 				events = events.map((event) => ({
 					...event,
@@ -193,11 +252,9 @@ export const getWikiEntry = async (id, type) => {
 					}
 					return (a.order || 0) - (b.order || 0);
 				});
-
 				data.events = events;
 			}
 		}
 	}
-
 	return data;
 };

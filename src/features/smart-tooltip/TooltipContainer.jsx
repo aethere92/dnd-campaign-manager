@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { TooltipCard } from './components/TooltipCard';
+import { getAttributeValue } from '../../utils/entity/attributeParser';
 
 export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 	// 1. PREPARE VARIABLES
@@ -16,18 +17,25 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 			if (!targetId) return null;
 
 			if (targetType === 'session') {
-				const { data } = await supabase
-					.from('sessions')
-					.select('title, session_number, session_date, summary')
-					.eq('id', targetId)
-					.single();
+				// 1. Session data (No summary)
+				const { data } = await supabase.from('sessions').select('title, narrative').eq('id', targetId).single();
+
+				// 2. Attributes data
+				const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', targetId);
+
+				const attrs = (attributes || []).reduce((acc, c) => ({ ...acc, [c.name]: c.value }), {});
+				const num = getAttributeValue(attrs, ['session_number', 'Session']);
+				const date = getAttributeValue(attrs, ['session_date', 'Date']);
+				const summaryAttr = getAttributeValue(attrs, 'Summary');
+
 				return {
 					name: data.title,
 					type: 'session',
-					description: data.summary,
-					attributes: { Session: data.session_number, Date: data.session_date },
+					description: summaryAttr || data.narrative,
+					attributes: { Session: num, Date: date },
 				};
 			}
+
 			const { data, error } = await supabase
 				.from('entity_complete_view')
 				.select('name, type, description, attributes')
@@ -45,14 +53,16 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 	if (!target) return null;
 
 	// Detect if this is a mobile/touch device
-	const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+	// FIX: Synced breakpoint with EntityLink (1024px) to ensure consistent behavior on tablets
+	const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024;
 
 	return createPortal(
 		<>
 			{/* Mobile backdrop - tap outside to close */}
 			{isMobile && target.isPinned && (
 				<div
-					className='fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]'
+					// CHANGED: Removed backdrop-blur-sm, kept dimming
+					className='fixed inset-0 bg-black/20 z-[9998]'
 					onClick={(e) => {
 						e.stopPropagation();
 						onMouseLeave && onMouseLeave();

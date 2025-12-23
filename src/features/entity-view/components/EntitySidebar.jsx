@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Tag, Network, Shield, Activity } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
@@ -62,6 +63,18 @@ export const EntitySidebar = ({ traits, connections }) => {
 	const textTraits = traits.filter((t) => t.displayType === 'text');
 	const specialTraits = traits.filter((t) => t.displayType !== 'text');
 
+	// Sort connections: Type (A-Z) -> Name (A-Z)
+	const sortedConnections = useMemo(() => {
+		if (!connections) return [];
+		return [...connections].sort((a, b) => {
+			const typeA = a.typeLabel || '';
+			const typeB = b.typeLabel || '';
+			const compareType = typeA.localeCompare(typeB);
+			if (compareType !== 0) return compareType;
+			return (a.name || '').localeCompare(b.name || '');
+		});
+	}, [connections]);
+
 	return (
 		<div className='space-y-6 font-sans'>
 			{/* 1. Standard Traits Table */}
@@ -111,30 +124,35 @@ export const EntitySidebar = ({ traits, connections }) => {
 				</div>
 			)}
 
-			{/* 3. Connections - MIGRATED to use EntityIcon */}
-			{connections.length > 0 && (
+			{/* 3. Connections */}
+			{sortedConnections.length > 0 && (
 				<div>
 					<h3 className='text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
 						<Network size={10} /> Connections
 					</h3>
 					<div className='space-y-2'>
-						{connections.map((rel, i) => (
-							<div
+						{sortedConnections.map((rel, i) => (
+							<EntityLink
 								key={i}
+								id={rel.id}
+								type={rel.typeLabel}
+								inline={true} // Cleaner DOM structure (A > SPAN)
+								showIcon={false} // Custom icon rendering
 								className={clsx(
-									'group flex items-center justify-between p-2 rounded-lg border bg-white/60 transition-all cursor-pointer',
-									'border-stone-200 hover:border-amber-300 hover:shadow-sm hover:bg-white',
+									// Layout & Box Styling (Overrides EntityLink defaults with !)
+									'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-white/60 !transition-all !cursor-pointer !no-underline',
+									'!border-stone-200 hover:!border-amber-300 hover:!shadow-sm hover:!bg-white',
 									rel.theme.hover
 								)}>
+								{/* Left: Icon + Name */}
 								<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-									{/* MIGRATED: Using EntityIcon component */}
 									<EntityIcon type={rel.typeLabel} size={14} className='opacity-80 group-hover:opacity-100' />
 									<span className='text-sm font-semibold text-stone-700 truncate group-hover:text-foreground transition-colors'>
 										{rel.name}
 									</span>
 								</div>
 
-								{/* Badge */}
+								{/* Right: Role Badge */}
 								<span
 									className={clsx(
 										'shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-2 max-w-[45%] truncate',
@@ -142,7 +160,7 @@ export const EntitySidebar = ({ traits, connections }) => {
 									)}>
 									{rel.role}
 								</span>
-							</div>
+							</EntityLink>
 						))}
 					</div>
 				</div>

@@ -12,5 +12,5 @@ export const StatusIcon = ({ entity }) => {
 
 	const { Icon, className } = getStatusIcon(statusValue, entity.type);
 
-	return <Icon size={10} className={className} strokeWidth={2.5} />;
+	return <Icon size={12} className={className} strokeWidth={2.5} />;
 };

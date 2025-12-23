@@ -2,7 +2,7 @@ import { Calendar } from 'lucide-react';
 import { clsx } from 'clsx';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
 
-export const EntityHistory = ({ events, showSession = true, fullHeight = false }) => {
+export const EntityHistory = ({ events, showSession = true, fullHeight = true }) => {
 	if (!events || events.length === 0) return null;
 
 	return (

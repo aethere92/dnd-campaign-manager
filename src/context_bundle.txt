@@ -775,7 +775,7 @@ export default function EntityLink({
 						customIconUrl={customIconUrl}
 						size={14}
 						inline={true}
-						className='self-center opacity-80'
+						className='self-center rounded-full'
 					/>
 				)}
 				<span className='leading-snug'>{children}</span>
@@ -2318,30 +2318,24 @@ export function useEntityViewModel(entity) {
 --- END OF features\entity-view\useEntityViewModel.js ---
 
 --- FILE: features\entity-view\WikiEntityView.jsx ---
-/**
- * WikiEntityView Component (Refactored v3)
- * Main entity display component - now just header + layout selection
- *
- * Previously: 120 lines with embedded layout logic
- * Now: 30 lines of composition
- */
-
+// features/entity-view/WikiEntityView.jsx
 import { useEntityViewModel } from './useEntityViewModel';
 import { EntityHeader } from './components/EntityHeader';
 import StandardLayout from './layouts/StandardLayout';
 import SessionLayout from './layouts/SessionLayout';
 
-/**
- * Main entity view component
- * @param {Object} entity - Raw entity data
- */
 export default function WikiEntityView({ entity }) {
 	const viewModel = useEntityViewModel(entity);
 
 	if (!viewModel) return null;
 
-	// Select appropriate layout based on entity type
-	const LayoutComponent = viewModel.layoutMode === 'tabs' ? SessionLayout : StandardLayout;
+	// Determine layout based on entity type
+	let LayoutComponent;
+	if (entity?.type === 'session') {
+		LayoutComponent = SessionLayout;
+	} else {
+		LayoutComponent = StandardLayout;
+	}
 
 	return (
 		<div className='pb-16 animate-in fade-in duration-300 min-h-full'>
@@ -2364,6 +2358,20 @@ import { EntityHistory } from './EntityHistory';
 
 // Re-exporting History for use in tabs if needed by parent
 export { EntityHistory } from './EntityHistory';
+
+/**
+ * Thematic separator for sections
+ * "Line - Diamond - Line" style
+ */
+const SectionDivider = () => (
+	<div className='flex items-center gap-4 my-6 opacity-80 select-none'>
+		<div className='h-px bg-border flex-1' />
+		<div className='flex-shrink-0 text-accent/50'>
+			<Diamond size={10} fill='currentColor' />
+		</div>
+		<div className='h-px bg-border flex-1' />
+	</div>
+);
 
 export const EntityBody = ({ summary, sections, history, objectives }) => {
 	return (
@@ -2444,8 +2452,9 @@ export const EntityBody = ({ summary, sections, history, objectives }) => {
 				// --- RENDERER: LISTS (Features, Traits, Inventory, etc) ---
 				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
 					return (
-						<div key={prop.key} className='mt-5 pt-2 border-t border-border'>
-							<h3 className='capitalize text-lg mt-4 font-serif text-accent mb-2 font-bold'>{prop.key}</h3>
+						<div key={prop.key}>
+							<SectionDivider />
+							<h3 className='capitalize text-lg mt-0 font-serif text-accent mb-2 font-bold'>{prop.key}</h3>
 
 							{/* CLEAN LIST DESIGN */}
 							<ul className='grid grid-cols-1 gap-1.5 pl-1 list-none my-0'>
@@ -2469,8 +2478,9 @@ export const EntityBody = ({ summary, sections, history, objectives }) => {
 
 				// --- RENDERER: STANDARD TEXT SECTIONS ---
 				return (
-					<div key={prop.key} className='mt-4 pt-2 border-t border-border'>
-						<h3 className='capitalize text-lg font-serif text-accent mb-1 mt-2 inline-block pb-0.5'>{prop.key}</h3>
+					<div key={prop.key}>
+						<SectionDivider />
+						<h3 className='capitalize text-lg font-serif text-accent mb-1 mt-0 inline-block pb-0.5'>{prop.key}</h3>
 						<div className='mt-0.5'>
 							<SmartMarkdown>{prop.value}</SmartMarkdown>
 						</div>
@@ -2480,8 +2490,9 @@ export const EntityBody = ({ summary, sections, history, objectives }) => {
 
 			{/* History Section (Embedded) */}
 			{history && history.length > 0 && (
-				<div className='mt-4 pt-2 border-t border-border'>
-					<h3 className='font-serif text-lg mt-4 font-bold text-foreground mb-3 flex items-center gap-2'>
+				<div className='mt-2'>
+					<SectionDivider />
+					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
 						<History size={16} className='text-accent' /> Events
 					</h3>
 					<EntityHistory events={history} />
@@ -2924,31 +2935,23 @@ export const useEntitySidebar = (entity, traits) => {
 
 export { default as StandardLayout } from './StandardLayout';
 export { default as SessionLayout } from './SessionLayout';
+export { default as EncounterLayout } from './EncounterLayout';
 
 --- END OF features\entity-view\layouts\index.js ---
 
 --- FILE: features\entity-view\layouts\SessionLayout.jsx ---
-/**
- * SessionLayout Component
- * Layout for sessions (tabbed interface with ToC)
- */
-
+// features/entity-view/layouts/SessionLayout.jsx
 import { useMemo } from 'react';
-import { BookOpen, FileText, History } from 'lucide-react';
+import { BookOpen, History } from 'lucide-react';
 import TabContainer from '../../../components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '../components/EntityBody';
 import { TableOfContents } from '../../table-of-contents/TableOfContents';
 import { extractHeaders } from '../../../utils/text/markdownHelpers';
 import { ThreeColumnLayout } from '../../../components/layout/SplitView';
 
-/**
- * Session-specific tabbed layout
- * @param {Object} viewModel - Entity view model
- */
 export default function SessionLayout({ viewModel }) {
 	if (!viewModel) return null;
 
-	// Extract ToC items from narrative
 	const tocItems = useMemo(() => {
 		if (viewModel.content.narrative) {
 			return extractHeaders(viewModel.content.narrative);
@@ -2956,7 +2959,6 @@ export default function SessionLayout({ viewModel }) {
 		return [];
 	}, [viewModel.content.narrative]);
 
-	// Render narrative tab content
 	const renderNarrative = () => (
 		<ThreeColumnLayout
 			left={null}
@@ -2970,7 +2972,6 @@ export default function SessionLayout({ viewModel }) {
 					<TableOfContents
 						items={tocItems}
 						className='ml-4'
-						// Custom breakpoint: 1650px needed to fit Sidebar + 3Col Grid without overflow
 						visibilityClass='hidden min-[1650px]:block'
 						mobileToggleClass='min-[1650px]:hidden'
 					/>
@@ -2979,14 +2980,6 @@ export default function SessionLayout({ viewModel }) {
 		/>
 	);
 
-	// Render summary tab content
-	const renderSummary = () => (
-		<div className='max-w-3xl mx-auto px-4 sm:px-6 py-10'>
-			<EntityBody summary={viewModel.content.summary} sections={viewModel.content.sections} history={null} />
-		</div>
-	);
-
-	// Render timeline tab content
 	const renderTimeline = () => (
 		<div className='max-w-3xl mx-auto px-4 sm:px-6 py-10'>
 			<EntityHistory events={viewModel.content.history} fullHeight={true} />
@@ -3014,7 +3007,6 @@ export default function SessionLayout({ viewModel }) {
 				sticky
 			/>
 
-			{/* Mobile ToC Drawer */}
 			{tocItems.length > 0 && (
 				<div className='xl:hidden'>
 					<TableOfContents items={tocItems} />
@@ -4275,8 +4267,15 @@ export default function RelationshipGraph() {
 	}
 
 	return (
-		// CHANGED: 'bg-muted' -> 'bg-background' to inherit the D&D texture
-		<div className='h-full w-full relative bg-background overflow-hidden'>
+		// IMPLEMENTATION: Constellation Background via CSS radial-gradient
+		<div
+			className='h-full w-full relative bg-background overflow-hidden'
+			style={{
+				backgroundImage:
+					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			{/* Overlay UI */}
 			<GraphLegend />
 
@@ -4329,6 +4328,13 @@ import './types';
 
 const FALLBACK_ICON_PATH = 'images/icons';
 
+// --- INK THEME PALETTE ---
+const INK_COLORS = {
+	ALLY: '#4d7c0f', // Forest Green Ink
+	ENEMY: '#7f1d1d', // Dried Blood Red
+	NEUTRAL: '#78716c', // Warm Stone/Sepia
+};
+
 export function useGraphViewModel() {
 	const { campaignId } = useCampaign();
 
@@ -4356,6 +4362,7 @@ export function useGraphViewModel() {
 		const entityIds = new Set(entities.map((e) => e.id));
 		const connectedNodeIds = new Set();
 		const uniqueEdgeTracker = new Set();
+		const degreeMap = new Map(); // Track connection counts
 
 		// Pass 1: Generate Edges first to determine connectivity
 		entities.forEach((entity) => {
@@ -4374,13 +4381,16 @@ export function useGraphViewModel() {
 				connectedNodeIds.add(entity.id);
 				connectedNodeIds.add(rel.entity_id);
 
-				// Determine Color based on Relationship Rank (Ally vs Enemy)
-				// Using centralized helper instead of hardcoded strings
-				const rank = getAffinityRank(rel.type);
-				let edgeColor = '#e5e7eb'; // default gray-200
+				// Increment Degrees
+				degreeMap.set(entity.id, (degreeMap.get(entity.id) || 0) + 1);
+				degreeMap.set(rel.entity_id, (degreeMap.get(rel.entity_id) || 0) + 1);
 
-				if (rank === 1) edgeColor = '#22c55e'; // Ally (Green)
-				if (rank === 3) edgeColor = '#ef4444'; // Enemy (Red)
+				// Determine Color based on Relationship Rank
+				const rank = getAffinityRank(rel.type);
+				let edgeColor = INK_COLORS.NEUTRAL;
+
+				if (rank === 1) edgeColor = INK_COLORS.ALLY;
+				if (rank === 3) edgeColor = INK_COLORS.ENEMY;
 
 				edges.push({
 					group: 'edges',
@@ -4396,22 +4406,25 @@ export function useGraphViewModel() {
 
 		// Pass 2: Generate Nodes (Only if they are connected)
 		entities.forEach((entity) => {
-			// FILTER: If node is not in our connected set, skip it
 			if (!connectedNodeIds.has(entity.id)) return;
 
 			const config = getEntityConfig(entity.type);
-
-			// USE CENTRALIZED UTILITY for images
 			const finalIconUrl = resolveImageUrl(entity.attributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
+			const degree = degreeMap.get(entity.id) || 1;
+
+			// THRESHOLD: Nodes with < 3 connections are "minor" (dots)
+			const isMinor = degree < 3;
 
 			nodes.push({
 				group: 'nodes',
+				classes: isMinor ? 'minor' : 'major',
 				data: {
 					id: entity.id,
 					label: entity.name,
 					color: config.color,
 					image: finalIconUrl,
 					type: entity.type,
+					degree: degree, // For dynamic sizing
 				},
 			});
 		});
@@ -4426,12 +4439,18 @@ export function useGraphViewModel() {
 
 --- FILE: features\relationship-graph\components\CytoscapeCanvas.jsx ---
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
+import fcose from 'cytoscape-fcose'; // IMPLEMENTATION: fCoSE
 import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '../config/graphStyles';
+
+// Register the layout extension
+cytoscape.use(fcose);
 
 export const CytoscapeCanvas = ({ elements }) => {
 	const containerRef = useRef(null);
 	const cyRef = useRef(null);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!containerRef.current) return;
@@ -4442,10 +4461,10 @@ export const CytoscapeCanvas = ({ elements }) => {
 			elements: [],
 			style: CYTOSCAPE_STYLES,
 			layout: LAYOUT_CONFIG,
-			wheelSensitivity: 0.6,
+			wheelSensitivity: 3,
 			minZoom: 0.2,
 			maxZoom: 3,
-			autoungrabify: true, // Prevent moving
+			autoungrabify: false, // Allow moving nodes in fCoSE
 		});
 
 		const cy = cyRef.current;
@@ -4459,35 +4478,41 @@ export const CytoscapeCanvas = ({ elements }) => {
 			// Clear previous states
 			cy.elements().removeClass('highlighted dimmed');
 
-			// Get connections
 			const connectedEdges = node.connectedEdges();
 			const connectedNodes = connectedEdges.connectedNodes();
 
-			// Dim everything that isn't connected to this node
-			// logic: (All Elements) - (Node + Neighbors + Connecting Edges) -> Add Class Dimmed
+			// Dim everything else
 			cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
 
-			// Highlight specific elements
+			// Highlight selection
 			node.addClass('highlighted');
 			connectedNodes.addClass('highlighted');
 			connectedEdges.addClass('highlighted');
 		});
 
-		// 2. Click Background: Reset View
+		// 2. Click Background: Reset
 		cy.on('tap', (evt) => {
 			if (evt.target === cy) {
 				cy.elements().removeClass('highlighted dimmed');
 			}
 		});
 
-		// Cleanup
+		// 3. IMPLEMENTATION: Double Click to Navigate
+		cy.on('dblclick', 'node', (evt) => {
+			const node = evt.target;
+			const { id, type } = node.data();
+			if (id && type) {
+				navigate(`/wiki/${type}/${id}`);
+			}
+		});
+
 		return () => {
 			if (cyRef.current) {
 				cyRef.current.destroy();
 				cyRef.current = null;
 			}
 		};
-	}, []);
+	}, [navigate]);
 
 	// 2. Handle Data Updates
 	useEffect(() => {
@@ -4501,8 +4526,8 @@ export const CytoscapeCanvas = ({ elements }) => {
 		});
 
 		if (elements.length > 0) {
+			// Run fCoSE layout
 			cy.layout(LAYOUT_CONFIG).run();
-			cy.fit(elements, 50);
 		}
 	}, [elements]);
 
@@ -4516,7 +4541,7 @@ import { ENTITY_CONFIG } from '../../../config/entity/entityConfig'; // Adjust p
 
 export const GraphLegend = () => {
 	// Filter out the 'default' config to keep legend clean
-	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity');
+	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity' && c.type !== 'session');
 
 	return (
 		<div className='absolute top-4 left-4 z-10 bg-background/90 p-3 rounded shadow border border-border backdrop-blur pointer-events-none select-none'>
@@ -4537,6 +4562,7 @@ export const GraphLegend = () => {
 
 --- FILE: features\relationship-graph\config\graphStyles.js ---
 export const CYTOSCAPE_STYLES = [
+	// --- MAJOR NODES (Hubs/VIPs) ---
 	{
 		selector: 'node',
 		style: {
@@ -4544,78 +4570,104 @@ export const CYTOSCAPE_STYLES = [
 			'border-color': 'data(color)',
 			'background-image': 'data(image)',
 			'background-fit': 'cover',
-			'border-width': 3,
-			width: 60,
-			height: 60,
+			'border-width': 2,
+			width: 'mapData(degree, 3, 20, 30, 50)',
+			height: 'mapData(degree, 3, 20, 30, 50)',
 			'font-family': 'Inter, sans-serif',
-			'font-size': 12,
+			'font-size': 14,
+			'font-weight': 'bold',
 			'text-valign': 'bottom',
-			'text-margin-y': 8,
-			'text-background-color': '#ffffff',
-			'text-background-opacity': 0.7,
-			'text-background-padding': 2,
+			'text-margin-y': 6,
+			'text-background-color': '#fdfbf7',
+			'text-background-opacity': 0.8,
+			'text-background-padding': 3,
 			'text-background-shape': 'roundrectangle',
-			color: '#1f2937', // gray-800
-			'transition-property': 'opacity',
+			color: '#1f2937',
+			'text-wrap': 'ellipsis',
+			'text-max-width': 100,
+			'transition-property': 'opacity, width, height',
 			'transition-duration': '0.3s',
 		},
 	},
+	// --- MINOR NODES (Dots) ---
+	{
+		selector: 'node.minor',
+		style: {
+			// ADJUSTED: Increased from 14 to 20 for better visibility
+			width: 20,
+			height: 20,
+			// 'background-image': 'none', // Hide Icon
+			'background-color': 'data(color)', // Use entity color as fill
+			'border-width': 1,
+			'border-color': 'data(color)',
+			'font-size': 10,
+			'text-margin-y': 4,
+			'text-background-opacity': 0, // No background for text to reduce clutter
+			color: '#4b5563', // Gray text
+		},
+	},
+	// --- EDGES ---
 	{
 		selector: 'edge',
 		style: {
 			'line-color': 'data(color)',
 			'target-arrow-color': 'data(color)',
-			'target-arrow-shape': 'triangle',
-			width: 2,
 			'curve-style': 'bezier',
-			'arrow-scale': 1.2,
-			opacity: 0.6,
-			'transition-property': 'opacity, width',
-			'transition-duration': '0.3s',
+			width: 1,
+			opacity: 0.2, // Slightly more transparent to handle overlap
+			'arrow-scale': 0.6,
+			'target-arrow-shape': 'triangle',
 		},
 	},
 	// --- INTERACTION STATES ---
 	{
 		selector: '.dimmed',
 		style: {
-			opacity: 0.1, // Fades out unconnected elements
+			opacity: 0.2,
 			'text-opacity': 0.1,
 			'border-opacity': 0.1,
+			'background-opacity': 0.1,
 		},
 	},
 	{
 		selector: '.highlighted',
 		style: {
-			opacity: 1,
 			'z-index': 9999,
+			'overlay-color': '#d97706', // Amber glow
+			'overlay-padding': 2,
+			'overlay-opacity': 0.2,
+			'text-wrap': 'wrap',
 		},
 	},
 	{
 		selector: 'edge.highlighted',
 		style: {
-			width: 4, // Thicker line for highlighted connections
+			width: 2,
 			opacity: 1,
-		},
-	},
-	{
-		selector: 'node.highlighted',
-		style: {
-			'border-width': 5, // Thicker border for highlighted nodes
-			'overlay-opacity': 0,
 		},
 	},
 ];
 
+// PERFORMANCE: Switch to fCoSE layout
 export const LAYOUT_CONFIG = {
-	name: 'cose',
-	animate: false,
-	nodeDimensionsIncludeLabels: true,
+	name: 'fcose',
+	quality: 'default',
+	randomize: false,
+	animate: true,
+	animationDuration: 1000,
+	fit: true,
 	padding: 50,
-	componentSpacing: 100,
-	nodeRepulsion: (node) => 20000,
-	idealEdgeLength: (edge) => 200,
-	edgeElasticity: (edge) => 100,
-	nestingFactor: 5,
+	nodeDimensionsIncludeLabels: true,
+	// Physics settings - INCREASED SPACING
+	nodeRepulsion: (node) => 20000 * (node.data('degree') || 1), // Stronger repulsion
+	idealEdgeLength: (edge) => 300, // Longer edges
+	edgeElasticity: (edge) => 0.45,
+	nestingFactor: 0.1,
+	gravity: 0.8,
+	numIter: 2500,
+	tile: true,
+	tilingPaddingVertical: 20,
+	tilingPaddingHorizontal: 20,
 };
 
 --- END OF features\relationship-graph\config\graphStyles.js ---
@@ -5634,6 +5686,7 @@ export {};
 --- END OF features\timeline\types.js ---
 
 --- FILE: features\timeline\useTimelineViewModel.js ---
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTimeline } from '../../services/timeline'; // Adjust path based on your root
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
@@ -5652,29 +5705,43 @@ export function useTimelineViewModel() {
 		enabled: !!campaignId,
 	});
 
-	const sessions = (data || []).map((session) => {
-		// Sort events safely
-		const sortedEvents = (session.events || []).sort((a, b) => a.event_order - b.event_order);
+	const sessions = useMemo(() => {
+		return (data || []).map((session) => {
+			// Sort events safely: Use spread to avoid mutating read-only cache, handle nulls
+			const sortedEvents = [...(session.events || [])].sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
 
-		// Map events to View Model
-		const events = sortedEvents.map((event) => ({
-			id: event.id,
-			title: event.title,
-			typeLabel: event.event_type?.replace(/_/g, ' ') || 'Event',
-			description: event.description,
-			location: event.location ? { name: event.location.name } : null,
-			npc: event.npc ? { name: event.npc.name } : null,
-			style: getEventStyle(event.event_type),
-		}));
+			// Map events to View Model
+			const events = sortedEvents.map((event) => {
+				// TRANSFORMATION: Convert relationships to tags
+				const tags = (event.relationships || [])
+					.map((rel) => {
+						if (!rel.target) return null;
+						return {
+							name: rel.target.name,
+							type: rel.target.type?.toLowerCase() || 'default',
+						};
+					})
+					.filter(Boolean); // Remove nulls
 
-		return {
-			id: session.id,
-			number: session.session_number,
-			dateLabel: session.session_date || 'Unknown Date',
-			title: session.title,
-			events,
-		};
-	});
+				return {
+					id: event.id,
+					title: event.title,
+					typeLabel: event.event_type?.replace(/_/g, ' ') || 'Event',
+					description: event.description,
+					tags, // New property containing all connected entities
+					style: getEventStyle(event.event_type),
+				};
+			});
+
+			return {
+				id: session.id,
+				number: session.session_number,
+				dateLabel: session.session_date || 'Unknown Date',
+				title: session.title,
+				events,
+			};
+		});
+	}, [data]);
 
 	return { sessions, isLoading };
 }
@@ -5683,8 +5750,45 @@ export function useTimelineViewModel() {
 
 --- FILE: features\timeline\components\TimelineEvent.jsx ---
 import { clsx } from 'clsx';
-import { MapPin, User } from 'lucide-react';
+import { MapPin, User, Flag, Scroll, Skull, Box } from 'lucide-react';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
+
+// Helper to get icon and style for tags based on entity type
+const getTagConfig = (type) => {
+	switch (type) {
+		case 'location':
+			return {
+				Icon: MapPin,
+				className: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+			};
+		case 'npc':
+		case 'character':
+			return {
+				Icon: User,
+				className: 'text-amber-600 bg-amber-50 border-amber-100',
+			};
+		case 'faction':
+			return {
+				Icon: Flag,
+				className: 'text-purple-600 bg-purple-50 border-purple-100',
+			};
+		case 'quest':
+			return {
+				Icon: Scroll,
+				className: 'text-blue-600 bg-blue-50 border-blue-100',
+			};
+		case 'encounter':
+			return {
+				Icon: Skull,
+				className: 'text-orange-600 bg-orange-50 border-orange-100',
+			};
+		default:
+			return {
+				Icon: Box,
+				className: 'text-gray-500 bg-gray-100 border-gray-200',
+			};
+	}
+};
 
 export const TimelineEvent = ({ event }) => {
 	const { Icon, container } = event.style;
@@ -5715,19 +5819,24 @@ export const TimelineEvent = ({ event }) => {
 					</div>
 				)}
 
-				{/* Tags */}
-				<div className='flex flex-wrap gap-2 mt-2'>
-					{event.location && (
-						<span className='inline-flex items-center gap-1 text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 cursor-default'>
-							<MapPin size={10} /> {event.location.name}
-						</span>
-					)}
-					{event.npc && (
-						<span className='inline-flex items-center gap-1 text-[10px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 cursor-default'>
-							<User size={10} /> {event.npc.name}
-						</span>
-					)}
-				</div>
+				{/* Dynamic Tags from Relationships */}
+				{event.tags && event.tags.length > 0 && (
+					<div className='flex flex-wrap gap-2 mt-2'>
+						{event.tags.map((tag, idx) => {
+							const { Icon: TagIcon, className } = getTagConfig(tag.type);
+							return (
+								<span
+									key={`${tag.name}-${idx}`}
+									className={clsx(
+										'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default',
+										className
+									)}>
+									<TagIcon size={10} /> {tag.name}
+								</span>
+							);
+						})}
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -7225,11 +7334,10 @@ export const getCampaigns = async () => {
 --- END OF services\campaigns.js ---
 
 --- FILE: services\entities.js ---
+// services/entities.js
 import { supabase } from '../lib/supabase';
 
-/**
- * Fetches sessions separately since they're not in entity_complete_view
- */
+// ... existing getSessions ...
 export const getSessions = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('sessions')
@@ -7248,10 +7356,7 @@ export const getSessions = async (campaignId) => {
 	}));
 };
 
-/**
- * Universal fetch using the View.
- * Returns everything (attributes, relationships) so the UI has full context.
- */
+// ... existing getCompleteEntities ...
 const getCompleteEntities = async (campaignId, type) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
@@ -7264,10 +7369,7 @@ const getCompleteEntities = async (campaignId, type) => {
 	return data;
 };
 
-/**
- * Quests need the specific 'status' column from the quests table,
- * merged with attributes from the view (for 'Quest Type').
- */
+// ... existing getQuestsWithStatus ...
 const getQuestsWithStatus = async (campaignId) => {
 	// 1. Fetch Entities from View (for attributes/description)
 	const { data: entities, error } = await supabase
@@ -7291,9 +7393,7 @@ const getQuestsWithStatus = async (campaignId) => {
 	}));
 };
 
-/**
- * Strategy map
- */
+// ... existing strategy map ...
 const entityStrategies = {
 	session: getSessions,
 	quest: getQuestsWithStatus,
@@ -7307,10 +7407,7 @@ export const getEntities = async (campaignId, type) => {
 	return strategy(campaignId, type);
 };
 
-// ... (Rest of file: getGraphData, getEntityIndex, getWikiEntry - keep as is) ...
-/**
- * Fetches only the necessary data for the Network Graph.
- */
+// ... existing getGraphData ...
 export const getGraphData = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
@@ -7324,9 +7421,7 @@ export const getGraphData = async (campaignId) => {
 	return data || [];
 };
 
-/**
- * Fetches a lightweight list of names/IDs for auto-linking text.
- */
+// ... existing getEntityIndex ...
 export const getEntityIndex = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
@@ -7348,6 +7443,9 @@ export const getWikiEntry = async (id, type) => {
 
 		if (error) throw error;
 
+		// FIX: Explicitly sort events by event_order
+		const sortedEvents = (data.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
+
 		return {
 			id: data.id,
 			name: data.title,
@@ -7359,7 +7457,7 @@ export const getWikiEntry = async (id, type) => {
 				Summary: data.summary,
 			},
 			relationships: [],
-			events: data.events || [],
+			events: sortedEvents || [],
 		};
 	}
 
@@ -7482,9 +7580,10 @@ export const globalSearch = async (campaignId, query) => {
 import { supabase } from '../lib/supabase';
 
 export const getTimeline = async (campaignId) => {
-	// We use Supabase relational joins to fetch everything in one network request.
-	// Syntax: alias:foreign_table_name ( columns )
-	const { data, error } = await supabase
+	// 1. Fetch Sessions and basic Event data
+	// NOTE: We cannot deep-join relationships here because PostgREST doesn't see a FK
+	// between 'session_events' and 'entity_relationships' directly.
+	const { data: sessions, error: sessionError } = await supabase
 		.from('sessions')
 		.select(
 			`
@@ -7499,26 +7598,62 @@ export const getTimeline = async (campaignId) => {
                 title, 
                 description, 
                 event_type, 
-                event_order,
-                npc:npcs ( name ),
-                location:locations ( name )
+                event_order
             )
         `
 		)
 		.eq('campaign_id', campaignId)
 		.order('session_number', { ascending: true });
 
-	if (error) throw error;
+	if (sessionError) throw sessionError;
 
-	// Supabase nested ordering can sometimes be finicky depending on the adapter version,
-	// so we perform a lightweight sort on the events array in JavaScript to guarantee order.
-	data.forEach((session) => {
+	// 2. Extract all Event IDs to batch-fetch their tags
+	const allEvents = sessions.flatMap((s) => s.events || []);
+	const eventIds = allEvents.map((e) => e.id);
+
+	if (eventIds.length === 0) return sessions;
+
+	// 3. Fetch Relationships (Tags) for these events
+	// We want outgoing relationships: Event -> NPC/Location
+	const { data: relationships, error: relError } = await supabase
+		.from('entity_relationships')
+		.select(
+			`
+            from_entity_id,
+            target:entities!to_entity_id ( name, type )
+        `
+		)
+		.in('from_entity_id', eventIds);
+
+	if (relError) {
+		console.error('Failed to load timeline tags:', relError);
+		// Return sessions without tags rather than crashing
+		return sessions;
+	}
+
+	// 4. Map relationships by Event ID for O(1) lookup
+	const relMap = new Map();
+	relationships.forEach((rel) => {
+		if (!relMap.has(rel.from_entity_id)) {
+			relMap.set(rel.from_entity_id, []);
+		}
+		relMap.get(rel.from_entity_id).push(rel);
+	});
+
+	// 5. Attach relationships to events
+	sessions.forEach((session) => {
 		if (session.events && session.events.length > 0) {
-			session.events.sort((a, b) => a.event_order - b.event_order);
+			// Sort events while we're here
+			session.events.sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
+
+			// Inject relationships
+			session.events.forEach((event) => {
+				event.relationships = relMap.get(event.id) || [];
+			});
 		}
 	});
 
-	return data;
+	return sessions;
 };
 
 --- END OF services\timeline.js ---

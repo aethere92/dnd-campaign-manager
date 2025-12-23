@@ -92,7 +92,7 @@ export const getEntityDescription = (entity) => {
 
 	// Sessions might use summary
 	if (isSession(entity)) {
-		return entity.summary || entity.narrative || null;
+		return entity?.summary || entity.narrative || null;
 	}
 
 	// Characters might use background

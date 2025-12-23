@@ -2,8 +2,23 @@ import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
 import EntityBadge from '../../../components/entity/EntityBadge';
 
+// Helper to determine priority badge color
+const getPriorityColor = (priority) => {
+	const p = priority?.toLowerCase() || '';
+	if (p === 'high' || p === 'urgent' || p === 'critical') {
+		return 'border-orange-200 text-orange-800 bg-orange-50';
+	}
+	if (p === 'medium' || p === 'normal') {
+		return 'border-blue-200 text-blue-800 bg-blue-50';
+	}
+	if (p === 'low') {
+		return 'border-slate-200 text-slate-700 bg-slate-50';
+	}
+	return 'border-stone-200 text-stone-700 bg-stone-50';
+};
+
 export const EntityHeader = ({ data }) => {
-	const { title, typeLabel, imageUrl, avatarUrl, status, theme, extraTags } = data;
+	const { title, typeLabel, imageUrl, avatarUrl, status, priority, theme, extraTags } = data;
 
 	return (
 		<div className='h-40 md:h-48 relative group overflow-hidden header-bg-fallback'>
@@ -33,7 +48,7 @@ export const EntityHeader = ({ data }) => {
 					{/* Title & Status */}
 					<div className='flex-1'>
 						<div className='flex items-center flex-wrap gap-2 mb-1.5'>
-							{/* Type Badge - Using EntityBadge component */}
+							{/* Type Badge */}
 							<EntityBadge type={typeLabel.toLowerCase()} size='sm' variant='solid' />
 
 							{/* Status Badge */}
@@ -46,6 +61,17 @@ export const EntityHeader = ({ data }) => {
 											: 'border-emerald-600 text-emerald-700 bg-emerald-50'
 									)}>
 									{status.label}
+								</span>
+							)}
+
+							{/* Priority Badge (For Quests) */}
+							{priority && (
+								<span
+									className={clsx(
+										'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
+										getPriorityColor(priority)
+									)}>
+									{priority} Priority
 								</span>
 							)}
 

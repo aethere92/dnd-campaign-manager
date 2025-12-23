@@ -70,10 +70,10 @@ export default function EntityLink({
 						customIconUrl={customIconUrl}
 						size={14}
 						inline={true}
-						className='self-center opacity-80'
+						className='self-center rounded-full'
 					/>
 				)}
-				<span className='leading-snug'>{children}</span>
+				{children}
 			</a>
 		);
 	}
