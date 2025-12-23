@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Drawer } from '../../../components/ui/Drawer'; // Import generic
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarNav } from './SidebarNav';
 import { SidebarFooter } from './SidebarFooter';
@@ -7,33 +7,33 @@ import { SidebarFooter } from './SidebarFooter';
 export const Sidebar = ({ vm }) => {
 	const { sidebarOpen, setSidebarOpen, campaign, navStructure, currentPath, navigateTo, onSwitchCampaign } = vm;
 
+	const SidebarContent = () => (
+		<div className='flex flex-col h-full bg-muted border-r border-border'>
+			<SidebarHeader campaign={campaign} />
+			<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
+			<SidebarFooter onSwitch={onSwitchCampaign} />
+		</div>
+	);
+
 	return (
 		<>
-			{/* Mobile Overlay - High Z-index to cover Leaflet */}
-			{sidebarOpen && (
-				<div className='fixed inset-0 bg-black/50 z-[2000] lg:hidden' onClick={() => setSidebarOpen(false)} />
-			)}
+			{/* Mobile: Generic Drawer */}
+			<Drawer
+				isOpen={sidebarOpen}
+				onClose={() => setSidebarOpen(false)}
+				title={campaign?.name || 'Menu'}
+				position='left'
+				className='w-72'>
+				<div className='flex flex-col h-full bg-muted'>
+					<SidebarHeader campaign={campaign} />
+					<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
+					<SidebarFooter onSwitch={onSwitchCampaign} />
+				</div>
+			</Drawer>
 
-			<aside
-				className={clsx(
-					'w-64 bg-muted border-r border-border flex flex-col h-full transition-transform duration-300 lg:translate-x-0',
-					sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-					// Z-index bumped to 2001 to sit above the overlay and any map elements
-					'fixed lg:relative z-[2001]'
-				)}>
-				{/* Mobile Close Button */}
-				<button
-					onClick={() => setSidebarOpen(false)}
-					className='lg:hidden absolute top-4 right-4 p-2 text-gray-500 hover:text-foreground hover:bg-gray-100 rounded-md'
-					aria-label='Close sidebar'>
-					<X size={20} />
-				</button>
-
-				<SidebarHeader campaign={campaign} />
-
-				<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
-
-				<SidebarFooter onSwitch={onSwitchCampaign} />
+			{/* Desktop: Static Sidebar */}
+			<aside className='hidden lg:flex w-64 flex-col h-full border-r border-border bg-muted shrink-0'>
+				<SidebarContent />
 			</aside>
 		</>
 	);

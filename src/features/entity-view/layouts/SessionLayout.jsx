@@ -8,7 +8,6 @@ import { extractHeaders } from '../../../utils/text/markdownHelpers';
 import { ThreeColumnLayout } from '../../../components/layout/SplitView';
 
 export default function SessionLayout({ viewModel }) {
-	// 1. Add state to track the active tab
 	const [activeTab, setActiveTab] = useState('narrative');
 
 	if (!viewModel) return null;
@@ -25,7 +24,12 @@ export default function SessionLayout({ viewModel }) {
 			left={null}
 			center={
 				<div className='max-w-3xl mx-auto px-4 sm:px-6 py-10'>
-					<EntityBody summary={viewModel.content.narrative} sections={[]} history={null} />
+					<EntityBody
+						summary={viewModel.content.narrative}
+						sections={[]}
+						history={null}
+						levelUp={viewModel.content.levelUp} // Pass new prop
+					/>
 				</div>
 			}
 			right={
@@ -78,11 +82,9 @@ export default function SessionLayout({ viewModel }) {
 				]}
 				defaultTab='narrative'
 				sticky
-				// 2. Hook up the state change
 				onChange={setActiveTab}
 			/>
 
-			{/* 3. Only render the Mobile ToC if we are on the Narrative tab */}
 			{tocItems.length > 0 && activeTab === 'narrative' && (
 				<div className='xl:hidden'>
 					<TableOfContents items={tocItems} />

@@ -1,15 +1,23 @@
-/**
- * Entity Icon Mapping
- * Lucide icons for each entity type
- */
-
-import { User, MapPin, Scroll, Sword, Flag, Crown, BookOpen, Calendar } from 'lucide-react';
-
+import {
+	User,
+	MapPin,
+	Scroll,
+	Sword,
+	Flag,
+	Crown,
+	BookOpen,
+	Calendar,
+	Trees,
+	Castle,
+	Ship,
+	Landmark,
+	Globe,
+	Home,
+	Mountain,
+} from 'lucide-react';
 import { ENTITY_TYPES } from './types';
+import { getAttributeValue } from '../../utils/entity/attributeParser';
 
-/**
- * Icon map for entity types
- */
 export const ENTITY_ICONS = {
 	[ENTITY_TYPES.SESSION]: Calendar,
 	[ENTITY_TYPES.CHARACTER]: User,
@@ -21,12 +29,33 @@ export const ENTITY_ICONS = {
 	[ENTITY_TYPES.DEFAULT]: BookOpen,
 };
 
-/**
- * Get icon component for entity type
- * @param {string} type - Entity type
- * @returns {React.Component} Lucide icon component
- */
+// Location specific mappings
+const LOCATION_TYPE_ICONS = {
+	building: Home,
+	ship: Ship,
+	landmark: Landmark,
+	dungeon: Mountain,
+	region: MapPin,
+	city: Castle,
+	forest: Trees,
+	realm: Globe,
+};
+
 export const getEntityIcon = (type) => {
 	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
 	return ENTITY_ICONS[normalized] || ENTITY_ICONS[ENTITY_TYPES.DEFAULT];
+};
+
+/**
+ * Advanced resolution that looks at attributes for finer detail
+ */
+export const resolveEntityIcon = (entity) => {
+	const type = entity.type?.toLowerCase();
+
+	if (type === 'location') {
+		const locType = getAttributeValue(entity.attributes, 'type')?.toLowerCase();
+		return LOCATION_TYPE_ICONS[locType] || ENTITY_ICONS.location;
+	}
+
+	return getEntityIcon(type);
 };

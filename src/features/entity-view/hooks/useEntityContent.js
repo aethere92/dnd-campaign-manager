@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { isSession } from '../../../utils/entity/entityHelpers';
 import { transformEvents } from '../transforms/eventTransform';
+import { getAttributeValue } from '../../../utils/entity/attributeParser';
 
 /**
  * Helper: Extract and group mentioned entities from events and direct relationships
@@ -85,8 +86,11 @@ export const useEntityContent = (entity, attributes, sections) => {
 		// Process events
 		const events = transformEvents(entity.events);
 
-		// NEW: Process Mentions (for Sessions)
+		// Process Mentions (for Sessions)
 		const mentions = entityIsSession ? extractMentions(entity) : null;
+
+		// NEW: Extract Level Up
+		const levelUp = getAttributeValue(attributes, ['level_up', 'Level Up', 'levelup']);
 
 		return {
 			objectives: entityIsQuest ? entity.objectives || [] : null,
@@ -94,7 +98,8 @@ export const useEntityContent = (entity, attributes, sections) => {
 			summary: mainSummary || '',
 			sections: sections || [],
 			history: events,
-			mentions, // Exported to View Model
+			mentions,
+			levelUp, // Added to return object
 		};
 	}, [entity, attributes, sections]);
 };

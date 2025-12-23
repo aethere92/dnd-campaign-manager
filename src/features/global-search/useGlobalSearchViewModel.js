@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '../campaign-session/CampaignContext';
 import { globalSearch } from '../../services/search';
 import { getEntityConfig } from '../../config/entity';
+import { transformSearchResults } from './transforms/searchTransform'; // Import transform
 import './types';
 
 const STORAGE_KEY = 'recent-searches';
@@ -27,16 +28,20 @@ export function useGlobalSearchViewModel() {
 	});
 
 	// Fetch search results
-	const { data: rawResults = [], isLoading } = useQuery({
+	const { data: rawData, isLoading } = useQuery({
 		queryKey: ['globalSearch', campaignId, query],
 		queryFn: () => globalSearch(campaignId, query),
 		enabled: !!campaignId && query.trim().length > 0,
-		staleTime: 1000 * 30, // 30 seconds
+		staleTime: 1000 * 30,
 	});
 
 	// Transform results to view model
 	const results = useMemo(() => {
-		return rawResults.map((result) => {
+		if (!rawData) return [];
+		// Apply Transform Layer here
+		const processedItems = transformSearchResults(rawData);
+
+		return processedItems.map((result) => {
 			const config = getEntityConfig(result.type);
 			return {
 				id: result.id,
@@ -48,7 +53,13 @@ export function useGlobalSearchViewModel() {
 				theme: config.tailwind,
 			};
 		});
-	}, [rawResults]);
+	}, [rawData]);
+
+	const flattenedRawResults = useMemo(() => {
+		if (!rawData) return [];
+		const processedItems = transformSearchResults(rawData);
+		return processedItems; // These have { id, name, type, description }
+	}, [rawData]);
 
 	// Transform recent searches to view model
 	const recentSearchesViewModel = useMemo(() => {
@@ -66,13 +77,22 @@ export function useGlobalSearchViewModel() {
 		});
 	}, [recentSearches]);
 
-	// Handle selection
 	const handleSelect = (result) => {
-		// Add to recent searches (store raw data)
-		const rawResult = rawResults.find((r) => r.id === result.id);
+		// Find the raw result from the flattened list
+		const rawResult = flattenedRawResults.find((r) => r.id === result.id);
+
 		if (rawResult) {
-			const updated = [rawResult, ...recentSearches.filter((r) => r.id !== rawResult.id)].slice(0, 5);
+			// Store minimal data: id, name, type, description
+			const toStore = {
+				id: rawResult.id,
+				name: rawResult.name,
+				type: rawResult.type,
+				description: rawResult.description || '',
+			};
+
+			const updated = [toStore, ...recentSearches.filter((r) => r.id !== toStore.id)].slice(0, 5);
 			setRecentSearches(updated);
+
 			try {
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 			} catch {

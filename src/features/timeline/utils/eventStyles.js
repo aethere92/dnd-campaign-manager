@@ -1,80 +1,45 @@
-import { Calendar, MapPin, User, Sword, Scroll, Flag, MessageSquare, Skull, Crown, Tent } from 'lucide-react';
+import { getEntityConfig, ENTITY_CONFIG, getEntityStyles } from '../../../config/entity';
+import { MessageSquare, Tent, Skull } from 'lucide-react';
 
-/**
- * Determines the visual style of an event based on its type string.
- * @param {string} eventType
- * @returns {import('../types').EventStyle}
- */
 export const getEventStyle = (eventType) => {
 	const type = eventType?.toLowerCase() || '';
 
-	// 1. COMBAT (Red)
+	// Mapping logic using centralized config
+	let entityType = 'default';
+	let Icon = MessageSquare;
+
+	// Resolve Type
 	if (type.match(/combat|fight|kill/)) {
-		return {
-			Icon: Sword,
-			container: 'border-red-500 bg-red-50 text-red-600',
-			line: 'bg-red-200',
-		};
+		entityType = 'character'; // Use red palette
+		Icon = ENTITY_CONFIG.encounter.icon || Skull;
+	} else if (type.includes('encounter')) {
+		entityType = 'encounter';
+		Icon = ENTITY_CONFIG.encounter.icon;
+	} else if (type.match(/npc|social|meet/)) {
+		entityType = 'npc';
+		Icon = ENTITY_CONFIG.npc.icon;
+	} else if (type.match(/location|travel|visit|arrive/)) {
+		entityType = 'location';
+		Icon = ENTITY_CONFIG.location.icon;
+	} else if (type.match(/quest|mission/)) {
+		entityType = 'quest';
+		Icon = ENTITY_CONFIG.quest.icon;
+	} else if (type.match(/camp|rest/)) {
+		entityType = 'location'; // Reuse location or define new
+		Icon = Tent;
+	} else if (type.includes('faction')) {
+		entityType = 'faction';
+		Icon = ENTITY_CONFIG.faction.icon;
 	}
 
-	// 2. DANGER/ENCOUNTER (Orange)
-	if (type.includes('encounter')) {
-		return {
-			Icon: Skull,
-			container: 'border-orange-500 bg-orange-50 text-orange-600',
-			line: 'bg-orange-200',
-		};
-	}
+	// Use centralized styles
+	const styles = getEntityStyles(entityType);
 
-	// 3. SOCIAL (Amber)
-	if (type.match(/npc|social|meet/)) {
-		return {
-			Icon: User,
-			container: 'border-amber-500 bg-amber-50 text-amber-600',
-			line: 'bg-amber-200',
-		};
-	}
-
-	// 4. TRAVEL (Emerald)
-	if (type.match(/location|travel|visit|arrive/)) {
-		return {
-			Icon: MapPin,
-			container: 'border-emerald-500 bg-emerald-50 text-emerald-600',
-			line: 'bg-emerald-200',
-		};
-	}
-
-	// 5. REST (Emerald/Green)
-	if (type.match(/camp|rest/)) {
-		return {
-			Icon: Tent,
-			container: 'border-emerald-600 bg-emerald-100 text-emerald-700',
-			line: 'bg-emerald-300',
-		};
-	}
-
-	// 6. QUESTS (Blue)
-	if (type.match(/quest|mission/)) {
-		return {
-			Icon: Scroll,
-			container: 'border-blue-500 bg-blue-50 text-blue-600',
-			line: 'bg-blue-200',
-		};
-	}
-
-	// 7. FACTIONS (Purple)
-	if (type.includes('faction')) {
-		return {
-			Icon: Flag,
-			container: 'border-purple-500 bg-purple-50 text-purple-600',
-			line: 'bg-purple-200',
-		};
-	}
-
-	// Default
 	return {
-		Icon: MessageSquare,
-		container: 'border-gray-400 bg-muted text-gray-500',
-		line: 'bg-gray-200',
+		Icon,
+		// Map standard styles to timeline specific class structure
+		container: `${styles.border} ${styles.bg} ${styles.text}`,
+		// Heuristic for line color (usually 200 or 300 shade)
+		line: styles.bg.replace('-50', '-200'),
 	};
 };

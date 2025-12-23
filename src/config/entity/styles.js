@@ -138,3 +138,17 @@ export const getEntityPreset = (preset, type) => {
 	const presetFn = ENTITY_CLASS_PRESETS[preset];
 	return presetFn ? presetFn(type) : '';
 };
+
+export const getPriorityStyles = (priority) => {
+	const p = priority?.toLowerCase() || '';
+	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
+		return 'border-orange-200 text-orange-800 bg-orange-50';
+	}
+	if (p.includes('medium') || p.includes('normal')) {
+		return 'border-blue-200 text-blue-800 bg-blue-50';
+	}
+	if (p.includes('low')) {
+		return 'border-slate-200 text-slate-700 bg-slate-50';
+	}
+	return 'border-stone-200 text-stone-700 bg-stone-50';
+};

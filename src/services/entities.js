@@ -122,18 +122,14 @@ export const getWikiEntry = async (id, type) => {
 			.select(`*, events:session_events (*)`)
 			.eq('id', id)
 			.single();
-
 		if (error) throw error;
 
-		// 2. Fetch Attributes Separately
+		// 2. Fetch Attributes
 		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
 
-		const meta = extractSessionMeta(data, attributes || []);
-		const sortedEvents = (data.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
-
-		// 3. Fetch Event Tags (Relationships linked to events)
-		const eventIds = sortedEvents.map((e) => e.id);
-		let eventRelationships = [];
+		// 3. Fetch Event Relationship Data
+		const eventIds = (data.events || []).map((e) => e.id);
+		let eventRelMap = new Map();
 
 		if (eventIds.length > 0) {
 			const { data: rels } = await supabase
@@ -141,26 +137,18 @@ export const getWikiEntry = async (id, type) => {
 				.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
 				.in('from_entity_id', eventIds);
 
-			if (rels) eventRelationships = rels;
+			(rels || []).forEach((rel) => {
+				if (!eventRelMap.has(rel.from_entity_id)) eventRelMap.set(rel.from_entity_id, []);
+				eventRelMap.get(rel.from_entity_id).push({
+					entity_id: rel.target.id,
+					entity_name: rel.target.name,
+					entity_type: rel.target.type,
+					type: 'mention',
+				});
+			});
 		}
 
-		// Attach relationships to events
-		const relMap = new Map();
-		eventRelationships.forEach((rel) => {
-			if (!relMap.has(rel.from_entity_id)) relMap.set(rel.from_entity_id, []);
-			relMap.get(rel.from_entity_id).push({
-				entity_id: rel.target.id,
-				entity_name: rel.target.name,
-				entity_type: rel.target.type,
-				type: 'mention',
-			});
-		});
-
-		sortedEvents.forEach((evt) => {
-			evt.relationships = relMap.get(evt.id) || [];
-		});
-
-		// 4. NEW: Fetch Direct Session Relationships (Session -> Entity)
+		// 4. Fetch Direct Session Relationships
 		const { data: directRels } = await supabase
 			.from('entity_relationships')
 			.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
@@ -170,21 +158,14 @@ export const getWikiEntry = async (id, type) => {
 			entity_id: rel.target.id,
 			entity_name: rel.target.name,
 			entity_type: rel.target.type,
-			type: rel.relationship_type, // e.g. "visited", "discussed"
+			type: rel.relationship_type,
 		}));
 
+		// Return raw + auxiliary data. The Transformer will handle the merge.
 		return {
-			id: data.id,
-			name: data.title,
+			data,
 			type: 'session',
-			description: getAttributeValue(meta.attributes, 'Summary') || data.narrative,
-			attributes: {
-				...meta.attributes,
-				Session: meta.session_number,
-				Date: meta.session_date,
-			},
-			relationships: sessionRelationships, // Now populated with direct links
-			events: sortedEvents || [],
+			additional: { attributes, eventRelMap, sessionRelationships },
 		};
 	}
 
@@ -192,17 +173,18 @@ export const getWikiEntry = async (id, type) => {
 	const { data, error: entityError } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
 	if (entityError) throw entityError;
 
-	// Quest Specifics
+	const additional = {};
+
 	if (type === 'quest') {
 		const { data: objectives } = await supabase
 			.from('quest_objectives')
 			.select('*')
 			.eq('quest_id', id)
 			.order('order_index', { ascending: true });
-		if (objectives) data.objectives = objectives;
+		additional.objectives = objectives || [];
 	}
 
-	// Event Processing
+	// RESOLVE SESSION NUMBERS FOR EVENTS
 	let events = data.events;
 	if (events && typeof events === 'object' && !Array.isArray(events)) {
 		events = Object.values(events).flat();
@@ -211,50 +193,50 @@ export const getWikiEntry = async (id, type) => {
 	if (events && Array.isArray(events) && events.length > 0) {
 		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
 		if (sessionIds.length > 0) {
-			const { data: sessions, error: sessionsError } = await supabase
-				.from('sessions')
-				.select('id')
-				.in('id', sessionIds);
+			// 1. Get the session rows
+			const { data: sessions } = await supabase.from('sessions').select('id').in('id', sessionIds);
 
-			if (!sessionsError && sessions && sessions.length > 0) {
-				const { data: attrs } = await supabase
-					.from('attributes')
-					.select('entity_id, name, value')
-					.in(
-						'entity_id',
-						sessions.map((s) => s.id)
-					);
+			// 2. Get the session number attributes
+			const { data: attrs } = await supabase
+				.from('attributes')
+				.select('entity_id, name, value')
+				.in('entity_id', sessionIds)
+				.or('name.eq.session_number,name.eq.Session');
 
-				const attrMap = new Map();
-				(attrs || []).forEach((a) => {
-					if (!attrMap.has(a.entity_id)) attrMap.set(a.entity_id, []);
-					attrMap.get(a.entity_id).push(a);
-				});
+			const sessionMap = new Map();
+			(sessions || []).forEach((s) => {
+				const sAttr = (attrs || []).find((a) => a.entity_id === s.id);
+				// We subtract 1 or use raw depending on your session indexing (matches your old logic)
+				const num = sAttr ? parseInt(sAttr.value) : null;
+				sessionMap.set(s.id, num);
+			});
 
-				const sessionMap = new Map();
-				sessions.forEach((s) => {
-					const sAttrs = attrMap.get(s.id) || [];
-					const meta = extractSessionMeta(s, sAttrs);
-					sessionMap.set(s.id, meta.session_number);
-				});
-
-				events = events.map((event) => ({
-					...event,
-					session_number:
-						event.session_id && sessionMap.has(event.session_id) ? sessionMap.get(event.session_id) - 1 : null,
-				}));
-
-				events.sort((a, b) => {
-					if (a.session_number !== b.session_number) {
-						if (a.session_number == null) return 1;
-						if (b.session_number == null) return -1;
-						return a.session_number - b.session_number;
-					}
-					return (a.order || 0) - (b.order || 0);
-				});
-				data.events = events;
-			}
+			additional.sessionMap = sessionMap;
 		}
 	}
+
+	return { data, type, additional };
+};
+
+// NEW: Service method for Tooltip (Fixes architecture leak)
+export const getTooltipData = async (id, type) => {
+	if (type === 'session') {
+		const { data } = await supabase.from('sessions').select('title, narrative').eq('id', id).single();
+		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
+		return {
+			name: data.title,
+			type: 'session',
+			// Return RAW attributes, let the hook/component parse
+			description: data.narrative,
+			attributes,
+		};
+	}
+
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('name, type, description, attributes')
+		.eq('id', id)
+		.single();
+	if (error) throw error;
 	return data;
 };

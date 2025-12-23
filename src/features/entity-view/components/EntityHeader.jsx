@@ -1,21 +1,7 @@
 import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
 import EntityBadge from '../../../components/entity/EntityBadge';
-
-// Helper to determine priority badge color
-const getPriorityColor = (priority) => {
-	const p = priority?.toLowerCase() || '';
-	if (p === 'high' || p === 'urgent' || p === 'critical') {
-		return 'border-orange-200 text-orange-800 bg-orange-50';
-	}
-	if (p === 'medium' || p === 'normal') {
-		return 'border-blue-200 text-blue-800 bg-blue-50';
-	}
-	if (p === 'low') {
-		return 'border-slate-200 text-slate-700 bg-slate-50';
-	}
-	return 'border-stone-200 text-stone-700 bg-stone-50';
-};
+import { getPriorityStyles } from '../../../config/entity/styles'; // Import
 
 export const EntityHeader = ({ data }) => {
 	const { title, typeLabel, imageUrl, avatarUrl, status, priority, theme, extraTags } = data;
@@ -35,7 +21,7 @@ export const EntityHeader = ({ data }) => {
 			<div className='absolute bottom-0 left-0 w-full p-4 md:p-6'>
 				<div className='max-w-6xl mx-auto flex items-end gap-4'>
 					{/* 2. AVATAR - Using EntityIcon component */}
-					<div className='hidden md:block'>
+					<div className='hidden md:flex md:items-end'>
 						<EntityIcon
 							type={typeLabel.toLowerCase()}
 							customIconUrl={avatarUrl}
@@ -69,7 +55,7 @@ export const EntityHeader = ({ data }) => {
 								<span
 									className={clsx(
 										'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
-										getPriorityColor(priority)
+										getPriorityStyles(priority) // Use centralized logic
 									)}>
 									{priority} Priority
 								</span>
