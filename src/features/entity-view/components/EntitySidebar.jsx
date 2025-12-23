@@ -3,6 +3,7 @@ import { Tag, Network, Shield, Activity } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
 import EntityLink from '../../../components/entity/EntityLink';
+import { capitalize, toTitleCase } from '../../../utils/text/textProcessing'; // Imported toTitleCase
 
 // --- SUB-COMPONENTS ---
 const AbilityGrid = ({ stats }) => (
@@ -25,7 +26,7 @@ const TagList = ({ tags }) => (
 			<span
 				key={i}
 				className='inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-stone-100 text-stone-700 border border-stone-200/60 shadow-sm'>
-				{item}
+				{toTitleCase(item)} {/* Changed to toTitleCase for consisteny */}
 			</span>
 		))}
 	</div>
@@ -38,7 +39,10 @@ const StandardTrait = ({ label, value, index }) => (
 			index % 2 === 0 ? 'bg-white/40' : 'bg-transparent'
 		)}>
 		<span className='text-[10px] font-bold uppercase tracking-widest text-stone-500/90 shrink-0 mr-4'>{label}</span>
-		<span className='text-[13px] font-semibold text-stone-800 text-right leading-snug break-words'>{value}</span>
+		<span className='text-[13px] font-semibold text-stone-800 text-right leading-snug break-words'>
+			{/* Changed to toTitleCase to handle "alive" -> "Alive", "neutral good" -> "Neutral Good" */}
+			{typeof value === 'string' ? toTitleCase(value) : value}
+		</span>
 	</div>
 );
 
