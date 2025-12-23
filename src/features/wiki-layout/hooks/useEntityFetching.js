@@ -16,7 +16,18 @@ export function useEntityFetching(type) {
 		error,
 	} = useQuery({
 		queryKey: ['entities', campaignId, normalizedType],
-		queryFn: () => getEntities(campaignId, normalizedType),
+		queryFn: async () => {
+			// Special Case: For NPCs, we need Locations too to build the tree (Region -> City -> NPC)
+			if (normalizedType === 'npc') {
+				const [npcs, locations] = await Promise.all([
+					getEntities(campaignId, 'npc'),
+					getEntities(campaignId, 'location'),
+				]);
+				// Merge them (ensure uniqueness just in case, though types differ)
+				return [...npcs, ...locations];
+			}
+			return getEntities(campaignId, normalizedType);
+		},
 		enabled: !!campaignId && !!normalizedType,
 		staleTime: 1000 * 60 * 5, // 5 minutes
 	});

@@ -9,7 +9,6 @@ const buildTree = (items, sortFn) => {
 
 	// 1. Initialize map
 	items.forEach((item) => {
-		// Shallow clone to attach children
 		idMap.set(item.id, { ...item, children: [] });
 	});
 
@@ -18,17 +17,48 @@ const buildTree = (items, sortFn) => {
 		const node = idMap.get(item.id);
 		const parentId = item.meta.parentId;
 
-		// If has parent and parent exists in this list (safety check)
 		if (parentId && idMap.has(parentId)) {
 			const parent = idMap.get(parentId);
 			parent.children.push(node);
 		} else {
-			// Is a root node
 			roots.push(node);
 		}
 	});
 
-	// 3. Recursive Sort
+	// 3. Prune Empty Folders (Recursive)
+	// We want to remove 'location' nodes that have no children,
+	// UNLESS we are in the Location wiki (where locations ARE the content).
+	// But in NPC wiki, Locations are just containers.
+	// Since we don't pass 'type' context here easily, we rely on the fact
+	// that if a Location was fetched as a "container" for NPCs, it's expendable if empty.
+
+	const prune = (nodes) => {
+		// Filter out nodes that are locations AND have no children
+		// But wait, if we are in Location View, we don't want to prune leaf locations.
+		// Simple heuristic: If we are in 'tree' mode for NPCs, we probably have mixed types.
+		// If ALL items are Locations, we shouldn't prune leaf locations.
+
+		// Let's rely on the calling context. If we have mixed types, we prune "empty folders".
+		const hasMixedTypes = items.some((i) => i.type === 'npc');
+
+		if (!hasMixedTypes) return nodes; // Don't prune if we are just listing locations
+
+		return nodes.filter((node) => {
+			if (node.children.length > 0) {
+				node.children = prune(node.children);
+			}
+
+			// If it's a location (folder) and has no children after pruning, remove it
+			if (node.type === 'location' && node.children.length === 0) {
+				return false;
+			}
+			return true;
+		});
+	};
+
+	let finalRoots = prune(roots);
+
+	// 4. Recursive Sort
 	const sortRecursive = (nodes) => {
 		if (sortFn) nodes.sort(sortFn);
 		nodes.forEach((node) => {
@@ -38,8 +68,8 @@ const buildTree = (items, sortFn) => {
 		});
 	};
 
-	sortRecursive(roots);
-	return roots;
+	sortRecursive(finalRoots);
+	return finalRoots;
 };
 
 export function useEntityGrouping(entities, type, searchQuery = '') {
@@ -64,7 +94,7 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 					id: 'root',
 					title: null,
 					items: treeRoots,
-					isTree: true, // Signal to renderer
+					isTree: true,
 				},
 			];
 		}

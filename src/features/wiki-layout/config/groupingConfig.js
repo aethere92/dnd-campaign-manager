@@ -1,7 +1,26 @@
 export const GROUPING_CONFIG = {
 	location: {
-		mode: 'tree', // Triggers tree builder
+		mode: 'tree',
 		sortItems: (a, b) => a.name.localeCompare(b.name),
+	},
+	npc: {
+		mode: 'tree', // Changed from groupBy to tree
+		sortItems: (a, b) => {
+			// Locations (folders) should generally come first or sort A-Z
+			if (a.type !== b.type) {
+				// Locations first
+				if (a.type === 'location') return -1;
+				if (b.type === 'location') return 1;
+			}
+
+			// For NPCs: Rank by Affinity, then Name
+			if (a.type === 'npc' && b.type === 'npc') {
+				const rankDiff = a.meta.affinityRank - b.meta.affinityRank;
+				if (rankDiff !== 0) return rankDiff;
+			}
+
+			return a.name.localeCompare(b.name);
+		},
 	},
 	faction: {
 		groupBy: (item) => {
@@ -13,22 +32,6 @@ export const GROUPING_CONFIG = {
 		},
 		sortGroups: ['Allies', 'Neutral', 'Enemies', 'Unknown'],
 		sortItems: (a, b) => a.name.localeCompare(b.name),
-	},
-	npc: {
-		groupBy: (item) => {
-			// Check relationships first (dynamic locations)
-			if (item.relationships && Array.isArray(item.relationships)) {
-				const locationRel = item.relationships.find((rel) => rel.entity_type === 'location');
-				if (locationRel) return locationRel.entity_name;
-			}
-			return item.meta.region !== 'Uncharted' ? item.meta.region : 'Wanderers';
-		},
-		sortGroups: 'alpha',
-		sortItems: (a, b) => {
-			const rankDiff = a.meta.affinityRank - b.meta.affinityRank;
-			if (rankDiff !== 0) return rankDiff;
-			return a.name.localeCompare(b.name);
-		},
 	},
 	quest: {
 		groupBy: (item) => {
