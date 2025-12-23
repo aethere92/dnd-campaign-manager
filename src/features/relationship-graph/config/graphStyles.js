@@ -54,13 +54,14 @@ export const CYTOSCAPE_STYLES = [
 			opacity: 0.2, // Slightly more transparent to handle overlap
 			'arrow-scale': 0.6,
 			'target-arrow-shape': 'triangle',
+			events: 'no',
 		},
 	},
 	// --- INTERACTION STATES ---
 	{
 		selector: '.dimmed',
 		style: {
-			opacity: 0.2,
+			opacity: 0.05,
 			'text-opacity': 0.1,
 			'border-opacity': 0.1,
 			'background-opacity': 0.1,
@@ -70,9 +71,6 @@ export const CYTOSCAPE_STYLES = [
 		selector: '.highlighted',
 		style: {
 			'z-index': 9999,
-			'overlay-color': '#d97706', // Amber glow
-			'overlay-padding': 2,
-			'overlay-opacity': 0.2,
 			'text-wrap': 'wrap',
 		},
 	},
