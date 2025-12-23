@@ -54,8 +54,8 @@ export const EntityListItem = ({ item, showStatus, onItemClick }) => {
 					<EntityIcon
 						type={item.type}
 						customIconUrl={iconUrl}
-						size={hasCustomIcon ? 14 : 12}
-						className={hasCustomIcon ? 'rounded-sm object-cover shadow-sm border border-black/5' : ''}
+						size={hasCustomIcon ? 16 : 14}
+						className={hasCustomIcon ? 'rounded-full object-cover' : ''}
 					/>
 				</span>
 			)}

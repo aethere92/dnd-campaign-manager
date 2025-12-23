@@ -90,15 +90,10 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 						)}>
 						{hasCustomIcon ? (
 							// CASE A: Custom Image (Character Portrait, etc.)
-							<EntityIcon
-								type={item.type}
-								customIconUrl={iconUrl}
-								size={12}
-								className='rounded-sm object-cover shadow-sm border border-black/10'
-							/>
+							<EntityIcon type={item.type} customIconUrl={iconUrl} size={14} />
 						) : LocationTypeIcon ? (
 							// CASE B: Specific Location Icon (Castle, Trees, etc.)
-							<LocationTypeIcon size={12} strokeWidth={2} />
+							<LocationTypeIcon size={14} strokeWidth={2} />
 						) : (
 							// CASE C: Generic Default Icon (Fallback)
 							<EntityIcon type={item.type} size={12} />
