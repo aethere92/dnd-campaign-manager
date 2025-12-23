@@ -18,37 +18,37 @@ const ENTITY_TAILWIND_CLASSES = {
 	[ENTITY_TYPES.CHARACTER]: {
 		text: 'text-red-700',
 		bg: 'bg-red-50',
-		border: 'border-red-500',
+		border: 'border-red-300',
 		hover: 'hover:bg-red-50',
 	},
 	[ENTITY_TYPES.NPC]: {
 		text: 'text-amber-700',
 		bg: 'bg-amber-50',
-		border: 'border-amber-500',
+		border: 'border-amber-300',
 		hover: 'hover:bg-amber-50',
 	},
 	[ENTITY_TYPES.LOCATION]: {
 		text: 'text-emerald-700',
 		bg: 'bg-emerald-50',
-		border: 'border-emerald-500',
+		border: 'border-emerald-300',
 		hover: 'hover:bg-emerald-50',
 	},
 	[ENTITY_TYPES.QUEST]: {
 		text: 'text-blue-700',
 		bg: 'bg-blue-50',
-		border: 'border-blue-500',
+		border: 'border-blue-300',
 		hover: 'hover:bg-blue-50',
 	},
 	[ENTITY_TYPES.FACTION]: {
 		text: 'text-purple-700',
 		bg: 'bg-purple-50',
-		border: 'border-purple-500',
+		border: 'border-purple-300',
 		hover: 'hover:bg-purple-50',
 	},
 	[ENTITY_TYPES.ENCOUNTER]: {
 		text: 'text-orange-700',
 		bg: 'bg-orange-50',
-		border: 'border-orange-500',
+		border: 'border-orange-300',
 		hover: 'hover:bg-orange-50',
 	},
 	[ENTITY_TYPES.DEFAULT]: {
