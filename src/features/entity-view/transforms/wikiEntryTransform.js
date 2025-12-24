@@ -52,7 +52,12 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 
 	// Quest Objectives
 	if (type === 'quest' && additionalData.objectives) {
-		entity.objectives = additionalData.objectives;
+		// REFACTORED: Flatten session info for the view
+		entity.objectives = additionalData.objectives.map((obj) => ({
+			...obj,
+			completed_session_number: obj.session?.session_number || null,
+			completed_session_title: obj.session?.title || null,
+		}));
 	}
 
 	// Event Processing

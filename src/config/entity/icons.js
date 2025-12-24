@@ -35,6 +35,7 @@ const LOCATION_TYPE_ICONS = {
 	ship: Ship,
 	landmark: Landmark,
 	dungeon: Mountain,
+	cave: Mountain,
 	region: MapPin,
 	city: Castle,
 	forest: Trees,
