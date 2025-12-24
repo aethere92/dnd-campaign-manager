@@ -11,28 +11,33 @@ const RelationshipGraph = lazy(() => import('../../features/relationship-graph/R
 const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
 const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
 
+// Admin Features
 const AdminLayout = lazy(() => import('../../features/admin-console/layouts/AdminLayout'));
 const SplitPaneManager = lazy(() => import('../../features/admin-console/pages/SplitPaneManager'));
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
 
+	// SECURITY CHECK: Only true during 'npm run dev'
+	const isDev = import.meta.env.DEV;
+
 	return (
 		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
 			<Routes>
-				{/* --- 1. ADMIN CONSOLE --- */}
-				<Route path='/dm' element={<AdminLayout />}>
-					<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
-					<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
-				</Route>
+				{/* --- 1. ADMIN CONSOLE (Strictly Dev Only) --- */}
+				{isDev && (
+					<Route path='/dm' element={<AdminLayout />}>
+						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
+						<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
+					</Route>
+				)}
 
-				{/* --- 2. CAMPAIGN SELECTION (Explicit Route) --- */}
+				{/* --- 2. CAMPAIGN SELECTION --- */}
 				<Route path='/select-campaign' element={<CampaignSelect />} />
 
-				{/* --- 3. MAIN APP (Protected) --- */}
+				{/* --- 3. MAIN APP --- */}
 				{campaignId ? (
 					<Route path='/' element={<MainLayout />}>
-						{/* FIX #2: Default to Session list instead of Atlas */}
 						<Route index element={<Navigate to='/wiki/session' replace />} />
 
 						<Route path='atlas/:mapId' element={<MapView />} />
@@ -47,9 +52,13 @@ export const AppRoutes = () => {
 							/>
 							<Route path=':entityId' element={<WikiEntryPage />} />
 						</Route>
+
+						{/* If user tries to access /dm manually in prod while logged in, 
+                            it won't match above. Add a catch-all to redirect back to home. */}
+						<Route path='*' element={<Navigate to='/' replace />} />
 					</Route>
 				) : (
-					// Fallback to selection if hitting root without ID
+					// Fallback if not logged in
 					<Route path='*' element={<Navigate to='/select-campaign' replace />} />
 				)}
 			</Routes>
