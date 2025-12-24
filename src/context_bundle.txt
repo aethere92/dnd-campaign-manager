@@ -32,6 +32,7 @@ INSTRUCTIONS FOR AI:
     ui/
       Button.jsx
       Card.jsx
+      DevAdminButton.jsx
       Drawer.jsx
       EmptyState.jsx
       LoadingSpinner.jsx
@@ -45,6 +46,26 @@ INSTRUCTIONS FOR AI:
       styles.js
       types.js
   features/
+    admin-console/
+      components/
+        AdminForm.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+        ui/
+          FormStyles.js
+      config/
+        strategies.js
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
     app-core/
       App.jsx
       AppRoutes.jsx
@@ -193,6 +214,7 @@ INSTRUCTIONS FOR AI:
   lib/
     supabase.js
   services/
+    admin.js
     campaigns.js
     entities.js
     search.js
@@ -1418,6 +1440,28 @@ export function CardContent({ children, className }) {
 
 --- END OF components\ui\Card.jsx ---
 
+--- FILE: components\ui\DevAdminButton.jsx ---
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Database, Wrench } from 'lucide-react';
+
+export default function DevAdminButton() {
+	// CRITICAL: This ensures it never renders in Production (GitHub Pages)
+	if (!import.meta.env.DEV) return null;
+
+	return (
+		<Link
+			to='/dm'
+			className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-1 bg-muted  rounded-full shadow-xl hover:bg-background hover:scale-105 transition-all border border-stone-300'
+			title='Open DM Console (Dev Mode Only)'>
+			<Wrench size={14} />
+			<span className='hidden md:inline'>Dev</span>
+		</Link>
+	);
+}
+
+--- END OF components\ui\DevAdminButton.jsx ---
+
 --- FILE: components\ui\Drawer.jsx ---
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -1799,37 +1843,37 @@ const ENTITY_TAILWIND_CLASSES = {
 	[ENTITY_TYPES.CHARACTER]: {
 		text: 'text-red-700',
 		bg: 'bg-red-50',
-		border: 'border-red-500',
+		border: 'border-red-300',
 		hover: 'hover:bg-red-50',
 	},
 	[ENTITY_TYPES.NPC]: {
 		text: 'text-amber-700',
 		bg: 'bg-amber-50',
-		border: 'border-amber-500',
+		border: 'border-amber-300',
 		hover: 'hover:bg-amber-50',
 	},
 	[ENTITY_TYPES.LOCATION]: {
 		text: 'text-emerald-700',
 		bg: 'bg-emerald-50',
-		border: 'border-emerald-500',
+		border: 'border-emerald-300',
 		hover: 'hover:bg-emerald-50',
 	},
 	[ENTITY_TYPES.QUEST]: {
 		text: 'text-blue-700',
 		bg: 'bg-blue-50',
-		border: 'border-blue-500',
+		border: 'border-blue-300',
 		hover: 'hover:bg-blue-50',
 	},
 	[ENTITY_TYPES.FACTION]: {
 		text: 'text-purple-700',
 		bg: 'bg-purple-50',
-		border: 'border-purple-500',
+		border: 'border-purple-300',
 		hover: 'hover:bg-purple-50',
 	},
 	[ENTITY_TYPES.ENCOUNTER]: {
 		text: 'text-orange-700',
 		bg: 'bg-orange-50',
-		border: 'border-orange-500',
+		border: 'border-orange-300',
 		hover: 'hover:bg-orange-50',
 	},
 	[ENTITY_TYPES.DEFAULT]: {
@@ -1998,6 +2042,2161 @@ export const getEntityLabel = (type, plural = false) => {
 
 --- END OF config\entity\types.js ---
 
+--- FILE: features\admin-console\components\AdminForm.jsx ---
+import React, { useEffect, useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form'; // Added useFieldArray
+import { getStrategy } from '../config/strategies';
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin';
+import Button from '../../../components/ui/Button';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { INPUT_CLASS, LABEL_CLASS, SECTION_CLASS, HEADER_CLASS } from './ui/FormStyles';
+
+// Inputs
+import MarkdownEditor from './MarkdownEditor';
+import SmartImageInput from './SmartImageInput';
+
+// Sub-managers
+import SessionEventManager from './SessionEventManager';
+import QuestObjectiveManager from './QuestObjectiveManager';
+import RelationshipManager from './RelationshipManager';
+
+export default function AdminForm({ type, id }) {
+	const strategy = getStrategy(type);
+	const { campaignId } = useCampaign();
+	const [isLoading, setIsLoading] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+
+	// Setup Form with Field Array for custom attributes
+	const {
+		register,
+		control,
+		handleSubmit,
+		reset,
+		watch,
+		setValue,
+		formState: { errors },
+	} = useForm({
+		defaultValues: {
+			attributes: {},
+			customAttributes: [], // Array container for dynamic fields
+		},
+	});
+
+	// Handle the dynamic list of custom attributes
+	const { fields, append, remove } = useFieldArray({
+		control,
+		name: 'customAttributes',
+	});
+
+	// 1. LOAD DATA
+	useEffect(() => {
+		const loadEntity = async () => {
+			if (!id) {
+				reset({ attributes: {}, customAttributes: [] });
+				return;
+			}
+
+			setIsLoading(true);
+			try {
+				const rawData = await fetchRawEntity(type, id);
+
+				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
+				const standardAttrs = {};
+				const customAttrs = [];
+
+				// Iterate over the LIST, not an object
+				(rawData.attributesList || []).forEach((attr) => {
+					const key = attr.name;
+					const value = attr.value;
+
+					if (definedKeys.includes(key)) {
+						// Standard attributes assume single value.
+						// If DB has multiple "race" rows, first one wins for the UI input.
+						if (!standardAttrs[key]) {
+							standardAttrs[key] = value;
+						} else {
+							// Edge case: If duplicate standard keys exist, push extras to custom
+							customAttrs.push({ key, value });
+						}
+					} else {
+						// All non-standard attributes go here, preserving duplicates
+						customAttrs.push({ key, value });
+					}
+				});
+
+				reset({
+					...rawData,
+					attributes: standardAttrs,
+					customAttributes: customAttrs,
+				});
+			} catch (err) {
+				console.error(err);
+				alert('Error loading entity.');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		loadEntity();
+	}, [type, id, reset, strategy]);
+
+	// 2. SAVE HANDLER
+	const onSubmit = async (data) => {
+		if (!campaignId && type !== 'campaign') {
+			alert('No Campaign Selected! Select one from the home screen first.');
+			return;
+		}
+
+		// Flatten everything into a single list for the Service
+		const attributesList = [];
+
+		// 1. Add Standard Attributes
+		Object.entries(data.attributes).forEach(([key, value]) => {
+			if (value && String(value).trim() !== '') {
+				attributesList.push({ name: key, value });
+			}
+		});
+
+		// 2. Add Custom Attributes (Allowing duplicates)
+		data.customAttributes.forEach((item) => {
+			if (item.key && item.key.trim() !== '') {
+				attributesList.push({ name: item.key, value: item.value });
+			}
+		});
+
+		const payload = {
+			...data,
+			attributesList, // Send the array, not the object
+		};
+
+		// Cleanup internal form state
+		delete payload.attributes;
+		delete payload.customAttributes;
+
+		setIsSaving(true);
+		try {
+			if (id) {
+				await updateEntity(type, id, payload);
+			} else {
+				await createEntity(type, { ...payload, campaign_id: campaignId });
+				if (!id) reset();
+			}
+		} catch (error) {
+			alert(`Error: ${error.message}`);
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
+
+	return (
+		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
+			{/* --- TOP BAR --- */}
+			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
+				<div className='flex items-center gap-2'>
+					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+					<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
+						{id ? 'Edit Mode' : 'Create Mode'}
+					</span>
+				</div>
+				<div className='flex gap-2'>
+					{id && (
+						<Link
+							to={`/wiki/${type}/${id}`}
+							target='_blank'
+							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors'>
+							<ExternalLink size={14} /> View Live
+						</Link>
+					)}
+					<Button type='button' variant='secondary' size='sm' icon={RotateCcw} onClick={() => reset()}>
+						Reset
+					</Button>
+					<Button type='submit' variant='primary' size='sm' icon={Save} disabled={isSaving}>
+						{isSaving ? 'Saving...' : 'Save Changes'}
+					</Button>
+				</div>
+			</div>
+
+			{/* --- CORE DETAILS --- */}
+			<div className={SECTION_CLASS}>
+				<h2 className={HEADER_CLASS}>Core Details</h2>
+				<div className='grid grid-cols-1 gap-4'>
+					<div>
+						<label className={LABEL_CLASS}>Name / Title</label>
+						<input
+							type='text'
+							{...register('name', { required: true })}
+							className={INPUT_CLASS}
+							placeholder='Entity Name...'
+						/>
+						{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
+					</div>
+
+					{strategy.hasNarrative && (
+						<div>
+							<MarkdownEditor
+								label='Description / Narrative'
+								rows={8}
+								value={watch('description') || ''}
+								onChange={(e) => setValue('description', e.target.value)}
+								placeholder='Write description using Markdown...'
+							/>
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* --- STANDARD ATTRIBUTES --- */}
+			<div className={SECTION_CLASS}>
+				<h2 className={HEADER_CLASS}>{strategy.label} Attributes</h2>
+
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					{strategy.defaultAttributes.map((attr) => (
+						<div key={attr.key}>
+							<label className={LABEL_CLASS}>{attr.label}</label>
+
+							{/* RENDER LOGIC: Check type explicitly to avoid duplication */}
+							{attr.type === 'image' ? (
+								<SmartImageInput
+									value={watch(`attributes.${attr.key}`)}
+									onChange={(e) => setValue(`attributes.${attr.key}`, e.target.value)}
+									placeholder='images/...'
+								/>
+							) : attr.type === 'select' ? (
+								<select {...register(`attributes.${attr.key}`)} className={INPUT_CLASS}>
+									<option value=''>Select...</option>
+									{attr.options.map((opt) => (
+										<option key={opt} value={opt}>
+											{opt}
+										</option>
+									))}
+								</select>
+							) : (
+								<input
+									type={attr.type === 'number' ? 'number' : 'text'}
+									{...register(`attributes.${attr.key}`)}
+									className={INPUT_CLASS}
+								/>
+							)}
+						</div>
+					))}
+				</div>
+			</div>
+
+			{/* --- CUSTOM ATTRIBUTES (Dynamic) --- */}
+			<div className={SECTION_CLASS}>
+				<div className={HEADER_CLASS}>
+					<span>Custom Attributes</span>
+					<Button
+						type='button'
+						onClick={() => append({ key: '', value: '' })}
+						size='sm'
+						variant='secondary'
+						icon={Plus}>
+						Add New
+					</Button>
+				</div>
+
+				<div className='space-y-2'>
+					{fields.map((field, index) => (
+						<div key={field.id} className='flex gap-3 items-start animate-in fade-in'>
+							<div className='w-1/3'>
+								<input
+									type='text'
+									{...register(`customAttributes.${index}.key`)}
+									placeholder='Key (e.g. SecretIdentity)'
+									className={`${INPUT_CLASS} font-bold text-muted-foreground`}
+								/>
+							</div>
+							<div className='flex-1'>
+								<input
+									type='text'
+									{...register(`customAttributes.${index}.value`)}
+									placeholder='Value'
+									className={INPUT_CLASS}
+								/>
+							</div>
+							<button
+								type='button'
+								onClick={() => remove(index)}
+								className='p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'>
+								<Trash2 size={16} />
+							</button>
+						</div>
+					))}
+					{fields.length === 0 && (
+						<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
+					)}
+				</div>
+			</div>
+
+			{/* --- CHILD MANAGERS --- */}
+			{id && type === 'session' && <SessionEventManager sessionId={id} />}
+			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
+			{id && <RelationshipManager entityId={id} />}
+		</form>
+	);
+}
+
+--- END OF features\admin-console\components\AdminForm.jsx ---
+
+--- FILE: features\admin-console\components\EntitySearch.jsx ---
+import React, { useState, useEffect, useRef } from 'react';
+import { searchEntitiesByName } from '../../../services/admin'; // <--- NEW IMPORT
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import { Search, X, Loader2 } from 'lucide-react';
+
+export default function EntitySearch({ onSelect }) {
+	const { campaignId } = useCampaign();
+	const [query, setQuery] = useState('');
+	const [results, setResults] = useState([]);
+	const [isOpen, setIsOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const wrapperRef = useRef(null);
+
+	// Close on click outside
+	useEffect(() => {
+		function handleClickOutside(event) {
+			if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+				setIsOpen(false);
+			}
+		}
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, [wrapperRef]);
+
+	useEffect(() => {
+		const doSearch = async () => {
+			if (query.length < 2) {
+				setResults([]);
+				return;
+			}
+			setIsLoading(true);
+			try {
+				// <--- USE NEW SERVICE HERE
+				const flat = await searchEntitiesByName(campaignId, query);
+
+				// Client-side Sorting: Exact Match > Starts With > Includes
+				flat.sort((a, b) => {
+					const nameA = (a.name || '').toLowerCase();
+					const nameB = (b.name || '').toLowerCase();
+					const q = query.toLowerCase();
+
+					// 1. Exact Match Priority
+					if (nameA === q && nameB !== q) return -1;
+					if (nameB === q && nameA !== q) return 1;
+
+					// 2. Starts With Priority
+					if (nameA.startsWith(q) && !nameB.startsWith(q)) return -1;
+					if (nameB.startsWith(q) && !nameA.startsWith(q)) return 1;
+
+					// 3. Shortest Name Priority (Less noise)
+					return nameA.length - nameB.length;
+				});
+
+				setResults(flat);
+				setIsOpen(true);
+			} catch (error) {
+				console.error('Search failed', error);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		const timeout = setTimeout(doSearch, 300);
+		return () => clearTimeout(timeout);
+	}, [query, campaignId]);
+
+	const handleSelect = (item) => {
+		onSelect(item);
+		setQuery('');
+		setIsOpen(false);
+	};
+
+	return (
+		<div className='relative w-full' ref={wrapperRef}>
+			{/* Label removed inside component for cleaner Bulk UI */}
+
+			<div className='relative'>
+				<input
+					type='text'
+					value={query}
+					onChange={(e) => {
+						setQuery(e.target.value);
+						if (!isOpen) setIsOpen(true);
+					}}
+					placeholder='Search by name...'
+					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm transition-shadow'
+				/>
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={14} />
+
+				{query && (
+					<button
+						onClick={() => {
+							setQuery('');
+							setIsOpen(false);
+						}}
+						className='absolute right-2 top-2 text-muted-foreground hover:text-foreground p-0.5 rounded'>
+						<X size={14} />
+					</button>
+				)}
+			</div>
+
+			{/* Dropdown Results */}
+			{isOpen && (results.length > 0 || isLoading) && (
+				<div className='absolute z-50 w-full mt-1 bg-white border border-border rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-100'>
+					{isLoading ? (
+						<div className='p-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-2'>
+							<Loader2 size={14} className='animate-spin' /> Searching...
+						</div>
+					) : (
+						results.map((item) => (
+							<button
+								key={item.id}
+								type='button'
+								onClick={() => handleSelect(item)}
+								className='w-full text-left px-3 py-2 hover:bg-amber-50 border-b border-border/50 last:border-0 transition-colors group'>
+								<div className='font-bold text-sm text-foreground group-hover:text-amber-800 truncate'>{item.name}</div>
+								<div className='flex items-center gap-2'>
+									<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded group-hover:bg-amber-100/50'>
+										{item.type}
+									</span>
+									{/* Description Snippet */}
+									<span className='text-[10px] text-muted-foreground/60 truncate max-w-[200px]'>
+										{item.description ? item.description.substring(0, 50) : ''}
+									</span>
+								</div>
+							</button>
+						))
+					)}
+				</div>
+			)}
+
+			{isOpen && !isLoading && results.length === 0 && query.length >= 2 && (
+				<div className='absolute z-50 w-full mt-1 bg-white border border-border rounded-lg shadow-xl p-3 text-center text-xs text-muted-foreground'>
+					No results for "{query}"
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\EntitySearch.jsx ---
+
+--- FILE: features\admin-console\components\EventTagger.jsx ---
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Loader2 } from 'lucide-react';
+import EntitySearch from './EntitySearch';
+import { fetchRelationships, addRelationship, deleteRelationship } from '../../../services/admin';
+
+export default function EventTagger({ eventId }) {
+	const [tags, setTags] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [isAdding, setIsAdding] = useState(false);
+
+	// If it's a temporary event (unsaved), we can't tag yet
+	const isTemp = String(eventId).startsWith('new-');
+
+	useEffect(() => {
+		if (!isTemp) loadTags();
+	}, [eventId]);
+
+	const loadTags = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchRelationships(eventId);
+			setTags(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAdd = async (target) => {
+		if (tags.find((t) => t.target?.id === target.id)) return;
+
+		setIsAdding(true);
+		try {
+			await addRelationship({
+				from_entity_id: eventId,
+				to_entity_id: target.id,
+				relationship_type: 'mention', // Standard type for events
+				is_bidirectional: false,
+			});
+			loadTags();
+		} catch (e) {
+			alert(e.message);
+		} finally {
+			setIsAdding(false);
+		}
+	};
+
+	const handleRemove = async (relId) => {
+		try {
+			await deleteRelationship(relId);
+			setTags(tags.filter((t) => t.id !== relId));
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	if (isTemp) {
+		return <div className='text-xs text-amber-600 bg-amber-50 p-2 rounded'>Save this event to enable tagging.</div>;
+	}
+
+	return (
+		<div className='space-y-2 mt-2 pt-2 border-t border-border/50'>
+			<label className='text-[10px] font-bold uppercase text-muted-foreground'>Mentions / Related Entities</label>
+
+			{/* Tag List */}
+			<div className='flex flex-wrap gap-2 mb-2'>
+				{tags.map((rel) => (
+					<div
+						key={rel.id}
+						className='flex items-center gap-1 bg-white border border-border px-2 py-1 rounded-md text-xs shadow-sm'>
+						<span className='font-medium text-foreground'>{rel.target?.name}</span>
+						<span className='text-[9px] text-muted-foreground uppercase'>{rel.target?.type}</span>
+						<button onClick={() => handleRemove(rel.id)} className='ml-1 text-gray-400 hover:text-red-500'>
+							<X size={12} />
+						</button>
+					</div>
+				))}
+				{loading && <Loader2 size={14} className='animate-spin text-muted-foreground' />}
+			</div>
+
+			{/* Search Input */}
+			<div className='max-w-xs'>
+				<EntitySearch onSelect={handleAdd} />
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\EventTagger.jsx ---
+
+--- FILE: features\admin-console\components\MarkdownEditor.jsx ---
+import React, { useState } from 'react';
+import { Eye, Edit3 } from 'lucide-react';
+import SmartMarkdown from '../../smart-text/SmartMarkdown';
+import { INPUT_CLASS, LABEL_CLASS } from './ui/FormStyles';
+
+export default function MarkdownEditor({ label, value, onChange, placeholder, rows = 6 }) {
+	const [mode, setMode] = useState('write'); // 'write' | 'preview'
+
+	return (
+		<div>
+			<div className='flex items-end justify-between mb-1'>
+				<label className={LABEL_CLASS}>{label}</label>
+				<div className='flex bg-muted rounded-md p-0.5 border border-border'>
+					<button
+						type='button'
+						onClick={() => setMode('write')}
+						className={`px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 transition-colors ${
+							mode === 'write'
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'
+						}`}>
+						<Edit3 size={12} /> Write
+					</button>
+					<button
+						type='button'
+						onClick={() => setMode('preview')}
+						className={`px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 transition-colors ${
+							mode === 'preview'
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'
+						}`}>
+						<Eye size={12} /> Preview
+					</button>
+				</div>
+			</div>
+
+			{mode === 'write' ? (
+				<textarea
+					rows={rows}
+					className={`${INPUT_CLASS} font-mono text-xs leading-relaxed`}
+					value={value}
+					onChange={onChange}
+					placeholder={placeholder}
+				/>
+			) : (
+				<div className='w-full px-3 py-3 bg-muted/10 border border-border rounded-md min-h-[150px] prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2'>
+					{value ? (
+						<SmartMarkdown>{value}</SmartMarkdown>
+					) : (
+						<span className='text-muted-foreground italic'>Nothing to preview.</span>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\MarkdownEditor.jsx ---
+
+--- FILE: features\admin-console\components\QuestObjectiveManager.jsx ---
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, Edit2, Save, X, Target, CheckCircle2, Circle, Calendar } from 'lucide-react';
+import { fetchChildRows, upsertQuestObjective, deleteRow, getSessionList } from '../../../services/admin'; // Import getSessionList
+import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './ui/FormStyles';
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import Button from '../../../components/ui/Button';
+
+export default function QuestObjectiveManager({ questId }) {
+	const { campaignId } = useCampaign();
+	const [objectives, setObjectives] = useState([]);
+	const [sessions, setSessions] = useState([]); // Store session options
+	const [loading, setLoading] = useState(false);
+	const [editingId, setEditingId] = useState(null);
+	const [formData, setFormData] = useState({});
+
+	useEffect(() => {
+		if (questId) {
+			loadObjectives();
+			loadSessions();
+		}
+	}, [questId]);
+
+	const loadObjectives = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchChildRows('quest_objectives', 'quest_id', questId, 'order_index');
+			setObjectives(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const loadSessions = async () => {
+		if (!campaignId) return;
+		try {
+			const data = await getSessionList(campaignId);
+			setSessions(data);
+		} catch (e) {
+			console.error('Failed to load sessions', e);
+		}
+	};
+
+	const handleAddNew = () => {
+		const nextOrder = objectives.length > 0 ? Math.max(...objectives.map((o) => o.order_index || 0)) + 1 : 1;
+		const newObj = {
+			id: `new-${Date.now()}`,
+			quest_id: questId,
+			objective_name: '', // Title
+			description: '',
+			objective_update: '', // Resolution text
+			status: 'pending',
+			order_index: nextOrder,
+			completed_session_id: null,
+		};
+		setObjectives([...objectives, newObj]);
+		handleEdit(newObj);
+	};
+
+	const handleEdit = (obj) => {
+		setEditingId(obj.id);
+		setFormData({ ...obj });
+	};
+
+	const handleSave = async () => {
+		try {
+			await upsertQuestObjective(formData);
+			setEditingId(null);
+			loadObjectives();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Delete?')) return;
+		if (String(id).startsWith('new')) {
+			setObjectives(objectives.filter((o) => o.id !== id));
+			return;
+		}
+		try {
+			await deleteRow('quest_objectives', id);
+			loadObjectives();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	return (
+		<div className={SECTION_CLASS}>
+			<div className={`${HEADER_CLASS} flex justify-between`}>
+				<span className='flex items-center gap-2'>
+					<Target size={18} className='text-blue-600' /> Objectives
+				</span>
+				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+					Add Objective
+				</Button>
+			</div>
+
+			<div className='space-y-3'>
+				{objectives.map((obj) => (
+					<div key={obj.id} className='group'>
+						{editingId === obj.id ? (
+							/* --- EDIT MODE --- */
+							<div className='bg-muted/30 border border-blue-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+								{/* Row 1: Order, Title, Status */}
+								<div className='flex gap-3'>
+									<div className='w-16'>
+										<label className={LABEL_CLASS}>#</label>
+										<input
+											type='number'
+											className={INPUT_CLASS}
+											value={formData.order_index}
+											onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
+										/>
+									</div>
+									<div className='flex-1'>
+										<label className={LABEL_CLASS}>Title (Name)</label>
+										<input
+											type='text'
+											className={`${INPUT_CLASS} font-bold`}
+											autoFocus
+											value={formData.objective_name || ''}
+											onChange={(e) => setFormData({ ...formData, objective_name: e.target.value })}
+											placeholder='Short summary...'
+										/>
+									</div>
+									<div className='w-32'>
+										<label className={LABEL_CLASS}>Status</label>
+										<select
+											className={INPUT_CLASS}
+											value={formData.status}
+											onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
+											<option value='pending'>Pending</option>
+											<option value='completed'>Completed</option>
+											<option value='failed'>Failed</option>
+										</select>
+									</div>
+								</div>
+
+								{/* Row 2: Description */}
+								<div>
+									<label className={LABEL_CLASS}>Description</label>
+									<textarea
+										rows={2}
+										className={INPUT_CLASS}
+										value={formData.description || ''}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+										placeholder='What needs to be done?'
+									/>
+								</div>
+
+								{/* Row 3: Updates & Session */}
+								<div className='grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border/50 pt-3'>
+									<div>
+										<label className={LABEL_CLASS}>Resolution / Update Text</label>
+										<textarea
+											rows={2}
+											className={INPUT_CLASS}
+											value={formData.objective_update || ''}
+											onChange={(e) => setFormData({ ...formData, objective_update: e.target.value })}
+											placeholder='How was it resolved?'
+										/>
+									</div>
+									<div>
+										<label className={LABEL_CLASS}>Completed In Session</label>
+										<select
+											className={INPUT_CLASS}
+											value={formData.completed_session_id || ''}
+											onChange={(e) => setFormData({ ...formData, completed_session_id: e.target.value || null })}>
+											<option value=''>-- None --</option>
+											{sessions.map((s) => (
+												<option key={s.id} value={s.id}>
+													{s.title}
+												</option>
+											))}
+										</select>
+									</div>
+								</div>
+
+								<div className='flex justify-end gap-2 pt-2'>
+									<Button
+										onClick={() => {
+											setEditingId(null);
+											loadObjectives();
+										}}
+										variant='ghost'
+										size='sm'
+										icon={X}>
+										Cancel
+									</Button>
+									<Button onClick={handleSave} variant='primary' size='sm' icon={Save}>
+										Save Objective
+									</Button>
+								</div>
+							</div>
+						) : (
+							/* --- VIEW MODE --- */
+							<div
+								className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
+									obj.status === 'completed'
+										? 'bg-emerald-50/50 border-emerald-200'
+										: 'bg-background border-border hover:border-blue-300'
+								}`}>
+								<span className='font-mono text-xs font-bold opacity-40 w-5 mt-1'>#{obj.order_index}</span>
+
+								<div className='shrink-0 mt-0.5'>
+									{obj.status === 'completed' ? (
+										<CheckCircle2 size={18} className='text-emerald-600' />
+									) : (
+										<Circle size={18} className='text-muted-foreground' />
+									)}
+								</div>
+
+								<div className='flex-1 min-w-0'>
+									{obj.objective_name && (
+										<div className='font-bold text-sm text-foreground mb-0.5'>{obj.objective_name}</div>
+									)}
+									<div
+										className={`text-sm ${obj.status === 'completed' ? 'text-muted-foreground' : 'text-foreground'}`}>
+										{obj.description}
+									</div>
+
+									{/* Resolution & Session Badges */}
+									{(obj.objective_update || obj.completed_session_id) && (
+										<div className='mt-2 flex flex-col gap-1'>
+											{obj.objective_update && (
+												<div className='text-xs text-emerald-700 bg-emerald-100/50 px-2 py-1 rounded border border-emerald-100 italic'>
+													"{obj.objective_update}"
+												</div>
+											)}
+											{obj.completed_session_id && (
+												<div className='flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground'>
+													<Calendar size={10} />
+													Session: {sessions.find((s) => s.id === obj.completed_session_id)?.title || 'Unknown'}
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+
+								<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+									<button
+										onClick={() => handleEdit(obj)}
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+										title='Edit Event'>
+										<Edit2 size={18} />
+									</button>
+									<button
+										onClick={() => handleDelete(obj.id)}
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										title='Delete Event'>
+										<Trash2 size={18} />
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				))}
+
+				{objectives.length === 0 && !loading && (
+					<div className='text-center py-6 text-muted-foreground text-sm italic'>No objectives defined yet.</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\QuestObjectiveManager.jsx ---
+
+--- FILE: features\admin-console\components\RelationshipManager.jsx ---
+import React, { useEffect, useState } from 'react';
+import { Trash2, Link as LinkIcon, ArrowRightLeft, ArrowRight, Save, X, Edit2, Layers, EyeOff } from 'lucide-react'; // Add EyeOff
+import EntitySearch from './EntitySearch';
+import { fetchRelationships, addRelationship, deleteRelationship, updateRelationship } from '../../../services/admin';
+import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS } from './ui/FormStyles';
+import Button from '../../../components/ui/Button';
+
+export default function RelationshipManager({ entityId }) {
+	const [relationships, setRelationships] = useState([]);
+	const [loading, setLoading] = useState(false);
+
+	// BULK ADD STATE
+	const [pendingTargets, setPendingTargets] = useState([]);
+	const [type, setType] = useState('Generic');
+	const [isBidirectional, setIsBidirectional] = useState(false);
+	const [isHidden, setIsHidden] = useState(false); // NEW STATE
+	const [isAdding, setIsAdding] = useState(false);
+
+	// EDIT STATE
+	const [editingId, setEditingId] = useState(null);
+	const [editForm, setEditForm] = useState({});
+
+	useEffect(() => {
+		if (entityId) loadRelationships();
+	}, [entityId]);
+
+	const loadRelationships = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchRelationships(entityId);
+			setRelationships(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// ... handleSelectTarget, removePending ... (Keep existing)
+	const handleSelectTarget = (item) => {
+		if (pendingTargets.find((t) => t.id === item.id) || item.id === entityId) return;
+		setPendingTargets([...pendingTargets, item]);
+	};
+	const removePending = (id) => setPendingTargets(pendingTargets.filter((t) => t.id !== id));
+
+	const handleBulkAdd = async () => {
+		if (pendingTargets.length === 0) return;
+		setIsAdding(true);
+		try {
+			await Promise.all(
+				pendingTargets.map((target) =>
+					addRelationship({
+						from_entity_id: entityId,
+						to_entity_id: target.id,
+						relationship_type: type,
+						is_bidirectional: isBidirectional,
+						is_hidden: isHidden, // NEW
+					})
+				)
+			);
+			setPendingTargets([]);
+			setType('Generic');
+			loadRelationships();
+		} catch (e) {
+			alert('Error: ' + e.message);
+		} finally {
+			setIsAdding(false);
+		}
+	};
+
+	const handleUpdate = async () => {
+		try {
+			await updateRelationship(editingId, {
+				relationship_type: editForm.relationship_type,
+				is_bidirectional: editForm.is_bidirectional,
+				is_hidden: editForm.is_hidden, // NEW
+			});
+			setEditingId(null);
+			loadRelationships();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Remove link?')) return;
+		try {
+			await deleteRelationship(id);
+			loadRelationships();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	if (!entityId) return null;
+
+	const relationshipTypes = [
+		'Generic',
+		'Ally',
+		'Enemy',
+		'Located_In',
+		'Member_Of',
+		'Quest_Giver',
+		'Participant',
+		'Leader_Of',
+		'Parent_Location',
+		'Workplace',
+		'Employee',
+		'Quest Update',
+		'Location Of',
+	];
+
+	return (
+		<div className={SECTION_CLASS}>
+			<h2 className={`${HEADER_CLASS} flex items-center gap-2`}>
+				<LinkIcon size={18} className='text-amber-600' /> Relationships
+			</h2>
+
+			{/* --- ADD NEW SECTION --- */}
+			<div className='bg-muted/30 p-4 rounded-lg mb-6 border border-border shadow-sm'>
+				{/* ... Staging Area Code (Same as previous) ... */}
+				<div className='flex items-center justify-between mb-3'>
+					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2'>
+						<Layers size={12} /> Bulk Connect
+					</h3>
+					{pendingTargets.length > 0 && (
+						<span className='text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100'>
+							{pendingTargets.length} Ready
+						</span>
+					)}
+				</div>
+
+				<div className='space-y-4'>
+					<div className='w-full'>
+						<EntitySearch onSelect={handleSelectTarget} />
+					</div>
+
+					{/* Pending Chips */}
+					{pendingTargets.length > 0 && (
+						<div className='flex flex-wrap gap-2 p-3 bg-background border border-border rounded-md'>
+							{pendingTargets.map((t) => (
+								<div
+									key={t.id}
+									className='flex items-center gap-2 bg-amber-50 text-amber-900 px-2 py-1 rounded border border-amber-200 text-xs font-medium'>
+									<span>{t.name}</span>
+									<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800'>
+										✕
+									</button>
+								</div>
+							))}
+						</div>
+					)}
+
+					<div className='flex flex-col md:flex-row gap-3 items-end pt-2 border-t border-border/50'>
+						<div className='flex-1 w-full grid grid-cols-2 gap-4'>
+							<div>
+								<label className='block text-[10px] uppercase font-bold text-muted-foreground mb-1'>Type</label>
+								<select value={type} onChange={(e) => setType(e.target.value)} className={INPUT_CLASS}>
+									{relationshipTypes.map((t) => (
+										<option key={t} value={t}>
+											{t}
+										</option>
+									))}
+								</select>
+							</div>
+							{/* CHECKBOXES */}
+							<div className='flex flex-col gap-2 pb-1'>
+								<label className='flex items-center gap-2 cursor-pointer select-none'>
+									<input
+										type='checkbox'
+										checked={isBidirectional}
+										onChange={(e) => setIsBidirectional(e.target.checked)}
+										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
+									/>
+									<span className='text-xs text-muted-foreground font-medium'>2-Way</span>
+								</label>
+								<label className='flex items-center gap-2 cursor-pointer select-none'>
+									<input
+										type='checkbox'
+										checked={isHidden}
+										onChange={(e) => setIsHidden(e.target.checked)}
+										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
+									/>
+									<span className='text-xs text-muted-foreground font-medium flex items-center gap-1'>
+										Hidden <EyeOff size={10} />
+									</span>
+								</label>
+							</div>
+						</div>
+						<Button
+							onClick={handleBulkAdd}
+							disabled={pendingTargets.length === 0 || isAdding}
+							size='sm'
+							variant='primary'
+							className='w-full md:w-auto min-w-[100px]'>
+							{isAdding ? 'Saving...' : `Add ${pendingTargets.length > 0 ? `(${pendingTargets.length})` : ''}`}
+						</Button>
+					</div>
+				</div>
+			</div>
+
+			{/* --- LIST SECTION --- */}
+			<div className='space-y-2'>
+				{relationships.map((rel) => (
+					<div
+						key={rel.id}
+						className={`group border rounded-lg transition-all ${
+							editingId === rel.id
+								? 'bg-amber-50/50 border-amber-300 ring-1 ring-amber-200'
+								: 'bg-background border-border hover:border-amber-300'
+						}`}>
+						{editingId === rel.id ? (
+							/* EDIT MODE */
+							<div className='grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 items-center p-2'>
+								<div className='font-bold text-sm text-foreground truncate min-w-0' title={rel.target?.name}>
+									{rel.target?.name}
+								</div>
+
+								<div className='w-32'>
+									<select
+										className={`${INPUT_CLASS} py-1 h-8 text-xs`}
+										value={editForm.relationship_type}
+										onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
+										{relationshipTypes.map((t) => (
+											<option key={t} value={t}>
+												{t}
+											</option>
+										))}
+									</select>
+								</div>
+
+								<div className='flex flex-col gap-1'>
+									<label className='flex items-center gap-1 cursor-pointer'>
+										<input
+											type='checkbox'
+											checked={editForm.is_bidirectional}
+											onChange={(e) => setEditForm({ ...editForm, is_bidirectional: e.target.checked })}
+										/>
+										<span className='text-[10px] uppercase text-muted-foreground'>2-Way</span>
+									</label>
+									<label className='flex items-center gap-1 cursor-pointer'>
+										<input
+											type='checkbox'
+											checked={editForm.is_hidden}
+											onChange={(e) => setEditForm({ ...editForm, is_hidden: e.target.checked })}
+										/>
+										<span className='text-[10px] uppercase text-muted-foreground'>Hidden</span>
+									</label>
+								</div>
+
+								{/* FIXED: Larger buttons */}
+								<div className='flex gap-1'>
+									<Button onClick={handleUpdate} size='sm' variant='primary' icon={Save} className='h-9 px-3'>
+										Save
+									</Button>
+									<Button onClick={() => setEditingId(null)} size='sm' variant='ghost' icon={X} className='h-9 px-3'>
+										Cancel
+									</Button>
+								</div>
+							</div>
+						) : (
+							/* VIEW MODE */
+							<div className='flex items-center justify-between p-2 pl-3'>
+								<div className='flex items-center gap-3 min-w-0'>
+									<span
+										className={`shrink-0 p-1.5 rounded-md ${
+											rel.is_bidirectional ? 'bg-blue-50 text-blue-600' : 'bg-muted text-muted-foreground'
+										}`}>
+										{rel.is_bidirectional ? <ArrowRightLeft size={16} /> : <ArrowRight size={16} />}
+									</span>
+									<div className='min-w-0'>
+										<div className='flex items-center gap-2'>
+											<div className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</div>
+											{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden from players' />}
+										</div>
+										<div className='text-[10px] text-muted-foreground uppercase tracking-wider flex gap-1'>
+											<span>{rel.relationship_type}</span>
+											<span className='opacity-50'>•</span>
+											<span>{rel.target?.type}</span>
+										</div>
+									</div>
+								</div>
+								{/* FIXED: Larger buttons */}
+								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
+									<button
+										onClick={() => {
+											setEditingId(rel.id);
+											setEditForm({
+												relationship_type: rel.relationship_type,
+												is_bidirectional: rel.is_bidirectional,
+												is_hidden: rel.is_hidden,
+											});
+										}}
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+										<Edit2 size={18} />
+									</button>
+									<button
+										onClick={() => handleDelete(rel.id)}
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+										<Trash2 size={18} />
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\RelationshipManager.jsx ---
+
+--- FILE: features\admin-console\components\SessionEventManager.jsx ---
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, Edit2, Save, X, Calendar } from 'lucide-react';
+import {
+	fetchChildRows,
+	upsertSessionEvent,
+	deleteRow,
+	fetchSessionEventsWithRelationships,
+} from '../../../services/admin';
+import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './ui/FormStyles';
+import Button from '../../../components/ui/Button';
+import EventTagger from './EventTagger';
+
+export default function SessionEventManager({ sessionId }) {
+	const [events, setEvents] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [editingId, setEditingId] = useState(null);
+	const [formData, setFormData] = useState({});
+
+	useEffect(() => {
+		if (sessionId) loadEvents();
+	}, [sessionId]);
+
+	const loadEvents = async () => {
+		setLoading(true);
+		try {
+			// Use the new specific function instead of generic fetchChildRows
+			const data = await fetchSessionEventsWithRelationships(sessionId);
+			setEvents(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddNew = () => {
+		const nextOrder = events.length > 0 ? Math.max(...events.map((e) => e.event_order || 0)) + 1 : 1;
+		const newEvent = {
+			id: `new-${Date.now()}`,
+			session_id: sessionId,
+			title: '',
+			description: '',
+			event_type: 'travel',
+			event_order: nextOrder,
+		};
+		setEvents([...events, newEvent]);
+		handleEdit(newEvent);
+	};
+
+	const handleEdit = (event) => {
+		setEditingId(event.id);
+		setFormData({ ...event });
+	};
+
+	const handleSave = async () => {
+		try {
+			// 1. SANITIZE: Remove 'relationships' (and any other UI-only props)
+			// We destructure 'relationships' out, and keep everything else in 'payload'
+			const { relationships, ...payload } = formData;
+
+			// 2. Save the clean payload
+			await upsertSessionEvent(payload);
+
+			setEditingId(null);
+			loadEvents();
+		} catch (e) {
+			alert('Error saving event: ' + e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Delete this event?')) return;
+		if (String(id).startsWith('new')) {
+			setEvents(events.filter((e) => e.id !== id));
+			return;
+		}
+		try {
+			await deleteRow('session_events', id);
+			loadEvents();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	return (
+		<div className={SECTION_CLASS}>
+			<div className={`${HEADER_CLASS} flex items-center justify-between`}>
+				<span className='flex items-center gap-2'>
+					<Calendar size={18} className='text-amber-600' /> Session Timeline
+				</span>
+				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+					Add Event
+				</Button>
+			</div>
+
+			<div className='space-y-3'>
+				{events.map((evt) => (
+					<div key={evt.id} className='group'>
+						{editingId === evt.id ? (
+							/* --- EDIT MODE --- */
+							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+								{/* Top Row Inputs ... (Same as before) ... */}
+								<div className='flex gap-3'>
+									<div className='w-16'>
+										<label className={LABEL_CLASS}>Order</label>
+										<input
+											type='number'
+											className={INPUT_CLASS}
+											value={formData.event_order}
+											onChange={(e) => setFormData({ ...formData, event_order: parseInt(e.target.value) })}
+										/>
+									</div>
+									<div className='flex-1'>
+										<label className={LABEL_CLASS}>Title</label>
+										<input
+											type='text'
+											className={`${INPUT_CLASS} font-bold`}
+											autoFocus
+											value={formData.title}
+											onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+										/>
+									</div>
+									<div className='w-1/4'>
+										<label className={LABEL_CLASS}>Type</label>
+										<select
+											className={INPUT_CLASS}
+											value={formData.event_type}
+											onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}>
+											{['travel', 'combat', 'social', 'exploration', 'location_visited', 'quest_started'].map((t) => (
+												<option key={t} value={t}>
+													{t}
+												</option>
+											))}
+										</select>
+									</div>
+								</div>
+
+								{/* Description */}
+								<div>
+									<label className={LABEL_CLASS}>Description</label>
+									<textarea
+										rows={3}
+										className={INPUT_CLASS}
+										value={formData.description || ''}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+									/>
+								</div>
+
+								{/* NEW: Event Tagger */}
+								<EventTagger eventId={evt.id} />
+
+								{/* Larger Action Buttons */}
+								<div className='flex justify-end gap-3 border-t border-border/50 pt-3'>
+									<Button
+										onClick={() => {
+											setEditingId(null);
+											loadEvents();
+										}}
+										variant='ghost'
+										icon={X}>
+										Cancel
+									</Button>
+									<Button onClick={handleSave} variant='primary' icon={Save}>
+										Save Changes
+									</Button>
+								</div>
+							</div>
+						) : (
+							/* --- VIEW MODE --- */
+							<div className='flex items-start gap-3 p-3 bg-background border border-border rounded-lg hover:border-amber-300 transition-colors'>
+								<div className='shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border border-border'>
+									{evt.event_order}
+								</div>
+								<div className='flex-1 min-w-0'>
+									<div className='flex items-center gap-2 mb-1'>
+										<span className='text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-muted text-muted-foreground rounded border border-border'>
+											{evt.event_type}
+										</span>
+										<h4 className='font-bold text-sm text-foreground'>{evt.title}</h4>
+									</div>
+									<p className='text-xs text-muted-foreground line-clamp-2'>{evt.description}</p>
+									{/* NEW: Relationship Tags Display */}
+									{evt.relationships && evt.relationships.length > 0 && (
+										<div className='flex flex-wrap gap-1.5 mt-1'>
+											{evt.relationships.map((rel) => (
+												<div
+													key={rel.id}
+													className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-white border border-border text-[10px] text-muted-foreground shadow-sm select-none'>
+													<span className='font-medium text-foreground'>{rel.target?.name}</span>
+													<span className='text-[9px] opacity-60 uppercase'>{rel.target?.type}</span>
+												</div>
+											))}
+										</div>
+									)}
+								</div>
+
+								{/* FIX: Larger Action Buttons */}
+								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
+									<button
+										onClick={() => handleEdit(evt)}
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+										title='Edit Event'>
+										<Edit2 size={18} />
+									</button>
+									<button
+										onClick={() => handleDelete(evt.id)}
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										title='Delete Event'>
+										<Trash2 size={18} />
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\SessionEventManager.jsx ---
+
+--- FILE: features\admin-console\components\SmartImageInput.jsx ---
+import React from 'react';
+import { Image as ImageIcon } from 'lucide-react';
+import { INPUT_CLASS } from './ui/FormStyles';
+
+// Helper to make DB paths browser-friendly
+const resolvePreviewUrl = (url) => {
+	if (!url) return null;
+	// Remove all ../ sequences
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	// Prepend the base URL (usually / or /dnd-campaign-manager/ depending on vite config)
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+export default function SmartImageInput({ value, onChange, placeholder, ...props }) {
+	const previewUrl = resolvePreviewUrl(value);
+
+	return (
+		<div className='flex gap-3 items-start'>
+			<div className='flex-1'>
+				<input
+					type='text'
+					className={INPUT_CLASS}
+					placeholder={placeholder || 'images/icons/...'}
+					value={value || ''}
+					onChange={onChange}
+					{...props}
+				/>
+				<p className='text-[10px] text-muted-foreground mt-1'>Value stored in DB: {value}</p>
+			</div>
+
+			{/* Live Preview Box */}
+			<div className='shrink-0 w-10 h-10 rounded border border-border bg-muted flex items-center justify-center overflow-hidden shadow-sm bg-white'>
+				{previewUrl ? (
+					<img
+						src={previewUrl}
+						alt='Preview'
+						className='w-full h-full object-contain'
+						onError={(e) => {
+							e.target.style.display = 'none';
+						}}
+					/>
+				) : (
+					<ImageIcon size={16} className='text-muted-foreground/50' />
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\components\SmartImageInput.jsx ---
+
+--- FILE: features\admin-console\components\ui\FormStyles.js ---
+// src/features/admin-console/components/ui/FormStyles.js
+
+export const INPUT_CLASS =
+	'w-full px-3 py-1.5 bg-background border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-muted-foreground/50 transition-shadow';
+
+export const LABEL_CLASS = 'block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5';
+
+export const SECTION_CLASS = 'bg-background border border-border rounded-lg p-4 shadow-sm';
+
+export const HEADER_CLASS =
+	'text-lg font-serif font-bold text-foreground border-b border-border pb-2 mb-4 flex items-center justify-between';
+
+--- END OF features\admin-console\components\ui\FormStyles.js ---
+
+--- FILE: features\admin-console\config\strategies.js ---
+export const ADMIN_STRATEGIES = {
+	// 0. CAMPAIGN (Meta Entity)
+	campaign: {
+		label: 'Campaign',
+		type: 'campaign',
+		primaryTable: 'campaigns',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true, // Use Markdown for description
+		defaultAttributes: [
+			{ key: 'campaign_id', label: 'Campaign ID (Integer)', type: 'number' }, // Required by your schema
+			{ key: 'map_data', label: 'Map Data (JSON)', type: 'text' }, // Advanced: map config
+		],
+	},
+
+	// 1. NPC
+	npc: {
+		label: 'NPC',
+		type: 'npc',
+		primaryTable: 'npcs',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'race', label: 'Race/Ancestry', type: 'text' },
+			{ key: 'class', label: 'Class/Occupation', type: 'text' },
+			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy', 'Unknown'] },
+			{ key: 'status', label: 'Status', type: 'text' },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 2. LOCATION
+	location: {
+		label: 'Location',
+		type: 'location',
+		primaryTable: 'locations',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 3. SESSION
+	session: {
+		label: 'Session',
+		type: 'session',
+		primaryTable: 'sessions',
+		colMapping: { name: 'title', description: 'narrative' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'session_number', label: 'Session Number', type: 'number' },
+			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
+		],
+	},
+
+	// 4. QUEST
+	quest: {
+		label: 'Quest',
+		type: 'quest',
+		primaryTable: 'quests',
+		colMapping: { name: 'title', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed', 'Failed', 'Pending'] },
+			{ key: 'quest type', label: 'Quest Type', type: 'select', options: ['Main Quest', 'Side Quest', 'Personal'] },
+			{ key: 'priority', label: 'Priority', type: 'select', options: ['Normal', 'High', 'Critical', 'Low'] },
+		],
+	},
+
+	// 5. FACTION
+	faction: {
+		label: 'Faction',
+		type: 'faction',
+		primaryTable: 'factions',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'leader', label: 'Leader', type: 'text' },
+			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy'] },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 6. ITEM
+	item: {
+		label: 'Item',
+		type: 'item',
+		primaryTable: 'items',
+		colMapping: { name: 'name', description: 'description' },
+		defaultAttributes: [
+			{
+				key: 'type',
+				label: 'Type',
+				type: 'select',
+				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Item', 'Key Item', 'Treasure'],
+			},
+			{
+				key: 'rarity',
+				label: 'Rarity',
+				type: 'select',
+				options: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'],
+			},
+			{ key: 'value', label: 'Gold Value', type: 'text' },
+			{ key: 'attunement', label: 'Attunement?', type: 'select', options: ['Yes', 'No'] },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 7. CHARACTER (The Party)
+	character: {
+		label: 'Character',
+		type: 'character',
+		primaryTable: 'characters',
+		// 'background' is usually the column name for description in D&D schemas
+		// If your table uses 'description', change 'background' to 'description'
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'race', label: 'Race', type: 'text' },
+			{ key: 'class', label: 'Class', type: 'text' },
+			{ key: 'level', label: 'Level', type: 'number' },
+			{ key: 'speed', label: 'Speed', type: 'text' },
+			{ key: 'hit points', label: 'Hit Points', type: 'text' },
+			{ key: 'armor class', label: 'Armor Class', type: 'text' },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	default: {
+		label: 'Entity',
+		primaryTable: 'entities',
+		colMapping: { name: 'name', description: 'description' },
+		defaultAttributes: [],
+	},
+};
+
+export const getStrategy = (type) => {
+	return ADMIN_STRATEGIES[type] || ADMIN_STRATEGIES.default;
+};
+
+--- END OF features\admin-console\config\strategies.js ---
+
+--- FILE: features\admin-console\layouts\AdminLayout.jsx ---
+import React from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play } from 'lucide-react';
+import { useCampaign } from '../../campaign-session/CampaignContext'; // 1. Import Context
+
+const NavItem = ({ to, icon: Icon, label }) => {
+	const location = useLocation();
+	const isActive = location.pathname.includes(to);
+
+	return (
+		<Link
+			to={to}
+			className={clsx(
+				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
+				isActive
+					? 'bg-amber-100 text-amber-900 shadow-sm ring-1 ring-amber-200'
+					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+			)}>
+			<Icon size={15} className={isActive ? 'text-amber-700' : 'opacity-70'} />
+			{label}
+		</Link>
+	);
+};
+
+export default function AdminLayout() {
+	const { campaignId, setCampaignId } = useCampaign(); // 2. Get Campaign State
+	const navigate = useNavigate();
+
+	const handleSwitch = () => {
+		if (confirm('Go to Campaign Selection screen?')) {
+			setCampaignId(null); // 3. Clear the ID
+			navigate('/select-campaign'); // 4. Navigate to root (which now renders CampaignSelect)
+		}
+	};
+
+	return (
+		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans'>
+			{/* Sidebar */}
+			<aside className='w-56 bg-background border-r border-border flex flex-col shrink-0'>
+				<div className='p-4 border-b border-border bg-muted/20'>
+					<div className='flex items-center gap-2 text-amber-700'>
+						<div className='p-1.5 bg-amber-100 rounded-md'>
+							<Database size={18} />
+						</div>
+						<h2 className='font-serif font-bold text-lg leading-none'>DM Console</h2>
+					</div>
+				</div>
+
+				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
+					<div className='px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						System
+					</div>
+					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Entities
+					</div>
+					<NavItem to='/dm/manage/character' icon={Users} label='Characters' />
+					<NavItem to='/dm/manage/npc' icon={Users} label='NPCs' />
+					<NavItem to='/dm/manage/location' icon={MapPin} label='Locations' />
+					<NavItem to='/dm/manage/faction' icon={Shield} label='Factions' />
+					<NavItem to='/dm/manage/item' icon={Gem} label='Items' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Campaign
+					</div>
+					<NavItem to='/dm/manage/session' icon={BookOpen} label='Sessions' />
+					<NavItem to='/dm/manage/quest' icon={Scroll} label='Quests' />
+				</nav>
+
+				<div className='p-3 border-t border-border space-y-1'>
+					{/* OPTION A: Return to Active Campaign */}
+					{campaignId && (
+						<Link
+							to='/'
+							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors'
+							title={`Return to Campaign ID: ${campaignId}`}>
+							<Play size={14} /> Enter Campaign
+						</Link>
+					)}
+
+					{/* OPTION B: Switch / Log Out */}
+					<button
+						onClick={handleSwitch}
+						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors text-left'>
+						<LogOut size={14} /> Campaign Select
+					</button>
+				</div>
+			</aside>
+
+			{/* Main Content */}
+			<main className='flex-1 h-full overflow-y-auto bg-muted/10 custom-scrollbar'>
+				<div className='mx-auto'>
+					<Outlet />
+				</div>
+			</main>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\layouts\AdminLayout.jsx ---
+
+--- FILE: features\admin-console\pages\EntityEditorPage.jsx ---
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import AdminForm from '../components/AdminForm'; // Import the form
+
+export default function EntityEditorPage() {
+	const { type, id } = useParams();
+
+	return (
+		<div className='max-w-5xl mx-auto'>
+			{/* Page Header */}
+			<div className='mb-6'>
+				<h1 className='text-2xl font-serif font-bold text-foreground capitalize'>
+					{id ? `Edit ${type}` : `Create New ${type}`}
+				</h1>
+				<p className='text-sm text-muted-foreground'>
+					{id ? `ID: ${id}` : 'Fill in the details below to create a new entry.'}
+				</p>
+			</div>
+
+			{/* The Dynamic Form */}
+			<AdminForm
+				type={type}
+				id={id}
+				key={`${type}-${id || 'new'}`} // <--- This forces a complete rebuild when type changes
+			/>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\pages\EntityEditorPage.jsx ---
+
+--- FILE: features\admin-console\pages\EntityListPage.jsx ---
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Edit, Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { getEntities } from '../../../services/entities';
+import { createEntity, fetchRawEntity, deleteEntity } from '../../../services/admin';
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import Button from '../../../components/ui/Button';
+import EntityBadge from '../../../components/entity/EntityBadge';
+
+export default function EntityListPage() {
+	const { type } = useParams(); // e.g., 'npc', 'location'
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const [search, setSearch] = useState('');
+	const [isCloning, setIsCloning] = useState(null); // Stores ID of item being cloned
+	const [isDeleting, setIsDeleting] = useState(null);
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// 1. Fetch List Data
+	const { data, isLoading, refetch } = useQuery({
+		queryKey: ['admin-list', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: !!campaignId,
+	});
+
+	const filtered = (data || []).filter((item) =>
+		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
+	);
+
+	// 2. Handle Duplication
+	const handleDuplicate = async (originalId) => {
+		if (!confirm('Create a copy of this entity?')) return;
+
+		setIsCloning(originalId);
+		try {
+			// A. Fetch original raw data (exactly as DB sees it)
+			const raw = await fetchRawEntity(normalizedType, originalId);
+
+			// B. Prepare Copy Data
+			// We strip the ID so Supabase creates a new one
+			// We modify the name so you know it's a copy
+			const copyData = {
+				...raw,
+				name: raw.name ? `${raw.name} (Copy)` : undefined,
+				title: raw.title ? `${raw.title} (Copy)` : undefined,
+				campaign_id: campaignId,
+			};
+
+			// C. Create the new entity
+			const result = await createEntity(normalizedType, copyData);
+
+			// D. Navigate to the new Editor
+			navigate(`/dm/editor/${normalizedType}/${result.id}`);
+		} catch (e) {
+			console.error('Duplication failed:', e);
+			alert('Failed to duplicate: ' + e.message);
+			setIsCloning(false); // Only reset if failed (otherwise we navigate away)
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm(`Are you sure you want to delete this ${normalizedType}? This cannot be undone.`)) return;
+
+		setIsDeleting(id);
+		try {
+			await deleteEntity(normalizedType, id);
+			// Refresh list
+			refetch();
+		} catch (e) {
+			alert('Delete failed: ' + e.message);
+		} finally {
+			setIsDeleting(null);
+		}
+	};
+
+	return (
+		<div className='space-y-4 animate-in fade-in duration-300'>
+			{/* --- Header Toolbar --- */}
+			<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+				<h1 className='text-2xl font-serif font-bold text-foreground capitalize flex items-center gap-2'>
+					{type}s
+					<span className='text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
+						{data?.length || 0}
+					</span>
+				</h1>
+				<Link to={`/dm/editor/${normalizedType}`}>
+					<Button variant='primary' icon={Plus} size='sm'>
+						Create New
+					</Button>
+				</Link>
+			</div>
+
+			{/* --- Search Bar --- */}
+			<div className='relative'>
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={16} />
+				<input
+					type='text'
+					placeholder={`Filter ${type}s...`}
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					className='w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm placeholder:text-muted-foreground/50'
+				/>
+			</div>
+
+			{/* --- Entity List --- */}
+			<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
+				<div className='divide-y divide-border'>
+					{isLoading ? (
+						<div className='p-12 flex justify-center text-muted-foreground'>
+							<Loader2 className='animate-spin text-amber-600' />
+						</div>
+					) : filtered.length === 0 ? (
+						<div className='p-12 text-center text-muted-foreground text-sm italic bg-muted/10'>
+							{search ? `No matches for "${search}"` : `No ${type}s found. Create one to get started.`}
+						</div>
+					) : (
+						filtered.map((item) => (
+							<div
+								key={item.id}
+								className='group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+								{/* Left: Info */}
+								<div className='flex items-center gap-3 min-w-0 flex-1'>
+									<div className='min-w-0'>
+										<div className='flex items-center gap-2'>
+											<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
+											{/* Show badge if type differs from current view (e.g. searching generic entities) */}
+											{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+										</div>
+										<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
+											{item.summary || item.narrative || item.description || 'No description'}
+										</div>
+									</div>
+								</div>
+
+								{/* Right: Actions */}
+								<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+									<EntityBadge
+										type={item.type}
+										size='sm'
+										variant='outline'
+										className='opacity-50 hidden sm:inline-flex'
+									/>
+
+									{/* Duplicate Button */}
+									<button
+										onClick={() => handleDuplicate(item.id)}
+										disabled={isCloning === item.id}
+										className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
+										title='Duplicate'>
+										{isCloning === item.id ? (
+											<Loader2 size={16} className='animate-spin text-amber-600' />
+										) : (
+											<Copy size={16} />
+										)}
+									</button>
+
+									{/* Edit Button */}
+									<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
+										<Button
+											variant='ghost'
+											size='sm'
+											icon={Edit}
+											className='h-8 px-2 text-muted-foreground hover:text-foreground'>
+											Edit
+										</Button>
+									</Link>
+
+									{/* Delete */}
+									<button
+										onClick={() => handleDelete(item.id)}
+										disabled={isDeleting === item.id}
+										className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										title='Delete'>
+										{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
+									</button>
+								</div>
+							</div>
+						))
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\pages\EntityListPage.jsx ---
+
+--- FILE: features\admin-console\pages\SplitPaneManager.jsx ---
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { getEntities } from '../../../services/entities';
+import { createEntity, fetchRawEntity, deleteEntity } from '../../../services/admin';
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import AdminForm from '../components/AdminForm';
+import Button from '../../../components/ui/Button';
+
+export default function SplitPaneManager() {
+	const { type, id } = useParams();
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const [search, setSearch] = useState('');
+
+	// Action States
+	const [isCloning, setIsCloning] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(null);
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// 1. Fetch List Data
+	const {
+		data: entities,
+		isLoading,
+		refetch,
+	} = useQuery({
+		queryKey: ['admin-list', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: normalizedType === 'campaign' || !!campaignId,
+	});
+
+	const filtered = (entities || []).filter((item) =>
+		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
+	);
+
+	// --- ACTIONS ---
+
+	const handleDuplicate = async (originalId, e) => {
+		e.stopPropagation(); // Prevent navigation
+		if (!confirm('Create a copy?')) return;
+
+		setIsCloning(originalId);
+		try {
+			const raw = await fetchRawEntity(normalizedType, originalId);
+			// Fix: Check for attributesList vs attributes object structure from fetchRawEntity
+			// fetchRawEntity returns { ..., attributes: {...} } OR { ..., attributesList: [...] } depending on version
+			// The service handles formatting for createEntity, we just need to modify the name.
+
+			const copyData = {
+				...raw,
+				name: raw.name ? `${raw.name} (Copy)` : undefined,
+				title: raw.title ? `${raw.title} (Copy)` : undefined,
+				campaign_id: campaignId,
+			};
+
+			// If ID exists in raw data, remove it so DB creates new one
+			delete copyData.id;
+
+			const result = await createEntity(normalizedType, copyData);
+			refetch(); // Refresh list
+			navigate(`/dm/manage/${normalizedType}/${result.id}`);
+		} catch (e) {
+			alert('Failed to duplicate: ' + e.message);
+		} finally {
+			setIsCloning(false);
+		}
+	};
+
+	const handleDelete = async (itemId, e) => {
+		e.stopPropagation(); // Prevent navigation
+		if (!confirm('Delete this entry?')) return;
+
+		setIsDeleting(itemId);
+		try {
+			await deleteEntity(normalizedType, itemId);
+			refetch();
+			// If we deleted the currently selected item, go back to "Create New"
+			if (id === itemId) {
+				navigate(`/dm/manage/${normalizedType}`);
+			}
+		} catch (e) {
+			alert('Delete failed: ' + e.message);
+		} finally {
+			setIsDeleting(null);
+		}
+	};
+
+	return (
+		<div className='flex h-[100vh] overflow-hidden bg-muted/10'>
+			{/* --- LEFT PANE: LIST --- */}
+			<div className='w-80 flex flex-col border-r border-border bg-background shrink-0 shadow-sm z-10'>
+				{/* Header & Search */}
+				<div className='p-3 border-b border-border space-y-3 bg-muted/10'>
+					<div className='flex items-center justify-between'>
+						<h2 className='text-lg font-serif font-bold capitalize text-foreground flex items-center gap-2'>
+							{type}s
+							<span className='text-xs font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
+								{entities?.length || 0}
+							</span>
+						</h2>
+						<Button
+							onClick={() => navigate(`/dm/manage/${normalizedType}`)}
+							size='sm'
+							variant='primary'
+							icon={Plus}
+							className='h-7 px-2 text-xs'>
+							New
+						</Button>
+					</div>
+					<div className='relative'>
+						<Search className='absolute left-2.5 top-2 text-muted-foreground/60' size={14} />
+						<input
+							type='text'
+							placeholder='Filter list...'
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							className='w-full pl-8 pr-3 py-1.5 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm'
+						/>
+					</div>
+				</div>
+
+				{/* Scrollable List */}
+				<div className='flex-1 overflow-y-auto custom-scrollbar'>
+					{isLoading ? (
+						<div className='p-8 flex justify-center'>
+							<Loader2 className='animate-spin text-amber-600' />
+						</div>
+					) : filtered.length === 0 ? (
+						<div className='p-6 text-center text-xs text-muted-foreground italic'>No matches.</div>
+					) : (
+						<div className='divide-y divide-border/40'>
+							{filtered.map((item) => {
+								const isActive = id === item.id;
+								return (
+									<div
+										key={item.id}
+										onClick={() => navigate(`/dm/manage/${normalizedType}/${item.id}`)}
+										className={`group relative flex items-center w-full text-left transition-all cursor-pointer ${
+											isActive ? 'bg-amber-50/80' : 'bg-background hover:bg-muted/50'
+										}`}>
+										{/* Active Marker Strip */}
+										<div
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500' : 'bg-transparent'}`}
+										/>
+
+										{/* Main Content Area */}
+										<div className='flex-1 py-3 pl-4 pr-2 min-w-0'>
+											<div
+												className={`font-bold text-sm truncate mb-0.5 ${
+													isActive ? 'text-amber-900' : 'text-foreground'
+												}`}>
+												{item.name || item.title}
+											</div>
+											<div className='flex items-center justify-between'>
+												<div className='text-[10px] text-muted-foreground truncate w-full'>
+													{item.summary || item.narrative || item.description || 'No description'}
+												</div>
+												{/* Status Dot */}
+												{item.status && (
+													<div
+														title={item.status}
+														className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+															item.status.toLowerCase().includes('active')
+																? 'bg-emerald-500'
+																: item.status.toLowerCase().includes('dead')
+																? 'bg-red-500'
+																: 'bg-slate-300'
+														}`}
+													/>
+												)}
+											</div>
+										</div>
+
+										{/* Action Buttons (Visible on Hover) */}
+										<div
+											className={`flex flex-col gap-1 pr-1 pl-1 ${
+												isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+											} transition-opacity`}>
+											<button
+												onClick={(e) => handleDuplicate(item.id, e)}
+												className='p-1 text-muted-foreground hover:text-blue-600 hover:bg-blue-100 rounded'
+												title='Duplicate'>
+												{isCloning === item.id ? <Loader2 size={12} className='animate-spin' /> : <Copy size={12} />}
+											</button>
+											<button
+												onClick={(e) => handleDelete(item.id, e)}
+												className='p-1 text-muted-foreground hover:text-red-600 hover:bg-red-100 rounded'
+												title='Delete'>
+												{isDeleting === item.id ? <Loader2 size={12} className='animate-spin' /> : <Trash2 size={12} />}
+											</button>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* --- RIGHT PANE: EDITOR --- */}
+			<div className='flex-1 overflow-y-auto bg-muted/10 p-4 md:p-8 custom-scrollbar'>
+				<div className='max-w-4xl mx-auto'>
+					<AdminForm key={`${normalizedType}-${id || 'new'}`} type={normalizedType} id={id} />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin-console\pages\SplitPaneManager.jsx ---
+
 --- FILE: features\app-core\App.jsx ---
 // features/app-core/App.jsx
 import { useEffect } from 'react';
@@ -2065,49 +4264,47 @@ const RelationshipGraph = lazy(() => import('../../features/relationship-graph/R
 const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
 const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
 
+const AdminLayout = lazy(() => import('../../features/admin-console/layouts/AdminLayout'));
+const SplitPaneManager = lazy(() => import('../../features/admin-console/pages/SplitPaneManager'));
+
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
-
-	if (!campaignId) {
-		return (
-			<Suspense fallback={<RouteLoading text='Loading...' />}>
-				<CampaignSelect />
-			</Suspense>
-		);
-	}
 
 	return (
 		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
 			<Routes>
-				<Route path='/' element={<MainLayout />}>
-					{/* FIXED: Atlas route with optional mapId param */}
-					<Route index element={<Navigate to='/atlas/world_map' replace />} />
-					<Route path='atlas/:mapId' element={<MapView />} />
-					<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
-
-					<Route path='timeline' element={<TimelineView />} />
-					<Route path='relationships' element={<RelationshipGraph />} />
-
-					<Route path='wiki/:type' element={<WikiLayout />}>
-						<Route
-							index
-							element={
-								<div className='h-full flex items-center justify-center text-gray-400 italic'>
-									Select an entry to view details
-								</div>
-							}
-						/>
-						<Route path=':entityId' element={<WikiEntryPage />} />
-					</Route>
-
-					{/* Legacy Redirects */}
-					<Route path='sessions' element={<Navigate to='/wiki/session' replace />} />
-					<Route path='characters' element={<Navigate to='/wiki/character' replace />} />
-					<Route path='npcs' element={<Navigate to='/wiki/npc' replace />} />
-					<Route path='locations' element={<Navigate to='/wiki/location' replace />} />
-					<Route path='quests' element={<Navigate to='/wiki/quest' replace />} />
-					<Route path='encounters' element={<Navigate to='/wiki/encounter' replace />} />
+				{/* --- 1. ADMIN CONSOLE --- */}
+				<Route path='/dm' element={<AdminLayout />}>
+					<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
+					<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
 				</Route>
+
+				{/* --- 2. CAMPAIGN SELECTION (Explicit Route) --- */}
+				<Route path='/select-campaign' element={<CampaignSelect />} />
+
+				{/* --- 3. MAIN APP (Protected) --- */}
+				{campaignId ? (
+					<Route path='/' element={<MainLayout />}>
+						{/* FIX #2: Default to Session list instead of Atlas */}
+						<Route index element={<Navigate to='/wiki/session' replace />} />
+
+						<Route path='atlas/:mapId' element={<MapView />} />
+						<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
+						<Route path='timeline' element={<TimelineView />} />
+						<Route path='relationships' element={<RelationshipGraph />} />
+
+						<Route path='wiki/:type' element={<WikiLayout />}>
+							<Route
+								index
+								element={<div className='h-full flex items-center justify-center text-gray-400'>Select an entry</div>}
+							/>
+							<Route path=':entityId' element={<WikiEntryPage />} />
+						</Route>
+					</Route>
+				) : (
+					// Fallback to selection if hitting root without ID
+					<Route path='*' element={<Navigate to='/select-campaign' replace />} />
+				)}
 			</Routes>
 		</Suspense>
 	);
@@ -2219,23 +4416,26 @@ export function useCampaignPersistence() {
 
 --- FILE: features\campaign-session\useCampaignSelection.js ---
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import { getCampaigns } from '../../services/campaigns';
 import { useCampaign } from './CampaignContext';
 import './types';
 
 export function useCampaignSelection() {
 	const { setCampaignId } = useCampaign();
+	const navigate = useNavigate(); // 2. Initialize hook
 
 	const { data: campaigns, isLoading } = useQuery({
 		queryKey: ['campaigns'],
 		queryFn: getCampaigns,
 	});
 
-	// Sort by ID as requested
+	// Sort by ID
 	const sortedCampaigns = (campaigns || []).sort((a, b) => String(a.campaign_id).localeCompare(String(b.campaign_id)));
 
 	const selectCampaign = (id) => {
 		setCampaignId(id);
+		navigate('/'); // 3. Force navigation to the main app route
 	};
 
 	return {
@@ -4377,6 +6577,7 @@ import { Outlet } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { useMainLayout } from './useMainLayout';
 import { Sidebar } from './components/Sidebar';
+import DevAdminButton from '../../components/ui/DevAdminButton';
 
 export default function MainLayout() {
 	const vm = useMainLayout();
@@ -4404,6 +6605,7 @@ export default function MainLayout() {
 				<div className='flex-1 overflow-hidden relative'>
 					<Outlet />
 				</div>
+				<DevAdminButton />
 			</main>
 		</div>
 	);
@@ -5043,7 +7245,7 @@ export const LAYOUT_CONFIG = {
 
 	// 4. GRAVITY (The "Centering" Force)
 	// Lowered significantly. This stops the graph from collapsing on itself.
-	gravity: 0.5, // (was 0.25)
+	gravity: 0.25, // (was 0.25)
 	gravityRange: 3.8,
 
 	// 5. ITERATIONS
@@ -7678,6 +9880,9 @@ import { Marker, Popup } from 'react-leaflet';
 import { ArrowRight, MapPin, Skull, Castle, User, Tent, Sparkles } from 'lucide-react';
 import { resolveMarkerIcon } from '../../utils/markerUtils';
 
+/**
+ * Resolves Lucide Icons for the Popup header based on Category
+ */
 const getCategoryIcon = (category) => {
 	const cat = category?.toLowerCase() || '';
 	if (cat.includes('combat') || cat.includes('danger') || cat.includes('encounter')) return Skull;
@@ -7694,13 +9899,14 @@ export const MapMarkers = ({ markers, onNavigate }) => {
 	return (
 		<>
 			{markers.map((marker, idx) => {
-				const Icon = getCategoryIcon(marker.category);
-				const markerIcon = resolveMarkerIcon(marker);
+				const CategoryIcon = getCategoryIcon(marker.category);
+				const leafletIcon = resolveMarkerIcon(marker);
 
 				return (
-					<Marker key={`${marker.label}-${idx}`} position={marker.position} icon={markerIcon}>
+					<Marker key={`${marker.label}-${idx}`} position={marker.position} icon={leafletIcon}>
 						<Popup closeButton={true}>
 							<div className='flex flex-col w-[260px] font-sans bg-background'>
+								{/* Header */}
 								<div className='px-4 pt-4 pb-2 pr-7 flex items-start justify-between gap-3'>
 									<div>
 										<span className='text-[10px] font-bold uppercase tracking-wider text-amber-600/90 block mb-1'>
@@ -7709,12 +9915,13 @@ export const MapMarkers = ({ markers, onNavigate }) => {
 										<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
 									</div>
 									<div className='shrink-0 p-1.5 rounded-lg shadow-sm border border-amber-200 bg-amber-50 text-amber-700'>
-										<Icon size={16} strokeWidth={2} />
+										<CategoryIcon size={16} strokeWidth={2} />
 									</div>
 								</div>
 
 								<div className='h-px w-full bg-border/50 my-1' />
 
+								{/* Description */}
 								<div className='px-4 py-2'>
 									{marker.description ? (
 										<p className='text-xs text-gray-600 leading-relaxed line-clamp-6'>{marker.description}</p>
@@ -7723,7 +9930,7 @@ export const MapMarkers = ({ markers, onNavigate }) => {
 									)}
 								</div>
 
-								{/* Navigation Link Logic */}
+								{/* Navigation Link (Map-to-Map) */}
 								{marker.mapLink && (
 									<div className='mt-2 bg-muted/50 p-2 border-t border-border flex justify-end rounded-b-lg'>
 										<button
@@ -7851,6 +10058,7 @@ export const calculateBounds = (imageWidth, imageHeight) => {
 --- FILE: features\world-map\utils\markerUtils.js ---
 import L from 'leaflet';
 
+// Singleton for invisible/interactive-only markers
 export const invisibleIcon = L.divIcon({
 	className: 'bg-transparent border-none',
 	html: '<div style="width: 100%; height: 100%;"></div>',
@@ -7859,6 +10067,7 @@ export const invisibleIcon = L.divIcon({
 	popupAnchor: [0, -10],
 });
 
+// Text Label Marker Generator
 export const createTextMarker = (label, fontSize) => {
 	const sizeStyle = fontSize ? `${fontSize}px` : '1.5rem';
 	return L.divIcon({
@@ -7875,13 +10084,15 @@ export const createTextMarker = (label, fontSize) => {
 	});
 };
 
-export const createCustomIcon = (iconName, baseUrl) => {
+// Custom Image Icon Generator
+export const createCustomIcon = (iconName) => {
 	return L.divIcon({
 		className: 'custom-marker-icon',
 		html: `
             <div class="group relative flex flex-col items-center">
                 <div class="w-8 h-8 transition-transform group-hover:-translate-y-1 duration-200">
-                    <img src="${baseUrl}images/custom-icons/${iconName}.png" class="w-full h-full object-contain drop-shadow-md filter" />
+                    <img src="${import.meta.env.BASE_URL}images/custom-icons/${iconName}.png" 
+                         class="w-full h-full object-contain drop-shadow-md filter" />
                 </div>
             </div>`,
 		iconSize: [32, 32],
@@ -7890,38 +10101,32 @@ export const createCustomIcon = (iconName, baseUrl) => {
 	});
 };
 
+// Logic Hub: Resolves the appropriate Leaflet icon
+export const resolveMarkerIcon = (marker) => {
+	const { icon, type, label, fontSize } = marker;
+
+	// 1. Text Marker (Check both 'type' and 'icon' properties per your original code)
+	if (type === 'text' || icon === 'text') {
+		return createTextMarker(label, fontSize);
+	}
+
+	// 2. Invisible / Null Icon (Interactive only)
+	if (!icon) {
+		return invisibleIcon;
+	}
+
+	// 3. Custom Image Icon (Fallback to your specific images folder)
+	return createCustomIcon(icon);
+};
+
+// For session paths/dots
 export const createDotIcon = (color) =>
 	L.divIcon({
 		className: 'path-dot',
-		html: `
-        <div class="relative w-3 h-3 group">
-            <div style="background-color: ${color};" class="absolute inset-0 rounded-full border-2 border-white shadow-sm transition-transform group-hover:scale-150"></div>
-        </div>`,
+		html: `<div style="background-color: ${color};" class="w-3 h-3 rounded-full border-2 border-white shadow-sm"></div>`,
 		iconSize: [12, 12],
 		iconAnchor: [6, 6],
 	});
-
-/**
- * Resolve the appropriate Leaflet icon for a marker based on its properties
- * @param {Object} marker - Marker data with label, category, iconName, fontSize
- * @returns {L.DivIcon} Leaflet icon instance
- */
-export const resolveMarkerIcon = (marker) => {
-	const baseUrl = import.meta.env.BASE_URL;
-
-	// 1. Custom Icon (if specified)
-	if (marker.iconName) {
-		return createCustomIcon(marker.iconName, baseUrl);
-	}
-
-	// 2. Text Label (if no popup and has label)
-	if (marker.label && !marker.description) {
-		return createTextMarker(marker.label, marker.fontSize);
-	}
-
-	// 3. Default Invisible Icon (for markers with popups)
-	return invisibleIcon;
-};
 
 --- END OF features\world-map\utils\markerUtils.js ---
 
@@ -7944,6 +10149,420 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 --- END OF lib\supabase.js ---
+
+--- FILE: services\admin.js ---
+import { supabase } from '../lib/supabase';
+import { getStrategy } from '../features/admin-console/config/strategies';
+
+// Helper to prepare attribute rows
+const prepareAttributeRows = (entityId, data) => {
+	// If we have a prepared list (from the new form logic), use it
+	if (data.attributesList && Array.isArray(data.attributesList)) {
+		return data.attributesList
+			.filter((attr) => attr.name && String(attr.value).trim() !== '')
+			.map((attr) => ({
+				entity_id: entityId,
+				name: attr.name,
+				value: attr.value,
+				is_private: false,
+			}));
+	}
+
+	// Fallback for legacy object format (just in case)
+	if (data.attributes) {
+		return Object.entries(data.attributes)
+			.filter(([_, value]) => value && String(value).trim() !== '')
+			.map(([key, value]) => ({
+				entity_id: entityId,
+				name: key,
+				value: value,
+				is_private: false,
+			}));
+	}
+	return [];
+};
+
+export const createEntity = async (type, data) => {
+	const strategy = getStrategy(type);
+
+	// 1. Prepare Core Payload
+	const corePayload = {};
+
+	// Only add parent campaign_id if it's NOT a campaign itself
+	if (type !== 'campaign') {
+		corePayload.campaign_id = data.campaign_id;
+	}
+
+	// Name/Desc Mapping
+	if (strategy.colMapping) {
+		if (data.name) corePayload[strategy.colMapping.name] = data.name;
+		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+	}
+	if (strategy.primaryTable === 'entities') corePayload.type = type;
+
+	// FIX #4: Extract Special Columns from Attributes (e.g. Campaign ID, Map Data)
+	// We look at the incoming attributesList or attributes object
+	const rawAttributes =
+		data.attributesList ||
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+
+	const attributesToInsert = [];
+
+	rawAttributes.forEach((attr) => {
+		// Does this attribute match a known column in the definitions?
+		// Simple check: For campaigns, 'campaign_id' and 'map_data' are columns.
+		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
+
+		if (isSpecialColumn) {
+			// It's a column! Add to core payload.
+			corePayload[attr.name] = attr.value;
+		} else {
+			// It's a normal attribute. Keep for attributes table.
+			attributesToInsert.push(attr);
+		}
+	});
+
+	console.log('[Admin] Creating:', corePayload);
+
+	// 2. Insert Core
+	const { data: insertedRecord, error: insertError } = await supabase
+		.from(strategy.primaryTable)
+		.insert(corePayload)
+		.select()
+		.single();
+
+	if (insertError) throw insertError;
+	const newId = insertedRecord.id;
+
+	// 3. Insert Remaining Attributes (if any)
+	// Campaigns usually don't use the attributes table, so this might be empty, which is fine.
+	if (attributesToInsert.length > 0 && strategy.primaryTable !== 'campaigns') {
+		const rows = attributesToInsert.map((attr) => ({
+			entity_id: newId,
+			name: attr.name,
+			value: attr.value,
+			is_private: false,
+		}));
+
+		const { error: attrError } = await supabase.from('attributes').insert(rows);
+		if (attrError) throw attrError;
+	}
+
+	return { id: newId, ...insertedRecord };
+};
+
+export const updateEntity = async (type, id, data) => {
+	const strategy = getStrategy(type);
+
+	// 1. Prepare Core Payload
+	const corePayload = {};
+	if (strategy.colMapping) {
+		if (data.name) corePayload[strategy.colMapping.name] = data.name;
+		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+	}
+
+	// FIX: Extract Special Columns from Attributes
+	const rawAttributes =
+		data.attributesList ||
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+
+	const attributesToInsert = [];
+
+	rawAttributes.forEach((attr) => {
+		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
+
+		if (isSpecialColumn) {
+			corePayload[attr.name] = attr.value;
+		} else {
+			attributesToInsert.push(attr);
+		}
+	});
+
+	// 2. Update Core
+	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
+
+	if (updateError) throw updateError;
+
+	// 3. Handle Attributes (Skip for campaigns usually)
+	if (strategy.primaryTable !== 'campaigns') {
+		// Delete old
+		const { error: deleteError } = await supabase.from('attributes').delete().eq('entity_id', id);
+		if (deleteError) throw deleteError;
+
+		// Insert new
+		if (attributesToInsert.length > 0) {
+			const rows = attributesToInsert.map((attr) => ({
+				entity_id: id,
+				name: attr.name,
+				value: attr.value,
+				is_private: false,
+			}));
+			const { error: insertError } = await supabase.from('attributes').insert(rows);
+			if (insertError) throw insertError;
+		}
+	}
+
+	return { success: true };
+};
+
+export const fetchRawEntity = async (type, id) => {
+	const strategy = getStrategy(type);
+
+	// 1. Fetch Core Data
+	const { data: coreData, error: coreError } = await supabase
+		.from(strategy.primaryTable)
+		.select('*')
+		.eq('id', id)
+		.single();
+
+	if (coreError) throw coreError;
+
+	// 2. Fetch Attributes (As List)
+	const { data: attrData, error: attrError } = await supabase
+		.from('attributes')
+		.select('name, value')
+		.eq('entity_id', id);
+
+	if (attrError) throw attrError;
+
+	// 3. Reverse Map Core Columns
+	const formData = { ...coreData };
+	if (strategy.colMapping) {
+		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
+			if (coreData[dbCol] !== undefined) {
+				formData[formField] = coreData[dbCol];
+			}
+		});
+	}
+
+	// 4. FIX: Map Column-based attributes (Campaigns) into the Attribute List
+	// If the strategy says 'campaign_id' is an attribute, but it exists on 'coreData',
+	// we fake it as an attribute so the UI renders it.
+	if (strategy.defaultAttributes) {
+		strategy.defaultAttributes.forEach((defAttr) => {
+			if (coreData[defAttr.key] !== undefined) {
+				attrData.push({
+					name: defAttr.key,
+					value: coreData[defAttr.key],
+				});
+			}
+		});
+	}
+
+	// RETURN RAW ATTRIBUTE LIST
+	// We intentionally do NOT convert to an object here to preserve duplicates
+	return { ...formData, attributesList: attrData };
+};
+
+/**
+ * Fetch all relationships for a specific entity
+ */
+export const fetchRelationships = async (id) => {
+	const { data, error } = await supabase
+		.from('entity_relationships')
+		.select(
+			`
+            id,
+            relationship_type,
+            description,
+            is_bidirectional,
+            is_hidden,
+            target:entities!to_entity_id ( id, name, type )
+        `
+		)
+		.eq('from_entity_id', id);
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Add a new relationship
+ * Note: Your DB trigger 'create_reverse_relationship' handles the reverse link automatically
+ * if is_bidirectional is true.
+ */
+export const addRelationship = async (payload) => {
+	// payload = { from_entity_id, to_entity_id, relationship_type, is_bidirectional }
+	const { data, error } = await supabase.from('entity_relationships').insert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Delete a relationship
+ */
+export const deleteRelationship = async (relId) => {
+	const { error } = await supabase.from('entity_relationships').delete().eq('id', relId);
+
+	if (error) throw error;
+	return true;
+};
+
+/**
+ * Fetch child rows (e.g., session_events)
+ */
+export const fetchChildRows = async (table, foreignKeyCol, parentId, orderBy = 'id') => {
+	const { data, error } = await supabase
+		.from(table)
+		.select('*')
+		.eq(foreignKeyCol, parentId)
+		.order(orderBy, { ascending: true });
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Save a single event.
+ * If no ID, it creates. If ID, it updates.
+ */
+export const upsertSessionEvent = async (eventData) => {
+	// 1. Remove ID if it's a placeholder "new"
+	const payload = { ...eventData };
+	if (String(payload.id).startsWith('new')) {
+		delete payload.id;
+	}
+
+	const { data, error } = await supabase.from('session_events').upsert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Delete a generic row
+ */
+export const deleteRow = async (table, id) => {
+	const { error } = await supabase.from(table).delete().eq('id', id);
+	if (error) throw error;
+	return true;
+};
+
+/**
+ * Save a single quest objective.
+ */
+export const upsertQuestObjective = async (objectiveData) => {
+	// Remove temp ID
+	const payload = { ...objectiveData };
+	if (String(payload.id).startsWith('new')) {
+		delete payload.id;
+	}
+
+	const { data, error } = await supabase.from('quest_objectives').upsert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+export const deleteEntity = async (type, id) => {
+	const strategy = getStrategy(type);
+
+	// 1. Delete Attributes
+	const { error: attrError } = await supabase.from('attributes').delete().eq('entity_id', id);
+
+	if (attrError) console.warn('Attribute delete warning:', attrError);
+
+	// 2. Delete Primary Row (Cascades to 'entities' via DB trigger)
+	const { error: mainError } = await supabase.from(strategy.primaryTable).delete().eq('id', id);
+
+	if (mainError) throw mainError;
+	return true;
+};
+
+export const updateRelationship = async (relId, updates) => {
+	const { error } = await supabase.from('entity_relationships').update(updates).eq('id', relId);
+
+	if (error) throw error;
+	return true;
+};
+
+export const searchEntitiesByName = async (campaignId, query) => {
+	const searchTerm = `%${query}%`;
+
+	// 1. Search Entities (NPCs, Locations, Characters, Factions, Quests, Items)
+	// We strictly search the 'name' column here.
+	const { data: entities } = await supabase
+		.from('entities')
+		.select('id, name, type, description')
+		.eq('campaign_id', campaignId)
+		.ilike('name', searchTerm)
+		.limit(15); // Higher limit
+
+	// 2. Search Sessions (Sessions are often separate)
+	const { data: sessions } = await supabase
+		.from('sessions')
+		.select('id, title, narrative')
+		.eq('campaign_id', campaignId)
+		.ilike('title', searchTerm)
+		.limit(5);
+
+	// Normalize Sessions to match Entity structure
+	const normSessions = (sessions || []).map((s) => ({
+		id: s.id,
+		name: s.title,
+		type: 'session',
+		description: s.narrative,
+	}));
+
+	return [...(entities || []), ...normSessions];
+};
+
+export const getSessionList = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('sessions')
+		.select('id, title')
+		.eq('campaign_id', campaignId)
+		.order('title', { ascending: true }); // Assuming title starts with "01", "02", etc.
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Fetch session events AND their relationships (mentions) efficiently.
+ */
+export const fetchSessionEventsWithRelationships = async (sessionId) => {
+	// 1. Fetch Events
+	const { data: events, error: eventError } = await supabase
+		.from('session_events')
+		.select('*')
+		.eq('session_id', sessionId)
+		.order('event_order', { ascending: true });
+
+	if (eventError) throw eventError;
+	if (!events || events.length === 0) return [];
+
+	// 2. Fetch Relationships for ALL these events at once
+	const eventIds = events.map((e) => e.id);
+	const { data: rels, error: relError } = await supabase
+		.from('entity_relationships')
+		.select(
+			`
+            id,
+            from_entity_id,
+            target:entities!to_entity_id ( id, name, type )
+        `
+		)
+		.in('from_entity_id', eventIds);
+
+	if (relError) throw relError;
+
+	// 3. Group Relationships by Event ID
+	const relMap = {};
+	rels.forEach((r) => {
+		if (!relMap[r.from_entity_id]) relMap[r.from_entity_id] = [];
+		relMap[r.from_entity_id].push(r);
+	});
+
+	// 4. Merge back into Event objects
+	return events.map((e) => ({
+		...e,
+		relationships: relMap[e.id] || [],
+	}));
+};
+
+--- END OF services\admin.js ---
 
 --- FILE: services\campaigns.js ---
 import { supabase } from '../lib/supabase';
@@ -7979,6 +10598,7 @@ export const getCampaigns = async () => {
 --- FILE: services\entities.js ---
 import { supabase } from '../lib/supabase';
 import { getAttributeValue } from '../utils/entity/attributeParser';
+import { getCampaigns } from './campaigns'; // 1. Add Import
 
 // --- HELPER: Extract Session Meta ---
 const extractSessionMeta = (session, attributes = []) => {
@@ -8063,6 +10683,7 @@ const entityStrategies = {
 	session: getSessions,
 	quest: getCompleteEntities,
 	default: getCompleteEntities,
+	campaign: async () => getCampaigns(),
 };
 
 export const getEntities = async (campaignId, type) => {

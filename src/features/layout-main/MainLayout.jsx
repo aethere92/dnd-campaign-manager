@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { useMainLayout } from './useMainLayout';
 import { Sidebar } from './components/Sidebar';
+import DevAdminButton from '../../components/ui/DevAdminButton';
 
 export default function MainLayout() {
 	const vm = useMainLayout();
@@ -29,6 +30,7 @@ export default function MainLayout() {
 				<div className='flex-1 overflow-hidden relative'>
 					<Outlet />
 				</div>
+				<DevAdminButton />
 			</main>
 		</div>
 	);

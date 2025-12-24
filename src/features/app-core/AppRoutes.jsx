@@ -11,49 +11,47 @@ const RelationshipGraph = lazy(() => import('../../features/relationship-graph/R
 const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
 const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
 
+const AdminLayout = lazy(() => import('../../features/admin-console/layouts/AdminLayout'));
+const SplitPaneManager = lazy(() => import('../../features/admin-console/pages/SplitPaneManager'));
+
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
-
-	if (!campaignId) {
-		return (
-			<Suspense fallback={<RouteLoading text='Loading...' />}>
-				<CampaignSelect />
-			</Suspense>
-		);
-	}
 
 	return (
 		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
 			<Routes>
-				<Route path='/' element={<MainLayout />}>
-					{/* FIXED: Atlas route with optional mapId param */}
-					<Route index element={<Navigate to='/atlas/world_map' replace />} />
-					<Route path='atlas/:mapId' element={<MapView />} />
-					<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
-
-					<Route path='timeline' element={<TimelineView />} />
-					<Route path='relationships' element={<RelationshipGraph />} />
-
-					<Route path='wiki/:type' element={<WikiLayout />}>
-						<Route
-							index
-							element={
-								<div className='h-full flex items-center justify-center text-gray-400 italic'>
-									Select an entry to view details
-								</div>
-							}
-						/>
-						<Route path=':entityId' element={<WikiEntryPage />} />
-					</Route>
-
-					{/* Legacy Redirects */}
-					<Route path='sessions' element={<Navigate to='/wiki/session' replace />} />
-					<Route path='characters' element={<Navigate to='/wiki/character' replace />} />
-					<Route path='npcs' element={<Navigate to='/wiki/npc' replace />} />
-					<Route path='locations' element={<Navigate to='/wiki/location' replace />} />
-					<Route path='quests' element={<Navigate to='/wiki/quest' replace />} />
-					<Route path='encounters' element={<Navigate to='/wiki/encounter' replace />} />
+				{/* --- 1. ADMIN CONSOLE --- */}
+				<Route path='/dm' element={<AdminLayout />}>
+					<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
+					<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
 				</Route>
+
+				{/* --- 2. CAMPAIGN SELECTION (Explicit Route) --- */}
+				<Route path='/select-campaign' element={<CampaignSelect />} />
+
+				{/* --- 3. MAIN APP (Protected) --- */}
+				{campaignId ? (
+					<Route path='/' element={<MainLayout />}>
+						{/* FIX #2: Default to Session list instead of Atlas */}
+						<Route index element={<Navigate to='/wiki/session' replace />} />
+
+						<Route path='atlas/:mapId' element={<MapView />} />
+						<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
+						<Route path='timeline' element={<TimelineView />} />
+						<Route path='relationships' element={<RelationshipGraph />} />
+
+						<Route path='wiki/:type' element={<WikiLayout />}>
+							<Route
+								index
+								element={<div className='h-full flex items-center justify-center text-gray-400'>Select an entry</div>}
+							/>
+							<Route path=':entityId' element={<WikiEntryPage />} />
+						</Route>
+					</Route>
+				) : (
+					// Fallback to selection if hitting root without ID
+					<Route path='*' element={<Navigate to='/select-campaign' replace />} />
+				)}
 			</Routes>
 		</Suspense>
 	);

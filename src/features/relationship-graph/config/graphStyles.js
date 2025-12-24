@@ -127,7 +127,7 @@ export const LAYOUT_CONFIG = {
 
 	// 4. GRAVITY (The "Centering" Force)
 	// Lowered significantly. This stops the graph from collapsing on itself.
-	gravity: 0.5, // (was 0.25)
+	gravity: 0.25, // (was 0.25)
 	gravityRange: 3.8,
 
 	// 5. ITERATIONS

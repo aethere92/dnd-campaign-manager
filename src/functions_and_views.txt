@@ -58,6 +58,7 @@ BEGIN
   RETURN NULL;
 END;
 
+
 --- Entity Complete View --- 
 
 create view public.entity_complete_view as
@@ -294,3 +295,37 @@ from
     where
       macro_events.macro_type is not null
   ) events on true;
+
+  --- create_reverse_relationship ---
+  
+BEGIN
+  -- Only proceed if is_bidirectional is true
+  IF NEW.is_bidirectional = true THEN
+    -- Check if reverse relationship already exists to avoid infinite loop
+    IF NOT EXISTS (
+      SELECT 1 FROM entity_relationships
+      WHERE from_entity_id = NEW.to_entity_id
+        AND to_entity_id = NEW.from_entity_id
+        AND relationship_type = NEW.relationship_type
+    ) THEN
+      -- Insert the reverse relationship
+      INSERT INTO entity_relationships (
+        from_entity_id,
+        to_entity_id,
+        relationship_type,
+        description,
+        is_bidirectional,
+        is_hidden
+      ) VALUES (
+        NEW.to_entity_id,           -- Swap: to becomes from
+        NEW.from_entity_id,          -- Swap: from becomes to
+        NEW.relationship_type,
+        NEW.description,
+        NEW.is_bidirectional,
+        NEW.is_hidden
+      );
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;

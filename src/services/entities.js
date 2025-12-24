@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { getAttributeValue } from '../utils/entity/attributeParser';
+import { getCampaigns } from './campaigns'; // 1. Add Import
 
 // --- HELPER: Extract Session Meta ---
 const extractSessionMeta = (session, attributes = []) => {
@@ -84,6 +85,7 @@ const entityStrategies = {
 	session: getSessions,
 	quest: getCompleteEntities,
 	default: getCompleteEntities,
+	campaign: async () => getCampaigns(),
 };
 
 export const getEntities = async (campaignId, type) => {
