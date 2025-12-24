@@ -16,7 +16,7 @@ export const useEntitySidebar = (entity, traits) => {
 	return useMemo(() => {
 		if (!entity) return null;
 
-		const connections = transformRelationships(entity.relationships, 8);
+		const connections = transformRelationships(entity.relationships, 50);
 
 		return {
 			traits: traits || [],
