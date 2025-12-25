@@ -20,13 +20,13 @@ export const TimelineEvent = ({ event }) => {
 			<div className='flex-1 -mt-1 pb-2'>
 				<h4 className='text-sm font-bold text-gray-800 mb-1 flex items-center gap-2'>
 					{event.title}
-					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-400 border border-border px-1.5 rounded-sm bg-muted'>
+					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-800 border border-border px-1.5 rounded-sm bg-muted ml-auto'>
 						{event.typeLabel}
 					</span>
 				</h4>
 
 				{event.description && (
-					<div className='text-sm text-gray-600 leading-relaxed text-pretty'>
+					<div className='text-sm text-gray-600 leading-relaxed text-pretty text-justify'>
 						<SmartMarkdown>{event.description}</SmartMarkdown>
 					</div>
 				)}

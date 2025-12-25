@@ -88,7 +88,7 @@ export const LAYOUT_CONFIG = {
 	name: 'fcose',
 	quality: 'default',
 	randomize: false,
-	animate: true,
+	animate: false,
 	animationDuration: 1000,
 	fit: true,
 	padding: 50,
@@ -132,7 +132,7 @@ export const LAYOUT_CONFIG = {
 
 	// 5. ITERATIONS
 	// More time for the simulation to resolve collisions
-	numIter: 5000,
+	numIter: 2500,
 
 	// Disconnected components spacing
 	tile: true,

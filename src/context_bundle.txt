@@ -3074,23 +3074,26 @@ export default function RelationshipManager({ entityId }) {
 
 	// Dropdown options
 	const relationshipTypes = [
-		'Generic',
+		'member_of',
+		'leadership_relation',
+		'part_of',
+		'affiliated_with',
+		'family_relation',
+		'romantic_relation',
+		'professional_relation',
+		'located_in',
 		'parent_location',
-		'Quest Update',
-		'session_character',
-		'session_npc',
-		'session_faction',
-		'session_location',
-		'session_quest',
-		'Participant',
-		'Ally',
-		'Enemy',
-		'Located_In',
-		'Member_Of',
-		'Quest_Giver',
-		'Leader_Of',
-		'Workplace',
-		'Employee',
+		'residence_relation',
+		'workplace_relation',
+		'ownership_relation',
+		'quest_giver',
+		'quest_objective',
+		'quest_update',
+		'quest_participant',
+		'quest_location',
+		'hostile_to',
+		'knowledge_of',
+		'encountered',
 	];
 
 	// Helper to get sort order including "Other" groups not in explicit list
@@ -5018,7 +5021,7 @@ import { Tag, Network, Shield, Activity } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
 import EntityLink from '../../../components/entity/EntityLink';
-import { capitalize, toTitleCase } from '../../../utils/text/textProcessing'; // Imported toTitleCase
+import { capitalize, toTitleCase } from '../../../utils/text/textProcessing';
 
 // --- SUB-COMPONENTS ---
 const AbilityGrid = ({ stats }) => (
@@ -5077,21 +5080,49 @@ const getRoleStyle = (roleStr) => {
 	return 'bg-stone-100 text-stone-500 border-stone-200/60';
 };
 
+// --- NEW COMPONENT: Type Divider ---
+const TypeDivider = ({ label }) => (
+	<div className='flex items-center gap-2 my-3'>
+		<div className='h-px bg-stone-200 flex-1' />
+		<span className='text-[9px] font-bold text-stone-400 uppercase tracking-widest'>{label}</span>
+		<div className='h-px bg-stone-200 flex-1' />
+	</div>
+);
+
 // --- MAIN COMPONENT ---
 export const EntitySidebar = ({ traits, connections }) => {
 	const textTraits = traits.filter((t) => t.displayType === 'text');
 	const specialTraits = traits.filter((t) => t.displayType !== 'text');
 
-	// Sort connections: Type (A-Z) -> Name (A-Z)
-	const sortedConnections = useMemo(() => {
-		if (!connections) return [];
-		return [...connections].sort((a, b) => {
-			const typeA = a.typeLabel || '';
-			const typeB = b.typeLabel || '';
+	// Group connections by Type Label
+	const groupedConnections = useMemo(() => {
+		if (!connections || connections.length === 0) return [];
+
+		// 1. Sort by Type, then Name
+		const sorted = [...connections].sort((a, b) => {
+			const typeA = a.typeLabel || 'Other';
+			const typeB = b.typeLabel || 'Other';
 			const compareType = typeA.localeCompare(typeB);
 			if (compareType !== 0) return compareType;
 			return (a.name || '').localeCompare(b.name || '');
 		});
+
+		// 2. Group for rendering
+		const groups = [];
+		let currentType = null;
+		let currentGroup = null;
+
+		sorted.forEach((item) => {
+			const type = item.typeLabel || 'Other';
+			if (type !== currentType) {
+				currentType = type;
+				currentGroup = { type, items: [] };
+				groups.push(currentGroup);
+			}
+			currentGroup.items.push(item);
+		});
+
+		return groups;
 	}, [connections]);
 
 	return (
@@ -5143,43 +5174,49 @@ export const EntitySidebar = ({ traits, connections }) => {
 				</div>
 			)}
 
-			{/* 3. Connections */}
-			{sortedConnections.length > 0 && (
+			{/* 3. Connections (Grouped with Dividers) */}
+			{groupedConnections.length > 0 && (
 				<div>
 					<h3 className='text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
 						<Network size={10} /> Connections
 					</h3>
-					<div className='space-y-2'>
-						{sortedConnections.map((rel, i) => (
-							<EntityLink
-								key={i}
-								id={rel.id}
-								type={rel.typeLabel}
-								inline={true} // Cleaner DOM structure (A > SPAN)
-								showIcon={false} // Custom icon rendering
-								className={clsx(
-									// Layout & Box Styling (Overrides EntityLink defaults with !)
-									'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-white/60 !transition-all !cursor-pointer !no-underline',
-									'!border-stone-200 hover:!border-amber-300 hover:!shadow-sm hover:!bg-white',
-									rel.theme.hover
-								)}>
-								{/* Left: Icon + Name */}
-								<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-									<EntityIcon type={rel.typeLabel} size={14} className='opacity-80 group-hover:opacity-100' />
-									<span className='text-sm font-semibold text-stone-700 truncate group-hover:text-foreground transition-colors'>
-										{rel.name}
-									</span>
-								</div>
 
-								{/* Right: Role Badge */}
-								<span
-									className={clsx(
-										'shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-2 max-w-[45%] truncate',
-										getRoleStyle(rel.role)
-									)}>
-									{rel.role}
-								</span>
-							</EntityLink>
+					<div className='space-y-1'>
+						{groupedConnections.map((group, gIdx) => (
+							<div key={group.type}>
+								{/* Divider (skip for first one if desired, currently showing for all as per design pattern) */}
+								<TypeDivider label={group.type} />
+
+								<div className='space-y-2'>
+									{group.items.map((rel, i) => (
+										<EntityLink
+											key={rel.id}
+											id={rel.id}
+											type={rel.typeLabel}
+											inline={true}
+											showIcon={false}
+											className={clsx(
+												'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-white/60 !transition-all !cursor-pointer !no-underline',
+												'!border-stone-200 hover:!border-amber-300 hover:!shadow-sm hover:!bg-white',
+												rel.theme.hover
+											)}>
+											<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+												<EntityIcon type={rel.typeLabel} size={14} className='opacity-80 group-hover:opacity-100' />
+												<span className='text-sm font-semibold text-stone-700 truncate group-hover:text-foreground transition-colors'>
+													{rel.name}
+												</span>
+											</div>
+											<span
+												className={clsx(
+													'shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-2 max-w-[45%] truncate',
+													getRoleStyle(rel.role)
+												)}>
+												{rel.role}
+											</span>
+										</EntityLink>
+									))}
+								</div>
+							</div>
 						))}
 					</div>
 				</div>
@@ -5191,56 +5228,137 @@ export const EntitySidebar = ({ traits, connections }) => {
 --- END OF features\entity-view\components\EntitySidebar.jsx ---
 
 --- FILE: features\entity-view\components\QuestObjectives.jsx ---
-import { CheckCircle2, Circle, XCircle, Target } from 'lucide-react';
+import { useState } from 'react';
+import {
+	CheckCircle2,
+	Circle,
+	XCircle,
+	Target,
+	Calendar,
+	ChevronDown,
+	ChevronRight,
+	CornerDownRight,
+} from 'lucide-react';
 import { clsx } from 'clsx';
+import SmartMarkdown from '../../smart-text/SmartMarkdown';
+
+const QuestObjectiveItem = ({ obj }) => {
+	const [isOpen, setIsOpen] = useState(false);
+
+	const isCompleted = obj.status === 'completed';
+	const isFailed = obj.status === 'failed';
+
+	const hasUpdate = !!obj.objective_update;
+	const hasSession = isCompleted && obj.completed_session_number;
+	const hasContent = hasUpdate || hasSession;
+
+	const toggle = () => hasContent && setIsOpen(!isOpen);
+
+	return (
+		<div
+			className={clsx(
+				'transition-colors border-b border-border/40 last:border-0',
+				isCompleted ? 'bg-emerald-50/10' : isFailed ? 'bg-red-50/10' : 'hover:bg-muted/30'
+			)}>
+			{/* --- MAIN ROW --- */}
+			<div
+				className={clsx(
+					'flex items-start gap-3 px-3 py-2 cursor-pointer group',
+					hasContent ? 'hover:bg-black/5' : 'cursor-default'
+				)}
+				onClick={toggle}>
+				{/* Status Icon */}
+				<div className='mt-0.5 shrink-0'>
+					{isCompleted ? (
+						<CheckCircle2 size={16} className='text-emerald-600' />
+					) : isFailed ? (
+						<XCircle size={16} className='text-red-500' />
+					) : (
+						<Circle size={16} className='text-muted-foreground/40' strokeWidth={2} />
+					)}
+				</div>
+
+				{/* Text Content */}
+				<div className='flex-1 min-w-0 pt-0.5'>
+					{obj.objective_name && (
+						<div className='text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wide mb-0.5'>
+							{obj.objective_name}
+						</div>
+					)}
+					<div
+						className={clsx(
+							'text-[13px] leading-snug font-medium transition-colors',
+							isCompleted ? 'text-stone-600' : isFailed ? 'text-red-800/80' : 'text-foreground'
+						)}>
+						<SmartMarkdown components={{ p: 'span' }}>{obj.description}</SmartMarkdown>
+					</div>
+				</div>
+
+				{/* Toggle Chevron */}
+				{hasContent && (
+					<button
+						className={clsx(
+							'shrink-0 text-gray-400 group-hover:text-foreground transition-colors mt-0.5',
+							isOpen && 'text-foreground'
+						)}>
+						{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+					</button>
+				)}
+			</div>
+
+			{/* --- DROPDOWN CONTENT --- */}
+			{isOpen && hasContent && (
+				<div className='pl-9 pr-3 pb-2 -mt-1 animate-in slide-in-from-top-1 fade-in duration-200'>
+					<div className='flex flex-col gap-1.5'>
+						{/* Session Badge */}
+						{hasSession && (
+							<div className='flex items-center gap-2'>
+								<span className='inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700/80'>
+									<Calendar size={10} />
+									Session {obj.completed_session_number}
+									{obj.completed_session_title && (
+										<span className='opacity-60 normal-case tracking-normal font-medium'>
+											• {obj.completed_session_title}
+										</span>
+									)}
+								</span>
+							</div>
+						)}
+
+						{/* Update Text */}
+						{hasUpdate && (
+							<div className='flex gap-2 items-start'>
+								<CornerDownRight size={12} className='shrink-0 mt-1 text-accent opacity-60' />
+								<span className='text-xs text-stone-600 italic leading-relaxed'>
+									<SmartMarkdown>{obj.objective_update}</SmartMarkdown>
+								</span>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
 
 export const QuestObjectives = ({ objectives }) => {
 	if (!objectives || objectives.length === 0) return null;
 
 	return (
-		<div className='mb-8 not-prose border border-stone-200 rounded-lg overflow-hidden bg-background'>
-			<div className='px-3 py-2 border-b border-stone-200 bg-stone-100/40 flex items-center gap-2'>
+		<div className='mb-8 not-prose border border-stone-200 rounded-lg overflow-hidden bg-stone-50/20'>
+			<div className='px-3 py-2 border-b border-stone-200 bg-stone-100/50 flex items-center gap-2'>
 				<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 m-0'>
 					<Target size={12} className='text-accent' /> Quest Objectives
 				</h3>
+				<span className='ml-auto text-[9px] font-bold bg-stone-200/60 px-1.5 py-0.5 rounded text-stone-500'>
+					{objectives.filter((o) => o.status === 'completed').length} / {objectives.length}
+				</span>
 			</div>
-			<div className='divide-y divide-border/50'>
-				{objectives.map((obj, idx) => {
-					const isCompleted = obj.status === 'completed';
-					const isFailed = obj.status === 'failed';
-					return (
-						<div
-							key={obj.id || idx}
-							className={clsx(
-								'flex items-start gap-3 px-3 py-2.5 transition-colors',
-								isCompleted ? 'bg-emerald-50/30' : isFailed ? 'bg-red-50/30' : 'hover:bg-muted/50'
-							)}>
-							<div className='mt-0.5 shrink-0'>
-								{isCompleted ? (
-									<CheckCircle2 size={14} className='text-emerald-600' />
-								) : isFailed ? (
-									<XCircle size={14} className='text-red-500' />
-								) : (
-									<Circle size={14} className='text-muted-foreground/40' strokeWidth={2} />
-								)}
-							</div>
-							<div className='flex-1 min-w-0'>
-								<p
-									className={clsx(
-										'text-[13px] leading-snug m-0',
-										isCompleted ? 'text-muted-foreground' : isFailed ? 'text-red-800/80' : 'text-foreground font-medium'
-									)}>
-									{obj.description}
-								</p>
-								{obj.objective_name && (
-									<span className='block text-[9px] font-bold text-muted-foreground/70 uppercase tracking-wider mt-1'>
-										{obj.objective_name}
-									</span>
-								)}
-							</div>
-						</div>
-					);
-				})}
+
+			<div className='bg-background'>
+				{objectives.map((obj, idx) => (
+					<QuestObjectiveItem key={obj.id || idx} obj={obj} />
+				))}
 			</div>
 		</div>
 	);
@@ -5523,7 +5641,7 @@ export const useEntitySidebar = (entity, traits) => {
 	return useMemo(() => {
 		if (!entity) return null;
 
-		const connections = transformRelationships(entity.relationships, 8);
+		const connections = transformRelationships(entity.relationships, 50);
 
 		return {
 			traits: traits || [],
@@ -6090,7 +6208,12 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 
 	// Quest Objectives
 	if (type === 'quest' && additionalData.objectives) {
-		entity.objectives = additionalData.objectives;
+		// REFACTORED: Flatten session info for the view
+		entity.objectives = additionalData.objectives.map((obj) => ({
+			...obj,
+			completed_session_number: obj.session?.session_number || null,
+			completed_session_title: obj.session?.title || null,
+		}));
 	}
 
 	// Event Processing
@@ -6962,7 +7085,7 @@ export const SidebarHeader = ({ campaign }) => {
 	return (
 		<div className='p-4'>
 			{/* Campaign Card */}
-			<div className='flex items-center gap-3 px-2 py-2 mb-4 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors'>
+			<div className='hidden lg:flex items-center gap-3 px-2 py-2 mb-4 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors'>
 				<div className='w-8 h-8 rounded bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center text-white font-serif font-bold shadow-sm'>
 					{campaign?.initial || 'C'}
 				</div>
@@ -6972,7 +7095,7 @@ export const SidebarHeader = ({ campaign }) => {
 			</div>
 
 			{/* Global Search */}
-			<div className='mb-6'>
+			<div className='lg:mb-6'>
 				<GlobalSearch />
 			</div>
 		</div>
@@ -8519,13 +8642,13 @@ export const TimelineEvent = ({ event }) => {
 			<div className='flex-1 -mt-1 pb-2'>
 				<h4 className='text-sm font-bold text-gray-800 mb-1 flex items-center gap-2'>
 					{event.title}
-					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-400 border border-border px-1.5 rounded-sm bg-muted'>
+					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-800 border border-border px-1.5 rounded-sm bg-muted ml-auto'>
 						{event.typeLabel}
 					</span>
 				</h4>
 
 				{event.description && (
-					<div className='text-sm text-gray-600 leading-relaxed text-pretty'>
+					<div className='text-sm text-gray-600 leading-relaxed text-pretty text-justify'>
 						<SmartMarkdown>{event.description}</SmartMarkdown>
 					</div>
 				)}

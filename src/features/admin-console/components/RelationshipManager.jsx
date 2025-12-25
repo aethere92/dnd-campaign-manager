@@ -161,23 +161,26 @@ export default function RelationshipManager({ entityId }) {
 
 	// Dropdown options
 	const relationshipTypes = [
-		'Generic',
+		'member_of',
+		'leadership_relation',
+		'part_of',
+		'affiliated_with',
+		'family_relation',
+		'romantic_relation',
+		'professional_relation',
+		'located_in',
 		'parent_location',
-		'Quest Update',
-		'session_character',
-		'session_npc',
-		'session_faction',
-		'session_location',
-		'session_quest',
-		'Participant',
-		'Ally',
-		'Enemy',
-		'Located_In',
-		'Member_Of',
-		'Quest_Giver',
-		'Leader_Of',
-		'Workplace',
-		'Employee',
+		'residence_relation',
+		'workplace_relation',
+		'ownership_relation',
+		'quest_giver',
+		'quest_objective',
+		'quest_update',
+		'quest_participant',
+		'quest_location',
+		'hostile_to',
+		'knowledge_of',
+		'encountered',
 	];
 
 	// Helper to get sort order including "Other" groups not in explicit list
@@ -360,31 +363,21 @@ export default function RelationshipManager({ entityId }) {
 												</div>
 											) : (
 												/* VIEW MODE */
-												<div
-													className={`flex items-center justify-between p-2 pl-0 border-l-[3px] ${style.border.replace(
-														'border',
-														'border-l'
-													)}`}>
+												<div className={`flex items-center justify-between p-1 pl-0`}>
 													<div className='flex items-center gap-3 min-w-0 pl-3'>
-														<div className='min-w-0'>
-															<div className='flex items-center gap-2'>
-																<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
-																{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden' />}
-																{rel.is_bidirectional && (
-																	<ArrowRightLeft
-																		size={12}
-																		className='text-muted-foreground/50'
-																		title='Bidirectional'
-																	/>
-																)}
-															</div>
-															<div className='flex items-center gap-1.5 mt-0.5'>
-																{/* Relationship Type Badge */}
-																<span
-																	className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
-																	{rel.relationship_type.replace('_', ' ')}
-																</span>
-															</div>
+														<div className='flex items-center gap-2'>
+															<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
+															{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden' />}
+															{rel.is_bidirectional && (
+																<ArrowRightLeft size={12} className='text-muted-foreground/50' title='Bidirectional' />
+															)}
+														</div>
+														<div className='flex items-center gap-1.5 mt-0.5'>
+															{/* Relationship Type Badge */}
+															<span
+																className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
+																{rel.relationship_type.replace('_', ' ')}
+															</span>
 														</div>
 													</div>
 													<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2'>

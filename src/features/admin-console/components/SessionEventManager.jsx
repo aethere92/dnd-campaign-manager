@@ -10,6 +10,24 @@ import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './ui/Form
 import Button from '../../../components/ui/Button';
 import EventTagger from './EventTagger';
 
+const EVENT_TYPES = [
+	'combat',
+	'social',
+	'quest_started',
+	'quest_progressed',
+	'travel',
+	'location_discovered',
+	'location_visited',
+	'npc_encountered',
+	'faction_discovered',
+	'investigation',
+	'backstory',
+	'discovery',
+	'vision',
+	'shopping',
+	'special_event',
+];
+
 export default function SessionEventManager({ sessionId }) {
 	const [events, setEvents] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -23,7 +41,6 @@ export default function SessionEventManager({ sessionId }) {
 	const loadEvents = async () => {
 		setLoading(true);
 		try {
-			// Use the new specific function instead of generic fetchChildRows
 			const data = await fetchSessionEventsWithRelationships(sessionId);
 			setEvents(data);
 		} catch (e) {
@@ -54,13 +71,8 @@ export default function SessionEventManager({ sessionId }) {
 
 	const handleSave = async () => {
 		try {
-			// 1. SANITIZE: Remove 'relationships' (and any other UI-only props)
-			// We destructure 'relationships' out, and keep everything else in 'payload'
 			const { relationships, ...payload } = formData;
-
-			// 2. Save the clean payload
 			await upsertSessionEvent(payload);
-
 			setEditingId(null);
 			loadEvents();
 		} catch (e) {
@@ -99,7 +111,6 @@ export default function SessionEventManager({ sessionId }) {
 						{editingId === evt.id ? (
 							/* --- EDIT MODE --- */
 							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
-								{/* Top Row Inputs ... (Same as before) ... */}
 								<div className='flex gap-3'>
 									<div className='w-16'>
 										<label className={LABEL_CLASS}>Order</label>
@@ -120,22 +131,21 @@ export default function SessionEventManager({ sessionId }) {
 											onChange={(e) => setFormData({ ...formData, title: e.target.value })}
 										/>
 									</div>
-									<div className='w-1/4'>
+									<div className='w-1/3'>
 										<label className={LABEL_CLASS}>Type</label>
 										<select
 											className={INPUT_CLASS}
 											value={formData.event_type}
 											onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}>
-											{['travel', 'combat', 'social', 'exploration', 'location_visited', 'quest_started'].map((t) => (
+											{EVENT_TYPES.map((t) => (
 												<option key={t} value={t}>
-													{t}
+													{t.replace(/_/g, ' ')}
 												</option>
 											))}
 										</select>
 									</div>
 								</div>
 
-								{/* Description */}
 								<div>
 									<label className={LABEL_CLASS}>Description</label>
 									<textarea
@@ -146,10 +156,8 @@ export default function SessionEventManager({ sessionId }) {
 									/>
 								</div>
 
-								{/* NEW: Event Tagger */}
 								<EventTagger eventId={evt.id} />
 
-								{/* Larger Action Buttons */}
 								<div className='flex justify-end gap-3 border-t border-border/50 pt-3'>
 									<Button
 										onClick={() => {
@@ -174,12 +182,11 @@ export default function SessionEventManager({ sessionId }) {
 								<div className='flex-1 min-w-0'>
 									<div className='flex items-center gap-2 mb-1'>
 										<span className='text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-muted text-muted-foreground rounded border border-border'>
-											{evt.event_type}
+											{evt.event_type ? evt.event_type.replace(/_/g, ' ') : 'Event'}
 										</span>
 										<h4 className='font-bold text-sm text-foreground'>{evt.title}</h4>
 									</div>
 									<p className='text-xs text-muted-foreground line-clamp-2'>{evt.description}</p>
-									{/* NEW: Relationship Tags Display */}
 									{evt.relationships && evt.relationships.length > 0 && (
 										<div className='flex flex-wrap gap-1.5 mt-1'>
 											{evt.relationships.map((rel) => (
@@ -194,18 +201,15 @@ export default function SessionEventManager({ sessionId }) {
 									)}
 								</div>
 
-								{/* FIX: Larger Action Buttons */}
 								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
 									<button
 										onClick={() => handleEdit(evt)}
-										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
-										title='Edit Event'>
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
 										<Edit2 size={18} />
 									</button>
 									<button
 										onClick={() => handleDelete(evt.id)}
-										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
-										title='Delete Event'>
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
 										<Trash2 size={18} />
 									</button>
 								</div>

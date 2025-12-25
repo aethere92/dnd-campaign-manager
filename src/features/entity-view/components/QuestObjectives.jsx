@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
+import EntityLink from '../../../components/entity/EntityLink';
 
 const QuestObjectiveItem = ({ obj }) => {
 	const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,7 @@ const QuestObjectiveItem = ({ obj }) => {
 
 	const hasUpdate = !!obj.objective_update;
 	const hasSession = isCompleted && obj.completed_session_number;
-	const hasContent = hasUpdate || hasSession;
+	const hasContent = hasUpdate || (hasSession && obj.completed_session_title);
 
 	const toggle = () => hasContent && setIsOpen(!isOpen);
 
@@ -38,7 +39,7 @@ const QuestObjectiveItem = ({ obj }) => {
 				)}
 				onClick={toggle}>
 				{/* Status Icon */}
-				<div className='mt-0.5 shrink-0'>
+				<div className='mt-1.5 shrink-0'>
 					{isCompleted ? (
 						<CheckCircle2 size={16} className='text-emerald-600' />
 					) : isFailed ? (
@@ -50,11 +51,24 @@ const QuestObjectiveItem = ({ obj }) => {
 
 				{/* Text Content */}
 				<div className='flex-1 min-w-0 pt-0.5'>
-					{obj.objective_name && (
-						<div className='text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wide mb-0.5'>
-							{obj.objective_name}
-						</div>
-					)}
+					<div className='flex items-center justify-between gap-2 mb-0.5'>
+						{obj.objective_name && (
+							<div className='text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wide'>
+								{obj.objective_name}
+							</div>
+						)}
+
+						{/* Session Indicator Badge (Inline) */}
+						{hasSession && (
+							<div
+								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200/60'
+								title={`Completed in Session ${obj.completed_session_number}`}>
+								<Calendar size={10} />
+								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number}
+							</div>
+						)}
+					</div>
+
 					<div
 						className={clsx(
 							'text-[13px] leading-snug font-medium transition-colors',
@@ -80,21 +94,6 @@ const QuestObjectiveItem = ({ obj }) => {
 			{isOpen && hasContent && (
 				<div className='pl-9 pr-3 pb-2 -mt-1 animate-in slide-in-from-top-1 fade-in duration-200'>
 					<div className='flex flex-col gap-1.5'>
-						{/* Session Badge */}
-						{hasSession && (
-							<div className='flex items-center gap-2'>
-								<span className='inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700/80'>
-									<Calendar size={10} />
-									Session {obj.completed_session_number}
-									{obj.completed_session_title && (
-										<span className='opacity-60 normal-case tracking-normal font-medium'>
-											• {obj.completed_session_title}
-										</span>
-									)}
-								</span>
-							</div>
-						)}
-
 						{/* Update Text */}
 						{hasUpdate && (
 							<div className='flex gap-2 items-start'>
