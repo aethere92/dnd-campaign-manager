@@ -1,15 +1,43 @@
 import { History, Diamond } from 'lucide-react';
+import { clsx } from 'clsx';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
 import { EntityHistory } from './EntityHistory';
-import { QuestObjectives } from './QuestObjectives'; // Import
+import { QuestObjectives } from './QuestObjectives';
+import { SectionDivider } from '../../../components/ui/SectionDivider';
 import { EncounterTimeline } from './EncounterTimeline';
-import { SectionDivider } from '../../../components/ui/SectionDivider'; // Import
 
 // Re-exporting History for use in tabs if needed by parent
 export { EntityHistory } from './EntityHistory';
 
-// ... (LevelUpBanner component remains here or moves to own file) ...
-// For brevity, assuming LevelUpBanner is kept or moved similarly.
+const LevelUpBanner = ({ level }) => {
+	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
+
+	return (
+		<div className='mt-4 mb-6 w-full'>
+			{/* Full Width, Fixed Height (~64px) Banner */}
+			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-amber-700/80 rounded-lg shadow-sm w-full overflow-hidden'>
+				{/* Logo Section - Vertical Center */}
+				<div className='shrink-0 h-full flex items-center px-5 bg-amber-50/50 border-r border-border/40'>
+					<img
+						src={logoPath}
+						alt='Campaign Logo'
+						className='h-12 w-auto object-contain opacity-80 drop-shadow-sm mix-blend-multiply'
+					/>
+				</div>
+
+				{/* Text Content */}
+				<div className='flex-1 flex flex-col justify-center px-4'>
+					<h3 className='text-xs font-serif font-bold text-amber-900 uppercase tracking-[0.15em] leading-none m-0! p-0!'>
+						Level Up
+					</h3>
+					<p className='font-serif text-sm text-stone-700 leading-none p-0! m-0!'>
+						The party has reached <span className='font-bold text-foreground'>Level {level}</span>.
+					</p>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp }) => {
 	return (
@@ -20,7 +48,7 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 				</div>
 			)}
 
-			{/* Quest Objectives Component */}
+			{/* Quest Objectives */}
 			{objectives && objectives.length > 0 && (
 				<>
 					<SectionDivider />
@@ -28,7 +56,7 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 				</>
 			)}
 
-			{/* NEW: Combat Timeline (After Description, Before Events/Sections) */}
+			{/* Combat Timeline */}
 			{combatRounds && Object.keys(combatRounds).length > 0 && (
 				<>
 					<SectionDivider />
@@ -79,7 +107,8 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 				</div>
 			)}
 
-			{/* LevelUpBanner logic... */}
+			{/* Level Up Banner */}
+			{levelUp && <LevelUpBanner level={levelUp} />}
 		</div>
 	);
 };
