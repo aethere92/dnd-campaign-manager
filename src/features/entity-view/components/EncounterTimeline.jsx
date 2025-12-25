@@ -52,7 +52,7 @@ const CombatLogEntry = ({ action }) => {
 	return (
 		<div
 			className={clsx(
-				'flex items-start gap-2.5 p-2.5 border-b border-border/60 last:border-0 text-sm transition-colors group',
+				'flex items-start gap-2.5 p-2.5 border-b border-stone-200 last:border-0 text-sm transition-colors group',
 				'hover:bg-muted/50',
 				!isFriendly && rowBg
 			)}>
@@ -85,7 +85,7 @@ const CombatLogEntry = ({ action }) => {
 					)}
 
 					{/* Action Badge */}
-					<span className='text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider flex border border-border/60 items-center gap-1 rounded-sm px-1.5'>
+					<span className='text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider flex border border-stone-200 items-center gap-1 rounded-sm px-1.5'>
 						<ActionIcon size={10} />
 						{type}
 					</span>
@@ -116,7 +116,7 @@ const CombatLogEntry = ({ action }) => {
 
 					{/* Result Badge */}
 					{result && (
-						<span className='ml-auto text-[10px] font-bold text-foreground/80 bg-background/80 px-1.5 py-0.5 rounded border border-border shadow-sm whitespace-nowrap'>
+						<span className='ml-auto text-[10px] font-bold text-foreground/80 bg-background/80 px-1.5 py-0.5 rounded border border-stone-200 whitespace-nowrap'>
 							{result}
 						</span>
 					)}
@@ -150,11 +150,11 @@ export const EncounterTimeline = ({ rounds }) => {
 				<Swords size={14} className='text-accent' /> Combat Log
 			</h3>
 
-			<div className='border border-border rounded-lg overflow-hidden bg-background shadow-sm'>
+			<div className='border border-stone-200 rounded-lg overflow-hidden bg-background'>
 				{Object.entries(rounds).map(([roundNum, actions]) => (
 					<div key={roundNum}>
 						{/* Round Header */}
-						<div className='bg-muted/80 border-b border-border px-3 py-1.5 flex items-center justify-between'>
+						<div className='bg-muted/80 border-b border-stone-200 px-3 py-1.5 flex items-center justify-between'>
 							<span className='text-xs font-serif font-bold text-foreground'>Round {roundNum}</span>
 							<span className='text-[9px] font-bold uppercase text-muted-foreground tracking-wider'>
 								{actions.length} Turns
@@ -165,7 +165,7 @@ export const EncounterTimeline = ({ rounds }) => {
 						<div
 							className={clsx(
 								'bg-background',
-								Number(roundNum) !== Object.keys(rounds).length && 'border-b border-border'
+								Number(roundNum) !== Object.keys(rounds).length && 'border-b border-stone-200'
 							)}>
 							{actions.map((action) => (
 								<CombatLogEntry key={action.id} action={action} />
