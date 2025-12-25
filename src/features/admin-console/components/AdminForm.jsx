@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form'; // Added useFieldArray
+import { useForm, useFieldArray } from 'react-hook-form';
 import { getStrategy } from '../config/strategies';
 import { useCampaign } from '../../campaign-session/CampaignContext';
-import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin';
+import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin'; // Removed getSessionList
 import Button from '../../../components/ui/Button';
 import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -16,14 +16,15 @@ import SmartImageInput from './SmartImageInput';
 import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from './QuestObjectiveManager';
 import RelationshipManager from './RelationshipManager';
+import EncounterActionManager from './EncounterActionManager';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
 	const { campaignId } = useCampaign();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	// REMOVED: const [sessions, setSessions] = useState([]);
 
-	// Setup Form with Field Array for custom attributes
 	const {
 		register,
 		control,
@@ -35,11 +36,10 @@ export default function AdminForm({ type, id }) {
 	} = useForm({
 		defaultValues: {
 			attributes: {},
-			customAttributes: [], // Array container for dynamic fields
+			customAttributes: [],
 		},
 	});
 
-	// Handle the dynamic list of custom attributes
 	const { fields, append, remove } = useFieldArray({
 		control,
 		name: 'customAttributes',
@@ -48,35 +48,32 @@ export default function AdminForm({ type, id }) {
 	// 1. LOAD DATA
 	useEffect(() => {
 		const loadEntity = async () => {
-			if (!id) {
-				reset({ attributes: {}, customAttributes: [] });
-				return;
-			}
-
 			setIsLoading(true);
 			try {
-				const rawData = await fetchRawEntity(type, id);
+				// REMOVED: The session loading logic
 
+				if (!id) {
+					reset({ attributes: {}, customAttributes: [] });
+					setIsLoading(false);
+					return;
+				}
+
+				const rawData = await fetchRawEntity(type, id);
 				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
 				const standardAttrs = {};
 				const customAttrs = [];
 
-				// Iterate over the LIST, not an object
 				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
 					const value = attr.value;
 
 					if (definedKeys.includes(key)) {
-						// Standard attributes assume single value.
-						// If DB has multiple "race" rows, first one wins for the UI input.
 						if (!standardAttrs[key]) {
 							standardAttrs[key] = value;
 						} else {
-							// Edge case: If duplicate standard keys exist, push extras to custom
 							customAttrs.push({ key, value });
 						}
 					} else {
-						// All non-standard attributes go here, preserving duplicates
 						customAttrs.push({ key, value });
 					}
 				});
@@ -94,7 +91,7 @@ export default function AdminForm({ type, id }) {
 			}
 		};
 		loadEntity();
-	}, [type, id, reset, strategy]);
+	}, [type, id, reset, strategy]); // REMOVED campaignId dependency
 
 	// 2. SAVE HANDLER
 	const onSubmit = async (data) => {
@@ -290,6 +287,7 @@ export default function AdminForm({ type, id }) {
 			{/* --- CHILD MANAGERS --- */}
 			{id && type === 'session' && <SessionEventManager sessionId={id} />}
 			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
+			{id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
 			{id && <RelationshipManager entityId={id} />}
 		</form>
 	);

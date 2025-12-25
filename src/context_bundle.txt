@@ -3276,31 +3276,21 @@ export default function RelationshipManager({ entityId }) {
 												</div>
 											) : (
 												/* VIEW MODE */
-												<div
-													className={`flex items-center justify-between p-2 pl-0 border-l-[3px] ${style.border.replace(
-														'border',
-														'border-l'
-													)}`}>
+												<div className={`flex items-center justify-between p-1 pl-0`}>
 													<div className='flex items-center gap-3 min-w-0 pl-3'>
-														<div className='min-w-0'>
-															<div className='flex items-center gap-2'>
-																<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
-																{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden' />}
-																{rel.is_bidirectional && (
-																	<ArrowRightLeft
-																		size={12}
-																		className='text-muted-foreground/50'
-																		title='Bidirectional'
-																	/>
-																)}
-															</div>
-															<div className='flex items-center gap-1.5 mt-0.5'>
-																{/* Relationship Type Badge */}
-																<span
-																	className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
-																	{rel.relationship_type.replace('_', ' ')}
-																</span>
-															</div>
+														<div className='flex items-center gap-2'>
+															<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
+															{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden' />}
+															{rel.is_bidirectional && (
+																<ArrowRightLeft size={12} className='text-muted-foreground/50' title='Bidirectional' />
+															)}
+														</div>
+														<div className='flex items-center gap-1.5 mt-0.5'>
+															{/* Relationship Type Badge */}
+															<span
+																className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
+																{rel.relationship_type.replace('_', ' ')}
+															</span>
 														</div>
 													</div>
 													<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2'>
@@ -3351,6 +3341,24 @@ import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './ui/Form
 import Button from '../../../components/ui/Button';
 import EventTagger from './EventTagger';
 
+const EVENT_TYPES = [
+	'combat',
+	'social',
+	'quest_started',
+	'quest_progressed',
+	'travel',
+	'location_discovered',
+	'location_visited',
+	'npc_encountered',
+	'faction_discovered',
+	'investigation',
+	'backstory',
+	'discovery',
+	'vision',
+	'shopping',
+	'special_event',
+];
+
 export default function SessionEventManager({ sessionId }) {
 	const [events, setEvents] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -3364,7 +3372,6 @@ export default function SessionEventManager({ sessionId }) {
 	const loadEvents = async () => {
 		setLoading(true);
 		try {
-			// Use the new specific function instead of generic fetchChildRows
 			const data = await fetchSessionEventsWithRelationships(sessionId);
 			setEvents(data);
 		} catch (e) {
@@ -3395,13 +3402,8 @@ export default function SessionEventManager({ sessionId }) {
 
 	const handleSave = async () => {
 		try {
-			// 1. SANITIZE: Remove 'relationships' (and any other UI-only props)
-			// We destructure 'relationships' out, and keep everything else in 'payload'
 			const { relationships, ...payload } = formData;
-
-			// 2. Save the clean payload
 			await upsertSessionEvent(payload);
-
 			setEditingId(null);
 			loadEvents();
 		} catch (e) {
@@ -3440,7 +3442,6 @@ export default function SessionEventManager({ sessionId }) {
 						{editingId === evt.id ? (
 							/* --- EDIT MODE --- */
 							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
-								{/* Top Row Inputs ... (Same as before) ... */}
 								<div className='flex gap-3'>
 									<div className='w-16'>
 										<label className={LABEL_CLASS}>Order</label>
@@ -3461,22 +3462,21 @@ export default function SessionEventManager({ sessionId }) {
 											onChange={(e) => setFormData({ ...formData, title: e.target.value })}
 										/>
 									</div>
-									<div className='w-1/4'>
+									<div className='w-1/3'>
 										<label className={LABEL_CLASS}>Type</label>
 										<select
 											className={INPUT_CLASS}
 											value={formData.event_type}
 											onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}>
-											{['travel', 'combat', 'social', 'exploration', 'location_visited', 'quest_started'].map((t) => (
+											{EVENT_TYPES.map((t) => (
 												<option key={t} value={t}>
-													{t}
+													{t.replace(/_/g, ' ')}
 												</option>
 											))}
 										</select>
 									</div>
 								</div>
 
-								{/* Description */}
 								<div>
 									<label className={LABEL_CLASS}>Description</label>
 									<textarea
@@ -3487,10 +3487,8 @@ export default function SessionEventManager({ sessionId }) {
 									/>
 								</div>
 
-								{/* NEW: Event Tagger */}
 								<EventTagger eventId={evt.id} />
 
-								{/* Larger Action Buttons */}
 								<div className='flex justify-end gap-3 border-t border-border/50 pt-3'>
 									<Button
 										onClick={() => {
@@ -3515,12 +3513,11 @@ export default function SessionEventManager({ sessionId }) {
 								<div className='flex-1 min-w-0'>
 									<div className='flex items-center gap-2 mb-1'>
 										<span className='text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-muted text-muted-foreground rounded border border-border'>
-											{evt.event_type}
+											{evt.event_type ? evt.event_type.replace(/_/g, ' ') : 'Event'}
 										</span>
 										<h4 className='font-bold text-sm text-foreground'>{evt.title}</h4>
 									</div>
 									<p className='text-xs text-muted-foreground line-clamp-2'>{evt.description}</p>
-									{/* NEW: Relationship Tags Display */}
 									{evt.relationships && evt.relationships.length > 0 && (
 										<div className='flex flex-wrap gap-1.5 mt-1'>
 											{evt.relationships.map((rel) => (
@@ -3535,18 +3532,15 @@ export default function SessionEventManager({ sessionId }) {
 									)}
 								</div>
 
-								{/* FIX: Larger Action Buttons */}
 								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
 									<button
 										onClick={() => handleEdit(evt)}
-										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
-										title='Edit Event'>
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
 										<Edit2 size={18} />
 									</button>
 									<button
 										onClick={() => handleDelete(evt.id)}
-										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
-										title='Delete Event'>
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
 										<Trash2 size={18} />
 									</button>
 								</div>
@@ -5241,6 +5235,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
+import EntityLink from '../../../components/entity/EntityLink';
 
 const QuestObjectiveItem = ({ obj }) => {
 	const [isOpen, setIsOpen] = useState(false);
@@ -5250,7 +5245,7 @@ const QuestObjectiveItem = ({ obj }) => {
 
 	const hasUpdate = !!obj.objective_update;
 	const hasSession = isCompleted && obj.completed_session_number;
-	const hasContent = hasUpdate || hasSession;
+	const hasContent = hasUpdate || (hasSession && obj.completed_session_title);
 
 	const toggle = () => hasContent && setIsOpen(!isOpen);
 
@@ -5268,7 +5263,7 @@ const QuestObjectiveItem = ({ obj }) => {
 				)}
 				onClick={toggle}>
 				{/* Status Icon */}
-				<div className='mt-0.5 shrink-0'>
+				<div className='mt-1.5 shrink-0'>
 					{isCompleted ? (
 						<CheckCircle2 size={16} className='text-emerald-600' />
 					) : isFailed ? (
@@ -5280,11 +5275,24 @@ const QuestObjectiveItem = ({ obj }) => {
 
 				{/* Text Content */}
 				<div className='flex-1 min-w-0 pt-0.5'>
-					{obj.objective_name && (
-						<div className='text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wide mb-0.5'>
-							{obj.objective_name}
-						</div>
-					)}
+					<div className='flex items-center justify-between gap-2 mb-0.5'>
+						{obj.objective_name && (
+							<div className='text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wide'>
+								{obj.objective_name}
+							</div>
+						)}
+
+						{/* Session Indicator Badge (Inline) */}
+						{hasSession && (
+							<div
+								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200/60'
+								title={`Completed in Session ${obj.completed_session_number}`}>
+								<Calendar size={10} />
+								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number}
+							</div>
+						)}
+					</div>
+
 					<div
 						className={clsx(
 							'text-[13px] leading-snug font-medium transition-colors',
@@ -5310,21 +5318,6 @@ const QuestObjectiveItem = ({ obj }) => {
 			{isOpen && hasContent && (
 				<div className='pl-9 pr-3 pb-2 -mt-1 animate-in slide-in-from-top-1 fade-in duration-200'>
 					<div className='flex flex-col gap-1.5'>
-						{/* Session Badge */}
-						{hasSession && (
-							<div className='flex items-center gap-2'>
-								<span className='inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700/80'>
-									<Calendar size={10} />
-									Session {obj.completed_session_number}
-									{obj.completed_session_title && (
-										<span className='opacity-60 normal-case tracking-normal font-medium'>
-											• {obj.completed_session_title}
-										</span>
-									)}
-								</span>
-							</div>
-						)}
-
 						{/* Update Text */}
 						{hasUpdate && (
 							<div className='flex gap-2 items-start'>
@@ -7450,7 +7443,7 @@ export const LAYOUT_CONFIG = {
 	name: 'fcose',
 	quality: 'default',
 	randomize: false,
-	animate: true,
+	animate: false,
 	animationDuration: 1000,
 	fit: true,
 	padding: 50,
@@ -7494,7 +7487,7 @@ export const LAYOUT_CONFIG = {
 
 	// 5. ITERATIONS
 	// More time for the simulation to resolve collisions
-	numIter: 5000,
+	numIter: 2500,
 
 	// Disconnected components spacing
 	tile: true,
@@ -8725,38 +8718,115 @@ export const TimelineSession = ({ session }) => {
 --- END OF features\timeline\components\TimelineSession.jsx ---
 
 --- FILE: features\timeline\utils\eventStyles.js ---
-import { getEntityConfig, ENTITY_CONFIG, getEntityStyles } from '../../../config/entity';
-import { MessageSquare, Tent, Skull } from 'lucide-react';
+import { getEntityStyles } from '../../../config/entity';
+import {
+	Sword,
+	Skull,
+	MessageSquare,
+	Scroll,
+	CheckCircle2,
+	Footprints,
+	Map,
+	MapPin,
+	User,
+	Flag,
+	Search,
+	BookOpen,
+	Sparkles,
+	Eye,
+	ShoppingBag,
+	Star,
+	Tent,
+} from 'lucide-react';
 
 export const getEventStyle = (eventType) => {
 	const type = eventType?.toLowerCase() || '';
 
-	// Mapping logic using centralized config
 	let entityType = 'default';
-	let Icon = MessageSquare;
+	let Icon = Star;
 
-	// Resolve Type
-	if (type.match(/combat|fight|kill/)) {
-		entityType = 'character'; // Use red palette
-		Icon = ENTITY_CONFIG.encounter.icon || Skull;
-	} else if (type.includes('encounter')) {
-		entityType = 'encounter';
-		Icon = ENTITY_CONFIG.encounter.icon;
-	} else if (type.match(/npc|social|meet/)) {
-		entityType = 'npc';
-		Icon = ENTITY_CONFIG.npc.icon;
-	} else if (type.match(/location|travel|visit|arrive/)) {
-		entityType = 'location';
-		Icon = ENTITY_CONFIG.location.icon;
-	} else if (type.match(/quest|mission/)) {
-		entityType = 'quest';
-		Icon = ENTITY_CONFIG.quest.icon;
-	} else if (type.match(/camp|rest/)) {
-		entityType = 'location'; // Reuse location or define new
-		Icon = Tent;
-	} else if (type.includes('faction')) {
-		entityType = 'faction';
-		Icon = ENTITY_CONFIG.faction.icon;
+	switch (type) {
+		case 'combat':
+			entityType = 'encounter'; // Orange
+			Icon = Skull;
+			break;
+		case 'social':
+			entityType = 'npc'; // Amber
+			Icon = MessageSquare;
+			break;
+		case 'quest_started':
+			entityType = 'quest'; // Blue
+			Icon = Scroll;
+			break;
+		case 'quest_progressed':
+			entityType = 'quest'; // Blue
+			Icon = CheckCircle2;
+			break;
+		case 'travel':
+			entityType = 'location'; // Emerald
+			Icon = Footprints; // Journeys
+			break;
+		case 'location_discovered':
+			entityType = 'location'; // Emerald
+			Icon = Map; // Finding new places
+			break;
+		case 'location_visited':
+			entityType = 'location'; // Emerald
+			Icon = MapPin; // Arriving at known places
+			break;
+		case 'npc_encountered':
+			entityType = 'npc'; // Amber
+			Icon = User;
+			break;
+		case 'faction_discovered':
+			entityType = 'faction'; // Purple
+			Icon = Flag;
+			break;
+		case 'investigation':
+			entityType = 'default'; // Gray (Neutral/Mechanics)
+			Icon = Search;
+			break;
+		case 'backstory':
+			entityType = 'character'; // Red (Personal)
+			Icon = BookOpen;
+			break;
+		case 'discovery':
+			entityType = 'encounter'; // Orange (Loot/Items/Secrets)
+			Icon = Sparkles;
+			break;
+		case 'vision':
+			entityType = 'faction'; // Purple (Magic/Mystical)
+			Icon = Eye;
+			break;
+		case 'shopping':
+			entityType = 'npc'; // Amber (Trade/Commerce)
+			Icon = ShoppingBag;
+			break;
+		case 'special_event':
+			entityType = 'session'; // Slate (Meta/Unique)
+			Icon = Star;
+			break;
+		// Fallbacks for legacy types or fuzzy matches
+		default:
+			if (type.match(/combat|fight|kill/)) {
+				entityType = 'encounter';
+				Icon = Sword;
+			} else if (type.match(/npc|social|meet/)) {
+				entityType = 'npc';
+				Icon = MessageSquare;
+			} else if (type.match(/location|visit|arrive/)) {
+				entityType = 'location';
+				Icon = MapPin;
+			} else if (type.match(/quest|mission/)) {
+				entityType = 'quest';
+				Icon = Scroll;
+			} else if (type.match(/camp|rest/)) {
+				entityType = 'location';
+				Icon = Tent;
+			} else {
+				entityType = 'default';
+				Icon = Star;
+			}
 	}
 
 	// Use centralized styles
@@ -8766,7 +8836,7 @@ export const getEventStyle = (eventType) => {
 		Icon,
 		// Map standard styles to timeline specific class structure
 		container: `${styles.border} ${styles.bg} ${styles.text}`,
-		// Heuristic for line color (usually 200 or 300 shade)
+		// Heuristic for line color (usually 200 or 300 shade) based on bg class
 		line: styles.bg.replace('-50', '-200'),
 	};
 };
@@ -10842,7 +10912,7 @@ export const getCampaigns = async () => {
 --- FILE: services\entities.js ---
 import { supabase } from '../lib/supabase';
 import { getAttributeValue } from '../utils/entity/attributeParser';
-import { getCampaigns } from './campaigns'; // 1. Add Import
+import { getCampaigns } from './campaigns';
 
 // --- HELPER: Extract Session Meta ---
 const extractSessionMeta = (session, attributes = []) => {
@@ -10869,7 +10939,6 @@ const extractSessionMeta = (session, attributes = []) => {
 // --- API METHODS ---
 
 export const getSessions = async (campaignId) => {
-	// 1. Fetch Sessions (No summary, No join)
 	const { data: sessions, error } = await supabase
 		.from('sessions')
 		.select('id, title, narrative')
@@ -10878,7 +10947,6 @@ export const getSessions = async (campaignId) => {
 	if (error) throw error;
 	if (!sessions.length) return [];
 
-	// 2. Fetch Attributes Separately
 	const sessionIds = sessions.map((s) => s.id);
 	const { data: attributes } = await supabase
 		.from('attributes')
@@ -10960,7 +11028,6 @@ export const getEntityIndex = async (campaignId) => {
 
 export const getWikiEntry = async (id, type) => {
 	if (type === 'session') {
-		// 1. Fetch Session
 		const { data, error } = await supabase
 			.from('sessions')
 			.select(`*, events:session_events (*)`)
@@ -10968,10 +11035,8 @@ export const getWikiEntry = async (id, type) => {
 			.single();
 		if (error) throw error;
 
-		// 2. Fetch Attributes
 		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
 
-		// 3. Fetch Event Relationship Data
 		const eventIds = (data.events || []).map((e) => e.id);
 		let eventRelMap = new Map();
 
@@ -10992,7 +11057,6 @@ export const getWikiEntry = async (id, type) => {
 			});
 		}
 
-		// 4. Fetch Direct Session Relationships
 		const { data: directRels } = await supabase
 			.from('entity_relationships')
 			.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
@@ -11005,7 +11069,6 @@ export const getWikiEntry = async (id, type) => {
 			type: rel.relationship_type,
 		}));
 
-		// Return raw + auxiliary data. The Transformer will handle the merge.
 		return {
 			data,
 			type: 'session',
@@ -11019,12 +11082,39 @@ export const getWikiEntry = async (id, type) => {
 
 	const additional = {};
 
+	// FETCH QUEST OBJECTIVES WITH SESSION DATA
 	if (type === 'quest') {
-		const { data: objectives } = await supabase
+		const { data: objectives, error: objError } = await supabase
 			.from('quest_objectives')
-			.select('*')
+			.select('*, session:sessions(id, title)') // Basic join for title
 			.eq('quest_id', id)
 			.order('order_index', { ascending: true });
+
+		if (objError) console.error('Error fetching objectives:', objError);
+
+		if (objectives && objectives.length > 0) {
+			// 2. Fetch Session Numbers (stored as attributes)
+			const sessionIds = objectives.map((o) => o.completed_session_id).filter(Boolean);
+
+			if (sessionIds.length > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, value')
+					.in('entity_id', sessionIds)
+					.or('name.eq.session_number,name.eq.Session');
+
+				const sessionNumMap = new Map();
+				(attrs || []).forEach((a) => sessionNumMap.set(a.entity_id, a.value));
+
+				// 3. Attach number to the session object inside the objective
+				objectives.forEach((obj) => {
+					if (obj.session) {
+						obj.session.session_number = sessionNumMap.get(obj.session.id);
+					}
+				});
+			}
+		}
+
 		additional.objectives = objectives || [];
 	}
 
@@ -11037,10 +11127,8 @@ export const getWikiEntry = async (id, type) => {
 	if (events && Array.isArray(events) && events.length > 0) {
 		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
 		if (sessionIds.length > 0) {
-			// 1. Get the session rows
 			const { data: sessions } = await supabase.from('sessions').select('id').in('id', sessionIds);
 
-			// 2. Get the session number attributes
 			const { data: attrs } = await supabase
 				.from('attributes')
 				.select('entity_id, name, value')
@@ -11050,7 +11138,6 @@ export const getWikiEntry = async (id, type) => {
 			const sessionMap = new Map();
 			(sessions || []).forEach((s) => {
 				const sAttr = (attrs || []).find((a) => a.entity_id === s.id);
-				// We subtract 1 or use raw depending on your session indexing (matches your old logic)
 				const num = sAttr ? parseInt(sAttr.value) : null;
 				sessionMap.set(s.id, num);
 			});
@@ -11062,7 +11149,6 @@ export const getWikiEntry = async (id, type) => {
 	return { data, type, additional };
 };
 
-// NEW: Service method for Tooltip (Fixes architecture leak)
 export const getTooltipData = async (id, type) => {
 	if (type === 'session') {
 		const { data } = await supabase.from('sessions').select('title, narrative').eq('id', id).single();
@@ -11070,7 +11156,6 @@ export const getTooltipData = async (id, type) => {
 		return {
 			name: data.title,
 			type: 'session',
-			// Return RAW attributes, let the hook/component parse
 			description: data.narrative,
 			attributes,
 		};

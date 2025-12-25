@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play } from 'lucide-react';
+import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
 import { useCampaign } from '../../campaign-session/CampaignContext'; // 1. Import Context
 
 const NavItem = ({ to, icon: Icon, label }) => {
@@ -61,6 +61,7 @@ export default function AdminLayout() {
 					<NavItem to='/dm/manage/location' icon={MapPin} label='Locations' />
 					<NavItem to='/dm/manage/faction' icon={Shield} label='Factions' />
 					<NavItem to='/dm/manage/item' icon={Gem} label='Items' />
+					<NavItem to='/dm/manage/encounter' icon={Sword} label='Encounters' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Campaign

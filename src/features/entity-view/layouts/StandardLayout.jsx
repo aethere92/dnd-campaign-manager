@@ -29,6 +29,7 @@ export default function StandardLayout({ viewModel }) {
 							sections={viewModel.content.sections}
 							history={viewModel.content.history}
 							objectives={viewModel.content.objectives}
+							combatRounds={viewModel.content.combatRounds}
 						/>
 					</div>
 				</div>

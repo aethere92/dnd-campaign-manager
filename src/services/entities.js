@@ -206,6 +206,63 @@ export const getWikiEntry = async (id, type) => {
 		additional.objectives = objectives || [];
 	}
 
+	// 2. ENCOUNTER ACTIONS (UPDATED)
+	if (type === 'encounter') {
+		// Step A: Fetch Actions with basic Actor/Target info
+		const { data: actions, error: actError } = await supabase
+			.from('encounter_actions')
+			.select(
+				`
+                *,
+                actor:entities!actor_entity_id (id, name, type),
+                target:entities!target_entity_id (id, name, type)
+            `
+			)
+			.eq('encounter_id', id)
+			.order('round_number', { ascending: true })
+			.order('action_order', { ascending: true });
+
+		if (actError) console.error('Error fetching encounter actions:', actError);
+
+		if (actions && actions.length > 0) {
+			// Step B: Get ALL unique Entity IDs (Actors AND Targets)
+			const entityIds = new Set();
+			actions.forEach((a) => {
+				if (a.actor?.id) entityIds.add(a.actor.id);
+				if (a.target?.id) entityIds.add(a.target.id);
+			});
+
+			// Step C: Fetch attributes for these entities
+			let entityAttrs = [];
+			if (entityIds.size > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, name, value')
+					.in('entity_id', Array.from(entityIds));
+				entityAttrs = attrs || [];
+			}
+
+			// Step D: Map attributes
+			const attrMap = new Map();
+			entityAttrs.forEach((attr) => {
+				if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
+				attrMap.get(attr.entity_id).push(attr);
+			});
+
+			// Step E: Attach to action objects
+			actions.forEach((action) => {
+				if (action.actor?.id) {
+					action.actor.attributes = attrMap.get(action.actor.id) || [];
+				}
+				if (action.target?.id) {
+					action.target.attributes = attrMap.get(action.target.id) || [];
+				}
+			});
+		}
+
+		additional.encounterActions = actions || [];
+	}
+
 	// RESOLVE SESSION NUMBERS FOR EVENTS
 	let events = data.events;
 	if (events && typeof events === 'object' && !Array.isArray(events)) {

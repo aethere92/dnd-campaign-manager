@@ -4,30 +4,42 @@
  */
 
 /**
- * Parse attributes safely from JSON string or object
- * @param {string|Object} attrs - Raw attributes
- * @returns {Object} Parsed attributes object
+ * Parse attributes safely from JSON string, Object, or DB Row Array
+ * @param {string|Object|Array} attrs - Raw attributes
+ * @returns {Object} Parsed attributes object { key: value }
  */
 export const parseAttributes = (attrs) => {
 	if (!attrs) return {};
-	if (typeof attrs === 'object') return attrs;
 
-	try {
-		return JSON.parse(attrs);
-	} catch {
-		console.warn('Failed to parse attributes:', attrs);
+	// 1. Handle JSON String
+	if (typeof attrs === 'string') {
+		try {
+			return JSON.parse(attrs);
+		} catch {
+			console.warn('Failed to parse attributes string:', attrs);
+			return {};
+		}
+	}
+
+	// 2. Handle DB Row Array: [{ name: 'icon', value: '...' }, ...]
+	// This is common when joining tables (e.g. encounter_actions -> actor -> attributes)
+	if (Array.isArray(attrs)) {
+		// Check if it looks like a Name/Value pair list
+		if (attrs.length > 0 && 'name' in attrs[0] && 'value' in attrs[0]) {
+			return attrs.reduce((acc, curr) => {
+				if (curr.name) acc[curr.name] = curr.value;
+				return acc;
+			}, {});
+		}
+		// Otherwise return as-is (might be a simple list attribute value)
 		return {};
 	}
+
+	// 3. Already an Object
+	return attrs;
 };
 
-/**
- * Extract a single attribute value (case-insensitive key lookup)
- * Handles nested structures: { value: "..." }, [{ value: "..." }], or plain strings
- *
- * @param {Object} attributes - Parsed attributes object
- * @param {string|string[]} keys - Key(s) to search for (tries each in order)
- * @returns {string|null} Extracted value or null
- */
+// ... (Keep getAttributeValue and rest of file exactly as is) ...
 export const getAttributeValue = (attributes, keys) => {
 	if (!attributes) return null;
 
@@ -63,14 +75,7 @@ export const getAttributeValue = (attributes, keys) => {
 	return null;
 };
 
-/**
- * Parse attribute value intelligently based on context
- * Handles arrays, objects, and type conversion
- *
- * @param {*} val - Raw attribute value
- * @param {string} key - Attribute key (for context)
- * @returns {*} Parsed value
- */
+// ... (Keep rest of file) ...
 export const parseAttributeValue = (val, key) => {
 	if (val === null || val === undefined) return null;
 
@@ -97,13 +102,6 @@ export const parseAttributeValue = (val, key) => {
 	return String(val);
 };
 
-/**
- * Parse ability scores from attribute string
- * Format: "STR 16 (+3), DEX 14 (+2), ..."
- *
- * @param {string} val - Ability scores string
- * @returns {Array<{name: string, score: string, mod: string}>}
- */
 export const parseAbilityScores = (val) => {
 	if (!val || typeof val !== 'string') return [];
 
@@ -117,12 +115,6 @@ export const parseAbilityScores = (val) => {
 	});
 };
 
-/**
- * Parse comma-separated tags/list
- *
- * @param {string|Array} val - Raw value
- * @returns {string[]} Array of cleaned tags
- */
 export const parseTagList = (val) => {
 	if (!val) return [];
 	if (Array.isArray(val)) return val.map(String);
@@ -133,11 +125,6 @@ export const parseTagList = (val) => {
 		.filter(Boolean);
 };
 
-/**
- * Check if an attribute key should be ignored in display
- * @param {string} key - Attribute key
- * @returns {boolean}
- */
 export const isIgnoredAttribute = (key) => {
 	const ignoredKeys = [
 		'image',
@@ -155,11 +142,6 @@ export const isIgnoredAttribute = (key) => {
 	return ignoredKeys.includes(key.toLowerCase());
 };
 
-/**
- * Check if an attribute should be treated as narrative text
- * @param {string} key - Attribute key
- * @returns {boolean}
- */
 export const isNarrativeAttribute = (key) => {
 	const narrativeKeys = [
 		'background',
@@ -182,22 +164,11 @@ export const isNarrativeAttribute = (key) => {
 	return narrativeKeys.includes(key.toLowerCase());
 };
 
-/**
- * Check if an attribute should be displayed as a list
- * @param {string} key - Attribute key
- * @returns {boolean}
- */
 export const isListAttribute = (key) => {
 	const listKeys = ['feature', 'features', 'traits', 'inventory', 'loot', 'spells'];
 	return listKeys.includes(key.toLowerCase());
 };
 
-/**
- * Determine display type for an attribute
- * @param {string} key - Attribute key
- * @param {*} value - Attribute value
- * @returns {'text'|'list'|'stat-grid'|'tags'|'narrative'}
- */
 export const getAttributeDisplayType = (key, value) => {
 	const normalizedKey = key.toLowerCase();
 

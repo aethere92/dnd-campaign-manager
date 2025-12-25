@@ -2,6 +2,7 @@ import { History, Diamond } from 'lucide-react';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
 import { EntityHistory } from './EntityHistory';
 import { QuestObjectives } from './QuestObjectives'; // Import
+import { EncounterTimeline } from './EncounterTimeline';
 import { SectionDivider } from '../../../components/ui/SectionDivider'; // Import
 
 // Re-exporting History for use in tabs if needed by parent
@@ -10,7 +11,7 @@ export { EntityHistory } from './EntityHistory';
 // ... (LevelUpBanner component remains here or moves to own file) ...
 // For brevity, assuming LevelUpBanner is kept or moved similarly.
 
-export const EntityBody = ({ summary, sections, history, objectives, levelUp }) => {
+export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp }) => {
 	return (
 		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
@@ -24,6 +25,14 @@ export const EntityBody = ({ summary, sections, history, objectives, levelUp }) 
 				<>
 					<SectionDivider />
 					<QuestObjectives objectives={objectives} />
+				</>
+			)}
+
+			{/* NEW: Combat Timeline (After Description, Before Events/Sections) */}
+			{combatRounds && Object.keys(combatRounds).length > 0 && (
+				<>
+					<SectionDivider />
+					<EncounterTimeline rounds={combatRounds} />
 				</>
 			)}
 

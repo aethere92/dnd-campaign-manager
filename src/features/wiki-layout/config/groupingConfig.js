@@ -3,6 +3,18 @@ export const GROUPING_CONFIG = {
 		mode: 'tree',
 		sortItems: (a, b) => a.name.localeCompare(b.name),
 	},
+	encounter: {
+		mode: 'tree',
+		sortItems: (a, b) => {
+			// 1. Folders (Locations) first
+			if (a.type !== b.type) {
+				if (a.type === 'location') return -1;
+				if (b.type === 'location') return 1;
+			}
+			// 2. Then Sort Encounters Alphabetically
+			return a.name.localeCompare(b.name);
+		},
+	},
 	npc: {
 		mode: 'tree', // Changed from groupBy to tree
 		sortItems: (a, b) => {

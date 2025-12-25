@@ -26,20 +26,11 @@ const buildTree = (items, sortFn) => {
 	});
 
 	// 3. Prune Empty Folders (Recursive)
-	// We want to remove 'location' nodes that have no children,
-	// UNLESS we are in the Location wiki (where locations ARE the content).
-	// But in NPC wiki, Locations are just containers.
-	// Since we don't pass 'type' context here easily, we rely on the fact
-	// that if a Location was fetched as a "container" for NPCs, it's expendable if empty.
-
 	const prune = (nodes) => {
-		// Filter out nodes that are locations AND have no children
-		// But wait, if we are in Location View, we don't want to prune leaf locations.
-		// Simple heuristic: If we are in 'tree' mode for NPCs, we probably have mixed types.
-		// If ALL items are Locations, we shouldn't prune leaf locations.
-
-		// Let's rely on the calling context. If we have mixed types, we prune "empty folders".
-		const hasMixedTypes = items.some((i) => i.type === 'npc');
+		// Generalize: If the list contains ANYTHING that isn't a location (e.g. NPC, Encounter),
+		// then we assume 'locations' are acting as folders and should be pruned if empty.
+		// If the list is ONLY locations, we are in the Location Wiki, so we keep everything.
+		const hasMixedTypes = items.some((i) => i.type !== 'location');
 
 		if (!hasMixedTypes) return nodes; // Don't prune if we are just listing locations
 
@@ -72,7 +63,9 @@ const buildTree = (items, sortFn) => {
 	return finalRoots;
 };
 
+// ... (rest of the file remains unchanged) ...
 export function useEntityGrouping(entities, type, searchQuery = '') {
+	// ... existing implementation ...
 	return useMemo(() => {
 		if (!entities || entities.length === 0) return [];
 

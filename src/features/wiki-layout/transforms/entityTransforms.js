@@ -14,14 +14,14 @@ const getParentId = (entity) => {
 	if (parentRel) return parentRel.entity_id;
 
 	// 2. Check for location link (NPC hierarchy: NPC -> Location)
-	if (entity.type === 'npc') {
+	if (entity.type === 'npc' || entity.type === 'encounter') {
 		// Get ALL relationships to locations
 		const locationRels = relationships.filter((r) => r.entity_type === 'location');
 
 		if (locationRels.length > 0) {
 			// Priority 1: Look for specific semantic types
 			const primary = locationRels.find((r) =>
-				['location', 'located_in', 'base', 'home', 'residence', 'origin'].includes(r.type?.toLowerCase())
+				['location', 'located_in', 'base', 'home', 'residence', 'origin', 'occurred_at'].includes(r.type?.toLowerCase())
 			);
 
 			// Priority 2: Fallback to the first location found (e.g. generic 'related')
@@ -32,7 +32,10 @@ const getParentId = (entity) => {
 	return null;
 };
 
+// ... (Rest of file remains unchanged) ...
 export function transformEntityToViewModel(entity, type) {
+	// ... existing implementation ...
+	// (This function calls getParentId internally, so no changes needed inside it)
 	// Context type (e.g. 'npc' or 'location')
 	const contextType = type === 'sessions' ? 'session' : type;
 
@@ -64,7 +67,7 @@ export function transformEntityToViewModel(entity, type) {
 		id: entity.id,
 		name: entity.name,
 		path: entity.id,
-		type: actualType, // Use actual type so icons render correctly
+		type: actualType,
 
 		status,
 		affinity,

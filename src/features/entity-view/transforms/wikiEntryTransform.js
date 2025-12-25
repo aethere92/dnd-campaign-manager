@@ -1,14 +1,9 @@
-import { getAttributeValue, parseAttributes } from '../../../utils/entity/attributeParser';
+import { getAttributeValue, parseAttributes } from '../../../utils/entity/attributeParser'; // Imported here
+import { resolveImageUrl } from '../../../utils/image/imageResolver';
 
 const extractSessionMeta = (session, attributes = []) => {
-	let attrs = attributes;
-	if (Array.isArray(attrs)) {
-		attrs = attrs.reduce((acc, curr) => {
-			acc[curr.name] = curr.value;
-			return acc;
-		}, {});
-	}
-	attrs = attrs || {};
+	// REUSE: Use our upgraded utility instead of manual reduce
+	const attrs = parseAttributes(attributes);
 
 	const sessionNumber = getAttributeValue(attrs, ['session_number', 'Session', 'session']) || 999;
 	const sessionDate = getAttributeValue(attrs, ['session_date', 'Date', 'date']) || '';
@@ -26,7 +21,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 		const meta = extractSessionMeta(data, additionalData.attributes || []);
 		const sortedEvents = (data.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
 
-		// Attach relationships to events (passed from service)
 		const eventRelMap = additionalData.eventRelMap || new Map();
 		sortedEvents.forEach((evt) => {
 			evt.relationships = eventRelMap.get(evt.id) || [];
@@ -52,12 +46,62 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 
 	// Quest Objectives
 	if (type === 'quest' && additionalData.objectives) {
-		// REFACTORED: Flatten session info for the view
 		entity.objectives = additionalData.objectives.map((obj) => ({
 			...obj,
 			completed_session_number: obj.session?.session_number || null,
 			completed_session_title: obj.session?.title || null,
 		}));
+	}
+
+	// NEW: Encounter Actions Transformation
+	if (type === 'encounter' && additionalData.encounterActions) {
+		const actions = additionalData.encounterActions.map((action) => {
+			// 1. Resolve Actor Icon
+			const actorAttrs = parseAttributes(action.actor?.attributes);
+			const actorIcon = resolveImageUrl(actorAttrs, 'icon');
+
+			// 2. Resolve Target Icon (NEW)
+			const targetAttrs = parseAttributes(action.target?.attributes);
+			const targetIcon = resolveImageUrl(targetAttrs, 'icon');
+
+			const targetName = action.target_name || action.target?.name;
+			const targetId = action.target?.id;
+			const targetType = action.target?.type || 'default';
+
+			return {
+				id: action.id,
+				round: action.round_number,
+				order: action.action_order,
+				type: action.action_type,
+				isFriendly: action.is_friendly,
+				description: action.action_description,
+				result: action.result,
+				effect: action.effect,
+				actor: {
+					id: action.actor?.id,
+					name: action.actor_name || action.actor?.name || 'Unknown',
+					type: action.actor?.type || 'default',
+					iconUrl: actorIcon, // Pass Resolved Icon
+				},
+				target: targetName
+					? {
+							id: targetId,
+							name: targetName,
+							type: targetType,
+							iconUrl: targetIcon, // Pass Resolved Icon
+					  }
+					: null,
+			};
+		});
+
+		// ... grouping logic
+		const rounds = {};
+		actions.forEach((action) => {
+			if (!rounds[action.round]) rounds[action.round] = [];
+			rounds[action.round].push(action);
+		});
+
+		entity.combatRounds = rounds;
 	}
 
 	// Event Processing

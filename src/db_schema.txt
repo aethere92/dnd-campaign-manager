@@ -29,6 +29,7 @@ CREATE TABLE public.characters (
   name text NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  description text,
   CONSTRAINT characters_pkey PRIMARY KEY (id),
   CONSTRAINT characters_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.campaigns(id)
 );
@@ -38,27 +39,19 @@ CREATE TABLE public.encounter_actions (
   round_number integer NOT NULL,
   action_order integer NOT NULL,
   actor_name text NOT NULL,
+  actor_entity_id uuid,
+  is_friendly boolean,
   action_type text,
-  target_name text,
   action_description text NOT NULL,
-  attack_roll integer,
-  damage_roll text,
-  damage_dealt integer,
+  target_name text,
+  target_entity_id uuid,
   result text,
-  notes text,
+  effect text,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT encounter_actions_pkey PRIMARY KEY (id),
-  CONSTRAINT encounter_actions_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id)
-);
-CREATE TABLE public.encounter_initiative (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  encounter_id uuid NOT NULL,
-  combatant_name text NOT NULL,
-  initiative_roll integer NOT NULL,
-  order_index integer NOT NULL,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT encounter_initiative_pkey PRIMARY KEY (id),
-  CONSTRAINT encounter_initiative_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id)
+  CONSTRAINT encounter_actions_encounter_id_fkey FOREIGN KEY (encounter_id) REFERENCES public.encounters(id),
+  CONSTRAINT encounter_actions_actor_entity_fkey FOREIGN KEY (actor_entity_id) REFERENCES public.entities(id),
+  CONSTRAINT encounter_actions_target_entity_fkey FOREIGN KEY (target_entity_id) REFERENCES public.entities(id)
 );
 CREATE TABLE public.encounters (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

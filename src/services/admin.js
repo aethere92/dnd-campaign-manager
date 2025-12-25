@@ -408,3 +408,53 @@ export const fetchSessionEventsWithRelationships = async (sessionId) => {
 		relationships: relMap[e.id] || [],
 	}));
 };
+
+/**
+ * Fetch encounter actions with resolved actor/target names
+ */
+export const fetchEncounterActions = async (encounterId) => {
+	const { data, error } = await supabase
+		.from('encounter_actions')
+		.select(
+			`
+			*,
+			actor:entities!actor_entity_id(name, type),
+			target:entities!target_entity_id(name, type)
+		`
+		)
+		.eq('encounter_id', encounterId)
+		.order('round_number', { ascending: true })
+		.order('action_order', { ascending: true });
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Upsert an encounter action (turn)
+ */
+export const upsertEncounterAction = async (actionData) => {
+	const payload = { ...actionData };
+
+	// 1. Remove temporary ID
+	if (String(payload.id).startsWith('new')) {
+		delete payload.id;
+	}
+
+	// 2. Remove joined objects (derived data from the fetch) to prevent column errors
+	delete payload.actor;
+	delete payload.target;
+
+	// 3. Ensure numeric types
+	if (payload.round_number) payload.round_number = parseInt(payload.round_number);
+	if (payload.action_order) payload.action_order = parseInt(payload.action_order);
+
+	// 4. Ensure optional UUIDs are null if empty string
+	if (payload.actor_entity_id === '') payload.actor_entity_id = null;
+	if (payload.target_entity_id === '') payload.target_entity_id = null;
+
+	const { data, error } = await supabase.from('encounter_actions').upsert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};

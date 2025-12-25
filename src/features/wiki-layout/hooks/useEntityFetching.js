@@ -17,14 +17,15 @@ export function useEntityFetching(type) {
 	} = useQuery({
 		queryKey: ['entities', campaignId, normalizedType],
 		queryFn: async () => {
-			// Special Case: For NPCs, we need Locations too to build the tree (Region -> City -> NPC)
-			if (normalizedType === 'npc') {
-				const [npcs, locations] = await Promise.all([
-					getEntities(campaignId, 'npc'),
+			// Special Case: For NPCs and Encounters, we need Locations too
+			// to build the tree (Region -> City -> Entity)
+			if (normalizedType === 'npc' || normalizedType === 'encounter') {
+				const [mainEntities, locations] = await Promise.all([
+					getEntities(campaignId, normalizedType),
 					getEntities(campaignId, 'location'),
 				]);
 				// Merge them (ensure uniqueness just in case, though types differ)
-				return [...npcs, ...locations];
+				return [...mainEntities, ...locations];
 			}
 			return getEntities(campaignId, normalizedType);
 		},

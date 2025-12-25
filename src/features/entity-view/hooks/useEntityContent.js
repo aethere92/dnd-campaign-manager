@@ -76,6 +76,7 @@ export const useEntityContent = (entity, attributes, sections) => {
 
 		const entityIsSession = isSession(entity);
 		const entityIsQuest = entity.type === 'quest';
+		const entityIsEncounter = entity.type === 'encounter';
 
 		// Determine main summary
 		let mainSummary = attributes.Summary || entity.summary;
@@ -94,6 +95,7 @@ export const useEntityContent = (entity, attributes, sections) => {
 
 		return {
 			objectives: entityIsQuest ? entity.objectives || [] : null,
+			combatRounds: entityIsEncounter ? entity.combatRounds : null,
 			narrative: entityIsSession ? entity.description || '' : null,
 			summary: mainSummary || '',
 			sections: sections || [],

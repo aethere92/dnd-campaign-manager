@@ -127,6 +127,23 @@ export const ADMIN_STRATEGIES = {
 		],
 	},
 
+	// 8. ENCOUNTER
+	encounter: {
+		label: 'Encounter',
+		type: 'encounter',
+		primaryTable: 'encounters',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{
+				key: 'status',
+				label: 'Status',
+				type: 'select',
+				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
+			},
+		],
+	},
+
 	default: {
 		label: 'Entity',
 		primaryTable: 'entities',
