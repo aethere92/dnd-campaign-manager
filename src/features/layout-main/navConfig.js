@@ -1,6 +1,10 @@
-import { Map, History, Network, BookOpen, Users, Scroll, Sword, Shield } from 'lucide-react';
+import { Map, History, Network, BookOpen, Users, Scroll, Sword, Shield, Home } from 'lucide-react';
 
 export const NAV_STRUCTURE = [
+	{
+		title: 'Overview',
+		items: [{ label: 'Dashboard', Icon: Home, path: '/', key: 'dashboard' }], // NEW
+	},
 	{
 		title: 'World',
 		items: [

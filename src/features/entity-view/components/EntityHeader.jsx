@@ -1,10 +1,21 @@
+import { Link, useParams } from 'react-router-dom';
+import { Edit3 } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
 import EntityBadge from '../../../components/entity/EntityBadge';
-import { getPriorityStyles } from '../../../config/entity/styles'; // Import
+import { getPriorityStyles } from '../../../config/entity/styles';
 
+/**
+ * EntityHeader Component
+ * Displays the hero banner for an entity, including title, avatar, and metadata badges.
+ * Now includes a developer-only shortcut to the DM Console for quick editing.
+ */
 export const EntityHeader = ({ data }) => {
-	const { title, typeLabel, imageUrl, avatarUrl, status, priority, theme, extraTags } = data;
+	const { title, typeLabel, imageUrl, avatarUrl, status, priority, extraTags } = data;
+	const { entityId } = useParams();
+
+	// Only show edit controls in Dev mode (npm run dev)
+	const isDev = import.meta.env.DEV;
 
 	return (
 		<div className='h-40 md:h-48 relative group overflow-hidden header-bg-fallback'>
@@ -17,10 +28,23 @@ export const EntityHeader = ({ data }) => {
 			<div className='absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-10' />
 			<div className='absolute inset-0 header-gradient translate-y-1' />
 
-			{/* Content Layer */}
+			{/* 2. DEVELOPER ACTION BAR */}
+			{isDev && entityId && (
+				<div className='absolute top-4 right-4 z-30 animate-in fade-in slide-in-from-right-2 duration-500'>
+					<Link
+						to={`/dm/manage/${typeLabel.toLowerCase()}/${entityId}`}
+						className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'
+						title='Edit in DM Console'>
+						<Edit3 size={14} className='group-hover/edit:scale-110 transition-transform' />
+						<span className='text-[10px] font-bold uppercase tracking-tight'>Quick Edit</span>
+					</Link>
+				</div>
+			)}
+
+			{/* 3. CONTENT LAYER */}
 			<div className='absolute bottom-0 left-0 w-full p-4 md:p-6'>
 				<div className='max-w-6xl mx-auto flex items-end gap-4'>
-					{/* 2. AVATAR - Using EntityIcon component */}
+					{/* AVATAR */}
 					<div className='hidden md:flex md:items-end'>
 						<EntityIcon
 							type={typeLabel.toLowerCase()}
@@ -31,7 +55,7 @@ export const EntityHeader = ({ data }) => {
 						/>
 					</div>
 
-					{/* Title & Status */}
+					{/* Title & Status Metadata */}
 					<div className='flex-1'>
 						<div className='flex items-center flex-wrap gap-2 mb-1.5'>
 							{/* Type Badge */}
@@ -55,13 +79,13 @@ export const EntityHeader = ({ data }) => {
 								<span
 									className={clsx(
 										'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
-										getPriorityStyles(priority) // Use centralized logic
+										getPriorityStyles(priority)
 									)}>
 									{priority} Priority
 								</span>
 							)}
 
-							{/* Extra Tags */}
+							{/* Extra Tags (Session Date, etc) */}
 							{extraTags &&
 								extraTags.map((tag, i) => (
 									<span
@@ -71,6 +95,7 @@ export const EntityHeader = ({ data }) => {
 									</span>
 								))}
 						</div>
+
 						<h1 className='text-3xl md:text-4xl font-serif font-bold text-foreground leading-none drop-shadow-sm'>
 							{title}
 						</h1>

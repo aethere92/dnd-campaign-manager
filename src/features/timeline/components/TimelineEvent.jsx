@@ -1,9 +1,28 @@
+import { useMemo } from 'react';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '../../../config/entity'; // Use central config
+import { getEntityConfig } from '../../../config/entity';
 import SmartMarkdown from '../../smart-text/SmartMarkdown';
+import { Diamond } from 'lucide-react';
 
 export const TimelineEvent = ({ event }) => {
 	const { Icon, container } = event.style;
+
+	// Group tags by entity type
+	const groupedTags = useMemo(() => {
+		if (!event.tags || event.tags.length === 0) return [];
+
+		const groups = {};
+		event.tags.forEach((tag) => {
+			const type = tag.type || 'default';
+			if (!groups[type]) {
+				groups[type] = [];
+			}
+			groups[type].push(tag);
+		});
+
+		// Convert to array of groups
+		return Object.values(groups);
+	}, [event.tags]);
 
 	return (
 		<div className='relative flex gap-4 group'>
@@ -31,28 +50,39 @@ export const TimelineEvent = ({ event }) => {
 					</div>
 				)}
 
-				{/* Dynamic Tags - Refactored to use Entity Config */}
-				{event.tags && event.tags.length > 0 && (
-					<div className='flex flex-wrap gap-2 mt-2'>
-						{event.tags.map((tag, idx) => {
-							const config = getEntityConfig(tag.type);
-							const TagIcon = config.icon;
-							const styles = config.tailwind;
+				{/* Grouped Tags with Separators */}
+				{groupedTags.length > 0 && (
+					<div className='flex flex-wrap items-center gap-2 mt-2'>
+						{groupedTags.map((group, groupIndex) => (
+							<div key={groupIndex} className='flex items-center gap-2'>
+								{/* Tags in this group */}
+								<div className='flex flex-wrap gap-1.5'>
+									{group.map((tag, idx) => {
+										const config = getEntityConfig(tag.type);
+										const TagIcon = config.icon;
+										const styles = config.tailwind;
 
-							return (
-								<span
-									key={`${tag.name}-${idx}`}
-									className={clsx(
-										'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default',
-										// Use dynamic styles from config
-										styles.bg,
-										styles.text,
-										styles.border
-									)}>
-									<TagIcon size={10} /> {tag.name}
-								</span>
-							);
-						})}
+										return (
+											<span
+												key={`${tag.name}-${idx}`}
+												className={clsx(
+													'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default',
+													styles.bg,
+													styles.text,
+													styles.border
+												)}>
+												<TagIcon size={10} /> {tag.name}
+											</span>
+										);
+									})}
+								</div>
+
+								{/* Separator (except after last group) */}
+								{groupIndex < groupedTags.length - 1 && (
+									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
+								)}
+							</div>
+						))}
 					</div>
 				)}
 			</div>

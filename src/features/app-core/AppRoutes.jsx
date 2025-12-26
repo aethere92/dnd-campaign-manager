@@ -5,6 +5,7 @@ import { RouteLoading } from './components/RouteLoading';
 
 const CampaignSelect = lazy(() => import('../../features/campaign-session/components/CampaignSelect'));
 const MainLayout = lazy(() => import('../../features/layout-main/MainLayout'));
+const DashboardView = lazy(() => import('../../features/dashboard/DashboardView')); // NEW
 const MapView = lazy(() => import('../../features/world-map/MapView'));
 const TimelineView = lazy(() => import('../../features/timeline/TimelineView'));
 const RelationshipGraph = lazy(() => import('../../features/relationship-graph/RelationshipGraph'));
@@ -38,7 +39,8 @@ export const AppRoutes = () => {
 				{/* --- 3. MAIN APP --- */}
 				{campaignId ? (
 					<Route path='/' element={<MainLayout />}>
-						<Route index element={<Navigate to='/wiki/session' replace />} />
+						{/* CHANGED: Dashboard is now the home page */}
+						<Route index element={<DashboardView />} />
 
 						<Route path='atlas/:mapId' element={<MapView />} />
 						<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
@@ -53,12 +55,9 @@ export const AppRoutes = () => {
 							<Route path=':entityId' element={<WikiEntryPage />} />
 						</Route>
 
-						{/* If user tries to access /dm manually in prod while logged in, 
-                            it won't match above. Add a catch-all to redirect back to home. */}
 						<Route path='*' element={<Navigate to='/' replace />} />
 					</Route>
 				) : (
-					// Fallback if not logged in
 					<Route path='*' element={<Navigate to='/select-campaign' replace />} />
 				)}
 			</Routes>
