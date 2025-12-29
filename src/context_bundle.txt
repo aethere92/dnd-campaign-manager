@@ -519,10 +519,11 @@ h3[id] {
 	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* D&D Theme Specifics for Tooltips (If map background is light, invert this) */
-[data-theme='dnd'] .leaflet-tooltip {
-	/* If your map tiles are dark, keep white text. If light, use var(--accent) */
-	/* text-shadow: 0 0 3px var(--background); */
+/* --- PERFORMANCE UTILITY --- */
+/* Native browser optimization to skip rendering off-screen content */
+.virtual-list-item {
+	content-visibility: auto;
+	contain-intrinsic-size: 80px; /* Approximate height of an admin list item */
 }
 
 --- END OF index.css ---
@@ -532,34 +533,34 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import App from './features/app-core/App'; // Importing the Core Feature
+import App from './features/app-core/App';
 import './index.css';
-import 'leaflet/dist/leaflet.css'; // Leaflet Styles
+import 'leaflet/dist/leaflet.css';
 
-// 1. Environment Validation
 const validateEnv = () => {
 	const required = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
 	const missing = required.filter((key) => !import.meta.env[key]);
-
 	if (missing.length > 0) {
 		console.error('Missing required environment variables:', missing);
 	}
 };
 validateEnv();
 
-// 2. Query Client Configuration
+// CHANGED: Aggressive Caching Configuration
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
-			staleTime: 1000 * 60 * 5, // 5 minutes
-			cacheTime: 1000 * 60 * 30, // 30 minutes
+			// Data is considered fresh for 1 hour
+			staleTime: 1000 * 60 * 60,
+			// Keep unused data in memory for 24 hours
+			cacheTime: 1000 * 60 * 60 * 24,
 			refetchOnWindowFocus: false,
+			refetchOnMount: false, // Don't refetch just because component remounted
 			retry: 1,
 		},
 	},
 });
 
-// 3. Mount
 ReactDOM.createRoot(document.getElementById('root')).render(
 	<React.StrictMode>
 		<QueryClientProvider client={queryClient}>
@@ -753,23 +754,12 @@ export default function EntityIcon({
 
 --- FILE: components\entity\EntityLink.jsx ---
 import { useNavigate } from 'react-router-dom';
+import { useRef, useCallback } from 'react'; // ADDED
 import { clsx } from 'clsx';
 import { useTooltip } from '../../features/smart-tooltip/TooltipContext';
 import { getEntityStyles } from '../../config/entity';
 import EntityIcon from './EntityIcon';
 
-/**
- * EntityLink Component
- * Smart navigation link with tooltip support and consistent styling
- *
- * @param {string} id - Entity ID
- * @param {string} type - Entity type
- * @param {string} children - Link text
- * @param {string} customIconUrl - Optional custom icon
- * @param {boolean} showIcon - Show icon before text (default true)
- * @param {string} className - Additional CSS classes
- * @param {boolean} inline - Inline mode (minimal styling, default false)
- */
 export default function EntityLink({
 	id,
 	type,
@@ -784,32 +774,74 @@ export default function EntityLink({
 	const { openTooltip, closeTooltip } = useTooltip();
 	const styles = getEntityStyles(type);
 
+	// --- IMPROVEMENT #4: Long Press Logic ---
+	const pressTimer = useRef(null);
+	const isLongPress = useRef(false);
+
+	const handleTouchStart = (e) => {
+		isLongPress.current = false;
+		pressTimer.current = setTimeout(() => {
+			isLongPress.current = true;
+			// Open Tooltip on long press position
+			openTooltip(e, id, type, true);
+		}, 500); // 500ms threshold
+	};
+
+	const handleTouchEnd = (e) => {
+		if (pressTimer.current) {
+			clearTimeout(pressTimer.current);
+		}
+		// If it wasn't a long press, treat as click (Navigate)
+		if (!isLongPress.current) {
+			navigate(`/wiki/${type}/${id}`);
+			closeTooltip();
+		}
+		// Prevent ghost clicks if it was a long press
+		if (isLongPress.current && e.cancelable) {
+			e.preventDefault();
+		}
+	};
+
+	const handleTouchMove = () => {
+		// Cancel everything if user scrolls
+		if (pressTimer.current) {
+			clearTimeout(pressTimer.current);
+			isLongPress.current = true; // Treat as "handled" so we don't navigate
+		}
+	};
+	// ----------------------------------------
+
 	const handleMouseEnter = (e) => {
-		openTooltip(e, id, type);
+		// Desktop only
+		if (window.matchMedia('(hover: hover)').matches) {
+			openTooltip(e, id, type);
+		}
 	};
 
 	const handleClick = (e) => {
 		e.preventDefault();
-
-		// Mobile: Open tooltip instead of navigating
-		const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024;
-		if (isMobile) {
-			e.stopPropagation();
-			openTooltip(e, id, type, true);
-		} else {
+		// Desktop click handling (Touch handled via TouchEnd)
+		if (window.matchMedia('(hover: hover)').matches) {
 			navigate(`/wiki/${type}/${id}`);
 			closeTooltip();
 		}
 	};
 
-	// Inline mode: minimal styling for use within text
+	const commonProps = {
+		href: `/wiki/${type}/${id}`,
+		onClick: handleClick,
+		onMouseEnter: handleMouseEnter,
+		onMouseLeave: closeTooltip,
+		// Mobile Events
+		onTouchStart: handleTouchStart,
+		onTouchEnd: handleTouchEnd,
+		onTouchMove: handleTouchMove,
+		...props,
+	};
+
 	if (inline) {
 		return (
 			<a
-				href={`/wiki/${type}/${id}`}
-				onClick={handleClick}
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={closeTooltip}
 				className={clsx(
 					'inline-flex items-center gap-1.5 font-semibold no-underline transition-colors',
 					'border-b border-dashed border-transparent hover:border-current cursor-pointer align-middle',
@@ -817,7 +849,7 @@ export default function EntityLink({
 					styles.hover,
 					className
 				)}
-				{...props}>
+				{...commonProps}>
 				{showIcon && (
 					<EntityIcon
 						type={type}
@@ -832,13 +864,8 @@ export default function EntityLink({
 		);
 	}
 
-	// Standard mode: card/button styling
 	return (
 		<a
-			href={`/wiki/${type}/${id}`}
-			onClick={handleClick}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={closeTooltip}
 			className={clsx(
 				'flex items-center gap-2 px-3 py-2 rounded-lg transition-all cursor-pointer',
 				'hover:shadow-sm',
@@ -848,7 +875,7 @@ export default function EntityLink({
 				'border',
 				className
 			)}
-			{...props}>
+			{...commonProps}>
 			{showIcon && <EntityIcon type={type} customIconUrl={customIconUrl} size={18} inline={false} />}
 			<span className={clsx('font-semibold text-sm', styles.text)}>{children}</span>
 		</a>
@@ -2060,9 +2087,10 @@ export const getEntityLabel = (type, plural = false) => {
 --- FILE: features\admin-console\components\AdminForm.jsx ---
 import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query'; // CHANGED: Import
 import { getStrategy } from '../config/strategies';
 import { useCampaign } from '../../campaign-session/CampaignContext';
-import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin'; // Removed getSessionList
+import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin';
 import Button from '../../../components/ui/Button';
 import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -2081,10 +2109,11 @@ import EncounterActionManager from './EncounterActionManager';
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
 	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient(); // CHANGED: Hook
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
-	// REMOVED: const [sessions, setSessions] = useState([]);
 
+	// ... (useForm setup remains same) ...
 	const {
 		register,
 		control,
@@ -2099,26 +2128,20 @@ export default function AdminForm({ type, id }) {
 			customAttributes: [],
 		},
 	});
+	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
 
-	const { fields, append, remove } = useFieldArray({
-		control,
-		name: 'customAttributes',
-	});
-
-	// 1. LOAD DATA
+	// ... (useEffect loadEntity remains same) ...
 	useEffect(() => {
 		const loadEntity = async () => {
 			setIsLoading(true);
 			try {
-				// REMOVED: The session loading logic
-
 				if (!id) {
 					reset({ attributes: {}, customAttributes: [] });
 					setIsLoading(false);
 					return;
 				}
-
 				const rawData = await fetchRawEntity(type, id);
+				// ... (Parsing logic remains same) ...
 				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
 				const standardAttrs = {};
 				const customAttrs = [];
@@ -2126,13 +2149,9 @@ export default function AdminForm({ type, id }) {
 				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
 					const value = attr.value;
-
 					if (definedKeys.includes(key)) {
-						if (!standardAttrs[key]) {
-							standardAttrs[key] = value;
-						} else {
-							customAttrs.push({ key, value });
-						}
+						if (!standardAttrs[key]) standardAttrs[key] = value;
+						else customAttrs.push({ key, value });
 					} else {
 						customAttrs.push({ key, value });
 					}
@@ -2151,38 +2170,27 @@ export default function AdminForm({ type, id }) {
 			}
 		};
 		loadEntity();
-	}, [type, id, reset, strategy]); // REMOVED campaignId dependency
+	}, [type, id, reset, strategy]);
 
-	// 2. SAVE HANDLER
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
 			alert('No Campaign Selected! Select one from the home screen first.');
 			return;
 		}
 
-		// Flatten everything into a single list for the Service
+		// ... (Payload construction remains same) ...
 		const attributesList = [];
-
-		// 1. Add Standard Attributes
 		Object.entries(data.attributes).forEach(([key, value]) => {
-			if (value && String(value).trim() !== '') {
-				attributesList.push({ name: key, value });
-			}
+			if (value && String(value).trim() !== '') attributesList.push({ name: key, value });
 		});
-
-		// 2. Add Custom Attributes (Allowing duplicates)
 		data.customAttributes.forEach((item) => {
-			if (item.key && item.key.trim() !== '') {
-				attributesList.push({ name: item.key, value: item.value });
-			}
+			if (item.key && item.key.trim() !== '') attributesList.push({ name: item.key, value: item.value });
 		});
 
 		const payload = {
 			...data,
-			attributesList, // Send the array, not the object
+			attributesList,
 		};
-
-		// Cleanup internal form state
 		delete payload.attributes;
 		delete payload.customAttributes;
 
@@ -2194,6 +2202,15 @@ export default function AdminForm({ type, id }) {
 				await createEntity(type, { ...payload, campaign_id: campaignId });
 				if (!id) reset();
 			}
+
+			// CHANGED: Invalidate all relevant queries to force a refresh despite strict caching
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey[0];
+					// Invalidate lists, wikis, dashboard, and graph
+					return ['entities', 'entry', 'dashboard', 'graph', 'timeline', 'globalSearch', 'admin-list'].includes(key);
+				},
+			});
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		} finally {
@@ -2204,8 +2221,9 @@ export default function AdminForm({ type, id }) {
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	return (
+		// ... (Return JSX remains exactly same) ...
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
-			{/* --- TOP BAR --- */}
+			{/* Top Bar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
 				<div className='flex items-center gap-2'>
 					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
@@ -2231,7 +2249,7 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- CORE DETAILS --- */}
+			{/* Core Details */}
 			<div className={SECTION_CLASS}>
 				<h2 className={HEADER_CLASS}>Core Details</h2>
 				<div className='grid grid-cols-1 gap-4'>
@@ -2260,16 +2278,13 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- STANDARD ATTRIBUTES --- */}
+			{/* Attributes */}
 			<div className={SECTION_CLASS}>
 				<h2 className={HEADER_CLASS}>{strategy.label} Attributes</h2>
-
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 					{strategy.defaultAttributes.map((attr) => (
 						<div key={attr.key}>
 							<label className={LABEL_CLASS}>{attr.label}</label>
-
-							{/* RENDER LOGIC: Check type explicitly to avoid duplication */}
 							{attr.type === 'image' ? (
 								<SmartImageInput
 									value={watch(`attributes.${attr.key}`)}
@@ -2297,7 +2312,7 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- CUSTOM ATTRIBUTES (Dynamic) --- */}
+			{/* Custom Attributes */}
 			<div className={SECTION_CLASS}>
 				<div className={HEADER_CLASS}>
 					<span>Custom Attributes</span>
@@ -2344,7 +2359,7 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- CHILD MANAGERS --- */}
+			{/* Sub Managers */}
 			{id && type === 'session' && <SessionEventManager sessionId={id} />}
 			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
 			{id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
@@ -2957,35 +2972,52 @@ import { INPUT_CLASS, LABEL_CLASS } from './ui/FormStyles';
 export default function MarkdownEditor({ label, value, onChange, placeholder, rows = 6 }) {
 	const [mode, setMode] = useState('write');
 	const [showSearch, setShowSearch] = useState(false);
-	const textareaRef = useRef(null); // Reference to the textarea DOM element
+	const textareaRef = useRef(null);
+
+	// CHANGED: Handler to detect @ character
+	const handleInputChange = (e) => {
+		const newValue = e.target.value;
+		const selectionStart = e.target.selectionStart;
+
+		// Pass to parent
+		onChange(e);
+
+		// Detect if user typed '@'
+		const charBefore = newValue.charAt(selectionStart - 1);
+		if (charBefore === '@') {
+			setShowSearch(true);
+		}
+	};
 
 	const handleInsertEntity = (entity) => {
-		// The Embed Pattern
-		const textToInsert = `\n[:: ${entity.name} ::](#entity/${entity.id}/${entity.type})\n`;
-
 		const textarea = textareaRef.current;
+		const textToInsert = `[${entity.name}](#entity/${entity.id}/${entity.type})`;
 
 		if (textarea) {
-			// 1. Get cursor position
 			const start = textarea.selectionStart;
 			const end = textarea.selectionEnd;
 			const currentText = value || '';
 
-			// 2. Insert text at cursor
-			const newValue = currentText.substring(0, start) + textToInsert + currentText.substring(end);
+			// CHANGED: Logic to replace the '@' that triggered this if it exists immediately before cursor
+			let insertPos = start;
+			let beforeText = currentText.substring(0, start);
+			const afterText = currentText.substring(end);
 
-			// 3. Update State
+			if (beforeText.endsWith('@')) {
+				beforeText = beforeText.slice(0, -1);
+				insertPos = start - 1;
+			}
+
+			const newValue = beforeText + textToInsert + afterText;
+
 			onChange({ target: { value: newValue } });
 
-			// 4. Restore focus and move cursor to end of inserted text
-			// Timeout ensures React render cycle completes first
 			setTimeout(() => {
 				textarea.focus();
-				const newCursorPos = start + textToInsert.length;
+				const newCursorPos = insertPos + textToInsert.length;
 				textarea.setSelectionRange(newCursorPos, newCursorPos);
 			}, 0);
 		} else {
-			// Fallback: Append to end
 			const newValue = (value || '') + textToInsert;
 			onChange({ target: { value: newValue } });
 		}
@@ -2998,7 +3030,6 @@ export default function MarkdownEditor({ label, value, onChange, placeholder, ro
 			<div className='flex items-end justify-between mb-1'>
 				<label className={LABEL_CLASS}>{label}</label>
 				<div className='flex bg-muted rounded-md p-0.5 border border-border'>
-					{/* INSERT BUTTON */}
 					{mode === 'write' && (
 						<button
 							type='button'
@@ -3034,11 +3065,10 @@ export default function MarkdownEditor({ label, value, onChange, placeholder, ro
 				</div>
 			</div>
 
-			{/* SEARCH POPUP OVERLAY */}
 			{showSearch && (
 				<div className='absolute top-8 left-0 right-0 z-50 p-2 bg-background border border-amber-300 shadow-xl rounded-lg animate-in fade-in zoom-in-95 duration-100'>
 					<div className='flex justify-between items-center mb-2 px-1'>
-						<span className='text-[10px] font-bold uppercase text-amber-600'>Select Entity to Embed</span>
+						<span className='text-[10px] font-bold uppercase text-amber-600'>Select Entity</span>
 						<button onClick={() => setShowSearch(false)}>
 							<X size={14} className='text-gray-400 hover:text-red-500' />
 						</button>
@@ -3049,11 +3079,11 @@ export default function MarkdownEditor({ label, value, onChange, placeholder, ro
 
 			{mode === 'write' ? (
 				<textarea
-					ref={textareaRef} // Attach Ref here
+					ref={textareaRef}
 					rows={rows}
 					className={`${INPUT_CLASS} font-mono text-xs leading-relaxed`}
 					value={value}
-					onChange={onChange}
+					onChange={handleInputChange} // CHANGED: Use new handler
 					placeholder={placeholder}
 				/>
 			) : (
@@ -4121,8 +4151,13 @@ export const ADMIN_STRATEGIES = {
 		hasNarrative: true,
 		defaultAttributes: [
 			{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed', 'Failed', 'Pending'] },
-			{ key: 'quest type', label: 'Quest Type', type: 'select', options: ['Main Quest', 'Side Quest', 'Personal'] },
-			{ key: 'priority', label: 'Priority', type: 'select', options: ['Normal', 'High', 'Critical', 'Low'] },
+			{
+				key: 'quest type',
+				label: 'Quest Type',
+				type: 'select',
+				options: ['Main Quest', 'Side Quest', 'Personal Quest'],
+			},
+			{ key: 'priority', label: 'Priority', type: 'select', options: ['Critical', 'High', 'Medium', 'Low', 'Trivial'] },
 		],
 	},
 
@@ -4365,16 +4400,15 @@ import Button from '../../../components/ui/Button';
 import EntityBadge from '../../../components/entity/EntityBadge';
 
 export default function EntityListPage() {
-	const { type } = useParams(); // e.g., 'npc', 'location'
+	const { type } = useParams();
 	const navigate = useNavigate();
 	const { campaignId } = useCampaign();
 	const [search, setSearch] = useState('');
-	const [isCloning, setIsCloning] = useState(null); // Stores ID of item being cloned
+	const [isCloning, setIsCloning] = useState(null);
 	const [isDeleting, setIsDeleting] = useState(null);
 
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
-	// 1. Fetch List Data
 	const { data, isLoading, refetch } = useQuery({
 		queryKey: ['admin-list', campaignId, normalizedType],
 		queryFn: () => getEntities(campaignId, normalizedType),
@@ -4385,44 +4419,32 @@ export default function EntityListPage() {
 		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
 	);
 
-	// 2. Handle Duplication
+	// ... (Handlers handleDuplicate and handleDelete remain same) ...
 	const handleDuplicate = async (originalId) => {
 		if (!confirm('Create a copy of this entity?')) return;
-
 		setIsCloning(originalId);
 		try {
-			// A. Fetch original raw data (exactly as DB sees it)
 			const raw = await fetchRawEntity(normalizedType, originalId);
-
-			// B. Prepare Copy Data
-			// We strip the ID so Supabase creates a new one
-			// We modify the name so you know it's a copy
 			const copyData = {
 				...raw,
 				name: raw.name ? `${raw.name} (Copy)` : undefined,
 				title: raw.title ? `${raw.title} (Copy)` : undefined,
 				campaign_id: campaignId,
 			};
-
-			// C. Create the new entity
 			const result = await createEntity(normalizedType, copyData);
-
-			// D. Navigate to the new Editor
 			navigate(`/dm/editor/${normalizedType}/${result.id}`);
 		} catch (e) {
 			console.error('Duplication failed:', e);
 			alert('Failed to duplicate: ' + e.message);
-			setIsCloning(false); // Only reset if failed (otherwise we navigate away)
+			setIsCloning(false);
 		}
 	};
 
 	const handleDelete = async (id) => {
 		if (!confirm(`Are you sure you want to delete this ${normalizedType}? This cannot be undone.`)) return;
-
 		setIsDeleting(id);
 		try {
 			await deleteEntity(normalizedType, id);
-			// Refresh list
 			refetch();
 		} catch (e) {
 			alert('Delete failed: ' + e.message);
@@ -4433,7 +4455,7 @@ export default function EntityListPage() {
 
 	return (
 		<div className='space-y-4 animate-in fade-in duration-300'>
-			{/* --- Header Toolbar --- */}
+			{/* Header Toolbar */}
 			<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
 				<h1 className='text-2xl font-serif font-bold text-foreground capitalize flex items-center gap-2'>
 					{type}s
@@ -4448,7 +4470,7 @@ export default function EntityListPage() {
 				</Link>
 			</div>
 
-			{/* --- Search Bar --- */}
+			{/* Search Bar */}
 			<div className='relative'>
 				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={16} />
 				<input
@@ -4460,7 +4482,7 @@ export default function EntityListPage() {
 				/>
 			</div>
 
-			{/* --- Entity List --- */}
+			{/* Entity List */}
 			<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
 				<div className='divide-y divide-border'>
 					{isLoading ? (
@@ -4475,13 +4497,13 @@ export default function EntityListPage() {
 						filtered.map((item) => (
 							<div
 								key={item.id}
-								className='group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+								// CHANGED: Added virtual-list-item class for CSS native virtualization
+								className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
 								{/* Left: Info */}
 								<div className='flex items-center gap-3 min-w-0 flex-1'>
 									<div className='min-w-0'>
 										<div className='flex items-center gap-2'>
 											<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
-											{/* Show badge if type differs from current view (e.g. searching generic entities) */}
 											{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
 										</div>
 										<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
@@ -4498,8 +4520,6 @@ export default function EntityListPage() {
 										variant='outline'
 										className='opacity-50 hidden sm:inline-flex'
 									/>
-
-									{/* Duplicate Button */}
 									<button
 										onClick={() => handleDuplicate(item.id)}
 										disabled={isCloning === item.id}
@@ -4511,8 +4531,6 @@ export default function EntityListPage() {
 											<Copy size={16} />
 										)}
 									</button>
-
-									{/* Edit Button */}
 									<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
 										<Button
 											variant='ghost'
@@ -4522,8 +4540,6 @@ export default function EntityListPage() {
 											Edit
 										</Button>
 									</Link>
-
-									{/* Delete */}
 									<button
 										onClick={() => handleDelete(item.id)}
 										disabled={isDeleting === item.id}
@@ -4758,9 +4774,8 @@ export default function SplitPaneManager() {
 --- END OF features\admin-console\pages\SplitPaneManager.jsx ---
 
 --- FILE: features\app-core\App.jsx ---
-// features/app-core/App.jsx
 import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query'; // Add this
+import { useQueryClient } from '@tanstack/react-query';
 import { TooltipProvider } from '../../features/smart-tooltip/TooltipContext';
 import { CampaignProvider, useCampaign } from '../../features/campaign-session/CampaignContext';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -4776,14 +4791,17 @@ function AppContent() {
 		document.documentElement.style.setProperty('--bg-texture', `url('${texturePath}')`);
 	}, []);
 
-	// 2. CRITICAL FIX: Clear cache when campaign changes
+	// 2. Set Default App Title
+	useEffect(() => {
+		document.title = 'D&D Campaign Manager';
+	}, []);
+
+	// 3. Clear cache when campaign changes
 	useEffect(() => {
 		if (campaignId) {
-			// Invalidate stale data instead of removing (preserves in-flight requests)
 			queryClient.invalidateQueries({
 				predicate: (query) => {
 					const key = query.queryKey[0];
-					// Only invalidate campaign-specific data
 					return ['entities', 'entry', 'timeline', 'graph', 'entityIndex', 'globalSearch'].includes(key);
 				},
 			});
@@ -4801,7 +4819,6 @@ export default function App() {
 	return (
 		<ErrorBoundary>
 			<CampaignProvider>
-				{/* We move logic to a sub-component so we can use useCampaign() */}
 				<AppContent />
 			</CampaignProvider>
 		</ErrorBoundary>
@@ -6208,13 +6225,24 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 --- END OF features\entity-view\components\EntityBody.jsx ---
 
 --- FILE: features\entity-view\components\EntityHeader.jsx ---
+import { Link, useParams } from 'react-router-dom';
+import { Edit3 } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '../../../components/entity/EntityIcon';
 import EntityBadge from '../../../components/entity/EntityBadge';
-import { getPriorityStyles } from '../../../config/entity/styles'; // Import
+import { getPriorityStyles } from '../../../config/entity/styles';
 
+/**
+ * EntityHeader Component
+ * Displays the hero banner for an entity, including title, avatar, and metadata badges.
+ * Now includes a developer-only shortcut to the DM Console for quick editing.
+ */
 export const EntityHeader = ({ data }) => {
-	const { title, typeLabel, imageUrl, avatarUrl, status, priority, theme, extraTags } = data;
+	const { title, typeLabel, imageUrl, avatarUrl, status, priority, extraTags } = data;
+	const { entityId } = useParams();
+
+	// Only show edit controls in Dev mode (npm run dev)
+	const isDev = import.meta.env.DEV;
 
 	return (
 		<div className='h-40 md:h-48 relative group overflow-hidden header-bg-fallback'>
@@ -6227,10 +6255,23 @@ export const EntityHeader = ({ data }) => {
 			<div className='absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-10' />
 			<div className='absolute inset-0 header-gradient translate-y-1' />
 
-			{/* Content Layer */}
+			{/* 2. DEVELOPER ACTION BAR */}
+			{isDev && entityId && (
+				<div className='absolute top-4 right-4 z-30 animate-in fade-in slide-in-from-right-2 duration-500'>
+					<Link
+						to={`/dm/manage/${typeLabel.toLowerCase()}/${entityId}`}
+						className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'
+						title='Edit in DM Console'>
+						<Edit3 size={14} className='group-hover/edit:scale-110 transition-transform' />
+						<span className='text-[10px] font-bold uppercase tracking-tight'>Quick Edit</span>
+					</Link>
+				</div>
+			)}
+
+			{/* 3. CONTENT LAYER */}
 			<div className='absolute bottom-0 left-0 w-full p-4 md:p-6'>
 				<div className='max-w-6xl mx-auto flex items-end gap-4'>
-					{/* 2. AVATAR - Using EntityIcon component */}
+					{/* AVATAR */}
 					<div className='hidden md:flex md:items-end'>
 						<EntityIcon
 							type={typeLabel.toLowerCase()}
@@ -6241,7 +6282,7 @@ export const EntityHeader = ({ data }) => {
 						/>
 					</div>
 
-					{/* Title & Status */}
+					{/* Title & Status Metadata */}
 					<div className='flex-1'>
 						<div className='flex items-center flex-wrap gap-2 mb-1.5'>
 							{/* Type Badge */}
@@ -6265,13 +6306,13 @@ export const EntityHeader = ({ data }) => {
 								<span
 									className={clsx(
 										'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
-										getPriorityStyles(priority) // Use centralized logic
+										getPriorityStyles(priority)
 									)}>
 									{priority} Priority
 								</span>
 							)}
 
-							{/* Extra Tags */}
+							{/* Extra Tags (Session Date, etc) */}
 							{extraTags &&
 								extraTags.map((tag, i) => (
 									<span
@@ -6281,6 +6322,7 @@ export const EntityHeader = ({ data }) => {
 									</span>
 								))}
 						</div>
+
 						<h1 className='text-3xl md:text-4xl font-serif font-bold text-foreground leading-none drop-shadow-sm'>
 							{title}
 						</h1>
@@ -6622,9 +6664,9 @@ const QuestObjectiveItem = ({ obj }) => {
 						{hasSession && (
 							<div
 								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200/60'
-								title={`Completed in Session ${obj.completed_session_number}`}>
+								title={`Completed in Session ${obj.completed_session_number - 1}`}>
 								<Calendar size={10} />
-								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number}
+								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number - 1}
 							</div>
 						)}
 					</div>
@@ -6996,7 +7038,8 @@ export { default as EncounterLayout } from './EncounterLayout';
 --- END OF features\entity-view\layouts\index.js ---
 
 --- FILE: features\entity-view\layouts\SessionLayout.jsx ---
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom'; // CHANGED: Replaces useState
 import { BookOpen, History, Network } from 'lucide-react';
 import TabContainer from '../../../components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '../components/EntityBody';
@@ -7006,7 +7049,19 @@ import { extractHeaders } from '../../../utils/text/markdownHelpers';
 import { ThreeColumnLayout } from '../../../components/layout/SplitView';
 
 export default function SessionLayout({ viewModel }) {
-	const [activeTab, setActiveTab] = useState('narrative');
+	// CHANGED: Use URL params for state
+	const [searchParams, setSearchParams] = useSearchParams();
+	const activeTab = searchParams.get('tab') || 'narrative';
+
+	const setActiveTab = (tabId) => {
+		setSearchParams(
+			(prev) => {
+				prev.set('tab', tabId);
+				return prev;
+			},
+			{ replace: true }
+		); // replace prevents cluttering history stack
+	};
 
 	if (!viewModel) return null;
 
@@ -7026,7 +7081,7 @@ export default function SessionLayout({ viewModel }) {
 						summary={viewModel.content.narrative}
 						sections={[]}
 						history={null}
-						levelUp={viewModel.content.levelUp} // Pass new prop
+						levelUp={viewModel.content.levelUp}
 					/>
 				</div>
 			}
@@ -7078,9 +7133,9 @@ export default function SessionLayout({ viewModel }) {
 						content: renderTimeline(),
 					},
 				]}
-				defaultTab='narrative'
+				defaultTab={activeTab} // CHANGED
 				sticky
-				onChange={setActiveTab}
+				onChange={setActiveTab} // CHANGED
 			/>
 
 			{tocItems.length > 0 && activeTab === 'narrative' && (
@@ -7095,18 +7150,11 @@ export default function SessionLayout({ viewModel }) {
 --- END OF features\entity-view\layouts\SessionLayout.jsx ---
 
 --- FILE: features\entity-view\layouts\StandardLayout.jsx ---
-/**
- * StandardLayout Component
- * Layout for NPCs, Locations, Items, Factions (sidebar + main content)
- */
-
+import { Drawer } from 'vaul';
+import { Info, X } from 'lucide-react';
 import { EntitySidebar } from '../components/EntitySidebar';
 import { EntityBody } from '../components/EntityBody';
 
-/**
- * Standard entity layout with sidebar and main content
- * @param {Object} viewModel - Entity view model
- */
 export default function StandardLayout({ viewModel }) {
 	if (!viewModel) return null;
 
@@ -7114,13 +7162,13 @@ export default function StandardLayout({ viewModel }) {
 		<div className='w-full px-4 sm:px-6 py-10'>
 			<div className='max-w-6xl mx-auto'>
 				<div className='grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 xl:gap-8'>
-					{/* Sidebar */}
-					<div className='lg:order-first min-w-0'>
+					{/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
+					<div className='hidden lg:block lg:order-first min-w-0'>
 						<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
 					</div>
 
-					{/* Main Content */}
-					<div className='min-w-0'>
+					{/* --- MAIN CONTENT --- */}
+					<div className='min-w-0 pb-20'>
 						<EntityBody
 							summary={viewModel.content.summary}
 							sections={viewModel.content.sections}
@@ -7130,6 +7178,40 @@ export default function StandardLayout({ viewModel }) {
 						/>
 					</div>
 				</div>
+			</div>
+
+			{/* --- MOBILE BOTTOM SHEET --- */}
+			<div className='lg:hidden'>
+				<Drawer.Root shouldScaleBackground>
+					<Drawer.Trigger asChild>
+						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-stone-300 rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
+							<Info size={18} />
+							<span>Info</span>
+						</button>
+					</Drawer.Trigger>
+
+					<Drawer.Portal>
+						<Drawer.Overlay className='fixed inset-0 bg-black/40 z-50 backdrop-blur-[2px]' />
+						<Drawer.Content className='bg-background flex flex-col rounded-t-[10px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-50 focus:outline-none border-t border-border'>
+							{/* Drag Handle */}
+							<div className='p-4 bg-muted/50 rounded-t-[10px] flex-shrink-0'>
+								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-4' />
+								<div className='flex justify-between items-center'>
+									{/* CHANGED: Used Drawer.Title instead of h2 for accessibility */}
+									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
+									<Drawer.Close className='p-2 bg-gray-100 rounded-full text-gray-500'>
+										<X size={16} />
+									</Drawer.Close>
+								</div>
+							</div>
+
+							{/* Content */}
+							<div className='p-4 bg-background flex-1 overflow-y-auto custom-scrollbar'>
+								<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+							</div>
+						</Drawer.Content>
+					</Drawer.Portal>
+				</Drawer.Root>
 			</div>
 		</div>
 	);
@@ -8295,7 +8377,7 @@ export {};
 --- END OF features\layout-main\types.js ---
 
 --- FILE: features\layout-main\useMainLayout.js ---
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react'; // Added useEffect
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCampaigns } from '../../services/campaigns';
@@ -8324,21 +8406,30 @@ export function useMainLayout() {
 		  }
 		: null;
 
-	// ARCHITECTURAL CHANGE: Dynamic Navigation Logic
-	// We use useMemo to recalculate navigation only when the campaign data changes.
+	// --- NEW: Dynamic Document Title ---
+	useEffect(() => {
+		if (campaign?.name) {
+			document.title = `${campaign.name} | Campaign Manager`;
+		}
+		// Reset when unmounting (leaving campaign view)
+		return () => {
+			document.title = 'D&D Campaign Manager';
+		};
+	}, [campaign]);
+	// -----------------------------------
+
 	const navStructure = useMemo(() => {
 		const hasMapData = !!currentCampaignData?.map_data;
 
 		return NAV_STRUCTURE.map((group) => ({
 			...group,
 			items: group.items.filter((item) => {
-				// If the item is the Atlas, only show it if map_data exists
 				if (item.key === 'atlas') {
 					return hasMapData;
 				}
 				return true;
 			}),
-		})).filter((group) => group.items.length > 0); // Cleanup empty groups if any
+		})).filter((group) => group.items.length > 0);
 	}, [currentCampaignData]);
 
 	const navigateTo = (path) => {
@@ -8358,7 +8449,7 @@ export function useMainLayout() {
 		navigateTo,
 		campaign,
 		onSwitchCampaign,
-		navStructure, // Return the computed structure
+		navStructure,
 	};
 }
 
@@ -10533,27 +10624,49 @@ import { useEffect } from 'react';
 import { useWikiNavigation } from './useWikiNavigation';
 import { WikiSidebar } from './components/WikiSidebar';
 
+// --- NEW HELPER: Recursive Search ---
+// Finds the first entity that matches the requested section type
+const findFirstContentEntity = (items, targetType) => {
+	for (const item of items) {
+		// 1. Found a direct match? (e.g. an NPC in the NPC section)
+		if (item.type === targetType) {
+			return item;
+		}
+
+		// 2. If it's a folder (Location) with children, look inside
+		if (item.children && item.children.length > 0) {
+			const found = findFirstContentEntity(item.children, targetType);
+			if (found) return found;
+		}
+	}
+	return null;
+};
+
 export default function WikiLayout() {
 	const navigation = useWikiNavigation();
 	const navigate = useNavigate();
 	const { type, entityId } = useParams();
 
+	// Ensure we match the internal type string (e.g. 'sessions' -> 'session')
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
 	// Auto-select first item if on index route and items exist
 	useEffect(() => {
-		// Only run if:
-		// 1. We're on the index route (no entityId)
-		// 2. Data has loaded
-		// 3. We have groups with items
 		if (!entityId && !navigation.isLoading && navigation.groups.length > 0) {
-			// Find the first item across all groups
 			const firstGroup = navigation.groups[0];
+
 			if (firstGroup && firstGroup.items.length > 0) {
-				const firstItem = firstGroup.items[0];
-				// Navigate to the first item
-				navigate(`/wiki/${type}/${firstItem.path}`, { replace: true });
+				// CHANGED: Use recursive search instead of blindly taking items[0]
+				const match = findFirstContentEntity(firstGroup.items, normalizedType);
+
+				// Fallback: If no matching child found (e.g. empty folder),
+				// just show the folder (items[0]) so the user isn't staring at a blank screen.
+				const target = match || firstGroup.items[0];
+
+				navigate(`/wiki/${type}/${target.path}`, { replace: true });
 			}
 		}
-	}, [entityId, navigation.isLoading, navigation.groups, navigate, type]);
+	}, [entityId, navigation.isLoading, navigation.groups, navigate, type, normalizedType]);
 
 	return (
 		<div className='relative flex flex-col lg:flex-row h-full bg-background overflow-hidden'>
@@ -10853,15 +10966,20 @@ export const EntityListItem = ({ item, showStatus, onItemClick }) => {
 --- END OF features\wiki-layout\components\sidebar\EntityListItem.jsx ---
 
 --- FILE: features\wiki-layout\components\sidebar\PriorityIcon.jsx ---
-import { ChevronsUp, ChevronsDown, Minus, AlertCircle } from 'lucide-react';
+import { ChevronUp, ChevronsUp, ChevronsDown, Minus, AlertCircle } from 'lucide-react';
 
 export const PriorityIcon = ({ priority }) => {
 	if (!priority) return null;
 	const p = priority.toLowerCase();
 
-	// High / Urgent
-	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
+	// Critical
+	if (p.includes('critical')) {
 		return <ChevronsUp size={14} className='text-orange-600' strokeWidth={3} />;
+	}
+
+	// High / Urgent
+	if (p.includes('high')) {
+		return <ChevronUp size={14} className='text-orange-600' strokeWidth={3} />;
 	}
 
 	// Low

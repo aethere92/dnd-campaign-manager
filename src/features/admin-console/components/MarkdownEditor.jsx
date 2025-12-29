@@ -7,35 +7,52 @@ import { INPUT_CLASS, LABEL_CLASS } from './ui/FormStyles';
 export default function MarkdownEditor({ label, value, onChange, placeholder, rows = 6 }) {
 	const [mode, setMode] = useState('write');
 	const [showSearch, setShowSearch] = useState(false);
-	const textareaRef = useRef(null); // Reference to the textarea DOM element
+	const textareaRef = useRef(null);
+
+	// CHANGED: Handler to detect @ character
+	const handleInputChange = (e) => {
+		const newValue = e.target.value;
+		const selectionStart = e.target.selectionStart;
+
+		// Pass to parent
+		onChange(e);
+
+		// Detect if user typed '@'
+		const charBefore = newValue.charAt(selectionStart - 1);
+		if (charBefore === '@') {
+			setShowSearch(true);
+		}
+	};
 
 	const handleInsertEntity = (entity) => {
-		// The Embed Pattern
-		const textToInsert = `\n[:: ${entity.name} ::](#entity/${entity.id}/${entity.type})\n`;
-
 		const textarea = textareaRef.current;
+		const textToInsert = `[${entity.name}](#entity/${entity.id}/${entity.type})`;
 
 		if (textarea) {
-			// 1. Get cursor position
 			const start = textarea.selectionStart;
 			const end = textarea.selectionEnd;
 			const currentText = value || '';
 
-			// 2. Insert text at cursor
-			const newValue = currentText.substring(0, start) + textToInsert + currentText.substring(end);
+			// CHANGED: Logic to replace the '@' that triggered this if it exists immediately before cursor
+			let insertPos = start;
+			let beforeText = currentText.substring(0, start);
+			const afterText = currentText.substring(end);
 
-			// 3. Update State
+			if (beforeText.endsWith('@')) {
+				beforeText = beforeText.slice(0, -1);
+				insertPos = start - 1;
+			}
+
+			const newValue = beforeText + textToInsert + afterText;
+
 			onChange({ target: { value: newValue } });
 
-			// 4. Restore focus and move cursor to end of inserted text
-			// Timeout ensures React render cycle completes first
 			setTimeout(() => {
 				textarea.focus();
-				const newCursorPos = start + textToInsert.length;
+				const newCursorPos = insertPos + textToInsert.length;
 				textarea.setSelectionRange(newCursorPos, newCursorPos);
 			}, 0);
 		} else {
-			// Fallback: Append to end
 			const newValue = (value || '') + textToInsert;
 			onChange({ target: { value: newValue } });
 		}
@@ -48,7 +65,6 @@ export default function MarkdownEditor({ label, value, onChange, placeholder, ro
 			<div className='flex items-end justify-between mb-1'>
 				<label className={LABEL_CLASS}>{label}</label>
 				<div className='flex bg-muted rounded-md p-0.5 border border-border'>
-					{/* INSERT BUTTON */}
 					{mode === 'write' && (
 						<button
 							type='button'
@@ -84,11 +100,10 @@ export default function MarkdownEditor({ label, value, onChange, placeholder, ro
 				</div>
 			</div>
 
-			{/* SEARCH POPUP OVERLAY */}
 			{showSearch && (
 				<div className='absolute top-8 left-0 right-0 z-50 p-2 bg-background border border-amber-300 shadow-xl rounded-lg animate-in fade-in zoom-in-95 duration-100'>
 					<div className='flex justify-between items-center mb-2 px-1'>
-						<span className='text-[10px] font-bold uppercase text-amber-600'>Select Entity to Embed</span>
+						<span className='text-[10px] font-bold uppercase text-amber-600'>Select Entity</span>
 						<button onClick={() => setShowSearch(false)}>
 							<X size={14} className='text-gray-400 hover:text-red-500' />
 						</button>
@@ -99,11 +114,11 @@ export default function MarkdownEditor({ label, value, onChange, placeholder, ro
 
 			{mode === 'write' ? (
 				<textarea
-					ref={textareaRef} // Attach Ref here
+					ref={textareaRef}
 					rows={rows}
 					className={`${INPUT_CLASS} font-mono text-xs leading-relaxed`}
 					value={value}
-					onChange={onChange}
+					onChange={handleInputChange} // CHANGED: Use new handler
 					placeholder={placeholder}
 				/>
 			) : (

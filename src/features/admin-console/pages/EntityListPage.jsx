@@ -9,16 +9,15 @@ import Button from '../../../components/ui/Button';
 import EntityBadge from '../../../components/entity/EntityBadge';
 
 export default function EntityListPage() {
-	const { type } = useParams(); // e.g., 'npc', 'location'
+	const { type } = useParams();
 	const navigate = useNavigate();
 	const { campaignId } = useCampaign();
 	const [search, setSearch] = useState('');
-	const [isCloning, setIsCloning] = useState(null); // Stores ID of item being cloned
+	const [isCloning, setIsCloning] = useState(null);
 	const [isDeleting, setIsDeleting] = useState(null);
 
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
-	// 1. Fetch List Data
 	const { data, isLoading, refetch } = useQuery({
 		queryKey: ['admin-list', campaignId, normalizedType],
 		queryFn: () => getEntities(campaignId, normalizedType),
@@ -29,44 +28,32 @@ export default function EntityListPage() {
 		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
 	);
 
-	// 2. Handle Duplication
+	// ... (Handlers handleDuplicate and handleDelete remain same) ...
 	const handleDuplicate = async (originalId) => {
 		if (!confirm('Create a copy of this entity?')) return;
-
 		setIsCloning(originalId);
 		try {
-			// A. Fetch original raw data (exactly as DB sees it)
 			const raw = await fetchRawEntity(normalizedType, originalId);
-
-			// B. Prepare Copy Data
-			// We strip the ID so Supabase creates a new one
-			// We modify the name so you know it's a copy
 			const copyData = {
 				...raw,
 				name: raw.name ? `${raw.name} (Copy)` : undefined,
 				title: raw.title ? `${raw.title} (Copy)` : undefined,
 				campaign_id: campaignId,
 			};
-
-			// C. Create the new entity
 			const result = await createEntity(normalizedType, copyData);
-
-			// D. Navigate to the new Editor
 			navigate(`/dm/editor/${normalizedType}/${result.id}`);
 		} catch (e) {
 			console.error('Duplication failed:', e);
 			alert('Failed to duplicate: ' + e.message);
-			setIsCloning(false); // Only reset if failed (otherwise we navigate away)
+			setIsCloning(false);
 		}
 	};
 
 	const handleDelete = async (id) => {
 		if (!confirm(`Are you sure you want to delete this ${normalizedType}? This cannot be undone.`)) return;
-
 		setIsDeleting(id);
 		try {
 			await deleteEntity(normalizedType, id);
-			// Refresh list
 			refetch();
 		} catch (e) {
 			alert('Delete failed: ' + e.message);
@@ -77,7 +64,7 @@ export default function EntityListPage() {
 
 	return (
 		<div className='space-y-4 animate-in fade-in duration-300'>
-			{/* --- Header Toolbar --- */}
+			{/* Header Toolbar */}
 			<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
 				<h1 className='text-2xl font-serif font-bold text-foreground capitalize flex items-center gap-2'>
 					{type}s
@@ -92,7 +79,7 @@ export default function EntityListPage() {
 				</Link>
 			</div>
 
-			{/* --- Search Bar --- */}
+			{/* Search Bar */}
 			<div className='relative'>
 				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={16} />
 				<input
@@ -104,7 +91,7 @@ export default function EntityListPage() {
 				/>
 			</div>
 
-			{/* --- Entity List --- */}
+			{/* Entity List */}
 			<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
 				<div className='divide-y divide-border'>
 					{isLoading ? (
@@ -119,13 +106,13 @@ export default function EntityListPage() {
 						filtered.map((item) => (
 							<div
 								key={item.id}
-								className='group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+								// CHANGED: Added virtual-list-item class for CSS native virtualization
+								className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
 								{/* Left: Info */}
 								<div className='flex items-center gap-3 min-w-0 flex-1'>
 									<div className='min-w-0'>
 										<div className='flex items-center gap-2'>
 											<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
-											{/* Show badge if type differs from current view (e.g. searching generic entities) */}
 											{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
 										</div>
 										<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
@@ -142,8 +129,6 @@ export default function EntityListPage() {
 										variant='outline'
 										className='opacity-50 hidden sm:inline-flex'
 									/>
-
-									{/* Duplicate Button */}
 									<button
 										onClick={() => handleDuplicate(item.id)}
 										disabled={isCloning === item.id}
@@ -155,8 +140,6 @@ export default function EntityListPage() {
 											<Copy size={16} />
 										)}
 									</button>
-
-									{/* Edit Button */}
 									<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
 										<Button
 											variant='ghost'
@@ -166,8 +149,6 @@ export default function EntityListPage() {
 											Edit
 										</Button>
 									</Link>
-
-									{/* Delete */}
 									<button
 										onClick={() => handleDelete(item.id)}
 										disabled={isDeleting === item.id}

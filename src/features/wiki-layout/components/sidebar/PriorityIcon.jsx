@@ -1,12 +1,17 @@
-import { ChevronsUp, ChevronsDown, Minus, AlertCircle } from 'lucide-react';
+import { ChevronUp, ChevronsUp, ChevronsDown, Minus, AlertCircle } from 'lucide-react';
 
 export const PriorityIcon = ({ priority }) => {
 	if (!priority) return null;
 	const p = priority.toLowerCase();
 
-	// High / Urgent
-	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
+	// Critical
+	if (p.includes('critical')) {
 		return <ChevronsUp size={14} className='text-orange-600' strokeWidth={3} />;
+	}
+
+	// High / Urgent
+	if (p.includes('high')) {
+		return <ChevronUp size={14} className='text-orange-600' strokeWidth={3} />;
 	}
 
 	// Low

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react'; // Added useEffect
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getCampaigns } from '../../services/campaigns';
@@ -27,21 +27,30 @@ export function useMainLayout() {
 		  }
 		: null;
 
-	// ARCHITECTURAL CHANGE: Dynamic Navigation Logic
-	// We use useMemo to recalculate navigation only when the campaign data changes.
+	// --- NEW: Dynamic Document Title ---
+	useEffect(() => {
+		if (campaign?.name) {
+			document.title = `${campaign.name} | Campaign Manager`;
+		}
+		// Reset when unmounting (leaving campaign view)
+		return () => {
+			document.title = 'D&D Campaign Manager';
+		};
+	}, [campaign]);
+	// -----------------------------------
+
 	const navStructure = useMemo(() => {
 		const hasMapData = !!currentCampaignData?.map_data;
 
 		return NAV_STRUCTURE.map((group) => ({
 			...group,
 			items: group.items.filter((item) => {
-				// If the item is the Atlas, only show it if map_data exists
 				if (item.key === 'atlas') {
 					return hasMapData;
 				}
 				return true;
 			}),
-		})).filter((group) => group.items.length > 0); // Cleanup empty groups if any
+		})).filter((group) => group.items.length > 0);
 	}, [currentCampaignData]);
 
 	const navigateTo = (path) => {
@@ -61,6 +70,6 @@ export function useMainLayout() {
 		navigateTo,
 		campaign,
 		onSwitchCampaign,
-		navStructure, // Return the computed structure
+		navStructure,
 	};
 }

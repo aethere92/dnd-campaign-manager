@@ -62,9 +62,9 @@ const QuestObjectiveItem = ({ obj }) => {
 						{hasSession && (
 							<div
 								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200/60'
-								title={`Completed in Session ${obj.completed_session_number}`}>
+								title={`Completed in Session ${obj.completed_session_number - 1}`}>
 								<Calendar size={10} />
-								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number}
+								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number - 1}
 							</div>
 						)}
 					</div>

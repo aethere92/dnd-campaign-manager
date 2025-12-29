@@ -262,8 +262,9 @@ h3[id] {
 	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* D&D Theme Specifics for Tooltips (If map background is light, invert this) */
-[data-theme='dnd'] .leaflet-tooltip {
-	/* If your map tiles are dark, keep white text. If light, use var(--accent) */
-	/* text-shadow: 0 0 3px var(--background); */
+/* --- PERFORMANCE UTILITY --- */
+/* Native browser optimization to skip rendering off-screen content */
+.virtual-list-item {
+	content-visibility: auto;
+	contain-intrinsic-size: 80px; /* Approximate height of an admin list item */
 }

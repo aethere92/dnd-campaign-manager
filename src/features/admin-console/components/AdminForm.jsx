@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query'; // CHANGED: Import
 import { getStrategy } from '../config/strategies';
 import { useCampaign } from '../../campaign-session/CampaignContext';
-import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin'; // Removed getSessionList
+import { createEntity, fetchRawEntity, updateEntity } from '../../../services/admin';
 import Button from '../../../components/ui/Button';
 import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -21,10 +22,11 @@ import EncounterActionManager from './EncounterActionManager';
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
 	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient(); // CHANGED: Hook
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
-	// REMOVED: const [sessions, setSessions] = useState([]);
 
+	// ... (useForm setup remains same) ...
 	const {
 		register,
 		control,
@@ -39,26 +41,20 @@ export default function AdminForm({ type, id }) {
 			customAttributes: [],
 		},
 	});
+	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
 
-	const { fields, append, remove } = useFieldArray({
-		control,
-		name: 'customAttributes',
-	});
-
-	// 1. LOAD DATA
+	// ... (useEffect loadEntity remains same) ...
 	useEffect(() => {
 		const loadEntity = async () => {
 			setIsLoading(true);
 			try {
-				// REMOVED: The session loading logic
-
 				if (!id) {
 					reset({ attributes: {}, customAttributes: [] });
 					setIsLoading(false);
 					return;
 				}
-
 				const rawData = await fetchRawEntity(type, id);
+				// ... (Parsing logic remains same) ...
 				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
 				const standardAttrs = {};
 				const customAttrs = [];
@@ -66,13 +62,9 @@ export default function AdminForm({ type, id }) {
 				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
 					const value = attr.value;
-
 					if (definedKeys.includes(key)) {
-						if (!standardAttrs[key]) {
-							standardAttrs[key] = value;
-						} else {
-							customAttrs.push({ key, value });
-						}
+						if (!standardAttrs[key]) standardAttrs[key] = value;
+						else customAttrs.push({ key, value });
 					} else {
 						customAttrs.push({ key, value });
 					}
@@ -91,38 +83,27 @@ export default function AdminForm({ type, id }) {
 			}
 		};
 		loadEntity();
-	}, [type, id, reset, strategy]); // REMOVED campaignId dependency
+	}, [type, id, reset, strategy]);
 
-	// 2. SAVE HANDLER
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
 			alert('No Campaign Selected! Select one from the home screen first.');
 			return;
 		}
 
-		// Flatten everything into a single list for the Service
+		// ... (Payload construction remains same) ...
 		const attributesList = [];
-
-		// 1. Add Standard Attributes
 		Object.entries(data.attributes).forEach(([key, value]) => {
-			if (value && String(value).trim() !== '') {
-				attributesList.push({ name: key, value });
-			}
+			if (value && String(value).trim() !== '') attributesList.push({ name: key, value });
 		});
-
-		// 2. Add Custom Attributes (Allowing duplicates)
 		data.customAttributes.forEach((item) => {
-			if (item.key && item.key.trim() !== '') {
-				attributesList.push({ name: item.key, value: item.value });
-			}
+			if (item.key && item.key.trim() !== '') attributesList.push({ name: item.key, value: item.value });
 		});
 
 		const payload = {
 			...data,
-			attributesList, // Send the array, not the object
+			attributesList,
 		};
-
-		// Cleanup internal form state
 		delete payload.attributes;
 		delete payload.customAttributes;
 
@@ -134,6 +115,15 @@ export default function AdminForm({ type, id }) {
 				await createEntity(type, { ...payload, campaign_id: campaignId });
 				if (!id) reset();
 			}
+
+			// CHANGED: Invalidate all relevant queries to force a refresh despite strict caching
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey[0];
+					// Invalidate lists, wikis, dashboard, and graph
+					return ['entities', 'entry', 'dashboard', 'graph', 'timeline', 'globalSearch', 'admin-list'].includes(key);
+				},
+			});
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		} finally {
@@ -144,8 +134,9 @@ export default function AdminForm({ type, id }) {
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	return (
+		// ... (Return JSX remains exactly same) ...
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
-			{/* --- TOP BAR --- */}
+			{/* Top Bar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
 				<div className='flex items-center gap-2'>
 					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
@@ -171,7 +162,7 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- CORE DETAILS --- */}
+			{/* Core Details */}
 			<div className={SECTION_CLASS}>
 				<h2 className={HEADER_CLASS}>Core Details</h2>
 				<div className='grid grid-cols-1 gap-4'>
@@ -200,16 +191,13 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- STANDARD ATTRIBUTES --- */}
+			{/* Attributes */}
 			<div className={SECTION_CLASS}>
 				<h2 className={HEADER_CLASS}>{strategy.label} Attributes</h2>
-
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 					{strategy.defaultAttributes.map((attr) => (
 						<div key={attr.key}>
 							<label className={LABEL_CLASS}>{attr.label}</label>
-
-							{/* RENDER LOGIC: Check type explicitly to avoid duplication */}
 							{attr.type === 'image' ? (
 								<SmartImageInput
 									value={watch(`attributes.${attr.key}`)}
@@ -237,7 +225,7 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- CUSTOM ATTRIBUTES (Dynamic) --- */}
+			{/* Custom Attributes */}
 			<div className={SECTION_CLASS}>
 				<div className={HEADER_CLASS}>
 					<span>Custom Attributes</span>
@@ -284,7 +272,7 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* --- CHILD MANAGERS --- */}
+			{/* Sub Managers */}
 			{id && type === 'session' && <SessionEventManager sessionId={id} />}
 			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
 			{id && type === 'encounter' && <EncounterActionManager encounterId={id} />}

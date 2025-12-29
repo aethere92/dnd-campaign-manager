@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom'; // CHANGED: Replaces useState
 import { BookOpen, History, Network } from 'lucide-react';
 import TabContainer from '../../../components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '../components/EntityBody';
@@ -8,7 +9,19 @@ import { extractHeaders } from '../../../utils/text/markdownHelpers';
 import { ThreeColumnLayout } from '../../../components/layout/SplitView';
 
 export default function SessionLayout({ viewModel }) {
-	const [activeTab, setActiveTab] = useState('narrative');
+	// CHANGED: Use URL params for state
+	const [searchParams, setSearchParams] = useSearchParams();
+	const activeTab = searchParams.get('tab') || 'narrative';
+
+	const setActiveTab = (tabId) => {
+		setSearchParams(
+			(prev) => {
+				prev.set('tab', tabId);
+				return prev;
+			},
+			{ replace: true }
+		); // replace prevents cluttering history stack
+	};
 
 	if (!viewModel) return null;
 
@@ -28,7 +41,7 @@ export default function SessionLayout({ viewModel }) {
 						summary={viewModel.content.narrative}
 						sections={[]}
 						history={null}
-						levelUp={viewModel.content.levelUp} // Pass new prop
+						levelUp={viewModel.content.levelUp}
 					/>
 				</div>
 			}
@@ -80,9 +93,9 @@ export default function SessionLayout({ viewModel }) {
 						content: renderTimeline(),
 					},
 				]}
-				defaultTab='narrative'
+				defaultTab={activeTab} // CHANGED
 				sticky
-				onChange={setActiveTab}
+				onChange={setActiveTab} // CHANGED
 			/>
 
 			{tocItems.length > 0 && activeTab === 'narrative' && (

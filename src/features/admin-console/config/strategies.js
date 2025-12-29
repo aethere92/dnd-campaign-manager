@@ -63,8 +63,13 @@ export const ADMIN_STRATEGIES = {
 		hasNarrative: true,
 		defaultAttributes: [
 			{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed', 'Failed', 'Pending'] },
-			{ key: 'quest type', label: 'Quest Type', type: 'select', options: ['Main Quest', 'Side Quest', 'Personal'] },
-			{ key: 'priority', label: 'Priority', type: 'select', options: ['Normal', 'High', 'Critical', 'Low'] },
+			{
+				key: 'quest type',
+				label: 'Quest Type',
+				type: 'select',
+				options: ['Main Quest', 'Side Quest', 'Personal Quest'],
+			},
+			{ key: 'priority', label: 'Priority', type: 'select', options: ['Critical', 'High', 'Medium', 'Low', 'Trivial'] },
 		],
 	},
 
