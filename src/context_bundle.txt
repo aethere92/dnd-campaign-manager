@@ -30,6 +30,7 @@ INSTRUCTIONS FOR AI:
       MarkdownRenderer.jsx
       MarkdownWithToC.jsx
     ui/
+      Breadcrumbs.jsx
       Button.jsx
       Card.jsx
       DevAdminButton.jsx
@@ -72,6 +73,9 @@ INSTRUCTIONS FOR AI:
       AppRoutes.jsx
       components/
         RouteLoading.jsx
+    calendar/
+      CalendarView.jsx
+      useCalendarViewModel.js
     campaign-session/
       CampaignContext.jsx
       types.js
@@ -125,6 +129,7 @@ INSTRUCTIONS FOR AI:
         wikiEntryTransform.js
     global-search/
       GlobalSearch.jsx
+      SearchContext.jsx
       types.js
       useGlobalSearchViewModel.js
       components/
@@ -136,6 +141,7 @@ INSTRUCTIONS FOR AI:
       transforms/
         searchTransform.js
     hooks/
+      useBreadcrumbs.js
       useTheme.js
     layout-main/
       MainLayout.jsx
@@ -234,11 +240,14 @@ INSTRUCTIONS FOR AI:
     supabase.js
   services/
     admin.js
+    calendar.js
     campaigns.js
     dashboard.js
     entities.js
+    graph.js
     search.js
     timeline.js
+    wiki.js
   styles/
   utils/
     index.js
@@ -1412,6 +1421,71 @@ export default function MarkdownWithToC({
 }
 
 --- END OF components\markdown\MarkdownWithToC.jsx ---
+
+--- FILE: components\ui\Breadcrumbs.jsx ---
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom'; // Added useLocation
+import { ChevronRight, Home } from 'lucide-react';
+import { clsx } from 'clsx';
+import { useBreadcrumbs } from '../../features/hooks/useBreadcrumbs';
+
+export default function Breadcrumbs({ className }) {
+	const crumbs = useBreadcrumbs();
+	const location = useLocation();
+
+	// 1. Explicitly exclude full-screen "World" views where overlays distract
+	const BLACKLISTED_ROUTES = ['/timeline', '/relationships', '/atlas'];
+	const isBlacklisted = BLACKLISTED_ROUTES.some((route) => location.pathname.startsWith(route));
+
+	if (isBlacklisted) return null;
+
+	// 2. Hide on "Landing Pages" (Depth check)
+	// If we only have "Home > [Category]", the Page Title serves as the breadcrumb.
+	// We only want to show this when deep navigating (e.g., "Home > Locations > Brindol")
+	if (crumbs.length <= 2) return null;
+
+	return (
+		<nav
+			className={clsx(
+				'inline-flex items-center gap-1 px-3 py-1.5 rounded-full',
+				'bg-background/60 backdrop-blur-md border border-border/50 shadow-sm',
+				'text-xs font-medium text-muted-foreground',
+				'transition-all hover:bg-background/90 hover:shadow-md hover:border-border',
+				className
+			)}
+			aria-label='Breadcrumb'>
+			<ol className='flex items-center gap-1.5'>
+				{crumbs.map((crumb, index) => {
+					const Icon = crumb.icon;
+					const isFirst = index === 0;
+
+					return (
+						<li key={crumb.path} className='flex items-center'>
+							{!isFirst && <ChevronRight size={10} className='text-muted-foreground/60 mx-0.5 shrink-0' />}
+
+							{crumb.isCurrent ? (
+								<span
+									className={clsx('flex items-center gap-1.5 truncate max-w-[200px]', 'text-foreground font-semibold')}>
+									{Icon && <Icon size={12} />}
+									{crumb.label}
+								</span>
+							) : (
+								<Link
+									to={crumb.path}
+									className='flex items-center gap-1.5 hover:text-accent transition-colors truncate max-w-[150px]'>
+									{isFirst ? <Home size={12} /> : Icon && <Icon size={12} />}
+									<span className={isFirst ? 'sr-only' : ''}>{crumb.label}</span>
+								</Link>
+							)}
+						</li>
+					);
+				})}
+			</ol>
+		</nav>
+	);
+}
+
+--- END OF components\ui\Breadcrumbs.jsx ---
 
 --- FILE: components\ui\Button.jsx ---
 import { clsx } from 'clsx';
@@ -4262,9 +4336,11 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
-import { useCampaign } from '../../campaign-session/CampaignContext'; // 1. Import Context
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import Breadcrumbs from '../../../components/ui/Breadcrumbs'; // IMPORTED
 
 const NavItem = ({ to, icon: Icon, label }) => {
+	// ... (existing code) ...
 	const location = useLocation();
 	const isActive = location.pathname.includes(to);
 
@@ -4284,13 +4360,14 @@ const NavItem = ({ to, icon: Icon, label }) => {
 };
 
 export default function AdminLayout() {
-	const { campaignId, setCampaignId } = useCampaign(); // 2. Get Campaign State
+	const { campaignId, setCampaignId } = useCampaign();
 	const navigate = useNavigate();
 
+	// ... (existing handleSwitch logic) ...
 	const handleSwitch = () => {
 		if (confirm('Go to Campaign Selection screen?')) {
-			setCampaignId(null); // 3. Clear the ID
-			navigate('/select-campaign'); // 4. Navigate to root (which now renders CampaignSelect)
+			setCampaignId(null);
+			navigate('/select-campaign');
 		}
 	};
 
@@ -4298,6 +4375,7 @@ export default function AdminLayout() {
 		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans'>
 			{/* Sidebar */}
 			<aside className='w-56 bg-background border-r border-border flex flex-col shrink-0'>
+				{/* ... (existing sidebar content) ... */}
 				<div className='p-4 border-b border-border bg-muted/20'>
 					<div className='flex items-center gap-2 text-amber-700'>
 						<div className='p-1.5 bg-amber-100 rounded-md'>
@@ -4308,6 +4386,7 @@ export default function AdminLayout() {
 				</div>
 
 				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
+					{/* ... (existing nav items) ... */}
 					<div className='px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						System
 					</div>
@@ -4331,7 +4410,7 @@ export default function AdminLayout() {
 				</nav>
 
 				<div className='p-3 border-t border-border space-y-1'>
-					{/* OPTION A: Return to Active Campaign */}
+					{/* ... (existing footer buttons) ... */}
 					{campaignId && (
 						<Link
 							to='/'
@@ -4341,7 +4420,6 @@ export default function AdminLayout() {
 						</Link>
 					)}
 
-					{/* OPTION B: Switch / Log Out */}
 					<button
 						onClick={handleSwitch}
 						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors text-left'>
@@ -4352,6 +4430,10 @@ export default function AdminLayout() {
 
 			{/* Main Content */}
 			<main className='flex-1 h-full overflow-y-auto bg-muted/10 custom-scrollbar'>
+				{/* ADDED: Breadcrumbs with container */}
+				<div className='px-6 pt-4 max-w-7xl mx-auto'>
+					<Breadcrumbs />
+				</div>
 				<div className='mx-auto'>
 					<Outlet />
 				</div>
@@ -4848,6 +4930,7 @@ const RelationshipGraph = lazy(() => import('../../features/relationship-graph/R
 const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
 const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
 const WikiLandingPage = lazy(() => import('../../features/entity-view/pages/WikiLandingPage'));
+const CalendarView = lazy(() => import('../../features/calendar/CalendarView'));
 
 // Admin Features
 const AdminLayout = lazy(() => import('../../features/admin-console/layouts/AdminLayout'));
@@ -4879,6 +4962,7 @@ export const AppRoutes = () => {
 						<Route path='atlas/:mapId' element={<MapView />} />
 						<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
 						<Route path='timeline' element={<TimelineView />} />
+						<Route path='calendar' element={<CalendarView />} />
 						<Route path='relationships' element={<RelationshipGraph />} />
 
 						<Route path='wiki/:type' element={<WikiLayout />}>
@@ -4909,6 +4993,665 @@ export const RouteLoading = ({ text }) => (
 );
 
 --- END OF features\app-core\components\RouteLoading.jsx ---
+
+--- FILE: features\calendar\CalendarView.jsx ---
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { Calendar as CalIcon, ZoomIn, ZoomOut, MousePointer2, BookOpen } from 'lucide-react';
+import { useCalendarViewModel } from './useCalendarViewModel';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { clsx } from 'clsx';
+import { useTooltip } from '../smart-tooltip/TooltipContext';
+
+// Constants
+const EVENT_HEIGHT = 36;
+const VERTICAL_GAP = 10;
+const MINUTES_PER_DAY = 1440;
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+const ZOOM_FACTOR = 1.25;
+const MIN_HOUR_LABEL_WIDTH = 22;
+
+/**
+ * Timeline ruler showing days and hours
+ */
+const TimelineRuler = React.memo(({ minMinute, totalMinutes, zoom, sessionSpans }) => {
+	const dayCount = Math.ceil(totalMinutes / MINUTES_PER_DAY);
+	const startDay = Math.floor(minMinute / MINUTES_PER_DAY);
+	const dayWidth = MINUTES_PER_DAY * zoom;
+	const hourWidth = MINUTES_PER_HOUR * zoom;
+
+	return (
+		<div className='flex flex-col bg-white/95 backdrop-blur-md border-b border-border shadow-md select-none sticky top-0 z-40'>
+			{/* Session Header Row */}
+			<div className='h-10 border-b border-border/50 relative flex bg-stone-50/80'>
+				{sessionSpans.map((span, idx) => {
+					const left = (span.start - minMinute) * zoom;
+					const width = (span.end - span.start) * zoom;
+
+					return (
+						<div
+							key={span.id}
+							className={clsx(
+								'absolute top-0 bottom-0 border-r border-border/60 flex items-center px-4 gap-2',
+								idx % 2 === 0 ? 'bg-amber-100/20' : 'bg-transparent'
+							)}
+							style={{
+								left: `${left}px`,
+								width: `${width}px`,
+								minWidth: '100px',
+							}}>
+							<BookOpen size={12} className='text-amber-700/60 shrink-0' />
+							<span className='text-[10px] font-bold text-amber-900 truncate uppercase tracking-wider'>
+								{span.title}
+							</span>
+						</div>
+					);
+				})}
+			</div>
+
+			{/* Days and Hours Header */}
+			<div className='flex h-16'>
+				{Array.from({ length: dayCount }, (_, i) => (
+					<div
+						key={`day-${i}`}
+						className='shrink-0 border-r border-border/40 relative h-full'
+						style={{ width: `${dayWidth}px` }}>
+						{/* Day Label */}
+						<div className='h-8 flex items-center px-4 text-xs font-serif font-bold text-stone-500 uppercase tracking-widest border-b border-border/20'>
+							Day {startDay + i}
+						</div>
+
+						{/* Hour Labels */}
+						<div className='h-8 flex'>
+							{Array.from({ length: HOURS_PER_DAY }, (_, h) => {
+								const shouldShowLabel = hourWidth > MIN_HOUR_LABEL_WIDTH || h % 6 === 0;
+
+								return (
+									<div
+										key={`hour-${h}`}
+										className='h-full border-r border-border/10 flex items-center justify-center text-[9px] font-mono text-stone-400 shrink-0'
+										style={{ width: `${hourWidth}px` }}>
+										{shouldShowLabel ? h : ''}
+									</div>
+								);
+							})}
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	);
+});
+
+TimelineRuler.displayName = 'TimelineRuler';
+
+/**
+ * SVG layer for narrative flow arrows between events
+ */
+const NarrativeFlowLayer = React.memo(({ links, zoom, minMinute }) => {
+	return (
+		<svg className='absolute inset-0 pointer-events-none z-0 overflow-visible'>
+			<defs>
+				<marker id='arrowhead' viewBox='0 0 10 10' refX='8' refY='5' markerWidth='3' markerHeight='3' orient='auto'>
+					<path d='M 0 0 L 10 5 L 0 10 z' fill='#cbd5e1' />
+				</marker>
+			</defs>
+			{links.map((link, i) => {
+				const x1 = (link.from.endTotalMinutes - minMinute) * zoom;
+				const x2 = (link.to.startTotalMinutes - minMinute) * zoom;
+				const y1 = link.from.lane * (EVENT_HEIGHT + VERTICAL_GAP) + EVENT_HEIGHT / 2;
+				const y2 = link.to.lane * (EVENT_HEIGHT + VERTICAL_GAP) + EVENT_HEIGHT / 2;
+
+				const dx = Math.abs(x2 - x1);
+				const curve = Math.min(dx * 0.5, 120);
+
+				return (
+					<path
+						key={`link-${i}`}
+						d={`M ${x1} ${y1} C ${x1 + curve} ${y1}, ${x2 - curve} ${y2}, ${x2} ${y2}`}
+						fill='none'
+						stroke='#e2e8f0'
+						strokeWidth='2'
+						markerEnd='url(#arrowhead)'
+					/>
+				);
+			})}
+		</svg>
+	);
+});
+
+NarrativeFlowLayer.displayName = 'NarrativeFlowLayer';
+
+/**
+ * Individual event card component
+ */
+const EventCard = React.memo(({ event, zoom, minMinute, openTooltip, closeTooltip }) => {
+	const visualWidth = event.duration * zoom;
+	const showTitle = visualWidth > 80;
+	const left = (event.startTotalMinutes - minMinute) * zoom;
+	const top = event.lane * (EVENT_HEIGHT + VERTICAL_GAP);
+
+	const handleMouseEnter = useCallback(
+		(e) => {
+			openTooltip(e, event.id, 'session_event');
+		},
+		[event.id, openTooltip]
+	);
+
+	return (
+		<div
+			className={clsx(
+				'absolute rounded-md border shadow-sm flex items-center transition-all duration-200 z-10',
+				'hover:z-50 hover:scale-[1.05] hover:shadow-xl cursor-pointer ring-offset-2 hover:ring-2 hover:ring-amber-500/30',
+				event.style.container,
+				!showTitle ? 'justify-center px-0' : 'px-2.5 gap-2'
+			)}
+			style={{
+				left: `${left}px`,
+				width: `${Math.max(visualWidth, 28)}px`,
+				top: `${top}px`,
+				height: `${EVENT_HEIGHT}px`,
+				willChange: 'transform',
+			}}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={closeTooltip}>
+			<event.style.Icon size={14} className={clsx('shrink-0 opacity-80', !showTitle && 'mx-auto')} />
+			{showTitle && (
+				<div className='flex flex-col min-w-0'>
+					<span className='text-[10px] font-bold truncate leading-tight'>{event.title}</span>
+					<span className='text-[8px] font-mono opacity-60'>{event.event_hour}</span>
+				</div>
+			)}
+		</div>
+	);
+});
+
+EventCard.displayName = 'EventCard';
+
+/**
+ * Main calendar view component
+ */
+export default function CalendarView() {
+	const { tracks, totalMinutes, minMinute, links, sessionSpans, zoom, setZoom, isLoading, error } =
+		useCalendarViewModel();
+
+	const { openTooltip, closeTooltip } = useTooltip();
+	const containerRef = useRef(null);
+	const [isPanning, setIsPanning] = useState(false);
+	const [panState, setPanState] = useState({
+		startX: 0,
+		startY: 0,
+		scrollLeft: 0,
+		scrollTop: 0,
+	});
+
+	// Ctrl+Scroll zoom handler
+	useEffect(() => {
+		const container = containerRef.current;
+		if (!container) return;
+
+		const handleWheel = (e) => {
+			if (e.ctrlKey || e.metaKey) {
+				e.preventDefault();
+				const factor = e.deltaY > 0 ? 1 / ZOOM_FACTOR : ZOOM_FACTOR;
+				setZoom((prev) => prev * factor);
+			}
+		};
+
+		container.addEventListener('wheel', handleWheel, { passive: false });
+		return () => container.removeEventListener('wheel', handleWheel);
+	}, [setZoom]);
+
+	// Pan handlers
+	const handleMouseDown = useCallback((e) => {
+		if (e.button !== 0) return; // Only left click
+
+		setIsPanning(true);
+		setPanState({
+			startX: e.pageX,
+			startY: e.pageY,
+			scrollLeft: containerRef.current.scrollLeft,
+			scrollTop: containerRef.current.scrollTop,
+		});
+	}, []);
+
+	const handleMouseMove = useCallback(
+		(e) => {
+			if (!isPanning) return;
+
+			const dx = e.pageX - panState.startX;
+			const dy = e.pageY - panState.startY;
+			containerRef.current.scrollLeft = panState.scrollLeft - dx;
+			containerRef.current.scrollTop = panState.scrollTop - dy;
+		},
+		[isPanning, panState]
+	);
+
+	const handleMouseUp = useCallback(() => {
+		setIsPanning(false);
+	}, []);
+
+	const handleZoomIn = useCallback(() => {
+		setZoom((prev) => prev * ZOOM_FACTOR);
+	}, [setZoom]);
+
+	const handleZoomOut = useCallback(() => {
+		setZoom((prev) => prev / ZOOM_FACTOR);
+	}, [setZoom]);
+
+	// Loading state
+	if (isLoading) {
+		return <LoadingSpinner text='Consulting the Archives...' />;
+	}
+
+	// Error state
+	if (error) {
+		return (
+			<div className='h-full flex items-center justify-center bg-background'>
+				<div className='text-center'>
+					<p className='text-destructive mb-2'>Failed to load calendar</p>
+					<p className='text-sm text-muted-foreground'>{error.message}</p>
+				</div>
+			</div>
+		);
+	}
+
+	const contentWidth = totalMinutes * zoom + 400;
+
+	return (
+		<div className='h-full flex flex-col bg-background overflow-hidden select-none font-sans'>
+			{/* Toolbar */}
+			<div className='p-3 border-b border-border flex justify-between items-center bg-background z-50 shadow-sm shrink-0'>
+				<div className='flex items-center gap-3'>
+					<div className='p-2 bg-amber-600 text-white rounded-lg shadow-md'>
+						<CalIcon size={20} />
+					</div>
+					<h1 className='text-lg font-serif font-bold'>Campaign Flow</h1>
+				</div>
+
+				<div className='flex items-center gap-4'>
+					{/* Instructions (desktop only) */}
+					<div className='hidden lg:flex items-center gap-2 text-[10px] text-muted-foreground font-mono bg-muted px-3 py-1.5 rounded-full'>
+						<MousePointer2 size={12} className='text-amber-600' />
+						<span>Ctrl + Scroll to Zoom • Drag to Pan</span>
+					</div>
+
+					{/* Zoom Controls */}
+					<div className='flex items-center gap-1 bg-muted p-1 rounded-lg border border-border'>
+						<button
+							onClick={handleZoomOut}
+							className='p-1 hover:bg-background rounded transition-colors'
+							aria-label='Zoom out'>
+							<ZoomOut size={16} />
+						</button>
+						<span className='text-[11px] font-mono font-bold w-12 text-center'>{Math.round(zoom * 100)}%</span>
+						<button
+							onClick={handleZoomIn}
+							className='p-1 hover:bg-background rounded transition-colors'
+							aria-label='Zoom in'>
+							<ZoomIn size={16} />
+						</button>
+					</div>
+				</div>
+			</div>
+
+			{/* Scrollable Canvas */}
+			<div
+				ref={containerRef}
+				onMouseDown={handleMouseDown}
+				onMouseLeave={handleMouseUp}
+				onMouseUp={handleMouseUp}
+				onMouseMove={handleMouseMove}
+				className={clsx(
+					'flex-1 overflow-auto custom-scrollbar relative bg-[#fcfaf7]',
+					isPanning ? 'cursor-grabbing' : 'cursor-grab'
+				)}>
+				<div
+					style={{
+						width: `${contentWidth}px`,
+						minWidth: '100%',
+						minHeight: '100%',
+						position: 'relative',
+					}}>
+					{/* Timeline Header */}
+					<TimelineRuler minMinute={minMinute} totalMinutes={totalMinutes} zoom={zoom} sessionSpans={sessionSpans} />
+
+					{/* Timeline Content */}
+					<div className='relative pt-8 min-h-[1000px]'>
+						{/* Session Background Regions - Highlighted blocks for each session */}
+						{sessionSpans.map((span, idx) => {
+							const left = (span.start - minMinute) * zoom;
+							const width = (span.end - span.start) * zoom;
+
+							// Calculate the maximum lane used by events in this session
+							const maxLane = Math.max(
+								...tracks.filter((evt) => evt.session?.id === span.id).map((evt) => evt.lane),
+								0
+							);
+							const height = (maxLane + 1) * (EVENT_HEIGHT + VERTICAL_GAP) + VERTICAL_GAP * 2;
+
+							return (
+								<div
+									key={span.id}
+									className={clsx(
+										'absolute pointer-events-none transition-all rounded-lg',
+										'border-2 shadow-sm',
+										idx % 2 === 0 ? 'bg-amber-50/40 border-amber-200/60' : 'bg-blue-50/30 border-blue-200/50'
+									)}
+									style={{
+										left: `${left}px`,
+										top: '0px',
+										width: `${width}px`,
+										height: `${height}px`,
+										minHeight: `${EVENT_HEIGHT + VERTICAL_GAP * 2}px`,
+									}}>
+									{/* Session Label Badge */}
+									<div
+										className={clsx(
+											'absolute -top-6 left-2 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm',
+											idx % 2 === 0
+												? 'bg-amber-100 text-amber-800 border border-amber-300'
+												: 'bg-blue-100 text-blue-800 border border-blue-300'
+										)}>
+										<BookOpen size={10} />
+										{span.title}
+									</div>
+								</div>
+							);
+						})}
+
+						{/* Hourly Grid Lines */}
+						<div className='absolute inset-0 pointer-events-none flex'>
+							{Array.from({ length: Math.ceil(totalMinutes / MINUTES_PER_HOUR) }, (_, i) => (
+								<div
+									key={`grid-${i}`}
+									className='h-full border-r border-stone-900/[0.03] shrink-0'
+									style={{ width: `${MINUTES_PER_HOUR * zoom}px` }}
+								/>
+							))}
+						</div>
+
+						{/* Narrative Flow Links */}
+						<div className='absolute inset-0 pointer-events-none'>
+							<NarrativeFlowLayer links={links} zoom={zoom} minMinute={minMinute} />
+						</div>
+
+						{/* Event Cards */}
+						{tracks.map((evt) => (
+							<EventCard
+								key={evt.id}
+								event={evt}
+								zoom={zoom}
+								minMinute={minMinute}
+								openTooltip={openTooltip}
+								closeTooltip={closeTooltip}
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\calendar\CalendarView.jsx ---
+
+--- FILE: features\calendar\useCalendarViewModel.js ---
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState, useCallback } from 'react';
+import { getCalendarEvents } from '../../services/calendar';
+import { useCampaign } from '../campaign-session/CampaignContext';
+import { getEventStyle } from '../timeline/utils/eventStyles';
+
+// Constants
+const MINUTES_PER_DAY = 1440;
+const HORIZONTAL_BUFFER = 10;
+const MIN_EVENT_DURATION = 1;
+const DEFAULT_EVENT_DURATION = 15;
+const DEFAULT_ZOOM = 2.0;
+const MIN_ZOOM = 0.05;
+const MAX_ZOOM = 10;
+
+/**
+ * Safely parse day number from string format (e.g., "Day 5" -> 5)
+ */
+const parseDayNumber = (dayStr) => {
+	if (!dayStr) return 0;
+	const match = String(dayStr).match(/(\d+)/);
+	return match ? parseInt(match[0], 10) : 0;
+};
+
+/**
+ * Parse time string to minutes (e.g., "14:30" -> 14*60+30)
+ */
+const parseTimeToMinutes = (timeStr) => {
+	if (!timeStr) return 0;
+	const parts = String(timeStr).split(':');
+	const hours = parseInt(parts[0], 10) || 0;
+	const minutes = parseInt(parts[1], 10) || 0;
+	return hours * 60 + minutes;
+};
+
+/**
+ * Calculate total minutes from start of timeline
+ */
+const calculateTotalMinutes = (dayNum, timeStr) => {
+	const dayMinutes = dayNum * MINUTES_PER_DAY;
+	const timeMinutes = parseTimeToMinutes(timeStr);
+	return dayMinutes + timeMinutes;
+};
+
+/**
+ * Process raw event data into timeline-ready format
+ */
+const processEvents = (rawEvents) => {
+	if (!Array.isArray(rawEvents) || rawEvents.length === 0) {
+		return [];
+	}
+
+	return rawEvents
+		.map((evt) => {
+			if (!evt) return null;
+
+			const dayNum = parseDayNumber(evt.event_day);
+			const startTotalMinutes = calculateTotalMinutes(dayNum, evt.event_hour);
+			const duration = Math.max(parseInt(evt.event_duration, 10) || DEFAULT_EVENT_DURATION, MIN_EVENT_DURATION);
+
+			return {
+				...evt,
+				startTotalMinutes,
+				endTotalMinutes: startTotalMinutes + duration,
+				duration,
+				style: getEventStyle(evt.event_type),
+			};
+		})
+		.filter(Boolean)
+		.sort((a, b) => a.startTotalMinutes - b.startTotalMinutes);
+};
+
+/**
+ * Calculate timeline bounds (min/max minutes)
+ */
+const calculateBounds = (events) => {
+	if (events.length === 0) {
+		return { minMinute: 0, maxMinute: MINUTES_PER_DAY };
+	}
+
+	const firstEvent = events[0].startTotalMinutes;
+	const lastEvent = events[events.length - 1].endTotalMinutes;
+
+	// Align to day boundaries
+	const minMinute = Math.floor(firstEvent / MINUTES_PER_DAY) * MINUTES_PER_DAY;
+	const maxMinute = Math.ceil(lastEvent / MINUTES_PER_DAY) * MINUTES_PER_DAY + MINUTES_PER_DAY;
+
+	return { minMinute, maxMinute };
+};
+
+/**
+ * Pack events into lanes using waterfall algorithm
+ * This prevents overlapping events in the timeline
+ */
+const packEventsIntoLanes = (events) => {
+	const lanes = [];
+
+	return events.map((evt) => {
+		// Find first available lane where event fits
+		let laneIndex = lanes.findIndex((laneEnd) => laneEnd + HORIZONTAL_BUFFER <= evt.startTotalMinutes);
+
+		if (laneIndex === -1) {
+			// No available lane, create new one
+			laneIndex = lanes.length;
+			lanes.push(evt.endTotalMinutes);
+		} else {
+			// Update lane end time
+			lanes[laneIndex] = evt.endTotalMinutes;
+		}
+
+		return { ...evt, lane: laneIndex };
+	});
+};
+
+/**
+ * Group events by session and calculate session spans
+ */
+const calculateSessionSpans = (packedEvents) => {
+	if (packedEvents.length === 0) return [];
+
+	const sessionMap = new Map();
+
+	packedEvents.forEach((evt) => {
+		const sessionId = evt.session?.id;
+		if (!sessionId) return;
+
+		if (!sessionMap.has(sessionId)) {
+			sessionMap.set(sessionId, {
+				id: sessionId,
+				title: evt.session?.title || 'Untitled Session',
+				start: evt.startTotalMinutes,
+				end: evt.endTotalMinutes,
+				eventCount: 1,
+			});
+		} else {
+			const span = sessionMap.get(sessionId);
+			span.start = Math.min(span.start, evt.startTotalMinutes);
+			span.end = Math.max(span.end, evt.endTotalMinutes);
+			span.eventCount++;
+		}
+	});
+
+	// Convert to array and sort by start time
+	return Array.from(sessionMap.values()).sort((a, b) => a.start - b.start);
+};
+
+/**
+ * Create sequential links between consecutive events
+ */
+const createSequentialLinks = (packedEvents) => {
+	if (packedEvents.length <= 1) return [];
+
+	const links = [];
+	for (let i = 0; i < packedEvents.length - 1; i++) {
+		links.push({
+			from: packedEvents[i],
+			to: packedEvents[i + 1],
+		});
+	}
+	return links;
+};
+
+/**
+ * Main hook for calendar view model
+ */
+export function useCalendarViewModel() {
+	const { campaignId } = useCampaign();
+	const [zoom, setZoomInternal] = useState(DEFAULT_ZOOM);
+
+	// Fetch calendar events
+	const { data, isLoading, error } = useQuery({
+		queryKey: ['calendar', campaignId],
+		queryFn: () => getCalendarEvents(campaignId),
+		enabled: !!campaignId,
+		staleTime: 5 * 60 * 1000, // 5 minutes
+	});
+
+	// Bounded zoom setter
+	const setZoom = useCallback((newZoom) => {
+		if (typeof newZoom === 'function') {
+			setZoomInternal((prev) => {
+				const computed = newZoom(prev);
+				return Math.min(Math.max(computed, MIN_ZOOM), MAX_ZOOM);
+			});
+		} else {
+			setZoomInternal(Math.min(Math.max(newZoom, MIN_ZOOM), MAX_ZOOM));
+		}
+	}, []);
+
+	// Process and compute timeline data
+	const timelineData = useMemo(() => {
+		if (!data || data.length === 0) {
+			return {
+				tracks: [],
+				totalMinutes: MINUTES_PER_DAY,
+				minMinute: 0,
+				links: [],
+				sessionSpans: [],
+			};
+		}
+
+		try {
+			// 1. Process raw events
+			const events = processEvents(data);
+			if (events.length === 0) {
+				return {
+					tracks: [],
+					totalMinutes: MINUTES_PER_DAY,
+					minMinute: 0,
+					links: [],
+					sessionSpans: [],
+				};
+			}
+
+			// 2. Calculate bounds
+			const { minMinute, maxMinute } = calculateBounds(events);
+
+			// 3. Pack into lanes
+			const packedEvents = packEventsIntoLanes(events);
+
+			// 4. Calculate session spans
+			const sessionSpans = calculateSessionSpans(packedEvents);
+
+			// 5. Create links
+			const links = createSequentialLinks(packedEvents);
+
+			return {
+				tracks: packedEvents,
+				totalMinutes: maxMinute - minMinute,
+				minMinute,
+				links,
+				sessionSpans,
+			};
+		} catch (err) {
+			console.error('Error processing calendar data:', err);
+			return {
+				tracks: [],
+				totalMinutes: MINUTES_PER_DAY,
+				minMinute: 0,
+				links: [],
+				sessionSpans: [],
+			};
+		}
+	}, [data]);
+
+	return {
+		...timelineData,
+		zoom,
+		setZoom,
+		isLoading,
+		error,
+	};
+}
+
+--- END OF features\calendar\useCalendarViewModel.js ---
 
 --- FILE: features\campaign-session\CampaignContext.jsx ---
 import { createContext, useContext } from 'react';
@@ -6878,12 +7621,12 @@ export const EntityGridCard = ({ entity, config, context }) => {
 		<Link
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
-				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
+				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-15',
 				'hover:border-accent/50 hover:shadow-sm hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
 			{/* Left: Image/Icon Square */}
-			<div className='w-20 shrink-0 relative bg-muted/30 border-r border-border/50'>
+			<div className='w-15 shrink-0 relative bg-muted/30 border-r border-border/50'>
 				{imageUrl ? (
 					<>
 						<img
@@ -6955,7 +7698,7 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 			</div>
 
 			{/* Grid */}
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3'>
 				{items.map((entity) => (
 					<EntityGridCard key={entity.id} entity={entity} config={config} context={context} />
 				))}
@@ -7477,7 +8220,7 @@ export default function StandardLayout({ viewModel }) {
 --- FILE: features\entity-view\pages\WikiEntryPage.jsx ---
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getWikiEntry } from '../../../services/entities';
+import { getWikiEntry } from '../../../services/wiki';
 import { transformWikiEntry } from '../transforms/wikiEntryTransform'; // Import transform
 import WikiEntityView from '../WikiEntityView';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
@@ -8056,7 +8799,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 
 --- FILE: features\global-search\GlobalSearch.jsx ---
 import { useRef, useEffect } from 'react';
-import { SearchTrigger } from './components/SearchTrigger';
 import { SearchModal } from './components/SearchModal';
 import { useGlobalSearchViewModel } from './useGlobalSearchViewModel';
 
@@ -8067,19 +8809,64 @@ export default function GlobalSearch() {
 	// Focus input when opened
 	useEffect(() => {
 		if (vm.isOpen && inputRef.current) {
-			inputRef.current.focus();
+			// Small timeout to ensure DOM is ready on mobile transitions
+			setTimeout(() => inputRef.current?.focus(), 50);
 		}
 	}, [vm.isOpen]);
 
-	return (
-		<>
-			<SearchTrigger onClick={() => vm.setIsOpen(true)} />
-			{vm.isOpen && <SearchModal vm={vm} inputRef={inputRef} />}
-		</>
-	);
+	// If not open, don't render anything (Modal handles Portal)
+	if (!vm.isOpen) return null;
+
+	return <SearchModal vm={vm} inputRef={inputRef} />;
 }
 
 --- END OF features\global-search\GlobalSearch.jsx ---
+
+--- FILE: features\global-search\SearchContext.jsx ---
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+
+const SearchContext = createContext(null);
+
+export const SearchProvider = ({ children }) => {
+	const [isOpen, setIsOpen] = useState(false);
+	const [query, setQuery] = useState('');
+
+	// Keyboard shortcut listener (CMD+K)
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+				e.preventDefault();
+				setIsOpen((prev) => !prev);
+			}
+			if (e.key === 'Escape' && isOpen) {
+				setIsOpen(false);
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isOpen]);
+
+	const openSearch = useCallback(() => setIsOpen(true), []);
+	const closeSearch = useCallback(() => {
+		setIsOpen(false);
+		setQuery(''); // Optional: clear query on close
+	}, []);
+
+	return (
+		<SearchContext.Provider value={{ isOpen, query, setQuery, openSearch, closeSearch }}>
+			{children}
+		</SearchContext.Provider>
+	);
+};
+
+export const useSearch = () => {
+	const context = useContext(SearchContext);
+	if (!context) throw new Error('useSearch must be used within SearchProvider');
+	return context;
+};
+
+--- END OF features\global-search\SearchContext.jsx ---
 
 --- FILE: features\global-search\types.js ---
 /**
@@ -8127,19 +8914,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '../campaign-session/CampaignContext';
 import { globalSearch } from '../../services/search';
 import { getEntityConfig } from '../../config/entity';
-import { transformSearchResults } from './transforms/searchTransform'; // Import transform
-import './types';
+import { transformSearchResults } from './transforms/searchTransform';
+import { useSearch } from './SearchContext'; // IMPORT CONTEXT
 
 const STORAGE_KEY = 'recent-searches';
 
-/**
- * @returns {import('./types').GlobalSearchViewModel}
- */
 export function useGlobalSearchViewModel() {
 	const navigate = useNavigate();
 	const { campaignId } = useCampaign();
-	const [isOpen, setIsOpen] = useState(false);
-	const [query, setQuery] = useState('');
+
+	// 1. Consume Context
+	const { isOpen, openSearch: setIsOpen, closeSearch, query, setQuery } = useSearch();
+
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [recentSearches, setRecentSearches] = useState(() => {
 		try {
@@ -8158,10 +8944,9 @@ export function useGlobalSearchViewModel() {
 		staleTime: 1000 * 30,
 	});
 
-	// Transform results to view model
+	// Transform results
 	const results = useMemo(() => {
 		if (!rawData) return [];
-		// Apply Transform Layer here
 		const processedItems = transformSearchResults(rawData);
 
 		return processedItems.map((result) => {
@@ -8180,11 +8965,9 @@ export function useGlobalSearchViewModel() {
 
 	const flattenedRawResults = useMemo(() => {
 		if (!rawData) return [];
-		const processedItems = transformSearchResults(rawData);
-		return processedItems; // These have { id, name, type, description }
+		return transformSearchResults(rawData);
 	}, [rawData]);
 
-	// Transform recent searches to view model
 	const recentSearchesViewModel = useMemo(() => {
 		return recentSearches.map((result) => {
 			const config = getEntityConfig(result.type);
@@ -8201,66 +8984,35 @@ export function useGlobalSearchViewModel() {
 	}, [recentSearches]);
 
 	const handleSelect = (result) => {
-		// Find the raw result from the flattened list
 		const rawResult = flattenedRawResults.find((r) => r.id === result.id);
 
 		if (rawResult) {
-			// Store minimal data: id, name, type, description
 			const toStore = {
 				id: rawResult.id,
 				name: rawResult.name,
 				type: rawResult.type,
 				description: rawResult.description || '',
 			};
-
 			const updated = [toStore, ...recentSearches.filter((r) => r.id !== toStore.id)].slice(0, 5);
 			setRecentSearches(updated);
-
 			try {
 				localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-			} catch {
-				// Ignore storage errors
-			}
+			} catch {}
 		}
 
-		// Navigate
 		navigate(`/wiki/${result.type}/${result.id}`);
 
-		// Reset state
-		setIsOpen(false);
-		setQuery('');
+		// Use Context Close
+		closeSearch();
 		setSelectedIndex(0);
 	};
 
-	// Clear recent searches
 	const clearRecent = () => {
 		setRecentSearches([]);
 		try {
 			localStorage.removeItem(STORAGE_KEY);
-		} catch {
-			// Ignore
-		}
+		} catch {}
 	};
-
-	// Keyboard shortcuts
-	useEffect(() => {
-		const handleKeyDown = (e) => {
-			// ⌘K / Ctrl+K to open
-			if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-				e.preventDefault();
-				setIsOpen(true);
-			}
-
-			// ESC to close
-			if (e.key === 'Escape' && isOpen) {
-				setIsOpen(false);
-				setQuery('');
-			}
-		};
-
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [isOpen]);
 
 	// Arrow key navigation
 	useEffect(() => {
@@ -8285,7 +9037,8 @@ export function useGlobalSearchViewModel() {
 
 	return {
 		isOpen,
-		setIsOpen,
+		setIsOpen, // Keeps API compatible with old components if they passed bool
+		closeSearch, // New explicit close
 		query,
 		setQuery,
 		results,
@@ -8326,29 +9079,30 @@ export const SearchFooter = () => {
 --- END OF features\global-search\components\SearchFooter.jsx ---
 
 --- FILE: features\global-search\components\SearchModal.jsx ---
-import { createPortal } from 'react-dom'; // 1. Import createPortal
-import { Search, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Search, X, Loader2 } from 'lucide-react';
 import { SearchResults } from './SearchResults';
 import { SearchFooter } from './SearchFooter';
 
 export const SearchModal = ({ vm, inputRef }) => {
-	// 2. Wrap the entire modal in createPortal, targeting document.body
 	return createPortal(
-		<div className='fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4'>
+		// Fixed inset-0 for full screen coverage on mobile
+		<div className='fixed inset-0 z-[100] flex flex-col lg:items-center lg:pt-[15vh] px-0 lg:px-4'>
 			{/* Backdrop */}
 			<div
-				className='absolute inset-0 bg-black/60 backdrop-blur-sm'
-				onClick={() => {
-					vm.setIsOpen(false);
-					vm.setQuery('');
-				}}
+				className='absolute inset-0 bg-background/95 lg:bg-black/60 lg:backdrop-blur-sm transition-all'
+				onClick={vm.closeSearch}
 			/>
 
 			{/* Search Panel */}
-			<div className='relative w-full max-w-2xl bg-background rounded-xl shadow-2xl border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-200'>
-				{/* Search Input */}
-				<div className='flex items-center gap-3 p-4 border-b border-border'>
-					<Search size={18} className='text-gray-400 shrink-0' />
+			<div className='relative w-full lg:max-w-2xl bg-background lg:rounded-xl shadow-2xl border-b lg:border border-border overflow-hidden flex flex-col h-full lg:h-auto lg:max-h-[70vh] animate-in fade-in slide-in-from-bottom-2 lg:slide-in-from-top-4 duration-200'>
+				{/* Search Input Area */}
+				<div className='flex items-center gap-3 p-4 border-b border-border bg-background shrink-0'>
+					<button onClick={vm.closeSearch} className='lg:hidden p-1 -ml-1 text-muted-foreground'>
+						<X size={20} />
+					</button>
+					<Search size={18} className='text-gray-400 shrink-0 hidden lg:block' />
+
 					<input
 						ref={inputRef}
 						type='text'
@@ -8357,10 +9111,13 @@ export const SearchModal = ({ vm, inputRef }) => {
 							vm.setQuery(e.target.value);
 							vm.setSelectedIndex(0);
 						}}
-						placeholder='Search sessions, characters, locations, and more...'
-						className='flex-1 bg-transparent text-sm text-foreground placeholder:text-gray-400 outline-none'
+						placeholder='Search sessions, entities, lore...'
+						className='flex-1 bg-transparent text-base lg:text-sm text-foreground placeholder:text-gray-400 outline-none h-10 lg:h-auto'
 					/>
-					{vm.query && (
+
+					{vm.isLoading && <Loader2 size={16} className='animate-spin text-amber-600' />}
+
+					{vm.query && !vm.isLoading && (
 						<button
 							onClick={() => {
 								vm.setQuery('');
@@ -8370,19 +9127,23 @@ export const SearchModal = ({ vm, inputRef }) => {
 							<X size={16} />
 						</button>
 					)}
-					<kbd className='hidden sm:inline-block px-2 py-1 text-[10px] font-semibold text-gray-400 bg-muted border border-border rounded'>
+					<kbd className='hidden lg:inline-block px-2 py-1 text-[10px] font-semibold text-gray-400 bg-muted border border-border rounded'>
 						ESC
 					</kbd>
 				</div>
 
-				{/* Results Area */}
-				<SearchResults vm={vm} />
+				{/* Results Area - Flex 1 for mobile scrolling */}
+				<div className='flex-1 overflow-y-auto bg-muted/10 custom-scrollbar'>
+					<SearchResults vm={vm} />
+				</div>
 
-				{/* Footer with keyboard shortcuts */}
-				<SearchFooter />
+				{/* Footer (Desktop Only) */}
+				<div className='hidden lg:block'>
+					<SearchFooter />
+				</div>
 			</div>
 		</div>,
-		document.body // The target container
+		document.body
 	);
 };
 
@@ -8430,15 +9191,33 @@ export const SearchResultItem = ({ item, isSelected, onSelect, onHover }) => {
 --- END OF features\global-search\components\SearchResultItem.jsx ---
 
 --- FILE: features\global-search\components\SearchResults.jsx ---
-import { Search, Clock } from 'lucide-react';
+import { Search, Clock, Calendar, Database } from 'lucide-react';
 import { clsx } from 'clsx';
 import { SearchResultItem } from './SearchResultItem';
+
+const GroupHeader = ({ label, icon: Icon }) => (
+	<div className='px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 bg-muted/50 border-y border-border/50 sticky top-0 z-10 backdrop-blur-sm'>
+		<Icon size={12} />
+		{label}
+	</div>
+);
 
 export const SearchResults = ({ vm }) => {
 	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent } = vm;
 
+	// GROUPING LOGIC
+	const groupedResults = results.reduce(
+		(acc, item) => {
+			const group = item.type === 'session' ? 'sessions' : 'entities';
+			if (!acc[group]) acc[group] = [];
+			acc[group].push(item);
+			return acc;
+		},
+		{ sessions: [], entities: [] }
+	);
+
 	return (
-		<div className='max-h-[60vh] overflow-y-auto'>
+		<div className='pb-4'>
 			{query.trim() === '' ? (
 				// Recent Searches / Empty State
 				<div className='p-4'>
@@ -8456,67 +9235,69 @@ export const SearchResults = ({ vm }) => {
 										key={item.id}
 										onClick={() => handleSelect(item)}
 										className='w-full flex items-start gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left group'>
-										<div
-											className={clsx(
-												'shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center',
-												item.theme.bg,
-												item.theme.border,
-												item.theme.text
-											)}>
-											<item.icon size={14} />
-										</div>
-										<div className='flex-1 min-w-0'>
-											<div className='flex items-center gap-2 mb-0.5'>
-												<span className='text-sm font-semibold text-foreground truncate'>{item.name}</span>
-												<span className='shrink-0 text-[10px] uppercase font-bold tracking-wider text-gray-400'>
-													{item.type}
-												</span>
-											</div>
-											<p className='text-xs text-gray-500 line-clamp-1'>{item.description}</p>
-										</div>
-										<Clock
-											size={14}
-											className='shrink-0 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity'
-										/>
+										<Clock size={14} className='mt-1 text-gray-300 group-hover:text-amber-600 transition-colors' />
+										<span className='text-sm text-gray-600 group-hover:text-foreground transition-colors'>
+											{item.name}
+										</span>
 									</button>
 								))}
 							</div>
 						</>
 					) : (
-						<div className='text-center py-12'>
+						<div className='text-center py-12 opacity-60'>
 							<Search size={40} className='mx-auto text-gray-300 mb-3' />
-							<p className='text-sm font-medium text-foreground mb-1'>Start typing to search</p>
-							<p className='text-xs text-gray-500'>
-								Search across sessions, characters, locations, quests, NPCs, and more
-							</p>
+							<p className='text-sm font-medium text-foreground mb-1'>Global Search</p>
+							<p className='text-xs text-gray-500'>Find anything in your campaign</p>
 						</div>
 					)}
 				</div>
-			) : isLoading ? (
-				<div className='text-center py-12'>
-					<div className='inline-block w-8 h-8 border-2 border-gray-200 border-t-amber-600 rounded-full animate-spin' />
-					<p className='text-sm text-gray-500 mt-3'>Searching...</p>
-				</div>
 			) : results.length > 0 ? (
-				// Search Results
-				<div className='py-2'>
-					{results.map((item, idx) => (
-						<SearchResultItem
-							key={item.id}
-							item={item}
-							isSelected={idx === selectedIndex}
-							onSelect={() => handleSelect(item)}
-							onHover={() => setSelectedIndex(idx)}
-						/>
-					))}
+				// Grouped Search Results
+				<div>
+					{groupedResults.sessions.length > 0 && (
+						<div className='mb-2'>
+							<GroupHeader label='Sessions' icon={Calendar} />
+							{groupedResults.sessions.map((item) => {
+								const idx = results.indexOf(item);
+								return (
+									<SearchResultItem
+										key={item.id}
+										item={item}
+										isSelected={idx === selectedIndex}
+										onSelect={() => handleSelect(item)}
+										onHover={() => setSelectedIndex(idx)}
+									/>
+								);
+							})}
+						</div>
+					)}
+
+					{groupedResults.entities.length > 0 && (
+						<div>
+							<GroupHeader label='Entities' icon={Database} />
+							{groupedResults.entities.map((item) => {
+								const idx = results.indexOf(item);
+								return (
+									<SearchResultItem
+										key={item.id}
+										item={item}
+										isSelected={idx === selectedIndex}
+										onSelect={() => handleSelect(item)}
+										onHover={() => setSelectedIndex(idx)}
+									/>
+								);
+							})}
+						</div>
+					)}
 				</div>
 			) : (
 				// No Results
-				<div className='text-center py-12 px-4'>
-					<Search size={40} className='mx-auto text-gray-300 mb-3' />
-					<p className='text-sm font-medium text-foreground mb-1'>No results found for "{query}"</p>
-					<p className='text-xs text-gray-500'>Try different keywords or check your spelling</p>
-				</div>
+				!isLoading && (
+					<div className='text-center py-12 px-4'>
+						<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
+						<p className='text-xs text-gray-500'>Try checking your spelling</p>
+					</div>
+				)
 			)}
 		</div>
 	);
@@ -8526,14 +9307,17 @@ export const SearchResults = ({ vm }) => {
 
 --- FILE: features\global-search\components\SearchTrigger.jsx ---
 import { Search } from 'lucide-react';
+import { useSearch } from '../SearchContext'; // Import Context
 
-export const SearchTrigger = ({ onClick }) => {
+export const SearchTrigger = ({ className }) => {
+	const { openSearch } = useSearch();
+
 	return (
 		<button
-			onClick={onClick}
-			className='w-full flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-md text-sm text-gray-500 hover:text-foreground hover:border-amber-500/50 transition-all group'>
+			onClick={openSearch}
+			className={`w-full flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-md text-sm text-gray-500 hover:text-foreground hover:border-amber-500/50 transition-all group ${className}`}>
 			<Search size={14} className='text-gray-400 group-hover:text-amber-600' />
-			<span className='flex-1 text-left text-xs'>Search everything...</span>
+			<span className='flex-1 text-left text-xs'>Search...</span>
 			<kbd className='hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-muted border border-border rounded'>
 				⌘K
 			</kbd>
@@ -8583,6 +9367,110 @@ export const transformSearchResults = (rawResults) => {
 
 --- END OF features\global-search\transforms\searchTransform.js ---
 
+--- FILE: features\hooks\useBreadcrumbs.js ---
+import { useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useEntityIndex } from '../smart-text/useEntityIndex';
+import { getEntityConfig } from '../../config/entity';
+import { capitalize } from '../../utils/text/textProcessing';
+
+const ROUTE_LABELS = {
+	dm: 'DM Console',
+	manage: 'Manage',
+	atlas: 'Atlas',
+	timeline: 'Timeline',
+	relationships: 'Graph',
+	wiki: 'Wiki',
+};
+
+export function useBreadcrumbs() {
+	const location = useLocation();
+	const { map: entityMap } = useEntityIndex(); // DESTRUCTURED: Use Map
+
+	const breadcrumbs = useMemo(() => {
+		const pathnames = location.pathname.split('/').filter((x) => x);
+		const crumbs = [];
+
+		crumbs.push({
+			label: 'Home',
+			path: '/',
+			isCurrent: pathnames.length === 0,
+		});
+
+		const isWiki = pathnames[0] === 'wiki';
+		const SKIP_SEGMENTS = ['manage', 'wiki'];
+
+		let currentPath = '';
+
+		for (let i = 0; i < pathnames.length; i++) {
+			const segment = pathnames[i];
+			currentPath += `/${segment}`;
+
+			if (SKIP_SEGMENTS.includes(segment)) continue;
+
+			const isLast = i === pathnames.length - 1;
+			const isUUID = /^[0-9a-fA-F-]{36}$/.test(segment);
+
+			if (isWiki && isUUID) {
+				// OPTIMIZATION: O(1) Lookup
+				const targetEntity = entityMap.get(segment);
+
+				if (targetEntity) {
+					const hierarchyStack = [];
+					let current = targetEntity;
+					const visited = new Set([current.id]);
+
+					// Fast recursive climb using Map
+					while (current.parentId) {
+						const parent = entityMap.get(current.parentId);
+						if (!parent || visited.has(parent.id)) break;
+
+						visited.add(parent.id);
+						hierarchyStack.unshift(parent);
+						current = parent;
+					}
+
+					hierarchyStack.forEach((ancestor) => {
+						crumbs.push({
+							label: ancestor.name,
+							path: `/wiki/${ancestor.type}/${ancestor.id}`,
+							isCurrent: false,
+							icon: null,
+						});
+					});
+
+					crumbs.push({
+						label: targetEntity.name,
+						path: currentPath,
+						isCurrent: isLast,
+					});
+				} else {
+					crumbs.push({ label: 'Unknown Entity', path: currentPath, isCurrent: isLast });
+				}
+			} else if (segment === 'new') {
+				crumbs.push({ label: 'Create New', path: currentPath, isCurrent: isLast });
+			} else if (getEntityConfig(segment).type !== 'default') {
+				const config = getEntityConfig(segment);
+				crumbs.push({
+					label: config.labelPlural,
+					path: currentPath,
+					isCurrent: isLast,
+					icon: config.icon,
+				});
+			} else {
+				const label = ROUTE_LABELS[segment] || capitalize(segment.replace(/_/g, ' '));
+				crumbs.push({ label, path: currentPath, isCurrent: isLast });
+			}
+		}
+
+		return crumbs;
+	}, [location.pathname, entityMap]);
+
+	return breadcrumbs;
+}
+
+--- END OF features\hooks\useBreadcrumbs.js ---
+
 --- FILE: features\hooks\useTheme.js ---
 import { useState, useEffect } from 'react';
 
@@ -8625,61 +9513,84 @@ export function useTheme() {
 
 --- FILE: features\layout-main\MainLayout.jsx ---
 import { Outlet } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Search } from 'lucide-react'; // Added Search Icon
 import { useMainLayout } from './useMainLayout';
 import { Sidebar } from './components/Sidebar';
 import DevAdminButton from '../../components/ui/DevAdminButton';
+import Breadcrumbs from '../../components/ui/Breadcrumbs';
+import GlobalSearch from '../global-search/GlobalSearch';
+import { SearchProvider, useSearch } from '../global-search/SearchContext'; // Import Provider
+
+// Separate component to access Context inside Provider
+const MobileHeaderActions = ({ vm }) => {
+	const { openSearch } = useSearch();
+
+	return (
+		<div className='lg:hidden flex items-center justify-between p-4 border-b border-border bg-background shrink-0'>
+			<button onClick={() => vm.setSidebarOpen(true)} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
+				<Menu size={20} />
+			</button>
+			<h1 className='text-sm font-serif font-bold'>{vm.campaign?.name || 'Campaign'}</h1>
+
+			{/* NEW: Mobile Search Trigger */}
+			<button onClick={openSearch} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
+				<Search size={20} />
+			</button>
+		</div>
+	);
+};
 
 export default function MainLayout() {
 	const vm = useMainLayout();
 
 	return (
-		<div className='flex h-screen bg-background text-foreground overflow-hidden'>
-			{' '}
-			{/* UPDATED */}
-			<Sidebar vm={vm} />
-			<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col'>
-				{' '}
-				{/* UPDATED */}
-				{/* Mobile Header */}
-				<div className='lg:hidden flex items-center justify-between p-4 border-b border-border bg-background shrink-0'>
-					{' '}
-					{/* UPDATED */}
-					<button
-						onClick={() => vm.setSidebarOpen(true)}
-						className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
-						<Menu size={20} />
-					</button>
-					<h1 className='text-sm font-serif font-bold'>{vm.campaign?.name || 'Campaign'}</h1>
-					<div className='w-9' />
-				</div>
-				<div className='flex-1 overflow-hidden relative'>
-					<Outlet />
-				</div>
-				<DevAdminButton />
-			</main>
-		</div>
+		<SearchProvider>
+			<div className='flex h-screen bg-background text-foreground overflow-hidden'>
+				<Sidebar vm={vm} />
+				<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col'>
+					{/* Updated Mobile Header */}
+					<MobileHeaderActions vm={vm} />
+
+					<div className='absolute top-4 left-6 z-40 hidden lg:block pointer-events-none'>
+						<div className='pointer-events-auto'>
+							<Breadcrumbs />
+						</div>
+					</div>
+
+					<div className='flex-1 overflow-hidden relative'>
+						<Outlet />
+					</div>
+					<DevAdminButton />
+				</main>
+
+				{/* Search Modal lives here now */}
+				<GlobalSearch />
+			</div>
+		</SearchProvider>
 	);
 }
 
 --- END OF features\layout-main\MainLayout.jsx ---
 
 --- FILE: features\layout-main\navConfig.js ---
-import { Map, History, Network, BookOpen, Users, Scroll, Sword, Shield, Home } from 'lucide-react';
+import { Map, History, Network, BookOpen, Users, Scroll, Sword, Shield, Home, Calendar } from 'lucide-react';
 
 export const NAV_STRUCTURE = [
 	{
 		title: 'Overview',
-		items: [{ label: 'Dashboard', Icon: Home, path: '/', key: 'dashboard' }], // NEW
+		items: [{ label: 'Dashboard', Icon: Home, path: '/', key: 'dashboard' }],
 	},
 	{
 		title: 'World',
 		items: [
 			{ label: 'Atlas', Icon: Map, path: '/atlas', key: 'atlas' },
 			{ label: 'Timeline', Icon: History, path: '/timeline', key: 'timeline' },
+			// NEW: Calendar View
+			{ label: 'Calendar', Icon: Calendar, path: '/calendar', key: 'calendar' },
 			{ label: 'Graph', Icon: Network, path: '/relationships', key: 'graph' },
 		],
 	},
+	// ... rest of file (Wiki section)
 	{
 		title: 'Wiki',
 		items: [
@@ -8899,7 +9810,7 @@ export const SidebarFooter = ({ onSwitch }) => {
 --- END OF features\layout-main\components\SidebarFooter.jsx ---
 
 --- FILE: features\layout-main\components\SidebarHeader.jsx ---
-import GlobalSearch from '../../global-search/GlobalSearch';
+import { SearchTrigger } from '../../global-search/components/SearchTrigger';
 
 export const SidebarHeader = ({ campaign }) => {
 	return (
@@ -8914,9 +9825,9 @@ export const SidebarHeader = ({ campaign }) => {
 				</div>
 			</div>
 
-			{/* Global Search */}
+			{/* Global Search Trigger - Desktop */}
 			<div className='lg:mb-6'>
-				<GlobalSearch />
+				<SearchTrigger />
 			</div>
 		</div>
 	);
@@ -9032,7 +9943,7 @@ export {};
 --- FILE: features\relationship-graph\useGraphViewModel.js ---
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { getGraphData } from '../../services/entities';
+import { getGraphData } from '../../services/graph';
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
 import { transformGraphData } from './transforms/graphTransform'; // Import transform
 import './types';
@@ -9512,8 +10423,8 @@ export {};
 import { useQuery } from '@tanstack/react-query';
 import { getEntityIndex } from '../../services/entities';
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
-import { resolveImageUrl, parseAttributes } from '../../utils/image/imageResolver'; // Use util
-import './types';
+import { resolveImageUrl, parseAttributes } from '../../utils/image/imageResolver';
+import { getParentId } from '../../utils/entity/entityHelpers'; // You added this util previously
 
 export function useEntityIndex() {
 	const { campaignId } = useCampaign();
@@ -9522,20 +10433,39 @@ export function useEntityIndex() {
 		queryKey: ['entityIndex', campaignId],
 		queryFn: async () => {
 			const rawData = await getEntityIndex(campaignId);
-			return rawData.map((entity) => {
+
+			const list = [];
+			const map = new Map();
+
+			rawData.forEach((entity) => {
 				const attrs = parseAttributes(entity.attributes);
-				return {
+				const lightEntity = {
 					...entity,
-					// Use standard resolver
+					// Pre-calculate hierarchy once
+					parentId: getParentId(entity),
+					// Resolve Icon once
 					iconUrl: resolveImageUrl(attrs, 'icon'),
 				};
+
+				// Remove heavy relationships array to save memory
+				delete lightEntity.relationships;
+
+				list.push(lightEntity);
+				map.set(entity.id, lightEntity);
 			});
+
+			// Return optimized structures
+			return {
+				list: list.sort((a, b) => b.name.length - a.name.length),
+				map,
+			};
 		},
-		staleTime: 1000 * 60 * 30,
+		staleTime: 1000 * 60 * 30, // 30 mins
 		enabled: !!campaignId,
 	});
 
-	return data || [];
+	// Default return shape
+	return data || { list: [], map: new Map() };
 }
 
 --- END OF features\smart-text\useEntityIndex.js ---
@@ -9598,13 +10528,13 @@ const replaceMatches = (text, matches) => {
 };
 
 export function useSmartText(text) {
-	const entityIndex = useEntityIndex();
+	const { list: entityIndex } = useEntityIndex();
 
 	const shouldProcess = useMemo(() => {
 		if (!text || typeof text !== 'string' || text.length < 3) return false;
 		if (!entityIndex || entityIndex.length === 0) return false;
 		return true;
-	}, [text, entityIndex.length]);
+	}, [text, entityIndex]);
 
 	return useMemo(() => {
 		if (!shouldProcess) return text || '';
@@ -9698,10 +10628,11 @@ const getImageBrightness = (imageUrl) => {
 
 export const EntityEmbed = ({ id, type, label }) => {
 	const navigate = useNavigate();
-	const entityIndex = useEntityIndex();
+	// FIX: Destructure the 'map' from the new hook signature
+	const { map: entityMap } = useEntityIndex();
 
-	// Resolve entity data
-	const entity = entityIndex.find((e) => e.id === id);
+	// FIX: Use .get() (O(1) speed) instead of .find()
+	const entity = entityMap.get(id);
 	const resolvedLabel = label || entity?.name || 'Unknown Entity';
 
 	// Resolve Images
@@ -9850,10 +10781,11 @@ import EntityLink from '../../../components/entity/EntityLink';
 import { useEntityIndex } from '../useEntityIndex';
 
 export const SmartEntityLink = ({ id, type, children }) => {
-	const entityIndex = useEntityIndex();
+	// FIX: Destructure the 'map' from the new hook signature
+	const { map: entityMap } = useEntityIndex();
 
-	// Look up custom icon from entity index
-	const entity = entityIndex.find((e) => e.id === id);
+	// FIX: Use .get() (O(1) speed) instead of .find()
+	const entity = entityMap.get(id);
 	const customIconUrl = entity?.iconUrl;
 
 	return (
@@ -11672,37 +12604,7 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 --- FILE: features\wiki-layout\transforms\entityTransforms.js ---
 import { getAttributeValue } from '../../../utils/entity/attributeParser';
 import { getAffinityRank } from '../../../utils/status/statusHelpers';
-
-// Helper to find parent relationship
-const getParentId = (entity) => {
-	const relationships = entity.relationships;
-	if (!relationships || !Array.isArray(relationships)) return null;
-
-	// 1. Check for explicit parent (Location hierarchy: Location -> Parent Location)
-	const parentRel = relationships.find(
-		(r) =>
-			(r.type === 'parent_location' || r.type === 'parent') && (r.direction === 'outgoing' || r.direction === undefined)
-	);
-	if (parentRel) return parentRel.entity_id;
-
-	// 2. Check for location link (NPC hierarchy: NPC -> Location)
-	if (entity.type === 'npc' || entity.type === 'encounter') {
-		// Get ALL relationships to locations
-		const locationRels = relationships.filter((r) => r.entity_type === 'location');
-
-		if (locationRels.length > 0) {
-			// Priority 1: Look for specific semantic types
-			const primary = locationRels.find((r) =>
-				['location', 'located_in', 'base', 'home', 'residence', 'origin', 'occurred_at'].includes(r.type?.toLowerCase())
-			);
-
-			// Priority 2: Fallback to the first location found (e.g. generic 'related')
-			return primary ? primary.entity_id : locationRels[0].entity_id;
-		}
-	}
-
-	return null;
-};
+import { getParentId } from '../../../utils/entity/entityHelpers';
 
 // ... (Rest of file remains unchanged) ...
 export function transformEntityToViewModel(entity, type) {
@@ -12979,6 +13881,38 @@ export const upsertEncounterAction = async (actionData) => {
 
 --- END OF services\admin.js ---
 
+--- FILE: services\calendar.js ---
+import { supabase } from '../lib/supabase';
+
+export const getCalendarEvents = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('session_events')
+		.select(
+			`
+            id,
+            title,
+            description,
+            event_type,
+            event_day,
+            event_hour,
+            event_duration,
+            session:sessions!inner(campaign_id, title)
+        `
+		)
+		.eq('session.campaign_id', campaignId)
+		.neq('event_day', null)
+		.neq('event_day', '');
+
+	if (error) {
+		console.error('Calendar Fetch Error:', error);
+		throw error;
+	}
+
+	return data;
+};
+
+--- END OF services\calendar.js ---
+
 --- FILE: services\campaigns.js ---
 import { supabase } from '../lib/supabase';
 
@@ -13500,7 +14434,7 @@ export const getGraphData = async (campaignId) => {
 export const getEntityIndex = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
-		.select('id, name, type, attributes')
+		.select('id, name, type, attributes, relationships')
 		.eq('campaign_id', campaignId);
 
 	if (error) return [];
@@ -13698,7 +14632,35 @@ export const getTooltipData = async (id, type) => {
 			attributes,
 		};
 	}
+	// NEW: Handle Session Event Tooltips
+	if (type === 'session_event') {
+		const { data } = await supabase
+			.from('session_events')
+			.select(
+				`
+                title, 
+                description, 
+                event_type,
+                event_hour,
+                event_duration,
+                session:sessions(title)
+            `
+			)
+			.eq('id', id)
+			.single();
 
+		return {
+			name: data.title,
+			type: 'event',
+			description: data.description,
+			attributes: {
+				Type: data.event_type,
+				Time: data.event_hour || 'N/A',
+				Duration: data.event_duration ? `${data.event_duration}m` : '-',
+				Session: data.session?.title, // Used Title instead of Number
+			},
+		};
+	}
 	const { data, error } = await supabase
 		.from('entity_complete_view')
 		.select('name, type, description, attributes')
@@ -13709,6 +14671,24 @@ export const getTooltipData = async (id, type) => {
 };
 
 --- END OF services\entities.js ---
+
+--- FILE: services\graph.js ---
+import { supabase } from '../lib/supabase';
+
+export const getGraphData = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, relationships, attributes')
+		.eq('campaign_id', campaignId);
+
+	if (error) {
+		console.error('Graph Fetch Error:', error);
+		return [];
+	}
+	return data || [];
+};
+
+--- END OF services\graph.js ---
 
 --- FILE: services\search.js ---
 import { supabase } from '../lib/supabase';
@@ -13850,6 +14830,163 @@ export const getTimeline = async (campaignId) => {
 };
 
 --- END OF services\timeline.js ---
+
+--- FILE: services\wiki.js ---
+import { supabase } from '../lib/supabase';
+
+// Moved getWikiEntry here to reduce bloat in entities.js
+export const getWikiEntry = async (id, type) => {
+	if (type === 'session') {
+		const { data, error } = await supabase
+			.from('sessions')
+			.select(`*, events:session_events (*)`)
+			.eq('id', id)
+			.single();
+		if (error) throw error;
+
+		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
+
+		const eventIds = (data.events || []).map((e) => e.id);
+		let eventRelMap = new Map();
+
+		if (eventIds.length > 0) {
+			const { data: rels } = await supabase
+				.from('entity_relationships')
+				.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
+				.in('from_entity_id', eventIds);
+
+			(rels || []).forEach((rel) => {
+				if (!eventRelMap.has(rel.from_entity_id)) eventRelMap.set(rel.from_entity_id, []);
+				eventRelMap.get(rel.from_entity_id).push({
+					entity_id: rel.target.id,
+					entity_name: rel.target.name,
+					entity_type: rel.target.type,
+					type: 'mention',
+				});
+			});
+		}
+
+		const { data: directRels } = await supabase
+			.from('entity_relationships')
+			.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
+			.eq('from_entity_id', id);
+
+		const sessionRelationships = (directRels || []).map((rel) => ({
+			entity_id: rel.target.id,
+			entity_name: rel.target.name,
+			entity_type: rel.target.type,
+			type: rel.relationship_type,
+		}));
+
+		return {
+			data,
+			type: 'session',
+			additional: { attributes, eventRelMap, sessionRelationships },
+		};
+	}
+
+	// --- STANDARD ENTITY FETCH ---
+	const { data, error: entityError } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
+	if (entityError) throw entityError;
+
+	const additional = {};
+
+	// FETCH QUEST OBJECTIVES
+	if (type === 'quest') {
+		const { data: objectives } = await supabase
+			.from('quest_objectives')
+			.select('*, session:sessions(id, title)')
+			.eq('quest_id', id)
+			.order('order_index', { ascending: true });
+
+		if (objectives && objectives.length > 0) {
+			const sessionIds = objectives.map((o) => o.completed_session_id).filter(Boolean);
+			if (sessionIds.length > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, value')
+					.in('entity_id', sessionIds)
+					.or('name.eq.session_number,name.eq.Session');
+
+				const sessionNumMap = new Map();
+				(attrs || []).forEach((a) => sessionNumMap.set(a.entity_id, a.value));
+
+				objectives.forEach((obj) => {
+					if (obj.session) {
+						obj.session.session_number = sessionNumMap.get(obj.session.id);
+					}
+				});
+			}
+		}
+		additional.objectives = objectives || [];
+	}
+
+	// FETCH ENCOUNTER ACTIONS
+	if (type === 'encounter') {
+		const { data: actions } = await supabase
+			.from('encounter_actions')
+			.select(`*, actor:entities!actor_entity_id (id, name, type), target:entities!target_entity_id (id, name, type)`)
+			.eq('encounter_id', id)
+			.order('round_number', { ascending: true })
+			.order('action_order', { ascending: true });
+
+		if (actions && actions.length > 0) {
+			const entityIds = new Set();
+			actions.forEach((a) => {
+				if (a.actor?.id) entityIds.add(a.actor.id);
+				if (a.target?.id) entityIds.add(a.target.id);
+			});
+
+			if (entityIds.size > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, name, value')
+					.in('entity_id', Array.from(entityIds));
+
+				const attrMap = new Map();
+				(attrs || []).forEach((attr) => {
+					if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
+					attrMap.get(attr.entity_id).push(attr);
+				});
+
+				actions.forEach((action) => {
+					if (action.actor?.id) action.actor.attributes = attrMap.get(action.actor.id) || [];
+					if (action.target?.id) action.target.attributes = attrMap.get(action.target.id) || [];
+				});
+			}
+		}
+		additional.encounterActions = actions || [];
+	}
+
+	// RESOLVE SESSION NUMBERS FOR EVENTS
+	let events = data.events;
+	// Flatten logic
+	if (events && typeof events === 'object' && !Array.isArray(events)) events = Object.values(events).flat();
+
+	if (events && Array.isArray(events) && events.length > 0) {
+		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
+		if (sessionIds.length > 0) {
+			const { data: sessions } = await supabase.from('sessions').select('id').in('id', sessionIds);
+			const { data: attrs } = await supabase
+				.from('attributes')
+				.select('entity_id, name, value')
+				.in('entity_id', sessionIds)
+				.or('name.eq.session_number,name.eq.Session');
+
+			const sessionMap = new Map();
+			(sessions || []).forEach((s) => {
+				const sAttr = (attrs || []).find((a) => a.entity_id === s.id);
+				const num = sAttr ? parseInt(sAttr.value) : null;
+				sessionMap.set(s.id, num);
+			});
+			additional.sessionMap = sessionMap;
+		}
+	}
+
+	return { data, type, additional };
+};
+
+--- END OF services\wiki.js ---
 
 --- FILE: utils\index.js ---
 /**
@@ -14226,6 +15363,42 @@ export const isEntityCompleted = (entity) => {
 export const isEntityFailed = (entity) => {
 	const status = entity.status?.toLowerCase();
 	return ['failed', 'failure', 'abandoned'].some((k) => status?.includes(k));
+};
+
+/**
+ * Determine the parent ID of an entity based on its relationships.
+ * Prioritizes explicit parent relationships, then location containers.
+ * @param {Object} entity - Entity object with relationships array
+ * @returns {string|null} ID of the parent entity
+ */
+export const getParentId = (entity) => {
+	const relationships = entity.relationships;
+	if (!relationships || !Array.isArray(relationships)) return null;
+
+	// 1. Check for explicit parent (Location hierarchy: Location -> Parent Location)
+	const parentRel = relationships.find(
+		(r) =>
+			(r.type === 'parent_location' || r.type === 'parent') && (r.direction === 'outgoing' || r.direction === undefined)
+	);
+	if (parentRel) return parentRel.entity_id;
+
+	// 2. Check for location link (NPC hierarchy: NPC -> Location)
+	if (entity.type === 'npc' || entity.type === 'encounter') {
+		// Get ALL relationships to locations
+		const locationRels = relationships.filter((r) => r.entity_type === 'location');
+
+		if (locationRels.length > 0) {
+			// Priority 1: Look for specific semantic types
+			const primary = locationRels.find((r) =>
+				['location', 'located_in', 'base', 'home', 'residence', 'origin', 'occurred_at'].includes(r.type?.toLowerCase())
+			);
+
+			// Priority 2: Fallback to the first location found (e.g. generic 'related')
+			return primary ? primary.entity_id : locationRels[0].entity_id;
+		}
+	}
+
+	return null;
 };
 
 --- END OF utils\entity\entityHelpers.js ---

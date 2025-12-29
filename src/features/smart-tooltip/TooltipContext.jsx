@@ -19,8 +19,15 @@ export const TooltipProvider = ({ children }) => {
 
 export const useTooltip = () => {
 	const context = useContext(TooltipContext);
+
+	// CHANGED: Graceful degradation instead of hard crash
 	if (!context) {
-		throw new Error('useTooltip must be used within a TooltipProvider');
+		// Return dummy functions so components don't break
+		return {
+			openTooltip: () => {},
+			closeTooltip: () => {},
+			cancelClose: () => {},
+		};
 	}
 	return context;
 };
