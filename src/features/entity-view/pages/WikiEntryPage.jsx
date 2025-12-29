@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getWikiEntry } from '../../../services/entities';
+import { getWikiEntry } from '../../../services/wiki';
 import { transformWikiEntry } from '../transforms/wikiEntryTransform'; // Import transform
 import WikiEntityView from '../WikiEntityView';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';

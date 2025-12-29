@@ -142,3 +142,39 @@ export const isEntityFailed = (entity) => {
 	const status = entity.status?.toLowerCase();
 	return ['failed', 'failure', 'abandoned'].some((k) => status?.includes(k));
 };
+
+/**
+ * Determine the parent ID of an entity based on its relationships.
+ * Prioritizes explicit parent relationships, then location containers.
+ * @param {Object} entity - Entity object with relationships array
+ * @returns {string|null} ID of the parent entity
+ */
+export const getParentId = (entity) => {
+	const relationships = entity.relationships;
+	if (!relationships || !Array.isArray(relationships)) return null;
+
+	// 1. Check for explicit parent (Location hierarchy: Location -> Parent Location)
+	const parentRel = relationships.find(
+		(r) =>
+			(r.type === 'parent_location' || r.type === 'parent') && (r.direction === 'outgoing' || r.direction === undefined)
+	);
+	if (parentRel) return parentRel.entity_id;
+
+	// 2. Check for location link (NPC hierarchy: NPC -> Location)
+	if (entity.type === 'npc' || entity.type === 'encounter') {
+		// Get ALL relationships to locations
+		const locationRels = relationships.filter((r) => r.entity_type === 'location');
+
+		if (locationRels.length > 0) {
+			// Priority 1: Look for specific semantic types
+			const primary = locationRels.find((r) =>
+				['location', 'located_in', 'base', 'home', 'residence', 'origin', 'occurred_at'].includes(r.type?.toLowerCase())
+			);
+
+			// Priority 2: Fallback to the first location found (e.g. generic 'related')
+			return primary ? primary.entity_id : locationRels[0].entity_id;
+		}
+	}
+
+	return null;
+};

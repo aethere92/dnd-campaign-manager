@@ -55,13 +55,13 @@ const replaceMatches = (text, matches) => {
 };
 
 export function useSmartText(text) {
-	const entityIndex = useEntityIndex();
+	const { list: entityIndex } = useEntityIndex();
 
 	const shouldProcess = useMemo(() => {
 		if (!text || typeof text !== 'string' || text.length < 3) return false;
 		if (!entityIndex || entityIndex.length === 0) return false;
 		return true;
-	}, [text, entityIndex.length]);
+	}, [text, entityIndex]);
 
 	return useMemo(() => {
 		if (!shouldProcess) return text || '';

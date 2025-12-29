@@ -5,12 +5,13 @@ import { RouteLoading } from './components/RouteLoading';
 
 const CampaignSelect = lazy(() => import('../../features/campaign-session/components/CampaignSelect'));
 const MainLayout = lazy(() => import('../../features/layout-main/MainLayout'));
-const DashboardView = lazy(() => import('../../features/dashboard/DashboardView')); // NEW
+const DashboardView = lazy(() => import('../../features/dashboard/DashboardView'));
 const MapView = lazy(() => import('../../features/world-map/MapView'));
 const TimelineView = lazy(() => import('../../features/timeline/TimelineView'));
 const RelationshipGraph = lazy(() => import('../../features/relationship-graph/RelationshipGraph'));
 const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
 const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
+const WikiLandingPage = lazy(() => import('../../features/entity-view/pages/WikiLandingPage'));
 
 // Admin Features
 const AdminLayout = lazy(() => import('../../features/admin-console/layouts/AdminLayout'));
@@ -18,14 +19,12 @@ const SplitPaneManager = lazy(() => import('../../features/admin-console/pages/S
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
-
-	// SECURITY CHECK: Only true during 'npm run dev'
 	const isDev = import.meta.env.DEV;
 
 	return (
 		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
 			<Routes>
-				{/* --- 1. ADMIN CONSOLE (Strictly Dev Only) --- */}
+				{/* Admin Console */}
 				{isDev && (
 					<Route path='/dm' element={<AdminLayout />}>
 						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
@@ -33,13 +32,12 @@ export const AppRoutes = () => {
 					</Route>
 				)}
 
-				{/* --- 2. CAMPAIGN SELECTION --- */}
+				{/* Campaign Selection */}
 				<Route path='/select-campaign' element={<CampaignSelect />} />
 
-				{/* --- 3. MAIN APP --- */}
+				{/* Main App */}
 				{campaignId ? (
 					<Route path='/' element={<MainLayout />}>
-						{/* CHANGED: Dashboard is now the home page */}
 						<Route index element={<DashboardView />} />
 
 						<Route path='atlas/:mapId' element={<MapView />} />
@@ -48,10 +46,8 @@ export const AppRoutes = () => {
 						<Route path='relationships' element={<RelationshipGraph />} />
 
 						<Route path='wiki/:type' element={<WikiLayout />}>
-							<Route
-								index
-								element={<div className='h-full flex items-center justify-center text-gray-400'>Select an entry</div>}
-							/>
+							{/* CHANGED: Replaced placeholder with Landing Page */}
+							<Route index element={<WikiLandingPage />} />
 							<Route path=':entityId' element={<WikiEntryPage />} />
 						</Route>
 

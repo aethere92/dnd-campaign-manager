@@ -1,12 +1,30 @@
-import { Search, Clock } from 'lucide-react';
+import { Search, Clock, Calendar, Database } from 'lucide-react';
 import { clsx } from 'clsx';
 import { SearchResultItem } from './SearchResultItem';
+
+const GroupHeader = ({ label, icon: Icon }) => (
+	<div className='px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 bg-muted/50 border-y border-border/50 sticky top-0 z-10 backdrop-blur-sm'>
+		<Icon size={12} />
+		{label}
+	</div>
+);
 
 export const SearchResults = ({ vm }) => {
 	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent } = vm;
 
+	// GROUPING LOGIC
+	const groupedResults = results.reduce(
+		(acc, item) => {
+			const group = item.type === 'session' ? 'sessions' : 'entities';
+			if (!acc[group]) acc[group] = [];
+			acc[group].push(item);
+			return acc;
+		},
+		{ sessions: [], entities: [] }
+	);
+
 	return (
-		<div className='max-h-[60vh] overflow-y-auto'>
+		<div className='pb-4'>
 			{query.trim() === '' ? (
 				// Recent Searches / Empty State
 				<div className='p-4'>
@@ -24,67 +42,69 @@ export const SearchResults = ({ vm }) => {
 										key={item.id}
 										onClick={() => handleSelect(item)}
 										className='w-full flex items-start gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left group'>
-										<div
-											className={clsx(
-												'shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center',
-												item.theme.bg,
-												item.theme.border,
-												item.theme.text
-											)}>
-											<item.icon size={14} />
-										</div>
-										<div className='flex-1 min-w-0'>
-											<div className='flex items-center gap-2 mb-0.5'>
-												<span className='text-sm font-semibold text-foreground truncate'>{item.name}</span>
-												<span className='shrink-0 text-[10px] uppercase font-bold tracking-wider text-gray-400'>
-													{item.type}
-												</span>
-											</div>
-											<p className='text-xs text-gray-500 line-clamp-1'>{item.description}</p>
-										</div>
-										<Clock
-											size={14}
-											className='shrink-0 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity'
-										/>
+										<Clock size={14} className='mt-1 text-gray-300 group-hover:text-amber-600 transition-colors' />
+										<span className='text-sm text-gray-600 group-hover:text-foreground transition-colors'>
+											{item.name}
+										</span>
 									</button>
 								))}
 							</div>
 						</>
 					) : (
-						<div className='text-center py-12'>
+						<div className='text-center py-12 opacity-60'>
 							<Search size={40} className='mx-auto text-gray-300 mb-3' />
-							<p className='text-sm font-medium text-foreground mb-1'>Start typing to search</p>
-							<p className='text-xs text-gray-500'>
-								Search across sessions, characters, locations, quests, NPCs, and more
-							</p>
+							<p className='text-sm font-medium text-foreground mb-1'>Global Search</p>
+							<p className='text-xs text-gray-500'>Find anything in your campaign</p>
 						</div>
 					)}
 				</div>
-			) : isLoading ? (
-				<div className='text-center py-12'>
-					<div className='inline-block w-8 h-8 border-2 border-gray-200 border-t-amber-600 rounded-full animate-spin' />
-					<p className='text-sm text-gray-500 mt-3'>Searching...</p>
-				</div>
 			) : results.length > 0 ? (
-				// Search Results
-				<div className='py-2'>
-					{results.map((item, idx) => (
-						<SearchResultItem
-							key={item.id}
-							item={item}
-							isSelected={idx === selectedIndex}
-							onSelect={() => handleSelect(item)}
-							onHover={() => setSelectedIndex(idx)}
-						/>
-					))}
+				// Grouped Search Results
+				<div>
+					{groupedResults.sessions.length > 0 && (
+						<div className='mb-2'>
+							<GroupHeader label='Sessions' icon={Calendar} />
+							{groupedResults.sessions.map((item) => {
+								const idx = results.indexOf(item);
+								return (
+									<SearchResultItem
+										key={item.id}
+										item={item}
+										isSelected={idx === selectedIndex}
+										onSelect={() => handleSelect(item)}
+										onHover={() => setSelectedIndex(idx)}
+									/>
+								);
+							})}
+						</div>
+					)}
+
+					{groupedResults.entities.length > 0 && (
+						<div>
+							<GroupHeader label='Entities' icon={Database} />
+							{groupedResults.entities.map((item) => {
+								const idx = results.indexOf(item);
+								return (
+									<SearchResultItem
+										key={item.id}
+										item={item}
+										isSelected={idx === selectedIndex}
+										onSelect={() => handleSelect(item)}
+										onHover={() => setSelectedIndex(idx)}
+									/>
+								);
+							})}
+						</div>
+					)}
 				</div>
 			) : (
 				// No Results
-				<div className='text-center py-12 px-4'>
-					<Search size={40} className='mx-auto text-gray-300 mb-3' />
-					<p className='text-sm font-medium text-foreground mb-1'>No results found for "{query}"</p>
-					<p className='text-xs text-gray-500'>Try different keywords or check your spelling</p>
-				</div>
+				!isLoading && (
+					<div className='text-center py-12 px-4'>
+						<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
+						<p className='text-xs text-gray-500'>Try checking your spelling</p>
+					</div>
+				)
 			)}
 		</div>
 	);

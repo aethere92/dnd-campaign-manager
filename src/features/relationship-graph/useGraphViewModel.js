@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { getGraphData } from '../../services/entities';
+import { getGraphData } from '../../services/graph';
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
 import { transformGraphData } from './transforms/graphTransform'; // Import transform
 import './types';

@@ -2,9 +2,11 @@ import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
-import { useCampaign } from '../../campaign-session/CampaignContext'; // 1. Import Context
+import { useCampaign } from '../../campaign-session/CampaignContext';
+import Breadcrumbs from '../../../components/ui/Breadcrumbs'; // IMPORTED
 
 const NavItem = ({ to, icon: Icon, label }) => {
+	// ... (existing code) ...
 	const location = useLocation();
 	const isActive = location.pathname.includes(to);
 
@@ -24,13 +26,14 @@ const NavItem = ({ to, icon: Icon, label }) => {
 };
 
 export default function AdminLayout() {
-	const { campaignId, setCampaignId } = useCampaign(); // 2. Get Campaign State
+	const { campaignId, setCampaignId } = useCampaign();
 	const navigate = useNavigate();
 
+	// ... (existing handleSwitch logic) ...
 	const handleSwitch = () => {
 		if (confirm('Go to Campaign Selection screen?')) {
-			setCampaignId(null); // 3. Clear the ID
-			navigate('/select-campaign'); // 4. Navigate to root (which now renders CampaignSelect)
+			setCampaignId(null);
+			navigate('/select-campaign');
 		}
 	};
 
@@ -38,6 +41,7 @@ export default function AdminLayout() {
 		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans'>
 			{/* Sidebar */}
 			<aside className='w-56 bg-background border-r border-border flex flex-col shrink-0'>
+				{/* ... (existing sidebar content) ... */}
 				<div className='p-4 border-b border-border bg-muted/20'>
 					<div className='flex items-center gap-2 text-amber-700'>
 						<div className='p-1.5 bg-amber-100 rounded-md'>
@@ -48,6 +52,7 @@ export default function AdminLayout() {
 				</div>
 
 				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
+					{/* ... (existing nav items) ... */}
 					<div className='px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						System
 					</div>
@@ -71,7 +76,7 @@ export default function AdminLayout() {
 				</nav>
 
 				<div className='p-3 border-t border-border space-y-1'>
-					{/* OPTION A: Return to Active Campaign */}
+					{/* ... (existing footer buttons) ... */}
 					{campaignId && (
 						<Link
 							to='/'
@@ -81,7 +86,6 @@ export default function AdminLayout() {
 						</Link>
 					)}
 
-					{/* OPTION B: Switch / Log Out */}
 					<button
 						onClick={handleSwitch}
 						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors text-left'>
@@ -92,6 +96,10 @@ export default function AdminLayout() {
 
 			{/* Main Content */}
 			<main className='flex-1 h-full overflow-y-auto bg-muted/10 custom-scrollbar'>
+				{/* ADDED: Breadcrumbs with container */}
+				<div className='px-6 pt-4 max-w-7xl mx-auto'>
+					<Breadcrumbs />
+				</div>
 				<div className='mx-auto'>
 					<Outlet />
 				</div>

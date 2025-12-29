@@ -1,5 +1,4 @@
 import { useRef, useEffect } from 'react';
-import { SearchTrigger } from './components/SearchTrigger';
 import { SearchModal } from './components/SearchModal';
 import { useGlobalSearchViewModel } from './useGlobalSearchViewModel';
 
@@ -10,14 +9,13 @@ export default function GlobalSearch() {
 	// Focus input when opened
 	useEffect(() => {
 		if (vm.isOpen && inputRef.current) {
-			inputRef.current.focus();
+			// Small timeout to ensure DOM is ready on mobile transitions
+			setTimeout(() => inputRef.current?.focus(), 50);
 		}
 	}, [vm.isOpen]);
 
-	return (
-		<>
-			<SearchTrigger onClick={() => vm.setIsOpen(true)} />
-			{vm.isOpen && <SearchModal vm={vm} inputRef={inputRef} />}
-		</>
-	);
+	// If not open, don't render anything (Modal handles Portal)
+	if (!vm.isOpen) return null;
+
+	return <SearchModal vm={vm} inputRef={inputRef} />;
 }

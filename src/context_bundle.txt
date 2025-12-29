@@ -102,6 +102,11 @@ INSTRUCTIONS FOR AI:
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx
+        landing/
+          EntityGridCard.jsx
+          Swimlane.jsx
+      config/
+        viewStrategies.js
       hooks/
         useEntityContent.js
         useEntityHeader.js
@@ -112,6 +117,7 @@ INSTRUCTIONS FOR AI:
         StandardLayout.jsx
       pages/
         WikiEntryPage.jsx
+        WikiLandingPage.jsx
       transforms/
         attributeTransform.js
         eventTransform.js
@@ -4835,12 +4841,13 @@ import { RouteLoading } from './components/RouteLoading';
 
 const CampaignSelect = lazy(() => import('../../features/campaign-session/components/CampaignSelect'));
 const MainLayout = lazy(() => import('../../features/layout-main/MainLayout'));
-const DashboardView = lazy(() => import('../../features/dashboard/DashboardView')); // NEW
+const DashboardView = lazy(() => import('../../features/dashboard/DashboardView'));
 const MapView = lazy(() => import('../../features/world-map/MapView'));
 const TimelineView = lazy(() => import('../../features/timeline/TimelineView'));
 const RelationshipGraph = lazy(() => import('../../features/relationship-graph/RelationshipGraph'));
 const WikiLayout = lazy(() => import('../../features/wiki-layout/WikiLayout'));
 const WikiEntryPage = lazy(() => import('../../features/entity-view/pages/WikiEntryPage'));
+const WikiLandingPage = lazy(() => import('../../features/entity-view/pages/WikiLandingPage'));
 
 // Admin Features
 const AdminLayout = lazy(() => import('../../features/admin-console/layouts/AdminLayout'));
@@ -4848,14 +4855,12 @@ const SplitPaneManager = lazy(() => import('../../features/admin-console/pages/S
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
-
-	// SECURITY CHECK: Only true during 'npm run dev'
 	const isDev = import.meta.env.DEV;
 
 	return (
 		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
 			<Routes>
-				{/* --- 1. ADMIN CONSOLE (Strictly Dev Only) --- */}
+				{/* Admin Console */}
 				{isDev && (
 					<Route path='/dm' element={<AdminLayout />}>
 						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
@@ -4863,13 +4868,12 @@ export const AppRoutes = () => {
 					</Route>
 				)}
 
-				{/* --- 2. CAMPAIGN SELECTION --- */}
+				{/* Campaign Selection */}
 				<Route path='/select-campaign' element={<CampaignSelect />} />
 
-				{/* --- 3. MAIN APP --- */}
+				{/* Main App */}
 				{campaignId ? (
 					<Route path='/' element={<MainLayout />}>
-						{/* CHANGED: Dashboard is now the home page */}
 						<Route index element={<DashboardView />} />
 
 						<Route path='atlas/:mapId' element={<MapView />} />
@@ -4878,10 +4882,8 @@ export const AppRoutes = () => {
 						<Route path='relationships' element={<RelationshipGraph />} />
 
 						<Route path='wiki/:type' element={<WikiLayout />}>
-							<Route
-								index
-								element={<div className='h-full flex items-center justify-center text-gray-400'>Select an entry</div>}
-							/>
+							{/* CHANGED: Replaced placeholder with Landing Page */}
+							<Route index element={<WikiLandingPage />} />
 							<Route path=':entityId' element={<WikiEntryPage />} />
 						</Route>
 
@@ -6818,6 +6820,259 @@ export const SessionMentions = ({ mentions }) => {
 
 --- END OF features\entity-view\components\SessionMentions.jsx ---
 
+--- FILE: features\entity-view\components\landing\EntityGridCard.jsx ---
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { clsx } from 'clsx';
+import { resolveImageUrl, parseAttributes } from '../../../../utils/image/imageResolver';
+import { getStatusInfo } from '../../../../utils/status/statusHelpers';
+import { getEntityDescription } from '../../../../utils/entity/entityHelpers';
+import { getAttributeValue } from '../../../../utils/entity/attributeParser';
+import EntityIcon from '../../../../components/entity/EntityIcon';
+
+// Helper: Description Extraction
+const resolveDescription = (entity, attributes) => {
+	if (entity.description && entity.description.length > 0) return entity.description;
+	const text = getAttributeValue(attributes, [
+		'summary',
+		'narrative',
+		'background',
+		'description',
+		'short_description',
+		'appearance',
+		'history',
+		'role',
+	]);
+	return text || null;
+};
+
+export const EntityGridCard = ({ entity, config, context }) => {
+	const attributes = parseAttributes(entity.attributes);
+	const imageUrl = resolveImageUrl(attributes, 'background') || resolveImageUrl(attributes, 'icon');
+	const status = getStatusInfo(entity);
+	const description = resolveDescription(entity, attributes);
+
+	// Status Logic
+	const isActorOrQuest = ['npc', 'character', 'faction', 'quest'].includes(entity.type);
+	const hasMeaningfulStatus = status.isDead || status.isFailed || status.rank === 1 || status.rank === 3;
+	const showStatus = isActorOrQuest && hasMeaningfulStatus;
+
+	// Determine Status Color
+	let statusBorderClass = 'border-l-transparent';
+	if (showStatus) {
+		if (status.isDead || status.isFailed) statusBorderClass = 'border-l-red-500';
+		else if (status.rank === 3) statusBorderClass = 'border-l-red-600';
+		else if (status.rank === 1) statusBorderClass = 'border-l-emerald-500';
+	}
+
+	// Metadata Logic
+	let footerLabel = entity.type;
+	if (context === 'geo') {
+		const role = getAttributeValue(attributes, ['role', 'occupation', 'class', 'monster type']);
+		footerLabel = role || entity.type;
+	} else {
+		footerLabel = entity.meta?.region || entity.type;
+	}
+
+	return (
+		<Link
+			to={`/wiki/${entity.type}/${entity.id}`}
+			className={clsx(
+				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
+				'hover:border-accent/50 hover:shadow-sm hover:bg-muted/10',
+				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
+			)}>
+			{/* Left: Image/Icon Square */}
+			<div className='w-20 shrink-0 relative bg-muted/30 border-r border-border/50'>
+				{imageUrl ? (
+					<>
+						<img
+							src={imageUrl}
+							alt={entity.name}
+							className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-105'
+						/>
+						<div className='absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors' />
+					</>
+				) : (
+					<div className='w-full h-full flex items-center justify-center bg-stone-100'>
+						<config.icon size={28} className='text-stone-400/70 mix-blend-multiply' strokeWidth={1.5} />
+					</div>
+				)}
+			</div>
+
+			{/* Right: Content */}
+			<div className='flex-1 px-3 py-2 flex flex-col min-w-0 justify-center'>
+				<div className='flex items-center justify-between gap-2'>
+					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-accent transition-colors truncate'>
+						{entity.name}
+					</h3>
+				</div>
+
+				<div className='text-[11px] text-muted-foreground truncate opacity-80 mt-0.5'>
+					{description || <span className='opacity-50 italic'>{footerLabel}</span>}
+				</div>
+			</div>
+		</Link>
+	);
+};
+
+--- END OF features\entity-view\components\landing\EntityGridCard.jsx ---
+
+--- FILE: features\entity-view\components\landing\Swimlane.jsx ---
+import { Link } from 'react-router-dom';
+import { ArrowRight, CornerDownRight } from 'lucide-react';
+import { EntityGridCard } from './EntityGridCard';
+
+export const Swimlane = ({ title, parentTitle, link, items, config, context }) => {
+	if (!items || items.length === 0) return null;
+
+	return (
+		<div className='mb-8 last:mb-0 animate-in fade-in slide-in-from-bottom-3 duration-500'>
+			{/* Header: Compact Visual Hierarchy */}
+			<div className='flex items-center gap-2 border-b border-border/60 pb-1.5 mb-3 group/header'>
+				{parentTitle && (
+					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest'>
+						{parentTitle}
+						<CornerDownRight size={10} className='translate-y-px opacity-50' />
+					</div>
+				)}
+
+				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
+					{title}
+					{link && (
+						<Link
+							to={link}
+							className='text-muted-foreground/20 hover:text-accent transition-colors'
+							title={`View ${title}`}>
+							<ArrowRight size={12} />
+						</Link>
+					)}
+				</h2>
+
+				<span className='text-[9px] font-bold bg-muted px-1.5 py-px rounded text-muted-foreground/60 ml-auto'>
+					{items.length}
+				</span>
+			</div>
+
+			{/* Grid */}
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+				{items.map((entity) => (
+					<EntityGridCard key={entity.id} entity={entity} config={config} context={context} />
+				))}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\entity-view\components\landing\Swimlane.jsx ---
+
+--- FILE: features\entity-view\config\viewStrategies.js ---
+import { MapPin, Flag, Circle, Swords, Users, Archive, LayoutGrid, Folder } from 'lucide-react';
+
+export const VIEW_STRATEGIES = {
+	location: { mode: 'geo' },
+	encounter: { mode: 'geo' },
+	npc: { mode: 'geo' },
+	faction: { mode: 'category' },
+	quest: { mode: 'category' },
+	character: { mode: 'flat' },
+	item: { mode: 'flat' },
+	session: { mode: 'flat' },
+};
+
+// Recursive Flattening with Deduplication
+const flattenGeoTree = (nodes, targetType, parentName = 'Uncharted', visitedIds) => {
+	let lanes = [];
+	const directItems = [];
+
+	nodes.forEach((node) => {
+		// 1. Handle "Children" (Traverse deeper first)
+		if (node.children && node.children.length > 0) {
+			const childLanes = flattenGeoTree(node.children, targetType, node.name, visitedIds);
+
+			// Check for direct items inside this folder
+			const myContent = childLanes.find((l) => l.title === null);
+
+			if (myContent && myContent.items.length > 0) {
+				lanes.push({
+					id: node.id,
+					title: node.name,
+					parentTitle: parentName,
+					link: `/wiki/${node.type}/${node.id}`,
+					items: myContent.items,
+				});
+			}
+			lanes = [...lanes, ...childLanes.filter((l) => l.title !== null)];
+		}
+
+		// 2. Handle "Self" (Is this node a target item?)
+		if (node.type === targetType) {
+			if (!visitedIds.has(node.id)) {
+				visitedIds.add(node.id);
+				directItems.push(node);
+			}
+		}
+	});
+
+	if (directItems.length > 0) {
+		lanes.push({ id: `misc-${parentName}`, title: null, parentTitle: parentName, link: null, items: directItems });
+	}
+	return lanes;
+};
+
+export const getSwimlanes = (groups, normalizedType) => {
+	if (groups.length === 0) return [];
+
+	const strategy = VIEW_STRATEGIES[normalizedType] || VIEW_STRATEGIES.location;
+
+	// STRATEGY 1: GEOGRAPHICAL (Tree Unrolling)
+	if (strategy.mode === 'geo' && groups[0].isTree) {
+		const rootItems = groups[0].items;
+		const visitedIds = new Set();
+
+		const rawLanes = flattenGeoTree(rootItems, normalizedType, null, visitedIds);
+
+		const rootLane = rawLanes.find((l) => l.title === null);
+		const otherLanes = rawLanes.filter((l) => l.title !== null);
+
+		if (rootLane) {
+			otherLanes.push({ ...rootLane, title: 'Uncharted / General', id: 'root-ungrouped' });
+		}
+		return otherLanes;
+	}
+
+	// STRATEGY 2: CATEGORICAL (Flat Groups)
+	if (strategy.mode === 'category') {
+		return groups.map((g) => ({
+			id: g.id,
+			title: g.title || 'Other',
+			link: null,
+			items: g.items,
+		}));
+	}
+
+	// STRATEGY 3: FLAT (One big group)
+	if (strategy.mode === 'flat') {
+		const allItems = groups.flatMap((g) => g.items).sort((a, b) => a.name.localeCompare(b.name));
+		return [
+			{
+				id: 'all',
+				title: 'All Entries',
+				link: null,
+				items: allItems,
+			},
+		];
+	}
+
+	return [];
+};
+
+export const getStrategyMode = (type) => {
+	return VIEW_STRATEGIES[type]?.mode || 'flat';
+};
+
+--- END OF features\entity-view\config\viewStrategies.js ---
+
 --- FILE: features\entity-view\hooks\useEntityContent.js ---
 import { useMemo } from 'react';
 import { isSession } from '../../../utils/entity/entityHelpers';
@@ -7255,6 +7510,100 @@ export default function WikiEntryPage() {
 }
 
 --- END OF features\entity-view\pages\WikiEntryPage.jsx ---
+
+--- FILE: features\entity-view\pages\WikiLandingPage.jsx ---
+import { useParams } from 'react-router-dom';
+import { Search, Folder } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useEntityFetching } from '../../wiki-layout/hooks/useEntityFetching';
+import { useEntityGrouping } from '../../wiki-layout/hooks/useEntityGrouping';
+import { getEntityConfig } from '../../../config/entity';
+import { getSwimlanes, getStrategyMode } from '../config/viewStrategies'; // Import Logic
+import { Swimlane } from '../components/landing/Swimlane'; // Import UI
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
+import { clsx } from 'clsx';
+
+export default function WikiLandingPage() {
+	const { type } = useParams();
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	const { entities, isLoading } = useEntityFetching(normalizedType);
+	const [search, setSearch] = useState('');
+
+	const config = getEntityConfig(normalizedType);
+	const mode = getStrategyMode(normalizedType);
+
+	// Use Grouping Hook
+	const groups = useEntityGrouping(entities, normalizedType, search);
+
+	// Transform Data
+	const swimlanes = useMemo(() => {
+		return getSwimlanes(groups, normalizedType);
+	}, [groups, normalizedType]);
+
+	if (isLoading) return <LoadingSpinner text={`Loading ${config.labelPlural}...`} />;
+
+	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
+
+	return (
+		<div className='p-6 md:p-12 max-w-[1600px] mx-auto min-h-full'>
+			{/* Header */}
+			<div className='flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-border pb-6'>
+				<div className='flex items-center gap-4'>
+					<div
+						className={clsx(
+							'p-3 rounded-xl border shadow-sm bg-background hidden md:block',
+							config.tailwind.border,
+							config.tailwind.text
+						)}>
+						<config.icon size={32} strokeWidth={1.5} />
+					</div>
+					<div>
+						<h1 className='text-3xl font-serif font-bold text-foreground capitalize leading-none mb-2'>
+							{config.labelPlural}
+						</h1>
+						<p className='text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
+					</div>
+				</div>
+
+				<div className='relative w-full md:w-72'>
+					<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
+					<input
+						type='text'
+						placeholder={`Search ${config.labelPlural}...`}
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						className='w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
+					/>
+				</div>
+			</div>
+
+			{/* Content */}
+			<div className='pb-20'>
+				{swimlanes.map((lane) => (
+					<Swimlane
+						key={lane.id}
+						title={lane.title}
+						parentTitle={lane.parentTitle}
+						link={lane.link}
+						items={lane.items}
+						config={config}
+						context={mode}
+					/>
+				))}
+
+				{totalCount === 0 && (
+					<div className='text-center py-32 opacity-40 flex flex-col items-center gap-4 border-2 border-dashed border-border rounded-xl'>
+						<Folder size={48} strokeWidth={1} />
+						<p className='text-lg font-serif text-muted-foreground'>No entries found.</p>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\entity-view\pages\WikiLandingPage.jsx ---
 
 --- FILE: features\entity-view\transforms\attributeTransform.js ---
 /**
@@ -10619,54 +10968,14 @@ export function useWikiNavigation() {
 --- END OF features\wiki-layout\useWikiNavigation.js ---
 
 --- FILE: features\wiki-layout\WikiLayout.jsx ---
-import { Outlet, useNavigate, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
 import { useWikiNavigation } from './useWikiNavigation';
 import { WikiSidebar } from './components/WikiSidebar';
 
-// --- NEW HELPER: Recursive Search ---
-// Finds the first entity that matches the requested section type
-const findFirstContentEntity = (items, targetType) => {
-	for (const item of items) {
-		// 1. Found a direct match? (e.g. an NPC in the NPC section)
-		if (item.type === targetType) {
-			return item;
-		}
-
-		// 2. If it's a folder (Location) with children, look inside
-		if (item.children && item.children.length > 0) {
-			const found = findFirstContentEntity(item.children, targetType);
-			if (found) return found;
-		}
-	}
-	return null;
-};
-
 export default function WikiLayout() {
 	const navigation = useWikiNavigation();
-	const navigate = useNavigate();
-	const { type, entityId } = useParams();
 
-	// Ensure we match the internal type string (e.g. 'sessions' -> 'session')
-	const normalizedType = type === 'sessions' ? 'session' : type;
-
-	// Auto-select first item if on index route and items exist
-	useEffect(() => {
-		if (!entityId && !navigation.isLoading && navigation.groups.length > 0) {
-			const firstGroup = navigation.groups[0];
-
-			if (firstGroup && firstGroup.items.length > 0) {
-				// CHANGED: Use recursive search instead of blindly taking items[0]
-				const match = findFirstContentEntity(firstGroup.items, normalizedType);
-
-				// Fallback: If no matching child found (e.g. empty folder),
-				// just show the folder (items[0]) so the user isn't staring at a blank screen.
-				const target = match || firstGroup.items[0];
-
-				navigate(`/wiki/${type}/${target.path}`, { replace: true });
-			}
-		}
-	}, [entityId, navigation.isLoading, navigation.groups, navigate, type, normalizedType]);
+	// REMOVED: The useEffect that auto-redirects to findFirstContentEntity
 
 	return (
 		<div className='relative flex flex-col lg:flex-row h-full bg-background overflow-hidden'>

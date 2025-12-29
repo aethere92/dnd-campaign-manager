@@ -1,4 +1,4 @@
-import GlobalSearch from '../../global-search/GlobalSearch';
+import { SearchTrigger } from '../../global-search/components/SearchTrigger';
 
 export const SidebarHeader = ({ campaign }) => {
 	return (
@@ -13,9 +13,9 @@ export const SidebarHeader = ({ campaign }) => {
 				</div>
 			</div>
 
-			{/* Global Search */}
+			{/* Global Search Trigger - Desktop */}
 			<div className='lg:mb-6'>
-				<GlobalSearch />
+				<SearchTrigger />
 			</div>
 		</div>
 	);

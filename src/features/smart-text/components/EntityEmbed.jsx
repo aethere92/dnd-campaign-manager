@@ -57,10 +57,11 @@ const getImageBrightness = (imageUrl) => {
 
 export const EntityEmbed = ({ id, type, label }) => {
 	const navigate = useNavigate();
-	const entityIndex = useEntityIndex();
+	// FIX: Destructure the 'map' from the new hook signature
+	const { map: entityMap } = useEntityIndex();
 
-	// Resolve entity data
-	const entity = entityIndex.find((e) => e.id === id);
+	// FIX: Use .get() (O(1) speed) instead of .find()
+	const entity = entityMap.get(id);
 	const resolvedLabel = label || entity?.name || 'Unknown Entity';
 
 	// Resolve Images

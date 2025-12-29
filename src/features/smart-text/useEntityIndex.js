@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { getEntityIndex } from '../../services/entities';
 import { useCampaign } from '../../features/campaign-session/CampaignContext';
-import { resolveImageUrl, parseAttributes } from '../../utils/image/imageResolver'; // Use util
-import './types';
+import { resolveImageUrl, parseAttributes } from '../../utils/image/imageResolver';
+import { getParentId } from '../../utils/entity/entityHelpers'; // You added this util previously
 
 export function useEntityIndex() {
 	const { campaignId } = useCampaign();
@@ -11,18 +11,37 @@ export function useEntityIndex() {
 		queryKey: ['entityIndex', campaignId],
 		queryFn: async () => {
 			const rawData = await getEntityIndex(campaignId);
-			return rawData.map((entity) => {
+
+			const list = [];
+			const map = new Map();
+
+			rawData.forEach((entity) => {
 				const attrs = parseAttributes(entity.attributes);
-				return {
+				const lightEntity = {
 					...entity,
-					// Use standard resolver
+					// Pre-calculate hierarchy once
+					parentId: getParentId(entity),
+					// Resolve Icon once
 					iconUrl: resolveImageUrl(attrs, 'icon'),
 				};
+
+				// Remove heavy relationships array to save memory
+				delete lightEntity.relationships;
+
+				list.push(lightEntity);
+				map.set(entity.id, lightEntity);
 			});
+
+			// Return optimized structures
+			return {
+				list: list.sort((a, b) => b.name.length - a.name.length),
+				map,
+			};
 		},
-		staleTime: 1000 * 60 * 30,
+		staleTime: 1000 * 60 * 30, // 30 mins
 		enabled: !!campaignId,
 	});
 
-	return data || [];
+	// Default return shape
+	return data || { list: [], map: new Map() };
 }

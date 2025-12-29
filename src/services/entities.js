@@ -107,7 +107,7 @@ export const getGraphData = async (campaignId) => {
 export const getEntityIndex = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
-		.select('id, name, type, attributes')
+		.select('id, name, type, attributes, relationships')
 		.eq('campaign_id', campaignId);
 
 	if (error) return [];
