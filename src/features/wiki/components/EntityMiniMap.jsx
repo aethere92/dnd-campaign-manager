@@ -5,14 +5,25 @@ import { Map as MapIcon, Maximize, Minimize } from 'lucide-react';
 import { clsx } from 'clsx';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
-const MapController = ({ bounds }) => {
+/**
+ * REFACTORED: MapController now handles viewport recalibration
+ * when switching in/out of fullscreen modes.
+ */
+const MapController = ({ bounds, activeFullscreen }) => {
 	const map = useMap();
+
 	useEffect(() => {
-		if (bounds) {
-			map.fitBounds(bounds);
-			map.setMaxBounds(bounds.pad(0.1));
+		if (bounds && map) {
+			// Small timeout ensures the DOM has finished its layout transition (h-96 <-> h-screen)
+			const timer = setTimeout(() => {
+				map.invalidateSize({ animate: true });
+				map.fitBounds(bounds, { padding: [20, 20] });
+			}, 100);
+
+			return () => clearTimeout(timer);
 		}
-	}, [map, bounds]);
+	}, [map, bounds, activeFullscreen]); // Re-run when fullscreen toggles
+
 	return null;
 };
 
@@ -20,23 +31,34 @@ export const EntityMiniMap = ({ imageUrl, title }) => {
 	const [dimensions, setDimensions] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
 	const containerRef = useRef(null);
 
-	// 1. Sync Fullscreen State with Browser Events
+	// Unified flag for UI
+	const activeFullscreen = isFullscreen || isPseudoFullscreen;
+
+	// Native Fullscreen Sync
 	useEffect(() => {
 		const handler = () => setIsFullscreen(!!document.fullscreenElement);
 		document.addEventListener('fullscreenchange', handler);
 		return () => document.removeEventListener('fullscreenchange', handler);
 	}, []);
 
-	// 2. Load Image and Calculate Bounds
+	// iOS Fallback Escape Handler
+	useEffect(() => {
+		const handleEsc = (e) => {
+			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
+		};
+		window.addEventListener('keydown', handleEsc);
+		return () => window.removeEventListener('keydown', handleEsc);
+	}, [isPseudoFullscreen]);
+
 	useEffect(() => {
 		const img = new Image();
 		img.src = imageUrl;
 		img.onload = () => {
 			const w = img.width;
 			const h = img.height;
-			// Southwest is [-height, 0], Northeast is [0, width]
 			const southWest = [-h, 0];
 			const northEast = [0, w];
 			setDimensions(L.latLngBounds(southWest, northEast));
@@ -48,12 +70,17 @@ export const EntityMiniMap = ({ imageUrl, title }) => {
 		e.stopPropagation();
 		if (!containerRef.current) return;
 
-		if (!document.fullscreenElement) {
-			containerRef.current.requestFullscreen().catch((err) => {
-				console.error(`Error enabling fullscreen: ${err.message}`);
-			});
+		const supportsNative =
+			document.fullscreenEnabled || document.webkitFullscreenEnabled || containerRef.current.requestFullscreen;
+
+		if (supportsNative) {
+			if (!document.fullscreenElement) {
+				containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
+			} else {
+				document.exitFullscreen();
+			}
 		} else {
-			document.exitFullscreen();
+			setIsPseudoFullscreen(!isPseudoFullscreen);
 		}
 	};
 
@@ -65,9 +92,10 @@ export const EntityMiniMap = ({ imageUrl, title }) => {
 		);
 
 	return (
-		<div className='mb-10 space-y-3 group' ref={containerRef}>
-			{/* Header (Hidden in fullscreen) */}
-			{!isFullscreen && (
+		<div
+			className={clsx('mb-10 space-y-3 group', isPseudoFullscreen && 'fixed inset-0 z-[9999] m-0! bg-background')}
+			ref={containerRef}>
+			{!activeFullscreen && (
 				<div className='flex items-center justify-between px-1'>
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
 						<MapIcon size={16} className='text-accent' /> Map
@@ -77,48 +105,37 @@ export const EntityMiniMap = ({ imageUrl, title }) => {
 
 			<div
 				className={clsx(
-					'w-full rounded-xl border border-border overflow-hidden shadow-sm relative z-0',
-					isFullscreen ? 'h-screen rounded-none border-0' : 'h-96'
+					'w-full overflow-hidden relative z-0 transition-all duration-300',
+					activeFullscreen ? 'h-screen rounded-none border-0' : 'h-96 rounded-xl border border-border shadow-sm'
 				)}>
 				<MapContainer
 					crs={L.CRS.Simple}
 					bounds={dimensions}
 					zoom={0}
 					minZoom={-3}
-					scrollWheelZoom={true} // FIXED: Enabled scroll to zoom
+					scrollWheelZoom={true}
 					attributionControl={false}
 					style={{
 						height: '100%',
 						width: '100%',
 						backgroundColor: 'var(--background)',
-						// STAR PATTERN: Adapted from GraphPage.jsx
 						backgroundImage:
 							'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
 						backgroundSize: '40px 40px, 20px 20px',
 						backgroundPosition: '0 0, 20px 20px',
 					}}>
-					<MapController bounds={dimensions} />
+					{/* PASS activeFullscreen to the controller */}
+					<MapController bounds={dimensions} activeFullscreen={activeFullscreen} />
 					<ImageOverlay url={imageUrl} bounds={dimensions} />
 				</MapContainer>
 
-				{/* Fullscreen Toggle Button */}
 				<div className='absolute top-3 right-3 z-[1000]'>
 					<button
 						onClick={toggleFullscreen}
-						className='p-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg text-muted-foreground hover:text-accent transition-all active:scale-95'
-						title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
-						{isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+						className='p-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg text-muted-foreground hover:text-accent transition-all active:scale-95'>
+						{activeFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
 					</button>
 				</div>
-
-				{/* Interaction Hint */}
-				{!isFullscreen && (
-					<div className='absolute bottom-3 right-3 z-[400] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity'>
-						<div className='bg-background/90 backdrop-blur-sm px-2 py-1 rounded border border-border text-[9px] font-bold uppercase text-muted-foreground shadow-lg'>
-							Scroll to Zoom • Drag to Pan
-						</div>
-					</div>
-				)}
 			</div>
 		</div>
 	);
