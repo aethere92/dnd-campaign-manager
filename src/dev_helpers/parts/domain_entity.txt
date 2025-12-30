@@ -1,0 +1,1823 @@
+================================================================
+PARTIAL BUNDLE: DOMAIN ENTITY
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: domain\entity\api\entityService.js ---
+import { supabase } from '@/shared/api/supabaseClient';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import { getCampaigns } from '@/features/campaign/api/campaignService';
+
+// --- HELPER: Extract Session Meta ---
+const extractSessionMeta = (session, attributes = []) => {
+	let attrs = attributes;
+	if (Array.isArray(attrs)) {
+		attrs = attrs.reduce((acc, curr) => {
+			acc[curr.name] = curr.value;
+			return acc;
+		}, {});
+	}
+	attrs = attrs || {};
+
+	const sessionNumber = getAttributeValue(attrs, ['session_number', 'Session', 'session']) || 999;
+	const sessionDate = getAttributeValue(attrs, ['session_date', 'Date', 'date']) || '';
+
+	return {
+		...session,
+		session_number: Number(sessionNumber),
+		session_date: sessionDate,
+		attributes: attrs,
+	};
+};
+
+// --- API METHODS ---
+
+export const getSessions = async (campaignId) => {
+	const { data: sessions, error } = await supabase
+		.from('sessions')
+		.select('id, title, narrative')
+		.eq('campaign_id', campaignId);
+
+	if (error) throw error;
+	if (!sessions.length) return [];
+
+	const sessionIds = sessions.map((s) => s.id);
+	const { data: attributes } = await supabase
+		.from('attributes')
+		.select('entity_id, name, value')
+		.in('entity_id', sessionIds);
+
+	const attrMap = new Map();
+	(attributes || []).forEach((attr) => {
+		if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
+		attrMap.get(attr.entity_id).push(attr);
+	});
+
+	const processed = sessions.map((s) => {
+		const sAttrs = attrMap.get(s.id) || [];
+		const meta = extractSessionMeta(s, sAttrs);
+
+		return {
+			id: meta.id,
+			name: meta.title,
+			type: 'session',
+			session_number: meta.session_number,
+			session_date: meta.session_date,
+			summary: getAttributeValue(meta.attributes, 'Summary') || meta.narrative,
+			narrative: meta.narrative,
+			attributes: meta.attributes,
+		};
+	});
+
+	return processed.sort((a, b) => a.session_number - b.session_number);
+};
+
+// Generic fetcher
+const getCompleteEntities = async (campaignId, type) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, description, attributes, relationships')
+		.eq('campaign_id', campaignId)
+		.eq('type', type)
+		.order('name');
+
+	if (error) throw error;
+	return data;
+};
+
+const entityStrategies = {
+	session: getSessions,
+	quest: getCompleteEntities,
+	default: getCompleteEntities,
+	campaign: async () => getCampaigns(),
+};
+
+export const getEntities = async (campaignId, type) => {
+	const strategy = entityStrategies[type] || entityStrategies.default;
+	return strategy(campaignId, type);
+};
+
+export const getGraphData = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, relationships, attributes')
+		.eq('campaign_id', campaignId);
+
+	if (error) {
+		console.error('Graph Fetch Error:', error);
+		return [];
+	}
+	return data || [];
+};
+
+export const getEntityIndex = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, attributes, relationships')
+		.eq('campaign_id', campaignId);
+
+	if (error) return [];
+	return data.sort((a, b) => b.name.length - a.name.length);
+};
+
+export const getWikiEntry = async (id, type) => {
+	if (type === 'session') {
+		const { data, error } = await supabase
+			.from('sessions')
+			.select(`*, events:session_events (*)`)
+			.eq('id', id)
+			.single();
+		if (error) throw error;
+
+		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
+
+		const eventIds = (data.events || []).map((e) => e.id);
+		let eventRelMap = new Map();
+
+		if (eventIds.length > 0) {
+			const { data: rels } = await supabase
+				.from('entity_relationships')
+				.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
+				.in('from_entity_id', eventIds);
+
+			(rels || []).forEach((rel) => {
+				if (!eventRelMap.has(rel.from_entity_id)) eventRelMap.set(rel.from_entity_id, []);
+				eventRelMap.get(rel.from_entity_id).push({
+					entity_id: rel.target.id,
+					entity_name: rel.target.name,
+					entity_type: rel.target.type,
+					type: 'mention',
+				});
+			});
+		}
+
+		const { data: directRels } = await supabase
+			.from('entity_relationships')
+			.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
+			.eq('from_entity_id', id);
+
+		const sessionRelationships = (directRels || []).map((rel) => ({
+			entity_id: rel.target.id,
+			entity_name: rel.target.name,
+			entity_type: rel.target.type,
+			type: rel.relationship_type,
+		}));
+
+		return {
+			data,
+			type: 'session',
+			additional: { attributes, eventRelMap, sessionRelationships },
+		};
+	}
+
+	// --- STANDARD ENTITY FETCH ---
+	const { data, error: entityError } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
+	if (entityError) throw entityError;
+
+	const additional = {};
+
+	// FETCH QUEST OBJECTIVES WITH SESSION DATA
+	if (type === 'quest') {
+		const { data: objectives, error: objError } = await supabase
+			.from('quest_objectives')
+			.select('*, session:sessions(id, title)') // Basic join for title
+			.eq('quest_id', id)
+			.order('order_index', { ascending: true });
+
+		if (objError) console.error('Error fetching objectives:', objError);
+
+		if (objectives && objectives.length > 0) {
+			// 2. Fetch Session Numbers (stored as attributes)
+			const sessionIds = objectives.map((o) => o.completed_session_id).filter(Boolean);
+
+			if (sessionIds.length > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, value')
+					.in('entity_id', sessionIds)
+					.or('name.eq.session_number,name.eq.Session');
+
+				const sessionNumMap = new Map();
+				(attrs || []).forEach((a) => sessionNumMap.set(a.entity_id, a.value));
+
+				// 3. Attach number to the session object inside the objective
+				objectives.forEach((obj) => {
+					if (obj.session) {
+						obj.session.session_number = sessionNumMap.get(obj.session.id);
+					}
+				});
+			}
+		}
+
+		additional.objectives = objectives || [];
+	}
+
+	// 2. ENCOUNTER ACTIONS (UPDATED)
+	if (type === 'encounter') {
+		// Step A: Fetch Actions with basic Actor/Target info
+		const { data: actions, error: actError } = await supabase
+			.from('encounter_actions')
+			.select(
+				`
+                *,
+                actor:entities!actor_entity_id (id, name, type),
+                target:entities!target_entity_id (id, name, type)
+            `
+			)
+			.eq('encounter_id', id)
+			.order('round_number', { ascending: true })
+			.order('action_order', { ascending: true });
+
+		if (actError) console.error('Error fetching encounter actions:', actError);
+
+		if (actions && actions.length > 0) {
+			// Step B: Get ALL unique Entity IDs (Actors AND Targets)
+			const entityIds = new Set();
+			actions.forEach((a) => {
+				if (a.actor?.id) entityIds.add(a.actor.id);
+				if (a.target?.id) entityIds.add(a.target.id);
+			});
+
+			// Step C: Fetch attributes for these entities
+			let entityAttrs = [];
+			if (entityIds.size > 0) {
+				const { data: attrs } = await supabase
+					.from('attributes')
+					.select('entity_id, name, value')
+					.in('entity_id', Array.from(entityIds));
+				entityAttrs = attrs || [];
+			}
+
+			// Step D: Map attributes
+			const attrMap = new Map();
+			entityAttrs.forEach((attr) => {
+				if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
+				attrMap.get(attr.entity_id).push(attr);
+			});
+
+			// Step E: Attach to action objects
+			actions.forEach((action) => {
+				if (action.actor?.id) {
+					action.actor.attributes = attrMap.get(action.actor.id) || [];
+				}
+				if (action.target?.id) {
+					action.target.attributes = attrMap.get(action.target.id) || [];
+				}
+			});
+		}
+
+		additional.encounterActions = actions || [];
+	}
+
+	// RESOLVE SESSION NUMBERS FOR EVENTS
+	let events = data.events;
+	if (events && typeof events === 'object' && !Array.isArray(events)) {
+		events = Object.values(events).flat();
+	}
+
+	if (events && Array.isArray(events) && events.length > 0) {
+		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
+		if (sessionIds.length > 0) {
+			const { data: sessions } = await supabase.from('sessions').select('id').in('id', sessionIds);
+
+			const { data: attrs } = await supabase
+				.from('attributes')
+				.select('entity_id, name, value')
+				.in('entity_id', sessionIds)
+				.or('name.eq.session_number,name.eq.Session');
+
+			const sessionMap = new Map();
+			(sessions || []).forEach((s) => {
+				const sAttr = (attrs || []).find((a) => a.entity_id === s.id);
+				const num = sAttr ? parseInt(sAttr.value) : null;
+				sessionMap.set(s.id, num);
+			});
+
+			additional.sessionMap = sessionMap;
+		}
+	}
+
+	return { data, type, additional };
+};
+
+export const getTooltipData = async (id, type) => {
+	if (type === 'session') {
+		const { data } = await supabase.from('sessions').select('title, narrative').eq('id', id).single();
+		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
+		return {
+			name: data.title,
+			type: 'session',
+			description: data.narrative,
+			attributes,
+		};
+	}
+
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('name, type, description, attributes')
+		.eq('id', id)
+		.single();
+	if (error) throw error;
+	return data;
+};
+
+--- END OF domain\entity\api\entityService.js ---
+
+--- FILE: domain\entity\components\EntityBadge.jsx ---
+import { clsx } from 'clsx';
+import { getEntityLabel } from '@/domain/entity/config/entityTypes';
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
+
+/**
+ * EntityBadge Component
+ * Displays a colored type badge for an entity
+ *
+ * @param {string} type - Entity type
+ * @param {string} label - Optional custom label (defaults to type label)
+ * @param {string} size - Badge size: 'sm', 'md', 'lg' (default 'md')
+ * @param {string} variant - Style variant: 'solid', 'outline', 'subtle' (default 'solid')
+ * @param {string} className - Additional CSS classes
+ */
+export default function EntityBadge({ type, label = null, size = 'md', variant = 'solid', className = '', ...props }) {
+	const styles = getEntityStyles(type);
+	const displayLabel = label || getEntityLabel(type);
+
+	const sizeClasses = {
+		sm: 'text-[9px] px-1.5 py-0.5',
+		md: 'text-[10px] px-2 py-0.5',
+		lg: 'text-xs px-2.5 py-1',
+	};
+
+	const variantClasses = {
+		solid: clsx(styles.bg, styles.text, styles.border, 'border'),
+		outline: clsx('bg-transparent', styles.text, styles.border, 'border'),
+		subtle: clsx(styles.bg, styles.text, 'border-transparent border'),
+	};
+
+	return (
+		<span
+			className={clsx(
+				'inline-flex items-center font-bold uppercase tracking-wider rounded shrink-0',
+				sizeClasses[size],
+				variantClasses[variant],
+				className
+			)}
+			{...props}>
+			{displayLabel}
+		</span>
+	);
+}
+
+--- END OF domain\entity\components\EntityBadge.jsx ---
+
+--- FILE: domain\entity\components\EntityIcon.jsx ---
+import { clsx } from 'clsx';
+import { getEntityIcon } from '@/domain/entity/config/entityIcons';
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
+
+/**
+ * EntityIcon Component
+ * Renders an entity icon with optional custom image override
+ *
+ * @param {string} type - Entity type
+ * @param {string} customIconUrl - Optional custom icon URL
+ * @param {number} size - Icon size in pixels (default 16)
+ * @param {string} className - Additional CSS classes
+ * @param {boolean} showBackground - Show colored background (default false)
+ * @param {boolean} inline - Use span instead of div for inline contexts (default false)
+ */
+export default function EntityIcon({
+	type,
+	customIconUrl = null,
+	size = 16,
+	className = '',
+	showBackground = false,
+	inline = false,
+	...props
+}) {
+	const Icon = getEntityIcon(type);
+	const styles = getEntityStyles(type);
+
+	// Choose container element (span for inline, div for block)
+	const Container = inline ? 'span' : 'div';
+
+	// If custom icon provided, render image
+	if (customIconUrl) {
+		return (
+			<Container
+				className={clsx(
+					'inline-flex items-center justify-center overflow-hidden',
+					showBackground && clsx('rounded-lg border', styles.bg, styles.border),
+					className
+				)}
+				style={{ width: size, height: size }}
+				{...props}>
+				<img
+					src={customIconUrl}
+					alt=''
+					className='w-full h-full object-cover'
+					onError={(e) => {
+						// Fallback to icon if image fails
+						e.target.style.display = 'none';
+						e.target.parentElement.classList.add('fallback-icon');
+					}}
+				/>
+			</Container>
+		);
+	}
+
+	// Default icon rendering
+	if (showBackground) {
+		return (
+			<Container
+				className={clsx(
+					'inline-flex items-center justify-center rounded-lg border p-1.5',
+					styles.bg,
+					styles.border,
+					styles.text,
+					className
+				)}
+				{...props}>
+				<Icon size={size} strokeWidth={2} />
+			</Container>
+		);
+	}
+
+	return <Icon size={size} className={clsx(styles.text, className)} strokeWidth={2} {...props} />;
+}
+
+--- END OF domain\entity\components\EntityIcon.jsx ---
+
+--- FILE: domain\entity\components\EntityLink.jsx ---
+import { useNavigate } from 'react-router-dom';
+import { useRef, useCallback } from 'react'; // ADDED
+import { clsx } from 'clsx';
+import { useTooltip } from '@/features/smart-tooltip/TooltipContext';
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
+import EntityIcon from './EntityIcon';
+
+export default function EntityLink({
+	id,
+	type,
+	children,
+	customIconUrl = null,
+	showIcon = true,
+	className = '',
+	inline = false,
+	...props
+}) {
+	const navigate = useNavigate();
+	const { openTooltip, closeTooltip } = useTooltip();
+	const styles = getEntityStyles(type);
+
+	// --- IMPROVEMENT #4: Long Press Logic ---
+	const pressTimer = useRef(null);
+	const isLongPress = useRef(false);
+
+	const handleTouchStart = (e) => {
+		isLongPress.current = false;
+		pressTimer.current = setTimeout(() => {
+			isLongPress.current = true;
+			// Open Tooltip on long press position
+			openTooltip(e, id, type, true);
+		}, 500); // 500ms threshold
+	};
+
+	const handleTouchEnd = (e) => {
+		if (pressTimer.current) {
+			clearTimeout(pressTimer.current);
+		}
+		// If it wasn't a long press, treat as click (Navigate)
+		if (!isLongPress.current) {
+			navigate(`/wiki/${type}/${id}`);
+			closeTooltip();
+		}
+		// Prevent ghost clicks if it was a long press
+		if (isLongPress.current && e.cancelable) {
+			e.preventDefault();
+		}
+	};
+
+	const handleTouchMove = () => {
+		// Cancel everything if user scrolls
+		if (pressTimer.current) {
+			clearTimeout(pressTimer.current);
+			isLongPress.current = true; // Treat as "handled" so we don't navigate
+		}
+	};
+	// ----------------------------------------
+
+	const handleMouseEnter = (e) => {
+		// Desktop only
+		if (window.matchMedia('(hover: hover)').matches) {
+			openTooltip(e, id, type);
+		}
+	};
+
+	const handleClick = (e) => {
+		e.preventDefault();
+		// Desktop click handling (Touch handled via TouchEnd)
+		if (window.matchMedia('(hover: hover)').matches) {
+			navigate(`/wiki/${type}/${id}`);
+			closeTooltip();
+		}
+	};
+
+	const commonProps = {
+		href: `/wiki/${type}/${id}`,
+		onClick: handleClick,
+		onMouseEnter: handleMouseEnter,
+		onMouseLeave: closeTooltip,
+		// Mobile Events
+		onTouchStart: handleTouchStart,
+		onTouchEnd: handleTouchEnd,
+		onTouchMove: handleTouchMove,
+		...props,
+	};
+
+	if (inline) {
+		return (
+			<a
+				className={clsx(
+					'inline-flex items-center gap-1.5 font-semibold no-underline transition-colors',
+					'border-b border-dashed border-transparent hover:border-current cursor-pointer align-middle',
+					styles.text,
+					styles.hover,
+					className
+				)}
+				{...commonProps}>
+				{showIcon && (
+					<EntityIcon
+						type={type}
+						customIconUrl={customIconUrl}
+						size={14}
+						inline={true}
+						className='self-center rounded-full'
+					/>
+				)}
+				{children}
+			</a>
+		);
+	}
+
+	return (
+		<a
+			className={clsx(
+				'flex items-center gap-2 px-3 py-2 rounded-lg transition-all cursor-pointer',
+				'hover:shadow-sm',
+				styles.bg,
+				styles.hover,
+				styles.border,
+				'border',
+				className
+			)}
+			{...commonProps}>
+			{showIcon && <EntityIcon type={type} customIconUrl={customIconUrl} size={18} inline={false} />}
+			<span className={clsx('font-semibold text-sm', styles.text)}>{children}</span>
+		</a>
+	);
+}
+
+--- END OF domain\entity\components\EntityLink.jsx ---
+
+--- FILE: domain\entity\components\EntityStatusIcon.jsx ---
+import { clsx } from 'clsx';
+import { getStatusIcon } from '@/domain/entity/utils/statusUtils';
+
+/**
+ * EntityStatusIcon Component
+ * Smart status indicator based on entity type and status/affinity
+ *
+ * @param {Object} entity - Entity object with type and status/affinity
+ * @param {number} size - Icon size (default 12)
+ * @param {string} className - Additional CSS classes
+ */
+export default function EntityStatusIcon({ entity, size = 12, className = '', ...props }) {
+	if (!entity) return null;
+
+	// Determine which status to show (affinity takes priority for NPCs/factions)
+	const statusValue = entity.affinity || entity.status;
+	if (!statusValue || statusValue === 'unknown') return null;
+
+	const { Icon, className: statusClass } = getStatusIcon(statusValue, entity.type);
+
+	return <Icon size={size} className={clsx(statusClass, className)} strokeWidth={2.5} {...props} />;
+}
+
+/**
+ * EntityStatusBadge Component
+ * Status indicator with text label
+ *
+ * @param {Object} entity - Entity object
+ * @param {string} className - Additional CSS classes
+ */
+export function EntityStatusBadge({ entity, className = '', ...props }) {
+	if (!entity) return null;
+
+	const statusValue = entity.affinity || entity.status;
+	if (!statusValue || statusValue === 'unknown') return null;
+
+	const { Icon, className: statusClass } = getStatusIcon(statusValue, entity.type);
+
+	return (
+		<span
+			className={clsx('inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-md border', className)}
+			{...props}>
+			<Icon size={12} className={statusClass} strokeWidth={2.5} />
+			<span className='capitalize'>{statusValue}</span>
+		</span>
+	);
+}
+
+--- END OF domain\entity\components\EntityStatusIcon.jsx ---
+
+--- FILE: domain\entity\config\entityColors.js ---
+/**
+ * Entity Color Palettes
+ * Hex colors for each entity type
+ */
+
+import { ENTITY_TYPES } from './entityTypes';
+
+/**
+ * Primary color for each entity type (hex)
+ */
+export const ENTITY_COLORS = {
+	[ENTITY_TYPES.SESSION]: '#64748b', // slate-500
+	[ENTITY_TYPES.CHARACTER]: '#ef4444', // red-500
+	[ENTITY_TYPES.NPC]: '#d97706', // amber-600
+	[ENTITY_TYPES.LOCATION]: '#10b981', // emerald-500
+	[ENTITY_TYPES.QUEST]: '#3b82f6', // blue-500
+	[ENTITY_TYPES.FACTION]: '#a855f7', // purple-500
+	[ENTITY_TYPES.ENCOUNTER]: '#f97316', // orange-500
+	[ENTITY_TYPES.DEFAULT]: '#6b7280', // gray-500
+};
+
+/**
+ * Get primary color for entity type
+ * @param {string} type - Entity type
+ * @returns {string} Hex color
+ */
+export const getEntityColor = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_COLORS[normalized] || ENTITY_COLORS[ENTITY_TYPES.DEFAULT];
+};
+
+/**
+ * Extended color palette for each type (for future use)
+ * Includes lighter/darker shades
+ */
+export const ENTITY_COLOR_PALETTES = {
+	[ENTITY_TYPES.SESSION]: {
+		50: '#f8fafc',
+		100: '#f1f5f9',
+		500: '#64748b',
+		700: '#334155',
+		900: '#0f172a',
+	},
+	[ENTITY_TYPES.CHARACTER]: {
+		50: '#fef2f2',
+		100: '#fee2e2',
+		500: '#ef4444',
+		700: '#b91c1c',
+		900: '#7f1d1d',
+	},
+	[ENTITY_TYPES.NPC]: {
+		50: '#fffbeb',
+		100: '#fef3c7',
+		500: '#d97706',
+		700: '#a16207',
+		900: '#78350f',
+	},
+	[ENTITY_TYPES.LOCATION]: {
+		50: '#ecfdf5',
+		100: '#d1fae5',
+		500: '#10b981',
+		700: '#047857',
+		900: '#064e3b',
+	},
+	[ENTITY_TYPES.QUEST]: {
+		50: '#eff6ff',
+		100: '#dbeafe',
+		500: '#3b82f6',
+		700: '#1d4ed8',
+		900: '#1e3a8a',
+	},
+	[ENTITY_TYPES.FACTION]: {
+		50: '#faf5ff',
+		100: '#f3e8ff',
+		500: '#a855f7',
+		700: '#7e22ce',
+		900: '#581c87',
+	},
+	[ENTITY_TYPES.ENCOUNTER]: {
+		50: '#fff7ed',
+		100: '#ffedd5',
+		500: '#f97316',
+		700: '#c2410c',
+		900: '#7c2d12',
+	},
+	[ENTITY_TYPES.DEFAULT]: {
+		50: '#f9fafb',
+		100: '#f3f4f6',
+		500: '#6b7280',
+		700: '#374151',
+		900: '#111827',
+	},
+};
+
+/**
+ * Get color palette for entity type
+ * @param {string} type - Entity type
+ * @returns {Object} Color palette
+ */
+export const getEntityPalette = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_COLOR_PALETTES[normalized] || ENTITY_COLOR_PALETTES[ENTITY_TYPES.DEFAULT];
+};
+
+--- END OF domain\entity\config\entityColors.js ---
+
+--- FILE: domain\entity\config\entityConfig.js ---
+/**
+ * Entity Configuration Orchestrator
+ * Combines all entity config modules into a unified API
+ * This replaces the old monolithic entityConfig.jsx
+ */
+
+import { ENTITY_TYPES, getEntityLabel } from './entityTypes';
+import { getEntityIcon } from './entityIcons';
+import { getEntityColor, getEntityPalette } from './entityColors';
+import { getEntityStyles, getEntityPreset, buildEntityClassName } from './entityStyles';
+
+/**
+ * Get complete configuration for an entity type
+ * @param {string} type - Entity type
+ * @returns {Object} Complete entity config
+ */
+export const getEntityConfig = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+
+	return {
+		type: normalized,
+		label: getEntityLabel(normalized),
+		labelPlural: getEntityLabel(normalized, true),
+		icon: getEntityIcon(normalized),
+		color: getEntityColor(normalized),
+		palette: getEntityPalette(normalized),
+		tailwind: getEntityStyles(normalized),
+	};
+};
+
+/**
+ * LEGACY EXPORT: Full config map for backwards compatibility
+ * TODO: Gradually migrate consumers to use getEntityConfig() instead
+ */
+export const ENTITY_CONFIG = Object.values(ENTITY_TYPES).reduce((acc, type) => {
+	acc[type] = getEntityConfig(type);
+	return acc;
+}, {});
+
+// Re-export everything for convenience
+export { ENTITY_TYPES, getEntityLabel } from './entityTypes';
+export { getEntityIcon } from './entityIcons';
+export { getEntityColor, getEntityPalette } from './entityColors';
+export { getEntityStyles, getEntityPreset, buildEntityClassName } from './entityStyles';
+
+--- END OF domain\entity\config\entityConfig.js ---
+
+--- FILE: domain\entity\config\entityIcons.js ---
+import {
+	User,
+	MapPin,
+	Scroll,
+	Sword,
+	Flag,
+	Crown,
+	BookOpen,
+	Calendar,
+	Trees,
+	Castle,
+	Ship,
+	Landmark,
+	Globe,
+	Home,
+	Mountain,
+} from 'lucide-react';
+import { ENTITY_TYPES } from './entityTypes';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
+export const ENTITY_ICONS = {
+	[ENTITY_TYPES.SESSION]: Calendar,
+	[ENTITY_TYPES.CHARACTER]: User,
+	[ENTITY_TYPES.NPC]: Crown,
+	[ENTITY_TYPES.LOCATION]: MapPin,
+	[ENTITY_TYPES.QUEST]: Scroll,
+	[ENTITY_TYPES.FACTION]: Flag,
+	[ENTITY_TYPES.ENCOUNTER]: Sword,
+	[ENTITY_TYPES.DEFAULT]: BookOpen,
+};
+
+// Location specific mappings
+const LOCATION_TYPE_ICONS = {
+	building: Home,
+	ship: Ship,
+	landmark: Landmark,
+	dungeon: Mountain,
+	cave: Mountain,
+	region: MapPin,
+	city: Castle,
+	forest: Trees,
+	realm: Globe,
+};
+
+export const getEntityIcon = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_ICONS[normalized] || ENTITY_ICONS[ENTITY_TYPES.DEFAULT];
+};
+
+/**
+ * Advanced resolution that looks at attributes for finer detail
+ */
+export const resolveEntityIcon = (entity) => {
+	const type = entity.type?.toLowerCase();
+
+	if (type === 'location') {
+		const locType = getAttributeValue(entity.attributes, 'type')?.toLowerCase();
+		return LOCATION_TYPE_ICONS[locType] || ENTITY_ICONS.location;
+	}
+
+	return getEntityIcon(type);
+};
+
+--- END OF domain\entity\config\entityIcons.js ---
+
+--- FILE: domain\entity\config\entityStyles.js ---
+/**
+ * Entity Tailwind Style Builders
+ * Generate Tailwind class strings for each entity type
+ */
+
+import { ENTITY_TYPES } from './entityTypes';
+
+/**
+ * Tailwind class maps for each entity type
+ */
+const ENTITY_TAILWIND_CLASSES = {
+	[ENTITY_TYPES.SESSION]: {
+		text: 'text-slate-700',
+		bg: 'bg-slate-50',
+		border: 'border-slate-500',
+		hover: 'hover:bg-slate-100',
+	},
+	[ENTITY_TYPES.CHARACTER]: {
+		text: 'text-red-700',
+		bg: 'bg-red-50',
+		border: 'border-red-300',
+		hover: 'hover:bg-red-50',
+	},
+	[ENTITY_TYPES.NPC]: {
+		text: 'text-amber-700',
+		bg: 'bg-amber-50',
+		border: 'border-amber-300',
+		hover: 'hover:bg-amber-50',
+	},
+	[ENTITY_TYPES.LOCATION]: {
+		text: 'text-emerald-700',
+		bg: 'bg-emerald-50',
+		border: 'border-emerald-300',
+		hover: 'hover:bg-emerald-50',
+	},
+	[ENTITY_TYPES.QUEST]: {
+		text: 'text-blue-700',
+		bg: 'bg-blue-50',
+		border: 'border-blue-300',
+		hover: 'hover:bg-blue-50',
+	},
+	[ENTITY_TYPES.FACTION]: {
+		text: 'text-purple-700',
+		bg: 'bg-purple-50',
+		border: 'border-purple-300',
+		hover: 'hover:bg-purple-50',
+	},
+	[ENTITY_TYPES.ENCOUNTER]: {
+		text: 'text-orange-700',
+		bg: 'bg-orange-50',
+		border: 'border-orange-300',
+		hover: 'hover:bg-orange-50',
+	},
+	[ENTITY_TYPES.DEFAULT]: {
+		text: 'text-gray-700',
+		bg: 'bg-muted',
+		border: 'border-gray-400',
+		hover: 'hover:bg-gray-100',
+	},
+};
+
+/**
+ * Get Tailwind classes for entity type
+ * @param {string} type - Entity type
+ * @returns {Object} Tailwind class object
+ */
+export const getEntityStyles = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_TAILWIND_CLASSES[normalized] || ENTITY_TAILWIND_CLASSES[ENTITY_TYPES.DEFAULT];
+};
+
+/**
+ * Build a complete className string for an entity
+ * @param {string} type - Entity type
+ * @param {string|string[]} variants - Style variants to include (e.g., 'text', 'bg', 'border')
+ * @param {string} additional - Additional classes to append
+ * @returns {string} Complete className string
+ */
+export const buildEntityClassName = (type, variants = [], additional = '') => {
+	const styles = getEntityStyles(type);
+
+	// Normalize variants to array
+	const variantList = Array.isArray(variants) ? variants : [variants];
+
+	// Build class string
+	const classes = variantList
+		.map((variant) => styles[variant])
+		.filter(Boolean)
+		.join(' ');
+
+	return additional ? `${classes} ${additional}` : classes;
+};
+
+/**
+ * Pre-built utility class sets for common patterns
+ */
+export const ENTITY_CLASS_PRESETS = {
+	/**
+	 * Icon badge (small colored circle with icon)
+	 */
+	iconBadge: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.bg} ${styles.border} ${styles.text} rounded-lg p-2 border`;
+	},
+
+	/**
+	 * Type badge (uppercase label)
+	 */
+	typeBadge: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.bg} ${styles.text} ${styles.border} text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border`;
+	},
+
+	/**
+	 * Card container
+	 */
+	card: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.bg} ${styles.border} border rounded-lg p-4 ${styles.hover} transition-colors`;
+	},
+
+	/**
+	 * Link styling
+	 */
+	link: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.text} ${styles.hover} transition-colors font-semibold`;
+	},
+};
+
+/**
+ * Get preset class string
+ * @param {string} preset - Preset name
+ * @param {string} type - Entity type
+ * @returns {string} Complete className string
+ */
+export const getEntityPreset = (preset, type) => {
+	const presetFn = ENTITY_CLASS_PRESETS[preset];
+	return presetFn ? presetFn(type) : '';
+};
+
+export const getPriorityStyles = (priority) => {
+	const p = priority?.toLowerCase() || '';
+	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
+		return 'border-orange-200 text-orange-800 bg-orange-50';
+	}
+	if (p.includes('medium') || p.includes('normal')) {
+		return 'border-blue-200 text-blue-800 bg-blue-50';
+	}
+	if (p.includes('low')) {
+		return 'border-slate-200 text-slate-700 bg-slate-50';
+	}
+	return 'border-stone-200 text-stone-700 bg-stone-50';
+};
+
+--- END OF domain\entity\config\entityStyles.js ---
+
+--- FILE: domain\entity\config\entityTypes.js ---
+/**
+ * Entity Type Definitions
+ * Central source of truth for entity types
+ */
+
+/**
+ * All valid entity types in the system
+ */
+export const ENTITY_TYPES = {
+	SESSION: 'session',
+	CHARACTER: 'character',
+	NPC: 'npc',
+	LOCATION: 'location',
+	QUEST: 'quest',
+	FACTION: 'faction',
+	ENCOUNTER: 'encounter',
+	DEFAULT: 'default',
+};
+
+/**
+ * Entity type labels (for display)
+ */
+export const ENTITY_LABELS = {
+	[ENTITY_TYPES.SESSION]: 'Session',
+	[ENTITY_TYPES.CHARACTER]: 'Character',
+	[ENTITY_TYPES.NPC]: 'NPC',
+	[ENTITY_TYPES.LOCATION]: 'Location',
+	[ENTITY_TYPES.QUEST]: 'Quest',
+	[ENTITY_TYPES.FACTION]: 'Faction',
+	[ENTITY_TYPES.ENCOUNTER]: 'Encounter',
+	[ENTITY_TYPES.DEFAULT]: 'Entity',
+};
+
+/**
+ * Pluralized entity labels (for navigation, headers)
+ */
+export const ENTITY_LABELS_PLURAL = {
+	[ENTITY_TYPES.SESSION]: 'Sessions',
+	[ENTITY_TYPES.CHARACTER]: 'Characters',
+	[ENTITY_TYPES.NPC]: 'NPCs',
+	[ENTITY_TYPES.LOCATION]: 'Locations',
+	[ENTITY_TYPES.QUEST]: 'Quests',
+	[ENTITY_TYPES.FACTION]: 'Factions',
+	[ENTITY_TYPES.ENCOUNTER]: 'Encounters',
+	[ENTITY_TYPES.DEFAULT]: 'Entities',
+};
+
+/**
+ * Get label for entity type
+ * @param {string} type - Entity type
+ * @param {boolean} plural - Return plural form
+ * @returns {string}
+ */
+export const getEntityLabel = (type, plural = false) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	const labels = plural ? ENTITY_LABELS_PLURAL : ENTITY_LABELS;
+	return labels[normalized] || labels[ENTITY_TYPES.DEFAULT];
+};
+
+--- END OF domain\entity\config\entityTypes.js ---
+
+--- FILE: domain\entity\utils\attributeParser.js ---
+/**
+ * Attribute Parsing Utilities
+ * Safe parsing and extraction of entity attributes
+ */
+
+/**
+ * Parse attributes safely from JSON string, Object, or DB Row Array
+ * @param {string|Object|Array} attrs - Raw attributes
+ * @returns {Object} Parsed attributes object { key: value }
+ */
+export const parseAttributes = (attrs) => {
+	if (!attrs) return {};
+
+	// 1. Handle JSON String
+	if (typeof attrs === 'string') {
+		try {
+			return JSON.parse(attrs);
+		} catch {
+			console.warn('Failed to parse attributes string:', attrs);
+			return {};
+		}
+	}
+
+	// 2. Handle DB Row Array: [{ name: 'icon', value: '...' }, ...]
+	// This is common when joining tables (e.g. encounter_actions -> actor -> attributes)
+	if (Array.isArray(attrs)) {
+		// Check if it looks like a Name/Value pair list
+		if (attrs.length > 0 && 'name' in attrs[0] && 'value' in attrs[0]) {
+			return attrs.reduce((acc, curr) => {
+				if (curr.name) acc[curr.name] = curr.value;
+				return acc;
+			}, {});
+		}
+		// Otherwise return as-is (might be a simple list attribute value)
+		return {};
+	}
+
+	// 3. Already an Object
+	return attrs;
+};
+
+// ... (Keep getAttributeValue and rest of file exactly as is) ...
+export const getAttributeValue = (attributes, keys) => {
+	if (!attributes) return null;
+
+	// Normalize keys to array
+	const keyList = Array.isArray(keys) ? keys : [keys];
+
+	for (const key of keyList) {
+		// Try exact match
+		let val = attributes[key];
+
+		// Try lowercase match
+		if (!val) {
+			val = attributes[key.toLowerCase()];
+		}
+
+		// Try capitalized match
+		if (!val) {
+			val = attributes[key.charAt(0).toUpperCase() + key.slice(1)];
+		}
+
+		if (!val) continue;
+
+		// Unwrap nested structures
+		if (typeof val === 'string') return val;
+		if (Array.isArray(val) && val[0]?.value) return val[0].value;
+		if (Array.isArray(val) && val[0]) return String(val[0]);
+		if (typeof val === 'object' && val.value) return val.value;
+
+		// Fallback: stringify
+		return String(val);
+	}
+
+	return null;
+};
+
+// ... (Keep rest of file) ...
+export const parseAttributeValue = (val, key) => {
+	if (val === null || val === undefined) return null;
+
+	// 1. Already an array - clean it
+	if (Array.isArray(val)) {
+		return val.map((item) => (typeof item === 'object' && item.value ? item.value : item));
+	}
+
+	// 2. Check if this should be a list based on key name
+	const listKeys = ['feature', 'features', 'traits', 'inventory', 'loot', 'spells'];
+	if (typeof val === 'string' && listKeys.includes(key?.toLowerCase())) {
+		return val
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+	}
+
+	// 3. Unwrap objects
+	if (typeof val === 'object' && val.value) {
+		return val.value;
+	}
+
+	// 4. Return as string
+	return String(val);
+};
+
+export const parseAbilityScores = (val) => {
+	if (!val || typeof val !== 'string') return [];
+
+	return val.split(',').map((s) => {
+		const parts = s.trim().split(' ');
+		const name = parts[0];
+		const score = parts.find((p) => /^\d+$/.test(p)) || '';
+		const mod = parts.find((p) => p.includes('('))?.replace(/[()]/g, '') || '';
+
+		return { name, score, mod };
+	});
+};
+
+export const parseTagList = (val) => {
+	if (!val) return [];
+	if (Array.isArray(val)) return val.map(String);
+
+	return String(val)
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean);
+};
+
+export const isIgnoredAttribute = (key) => {
+	const ignoredKeys = [
+		'image',
+		'portrait',
+		'icon',
+		'token',
+		'session',
+		'date',
+		'summary',
+		'background_image',
+		'background',
+		'is_active',
+	];
+
+	return ignoredKeys.includes(key.toLowerCase());
+};
+
+export const isNarrativeAttribute = (key) => {
+	const narrativeKeys = [
+		'background',
+		'personality',
+		'history',
+		'bio',
+		'biography',
+		'goals',
+		'ideals',
+		'bonds',
+		'flaws',
+		'notes',
+		'gm notes',
+		'description',
+		'appearance',
+		'tactics',
+		'narrative',
+	];
+
+	return narrativeKeys.includes(key.toLowerCase());
+};
+
+export const isListAttribute = (key) => {
+	const listKeys = ['feature', 'features', 'traits', 'inventory', 'loot', 'spells'];
+	return listKeys.includes(key.toLowerCase());
+};
+
+export const getAttributeDisplayType = (key, value) => {
+	const normalizedKey = key.toLowerCase();
+
+	// Special widgets
+	if (['abilities', 'stats'].includes(normalizedKey)) {
+		return 'stat-grid';
+	}
+
+	if (['ability score', 'saving throw', 'saves', 'skills', 'languages', 'proficiencies'].includes(normalizedKey)) {
+		return 'tags';
+	}
+
+	// Force list display
+	if (isListAttribute(key) && Array.isArray(value)) {
+		return 'list';
+	}
+
+	// Narrative text
+	if (isNarrativeAttribute(key)) {
+		return 'narrative';
+	}
+
+	// Long text becomes narrative
+	if (typeof value === 'string' && value.length > 100) {
+		return 'narrative';
+	}
+
+	// Default
+	return 'text';
+};
+
+--- END OF domain\entity\utils\attributeParser.js ---
+
+--- FILE: domain\entity\utils\entityUtils.js ---
+/**
+ * Entity Type Utilities
+ * Pure functions for entity type checking and normalization
+ */
+
+/**
+ * Normalize entity type string
+ * @param {string} type - Raw type string
+ * @returns {string} Normalized type
+ */
+export const normalizeEntityType = (type) => {
+	if (!type) return 'default';
+	const normalized = type.toLowerCase().trim();
+	// Handle plurals
+	return normalized === 'sessions' ? 'session' : normalized;
+};
+
+/**
+ * Check if entity type is a specific value
+ * @param {Object} entity - Entity object
+ * @param {string} type - Type to check
+ * @returns {boolean}
+ */
+export const isEntityType = (entity, type) => {
+	return normalizeEntityType(entity?.type) === normalizeEntityType(type);
+};
+
+/**
+ * Check if entity is a session
+ */
+export const isSession = (entity) => isEntityType(entity, 'session');
+
+/**
+ * Check if entity is a quest
+ */
+export const isQuest = (entity) => isEntityType(entity, 'quest');
+
+/**
+ * Check if entity is an NPC
+ */
+export const isNPC = (entity) => isEntityType(entity, 'npc');
+
+/**
+ * Check if entity is a location
+ */
+export const isLocation = (entity) => isEntityType(entity, 'location');
+
+/**
+ * Check if entity type should show status icons
+ * @param {string} type - Entity type
+ * @returns {boolean}
+ */
+export const shouldShowStatus = (type) => {
+	const normalized = normalizeEntityType(type);
+	return ['npc', 'faction', 'quest'].includes(normalized);
+};
+
+/**
+ * Get entity display name
+ * Handles different name fields across entity types
+ * @param {Object} entity - Entity object
+ * @returns {string}
+ */
+export const getEntityName = (entity) => {
+	if (!entity) return 'Unknown';
+
+	// Sessions use 'title'
+	if (isSession(entity)) {
+		return entity.title || entity.name || 'Untitled Session';
+	}
+
+	// Quests use 'title'
+	if (isQuest(entity)) {
+		return entity.title || entity.name || 'Untitled Quest';
+	}
+
+	// Everyone else uses 'name'
+	return entity.name || 'Unnamed';
+};
+
+/**
+ * Get entity description
+ * Handles different description fields
+ * @param {Object} entity - Entity object
+ * @returns {string|null}
+ */
+export const getEntityDescription = (entity) => {
+	if (!entity) return null;
+
+	// Try description first
+	if (entity.description) return entity.description;
+
+	// Sessions might use summary
+	if (isSession(entity)) {
+		return entity?.summary || entity.narrative || null;
+	}
+
+	// Characters might use background
+	if (isEntityType(entity, 'character')) {
+		return entity.background || entity.short_description || null;
+	}
+
+	return null;
+};
+
+/**
+ * Get entity icon initial (first letter)
+ * @param {Object} entity - Entity object
+ * @returns {string}
+ */
+export const getEntityInitial = (entity) => {
+	const name = getEntityName(entity);
+	return (name[0] || 'E').toUpperCase();
+};
+
+/**
+ * Check if entity is marked as dead/inactive
+ * @param {Object} entity - Entity object
+ * @returns {boolean}
+ */
+export const isEntityDead = (entity) => {
+	const status = entity.status?.toLowerCase();
+	return status === 'dead' || status === 'deceased' || status === 'inactive';
+};
+
+/**
+ * Check if entity/quest is completed
+ * @param {Object} entity - Entity object
+ * @returns {boolean}
+ */
+export const isEntityCompleted = (entity) => {
+	const status = entity.status?.toLowerCase();
+	return ['completed', 'finished', 'done', 'success'].some((k) => status?.includes(k));
+};
+
+/**
+ * Check if entity/quest has failed
+ * @param {Object} entity - Entity object
+ * @returns {boolean}
+ */
+export const isEntityFailed = (entity) => {
+	const status = entity.status?.toLowerCase();
+	return ['failed', 'failure', 'abandoned'].some((k) => status?.includes(k));
+};
+
+/**
+ * Determine the parent ID of an entity based on its relationships.
+ * Prioritizes explicit parent relationships, then location containers.
+ * @param {Object} entity - Entity object with relationships array
+ * @returns {string|null} ID of the parent entity
+ */
+export const getParentId = (entity) => {
+	const relationships = entity.relationships;
+	if (!relationships || !Array.isArray(relationships)) return null;
+
+	// 1. Check for explicit parent (Location hierarchy: Location -> Parent Location)
+	const parentRel = relationships.find(
+		(r) =>
+			(r.type === 'parent_location' || r.type === 'parent') && (r.direction === 'outgoing' || r.direction === undefined)
+	);
+	if (parentRel) return parentRel.entity_id;
+
+	// 2. Check for location link (NPC hierarchy: NPC -> Location)
+	if (entity.type === 'npc' || entity.type === 'encounter') {
+		// Get ALL relationships to locations
+		const locationRels = relationships.filter((r) => r.entity_type === 'location');
+
+		if (locationRels.length > 0) {
+			// Priority 1: Look for specific semantic types
+			const primary = locationRels.find((r) =>
+				['location', 'located_in', 'base', 'home', 'residence', 'origin', 'occurred_at'].includes(r.type?.toLowerCase())
+			);
+
+			// Priority 2: Fallback to the first location found (e.g. generic 'related')
+			return primary ? primary.entity_id : locationRels[0].entity_id;
+		}
+	}
+
+	return null;
+};
+
+--- END OF domain\entity\utils\entityUtils.js ---
+
+--- FILE: domain\entity\utils\statusUtils.js ---
+import { Sword, Shield, Circle, HelpCircle, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
+/**
+ * Rank definitions for sorting.
+ * Lower number = Higher priority in lists.
+ */
+const AFFINITY_RANKS = {
+	// Rank 1: Allies
+	ally: 1,
+	allies: 1,
+	friend: 1,
+	friendly: 1,
+	helpful: 1,
+	allied: 1,
+	alliance: 1,
+	aligned: 1,
+	// Rank 2: Neutral
+	neutral: 2,
+	indifferent: 2,
+	unknown: 2, // 'Unknown' faction status often implies neutral
+	// Rank 3: Enemies
+	enemy: 3,
+	enemies: 3,
+	hostile: 3,
+	rival: 3,
+	villain: 3,
+	threat: 3,
+	// Rank 99: Fallback
+	other: 99,
+};
+
+/**
+ * Calculate a numeric rank for an entity based on status/affinity string.
+ * Used for sorting: Allies -> Neutral -> Enemies -> Unknown
+ *
+ * @param {string} statusOrAffinity
+ * @returns {number} 1, 2, 3, or 99
+ */
+export const getAffinityRank = (statusOrAffinity) => {
+	const key = (statusOrAffinity || '').toLowerCase();
+
+	// Check for exact matches or substring matches
+	for (const [term, rank] of Object.entries(AFFINITY_RANKS)) {
+		if (key.includes(term)) return rank;
+	}
+
+	return 99;
+};
+
+/**
+ * Get status icon based on entity type and status
+ */
+export const getStatusIcon = (status, type) => {
+	const s = status?.toLowerCase() || 'unknown';
+
+	// Quest-specific icons
+	if (type === 'quest') {
+		if (['active', 'in progress', 'started'].some((k) => s.includes(k))) {
+			return { Icon: Circle, className: 'text-amber-500 fill-amber-500/20' };
+		}
+		if (['completed', 'finished', 'done', 'success'].some((k) => s.includes(k))) {
+			return { Icon: CheckCircle2, className: 'text-emerald-600' };
+		}
+		if (['failed', 'failure'].some((k) => s.includes(k))) {
+			return { Icon: XCircle, className: 'text-red-500' };
+		}
+		if (['abandoned', 'on-hold', 'paused'].some((k) => s.includes(k))) {
+			return { Icon: Clock, className: 'text-slate-400' };
+		}
+		return { Icon: Circle, className: 'text-slate-300' };
+	}
+
+	// NPC/Faction affinity icons
+	const rank = getAffinityRank(s);
+
+	if (rank === 3) {
+		// Enemy
+		return { Icon: Sword, className: 'text-red-500 fill-red-500/10' };
+	}
+	if (rank === 1) {
+		// Ally
+		return { Icon: Shield, className: 'text-emerald-500 fill-emerald-500/10' };
+	}
+	// Neutral / Unknown
+	return { Icon: Circle, className: 'text-gray-400' };
+};
+
+export const getStatusInfo = (entity) => {
+	const statusRaw = entity.status || getAttributeValue(entity.attributes, ['status']);
+	const affinityRaw = getAttributeValue(entity.attributes, ['affinity']);
+
+	const displayStatus = affinityRaw && affinityRaw !== 'unknown' ? affinityRaw : statusRaw;
+	const statusLower = displayStatus?.toLowerCase();
+
+	return {
+		raw: statusRaw,
+		display: displayStatus,
+		icon: getStatusIcon(displayStatus, entity.type),
+		rank: getAffinityRank(displayStatus),
+		isDead: statusLower === 'dead',
+		isFailed: statusLower === 'failed',
+		isCompleted: ['completed', 'finished', 'done', 'success'].some((k) => statusLower?.includes(k)),
+	};
+};
+
+--- END OF domain\entity\utils\statusUtils.js ---
+

@@ -1,0 +1,149 @@
+================================================================
+PROJECT STATISTICS
+Generated: 2025-12-30 12:38:25
+================================================================
+
+### OVERALL STATISTICS
+
+Total files: 173
+Total lines: 15,186
+Non-empty lines: 13,400
+Comment lines: 1,367
+Total size: 473,731 bytes (462.63 KB)
+Average lines per file: 87.8
+
+
+### STATISTICS BY FILE TYPE
+
+.css:
+  Files: 1
+  Lines: 271
+  Size: 6,699 bytes (6.54 KB)
+
+.js:
+  Files: 65
+  Lines: 6,325
+  Size: 184,431 bytes (180.11 KB)
+
+.json:
+  Files: 1
+  Lines: 184
+  Size: 4,394 bytes (4.29 KB)
+
+.jsx:
+  Files: 106
+  Lines: 8,406
+  Size: 278,207 bytes (271.69 KB)
+
+
+### LARGEST FILES (by lines)
+
+features\admin\api\adminService.js: 461 lines
+features\admin\components\RelationshipManager.jsx: 420 lines
+features\dashboard\api\dashboardService.js: 377 lines
+features\admin\components\EncounterManager.jsx: 354 lines
+domain\entity\api\entityService.js: 317 lines
+features\admin\components\AdminForm.jsx: 283 lines
+app\styles\global.css: 271 lines
+features\admin\components\QuestObjectiveManager.jsx: 269 lines
+dev_helpers\refactor.js: 256 lines
+features\admin\components\SessionEventManager.jsx: 224 lines
+features\admin\pages\SplitPaneManager.jsx: 211 lines
+features\wiki\components\EntitySidebar.jsx: 209 lines
+domain\entity\utils\attributeParser.js: 202 lines
+features\smart-text\components\EntityEmbed.jsx: 200 lines
+features\admin\config\imageManifest.json: 184 lines
+features\wiki\components\EntityHeader.jsx: 183 lines
+domain\entity\utils\entityUtils.js: 181 lines
+features\wiki\components\EncounterTimeline.jsx: 180 lines
+features\wiki\utils\attributeMapper.js: 172 lines
+shared\utils\textUtils.js: 169 lines
+
+
+### STATISTICS BY CATEGORY
+
+app:
+  Files: 4
+  Lines: 392
+  Size: 10,752 bytes (10.50 KB)
+
+dev_helpers:
+  Files: 2
+  Lines: 308
+  Size: 18,984 bytes (18.54 KB)
+
+domain_entity:
+  Files: 13
+  Lines: 1,528
+  Size: 41,003 bytes (40.04 KB)
+
+features_admin:
+  Files: 19
+  Lines: 3,431
+  Size: 112,791 bytes (110.15 KB)
+
+features_atlas:
+  Files: 12
+  Lines: 699
+  Size: 21,436 bytes (20.93 KB)
+
+features_campaign:
+  Files: 6
+  Lines: 231
+  Size: 6,989 bytes (6.83 KB)
+
+features_dashboard:
+  Files: 9
+  Lines: 1,017
+  Size: 34,149 bytes (33.35 KB)
+
+features_graph:
+  Files: 7
+  Lines: 420
+  Size: 11,256 bytes (10.99 KB)
+
+features_navigation:
+  Files: 7
+  Lines: 309
+  Size: 9,622 bytes (9.40 KB)
+
+features_search:
+  Files: 10
+  Lines: 546
+  Size: 17,289 bytes (16.88 KB)
+
+features_smart-text:
+  Files: 5
+  Lines: 437
+  Size: 12,468 bytes (12.18 KB)
+
+features_smart-tooltip:
+  Files: 5
+  Lines: 385
+  Size: 11,486 bytes (11.22 KB)
+
+features_table-of-contents:
+  Files: 5
+  Lines: 198
+  Size: 5,991 bytes (5.85 KB)
+
+features_timeline:
+  Files: 6
+  Lines: 449
+  Size: 13,080 bytes (12.77 KB)
+
+features_wiki:
+  Files: 40
+  Lines: 3,274
+  Size: 104,161 bytes (101.72 KB)
+
+root:
+  Files: 1
+  Lines: 42
+  Size: 1,190 bytes (1.16 KB)
+
+shared:
+  Files: 22
+  Lines: 1,520
+  Size: 41,084 bytes (40.12 KB)
+

@@ -1,0 +1,1842 @@
+================================================================
+PARTIAL BUNDLE: SHARED
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: shared\api\supabaseClient.js ---
+import { createClient } from '@supabase/supabase-js';
+
+// 1. Load variables from .env
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// 2. Safety Check (Helps debug if .env is missing)
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+	console.error(
+		'🚨 Supabase Critical Error: Missing environment variables.\n' +
+			'Please check that your .env file exists and contains VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+	);
+}
+
+// 3. Initialize and Export the Client
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+--- END OF shared\api\supabaseClient.js ---
+
+--- FILE: shared\components\ErrorBoundary.jsx ---
+import { Component } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import Button from './ui/Button';
+
+class ErrorBoundary extends Component {
+	constructor(props) {
+		super(props);
+		this.state = { hasError: false, error: null };
+	}
+
+	static getDerivedStateFromError(error) {
+		return { hasError: true, error };
+	}
+
+	componentDidCatch(error, errorInfo) {
+		console.error('Error caught by boundary:', error, errorInfo);
+	}
+
+	handleReset = () => {
+		this.setState({ hasError: false, error: null });
+		window.location.reload();
+	};
+
+	render() {
+		if (this.state.hasError) {
+			return (
+				<div className='min-h-screen flex items-center justify-center bg-muted p-4'>
+					<div className='max-w-md w-full text-center'>
+						<div className='mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100'>
+							<AlertTriangle className='w-8 h-8 text-red-600' />
+						</div>
+						<h1 className='text-2xl font-serif font-bold text-foreground mb-3'>Something went wrong</h1>
+						<p className='text-gray-600 mb-6'>Don't worry, your data is safe. Try refreshing the page to continue.</p>
+						{process.env.NODE_ENV === 'development' && this.state.error && (
+							<details className='mb-6 text-left bg-red-50 border border-red-200 rounded-lg p-4'>
+								<summary className='cursor-pointer font-semibold text-red-900 mb-2'>Error Details</summary>
+								<pre className='text-xs text-red-800 overflow-auto'>{this.state.error.toString()}</pre>
+							</details>
+						)}
+						<Button onClick={this.handleReset} icon={RefreshCw}>
+							Reload Application
+						</Button>
+					</div>
+				</div>
+			);
+		}
+
+		return this.props.children;
+	}
+}
+
+export default ErrorBoundary;
+
+--- END OF shared\components\ErrorBoundary.jsx ---
+
+--- FILE: shared\components\layout\CollapsibleSection.jsx ---
+import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { clsx } from 'clsx';
+
+/**
+ * CollapsibleSection Component
+ * Expandable/collapsible content section
+ *
+ * @param {string} title - Section title
+ * @param {React.ReactNode} children - Section content
+ * @param {boolean} defaultOpen - Initial state (default true)
+ * @param {React.Component} icon - Optional icon component
+ * @param {string} size - Title size: 'sm', 'md', 'lg' (default 'md')
+ * @param {string} variant - Style variant: 'default', 'bordered', 'card' (default 'default')
+ * @param {string} className - Additional classes
+ */
+export default function CollapsibleSection({
+	title,
+	children,
+	defaultOpen = true,
+	icon: Icon = null,
+	size = 'md',
+	variant = 'default',
+	className = '',
+	...props
+}) {
+	const [isOpen, setIsOpen] = useState(defaultOpen);
+
+	const sizeClasses = {
+		sm: 'text-xs',
+		md: 'text-sm',
+		lg: 'text-base',
+	};
+
+	const variantClasses = {
+		default: '',
+		bordered: 'border border-border rounded-lg p-3',
+		card: 'bg-background border border-border rounded-lg shadow-sm',
+	};
+
+	const headerPadding = variant === 'card' ? 'p-3' : '';
+	const contentPadding = variant === 'card' ? 'p-3 pt-0' : '';
+
+	return (
+		<div className={clsx(variantClasses[variant], className)} {...props}>
+			{/* Header */}
+			<button
+				onClick={() => setIsOpen(!isOpen)}
+				className={clsx(
+					'w-full flex items-center gap-2 font-semibold uppercase tracking-wider text-gray-500',
+					'hover:text-gray-700 transition-colors select-none',
+					sizeClasses[size],
+					headerPadding
+				)}>
+				{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+				{Icon && <Icon size={14} className='opacity-70' />}
+				<span className='flex-1 text-left truncate'>{title}</span>
+			</button>
+
+			{/* Content */}
+			{isOpen && <div className={contentPadding}>{children}</div>}
+		</div>
+	);
+}
+
+/**
+ * CollapsibleList Component
+ * List of collapsible sections with consistent styling
+ *
+ * @param {Array<{title: string, content: ReactNode, icon?: Component}>} sections - Section definitions
+ * @param {string} variant - Style variant (default 'default')
+ * @param {string} className - Additional classes
+ */
+export function CollapsibleList({ sections, variant = 'default', className = '', ...props }) {
+	return (
+		<div className={clsx('space-y-2', className)} {...props}>
+			{sections.map((section, index) => (
+				<CollapsibleSection
+					key={section.id || index}
+					title={section.title}
+					icon={section.icon}
+					variant={variant}
+					defaultOpen={section.defaultOpen !== false}>
+					{section.content}
+				</CollapsibleSection>
+			))}
+		</div>
+	);
+}
+
+--- END OF shared\components\layout\CollapsibleSection.jsx ---
+
+--- FILE: shared\components\layout\SplitView.jsx ---
+import { clsx } from 'clsx';
+
+/**
+ * SplitView Component
+ * Responsive 2-column layout pattern
+ *
+ * @param {React.ReactNode} sidebar - Sidebar content
+ * @param {React.ReactNode} main - Main content
+ * @param {string} sidebarPosition - 'left' or 'right' (default 'left')
+ * @param {string} sidebarWidth - Sidebar width class (default 'lg:w-64')
+ * @param {boolean} stickyHeader - Make sidebar sticky (default false)
+ * @param {string} className - Additional container classes
+ */
+export default function SplitView({
+	sidebar,
+	main,
+	sidebarPosition = 'left',
+	sidebarWidth = 'lg:w-64',
+	stickyHeader = false,
+	className = '',
+	...props
+}) {
+	const sidebarClasses = clsx(
+		'min-w-0',
+		sidebarWidth,
+		stickyHeader && 'lg:sticky lg:top-0 lg:self-start lg:max-h-screen lg:overflow-y-auto'
+	);
+
+	const mainClasses = 'flex-1 min-w-0';
+
+	return (
+		<div className={clsx('flex flex-col lg:flex-row gap-4 lg:gap-6', className)} {...props}>
+			{sidebarPosition === 'left' && <aside className={sidebarClasses}>{sidebar}</aside>}
+
+			<main className={mainClasses}>{main}</main>
+
+			{sidebarPosition === 'right' && <aside className={clsx(sidebarClasses, 'lg:order-2')}>{sidebar}</aside>}
+		</div>
+	);
+}
+
+/**
+ * ThreeColumnLayout Component
+ * For pages with sidebar, main content, and ToC/meta panel
+ *
+ * @param {React.ReactNode} left - Left sidebar
+ * @param {React.ReactNode} center - Main content
+ * @param {React.ReactNode} right - Right panel (ToC, etc.)
+ * @param {string} className - Additional container classes
+ */
+export function ThreeColumnLayout({ left, center, right, className = '', ...props }) {
+	return (
+		<div
+			className={clsx('grid grid-cols-1 xl:grid-cols-[1fr_48rem_1fr] gap-6 max-w-[1920px] mx-auto', className)}
+			{...props}>
+			{/* Left Gutter (Hidden on smaller screens) */}
+			<div className='hidden xl:block' aria-hidden='true'>
+				{left}
+			</div>
+
+			{/* Center Content */}
+			<div className='min-w-0'>{center}</div>
+
+			{/* Right Panel */}
+			<div className='hidden xl:block'>{right}</div>
+		</div>
+	);
+}
+
+--- END OF shared\components\layout\SplitView.jsx ---
+
+--- FILE: shared\components\layout\TabContainer.jsx ---
+import { useState } from 'react';
+import { clsx } from 'clsx';
+
+/**
+ * TabButton Component
+ * Individual tab button
+ */
+function TabButton({ active, label, onClick, icon: Icon }) {
+	return (
+		<button
+			onClick={onClick}
+			className={clsx(
+				'px-4 py-2 text-sm font-medium transition-all border-b-2 cursor-pointer',
+				active
+					? 'border-amber-600 text-amber-600 bg-amber-50/30'
+					: 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+			)}>
+			<span className='flex items-center gap-2'>
+				{Icon && <Icon size={14} />}
+				{label}
+			</span>
+		</button>
+	);
+}
+
+/**
+ * TabContainer Component
+ * Reusable tab navigation system
+ *
+ * @param {Array<{id: string, label: string, icon?: Component, content: ReactNode}>} tabs - Tab definitions
+ * @param {string} defaultTab - Default active tab ID
+ * @param {string} className - Additional container classes
+ * @param {boolean} sticky - Make tab bar sticky (default true)
+ * @param {Function} onChange - Callback when tab changes
+ */
+export default function TabContainer({
+	tabs,
+	defaultTab = null,
+	className = '',
+	sticky = true,
+	onChange = null,
+	...props
+}) {
+	const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+
+	const handleTabChange = (tabId) => {
+		setActiveTab(tabId);
+		if (onChange) onChange(tabId);
+	};
+
+	const activeTabContent = tabs.find((t) => t.id === activeTab)?.content;
+
+	return (
+		<div className={clsx('flex flex-col', className)} {...props}>
+			{/* Tab Bar */}
+			<div
+				className={clsx(
+					'bg-background/95 backdrop-blur shadow-sm border-b border-border z-20',
+					sticky && 'sticky top-0'
+				)}>
+				<div className='max-w-screen-2xl mx-auto px-6 flex justify-center'>
+					{tabs.map((tab) => (
+						<TabButton
+							key={tab.id}
+							active={activeTab === tab.id}
+							label={tab.label}
+							icon={tab.icon}
+							onClick={() => handleTabChange(tab.id)}
+						/>
+					))}
+				</div>
+			</div>
+
+			{/* Tab Content */}
+			<div className='flex-1 min-h-0'>{activeTabContent}</div>
+		</div>
+	);
+}
+
+/**
+ * TabPanel Component
+ * Wrapper for individual tab content
+ *
+ * @param {React.ReactNode} children - Panel content
+ * @param {string} className - Additional classes
+ */
+export function TabPanel({ children, className = '', ...props }) {
+	return (
+		<div className={clsx('p-6', className)} {...props}>
+			{children}
+		</div>
+	);
+}
+
+--- END OF shared\components\layout\TabContainer.jsx ---
+
+--- FILE: shared\components\markdown\MarkdownRenderer.jsx ---
+import ReactMarkdown from 'react-markdown';
+import { generateId, extractText } from '@/shared/utils/textUtils';
+
+/**
+ * HeadingRenderer Component
+ * Automatically adds IDs to headings for anchor links
+ */
+function HeadingRenderer({ level, children }) {
+	const text = extractText(children);
+	const id = generateId(text);
+	const Tag = `h${level}`;
+	return <Tag id={id}>{children}</Tag>;
+}
+
+/**
+ * MarkdownRenderer Component
+ * Pre-configured ReactMarkdown with sensible defaults
+ *
+ * @param {string} children - Markdown text
+ * @param {Object} components - Custom component overrides
+ * @param {boolean} addHeadingIds - Auto-generate heading IDs (default true)
+ * @param {string} className - Additional CSS classes
+ */
+export default function MarkdownRenderer({
+	children,
+	components = {},
+	addHeadingIds = true,
+	className = '',
+	...props
+}) {
+	// Safety check
+	let safeText = children;
+	if (Array.isArray(children)) {
+		safeText = children.join('');
+	} else if (typeof children !== 'string' && children !== null && children !== undefined) {
+		safeText = String(children);
+	}
+
+	// Build component overrides
+	const defaultComponents = {
+		// Auto-add IDs to headings
+		...(addHeadingIds && {
+			h1: (props) => <HeadingRenderer level={1} {...props} />,
+			h2: (props) => <HeadingRenderer level={2} {...props} />,
+			h3: (props) => <HeadingRenderer level={3} {...props} />,
+		}),
+		// External links open in new tab
+		a: ({ href, children }) => {
+			if (href && !href.startsWith('#') && !href.startsWith('/')) {
+				return (
+					<a href={href} target='_blank' rel='noopener noreferrer'>
+						{children}
+					</a>
+				);
+			}
+			return <a href={href}>{children}</a>;
+		},
+	};
+
+	return (
+		<ReactMarkdown className={className} components={{ ...defaultComponents, ...components }} {...props}>
+			{safeText}
+		</ReactMarkdown>
+	);
+}
+
+/**
+ * InlineMarkdown Component
+ * For rendering markdown inside inline contexts (no block elements)
+ *
+ * @param {string} children - Markdown text
+ */
+export function InlineMarkdown({ children, ...props }) {
+	return (
+		<MarkdownRenderer
+			components={{
+				p: 'span',
+				h1: 'strong',
+				h2: 'strong',
+				h3: 'strong',
+				ul: 'span',
+				ol: 'span',
+				li: 'span',
+			}}
+			addHeadingIds={false}
+			{...props}>
+			{children}
+		</MarkdownRenderer>
+	);
+}
+
+--- END OF shared\components\markdown\MarkdownRenderer.jsx ---
+
+--- FILE: shared\components\markdown\MarkdownWithToC.jsx ---
+import { useMemo } from 'react';
+import { extractHeaders } from '@/shared/utils/markdownUtils';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import MarkdownRenderer from './MarkdownRenderer';
+
+/**
+ * MarkdownWithToC Component
+ * Renders markdown with automatic Table of Contents generation
+ *
+ * @param {string} children - Markdown text
+ * @param {boolean} showToC - Show table of contents (default true)
+ * @param {number} tocMaxDepth - Maximum heading depth for ToC (default 3)
+ * @param {string} layout - Layout mode: 'split' or 'top' (default 'split')
+ * @param {string} className - Additional classes for markdown container
+ */
+export default function MarkdownWithToC({
+	children,
+	showToC = true,
+	tocMaxDepth = 3,
+	layout = 'split',
+	className = '',
+	components = {},
+	...props
+}) {
+	// Extract headers for ToC
+	const tocItems = useMemo(() => {
+		if (!showToC || !children) return [];
+		const headers = extractHeaders(children);
+		return headers.filter((h) => h.depth <= tocMaxDepth);
+	}, [children, showToC, tocMaxDepth]);
+
+	// No ToC needed
+	if (!showToC || tocItems.length === 0) {
+		return (
+			<MarkdownRenderer className={className} components={components} {...props}>
+				{children}
+			</MarkdownRenderer>
+		);
+	}
+
+	// Top layout: ToC above content
+	if (layout === 'top') {
+		return (
+			<div>
+				<div className='mb-6'>
+					<TableOfContents items={tocItems} />
+				</div>
+				<MarkdownRenderer className={className} components={components} {...props}>
+					{children}
+				</MarkdownRenderer>
+			</div>
+		);
+	}
+
+	// Split layout: ToC on side
+	return (
+		<div className='grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-8'>
+			{/* Content */}
+			<div className='min-w-0'>
+				<MarkdownRenderer className={className} components={components} {...props}>
+					{children}
+				</MarkdownRenderer>
+			</div>
+
+			{/* ToC Sidebar */}
+			<div className='hidden xl:block'>
+				<TableOfContents items={tocItems} />
+			</div>
+
+			{/* Mobile ToC */}
+			<div className='xl:hidden'>
+				<TableOfContents items={tocItems} />
+			</div>
+		</div>
+	);
+}
+
+--- END OF shared\components\markdown\MarkdownWithToC.jsx ---
+
+--- FILE: shared\components\ui\Breadcrumbs.jsx ---
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom'; // Added useLocation
+import { ChevronRight, Home } from 'lucide-react';
+import { clsx } from 'clsx';
+import { useBreadcrumbs } from '@/shared/hooks/useBreadcrumbs';
+
+export default function Breadcrumbs({ className }) {
+	const crumbs = useBreadcrumbs();
+	const location = useLocation();
+
+	// 1. Explicitly exclude full-screen "World" views where overlays distract
+	const BLACKLISTED_ROUTES = ['/timeline', '/relationships', '/atlas'];
+	const isBlacklisted = BLACKLISTED_ROUTES.some((route) => location.pathname.startsWith(route));
+
+	if (isBlacklisted) return null;
+
+	// 2. Hide on "Landing Pages" (Depth check)
+	// If we only have "Home > [Category]", the Page Title serves as the breadcrumb.
+	// We only want to show this when deep navigating (e.g., "Home > Locations > Brindol")
+	if (crumbs.length <= 2) return null;
+
+	return (
+		<nav
+			className={clsx(
+				'inline-flex items-center gap-1 px-3 py-1.5 rounded-full',
+				'bg-background/60 backdrop-blur-md border border-border/50 shadow-sm',
+				'text-xs font-medium text-muted-foreground',
+				'transition-all hover:bg-background/90 hover:shadow-md hover:border-border',
+				className
+			)}
+			aria-label='Breadcrumb'>
+			<ol className='flex items-center gap-1.5'>
+				{crumbs.map((crumb, index) => {
+					const Icon = crumb.icon;
+					const isFirst = index === 0;
+
+					return (
+						<li key={crumb.path} className='flex items-center'>
+							{!isFirst && <ChevronRight size={10} className='text-muted-foreground/60 mx-0.5 shrink-0' />}
+
+							{crumb.isCurrent ? (
+								<span
+									className={clsx('flex items-center gap-1.5 truncate max-w-[200px]', 'text-foreground font-semibold')}>
+									{Icon && <Icon size={12} />}
+									{crumb.label}
+								</span>
+							) : (
+								<Link
+									to={crumb.path}
+									className='flex items-center gap-1.5 hover:text-accent transition-colors truncate max-w-[150px]'>
+									{isFirst ? <Home size={12} /> : Icon && <Icon size={12} />}
+									<span className={isFirst ? 'sr-only' : ''}>{crumb.label}</span>
+								</Link>
+							)}
+						</li>
+					);
+				})}
+			</ol>
+		</nav>
+	);
+}
+
+--- END OF shared\components\ui\Breadcrumbs.jsx ---
+
+--- FILE: shared\components\ui\Button.jsx ---
+import { clsx } from 'clsx';
+
+export default function Button({
+	children,
+	variant = 'primary',
+	size = 'md',
+	icon: Icon,
+	fullWidth = false,
+	disabled = false,
+	className,
+	...props
+}) {
+	const baseStyles =
+		'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+
+	const variants = {
+		primary: 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500',
+		secondary: 'bg-gray-100 text-foreground hover:bg-gray-200 focus:ring-gray-500',
+		ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+		danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+	};
+
+	const sizes = {
+		sm: 'px-3 py-1.5 text-sm',
+		md: 'px-4 py-2 text-sm',
+		lg: 'px-6 py-3 text-base',
+	};
+
+	return (
+		<button
+			className={clsx(baseStyles, variants[variant], sizes[size], fullWidth && 'w-full', className)}
+			disabled={disabled}
+			{...props}>
+			{Icon && <Icon size={16} />}
+			{children}
+		</button>
+	);
+}
+
+--- END OF shared\components\ui\Button.jsx ---
+
+--- FILE: shared\components\ui\Card.jsx ---
+import { clsx } from 'clsx';
+
+export function Card({ children, className, padding = true, hover = false, ...props }) {
+	return (
+		<div
+			className={clsx(
+				'bg-[var(--card-bg)] border border-border rounded-lg shadow-sm',
+				padding && 'p-4',
+				hover && 'transition-shadow hover:shadow-md',
+				className
+			)}
+			{...props}>
+			{children}
+		</div>
+	);
+}
+
+export function CardHeader({ children, className }) {
+	return <div className={clsx('border-b border-border pb-3 mb-3', className)}>{children}</div>;
+}
+
+export function CardTitle({ children, className }) {
+	return <h3 className={clsx('text-lg font-serif font-semibold text-foreground', className)}>{children}</h3>;
+}
+
+export function CardContent({ children, className }) {
+	return <div className={className}>{children}</div>;
+}
+
+--- END OF shared\components\ui\Card.jsx ---
+
+--- FILE: shared\components\ui\DevAdminButton.jsx ---
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Database, Wrench } from 'lucide-react';
+
+export default function DevAdminButton() {
+	// CRITICAL: This ensures it never renders in Production (GitHub Pages)
+	if (!import.meta.env.DEV) return null;
+
+	return (
+		<Link
+			to='/dm'
+			className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-1 bg-muted  rounded-full shadow-xl hover:bg-background hover:scale-105 transition-all border border-stone-300'
+			title='Open DM Console (Dev Mode Only)'>
+			<Wrench size={14} />
+			<span className='hidden md:inline'>Dev</span>
+		</Link>
+	);
+}
+
+--- END OF shared\components\ui\DevAdminButton.jsx ---
+
+--- FILE: shared\components\ui\Drawer.jsx ---
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
+import { clsx } from 'clsx';
+import { useEffect, useState } from 'react';
+
+/**
+ * Reusable Mobile Drawer
+ */
+export const Drawer = ({ isOpen, onClose, title, children, position = 'right', className }) => {
+	const [isVisible, setIsVisible] = useState(false);
+
+	useEffect(() => {
+		if (isOpen) setIsVisible(true);
+		else setTimeout(() => setIsVisible(false), 300);
+	}, [isOpen]);
+
+	if (!isVisible && !isOpen) return null;
+
+	const positionClasses = {
+		right: 'right-0 top-0 bottom-0 border-l slide-in-from-right',
+		left: 'left-0 top-0 bottom-0 border-r slide-in-from-left',
+	};
+
+	return createPortal(
+		<div className='fixed inset-0 z-[9999] isolate'>
+			{/* Backdrop */}
+			<div
+				className={clsx(
+					'absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300',
+					isOpen ? 'opacity-100' : 'opacity-0'
+				)}
+				onClick={onClose}
+			/>
+
+			{/* Panel */}
+			<div
+				className={clsx(
+					'absolute w-80 bg-background shadow-2xl border-border flex flex-col transition-transform duration-300',
+					positionClasses[position],
+					isOpen ? 'translate-x-0' : position === 'right' ? 'translate-x-full' : '-translate-x-full',
+					className
+				)}>
+				{/* Header */}
+				<div className='p-4 border-b border-border flex items-center justify-between bg-muted shrink-0'>
+					<span className='text-sm font-serif font-bold text-foreground'>{title}</span>
+					<button onClick={onClose} className='p-2 hover:bg-background/50 rounded-full transition-colors'>
+						<X size={18} />
+					</button>
+				</div>
+
+				{/* Content - No background, let children control */}
+				<div className='flex-1 overflow-y-auto custom-scrollbar'>{children}</div>
+			</div>
+		</div>,
+		document.body
+	);
+};
+
+--- END OF shared\components\ui\Drawer.jsx ---
+
+--- FILE: shared\components\ui\EmptyState.jsx ---
+import { clsx } from 'clsx';
+
+export default function EmptyState({ icon: Icon, title, description, action, className }) {
+	return (
+		<div className={clsx('flex flex-col items-center justify-center p-8 text-center', className)}>
+			{Icon && (
+				<div className='mb-4 rounded-full bg-gray-100 p-4'>
+					<Icon className='w-8 h-8 text-gray-400' strokeWidth={1.5} />
+				</div>
+			)}
+			{title && <h3 className='text-lg font-serif font-semibold text-foreground mb-2'>{title}</h3>}
+			{description && <p className='text-sm text-gray-500 max-w-sm mb-6'>{description}</p>}
+			{action && <div>{action}</div>}
+		</div>
+	);
+}
+
+--- END OF shared\components\ui\EmptyState.jsx ---
+
+--- FILE: shared\components\ui\LoadingSpinner.jsx ---
+import { Loader2 } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export default function LoadingSpinner({ size = 'md', text = 'Loading...', className }) {
+	const sizes = {
+		sm: 'w-4 h-4',
+		md: 'w-8 h-8',
+		lg: 'w-12 h-12',
+	};
+
+	return (
+		<div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
+			<Loader2 className={clsx(sizes[size], 'animate-spin text-amber-600')} />
+			{text && <p className='text-sm text-gray-500 font-medium'>{text}</p>}
+		</div>
+	);
+}
+
+--- END OF shared\components\ui\LoadingSpinner.jsx ---
+
+--- FILE: shared\components\ui\SectionDivider.jsx ---
+import { Diamond } from 'lucide-react';
+
+export const SectionDivider = () => (
+	<div className='flex items-center gap-4 my-6 opacity-80 select-none'>
+		<div className='h-px bg-border flex-1' />
+		<div className='flex-shrink-0 text-accent/50'>
+			<Diamond size={10} fill='currentColor' />
+		</div>
+		<div className='h-px bg-border flex-1' />
+	</div>
+);
+
+--- END OF shared\components\ui\SectionDivider.jsx ---
+
+--- FILE: shared\hooks\useBreadcrumbs.js ---
+import { useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { capitalize } from '@/shared/utils/textUtils';
+
+const ROUTE_LABELS = {
+	dm: 'DM Console',
+	manage: 'Manage',
+	atlas: 'Atlas',
+	timeline: 'Timeline',
+	relationships: 'Graph',
+	wiki: 'Wiki',
+};
+
+export function useBreadcrumbs() {
+	const location = useLocation();
+	const { map: entityMap } = useEntityIndex(); // DESTRUCTURED: Use Map
+
+	const breadcrumbs = useMemo(() => {
+		const pathnames = location.pathname.split('/').filter((x) => x);
+		const crumbs = [];
+
+		crumbs.push({
+			label: 'Home',
+			path: '/',
+			isCurrent: pathnames.length === 0,
+		});
+
+		const isWiki = pathnames[0] === 'wiki';
+		const SKIP_SEGMENTS = ['manage', 'wiki'];
+
+		let currentPath = '';
+
+		for (let i = 0; i < pathnames.length; i++) {
+			const segment = pathnames[i];
+			currentPath += `/${segment}`;
+
+			if (SKIP_SEGMENTS.includes(segment)) continue;
+
+			const isLast = i === pathnames.length - 1;
+			const isUUID = /^[0-9a-fA-F-]{36}$/.test(segment);
+
+			if (isWiki && isUUID) {
+				// OPTIMIZATION: O(1) Lookup
+				const targetEntity = entityMap.get(segment);
+
+				if (targetEntity) {
+					const hierarchyStack = [];
+					let current = targetEntity;
+					const visited = new Set([current.id]);
+
+					// Fast recursive climb using Map
+					while (current.parentId) {
+						const parent = entityMap.get(current.parentId);
+						if (!parent || visited.has(parent.id)) break;
+
+						visited.add(parent.id);
+						hierarchyStack.unshift(parent);
+						current = parent;
+					}
+
+					hierarchyStack.forEach((ancestor) => {
+						crumbs.push({
+							label: ancestor.name,
+							path: `/wiki/${ancestor.type}/${ancestor.id}`,
+							isCurrent: false,
+							icon: null,
+						});
+					});
+
+					crumbs.push({
+						label: targetEntity.name,
+						path: currentPath,
+						isCurrent: isLast,
+					});
+				} else {
+					crumbs.push({ label: 'Unknown Entity', path: currentPath, isCurrent: isLast });
+				}
+			} else if (segment === 'new') {
+				crumbs.push({ label: 'Create New', path: currentPath, isCurrent: isLast });
+			} else if (getEntityConfig(segment).type !== 'default') {
+				const config = getEntityConfig(segment);
+				crumbs.push({
+					label: config.labelPlural,
+					path: currentPath,
+					isCurrent: isLast,
+					icon: config.icon,
+				});
+			} else {
+				const label = ROUTE_LABELS[segment] || capitalize(segment.replace(/_/g, ' '));
+				crumbs.push({ label, path: currentPath, isCurrent: isLast });
+			}
+		}
+
+		return crumbs;
+	}, [location.pathname, entityMap]);
+
+	return breadcrumbs;
+}
+
+--- END OF shared\hooks\useBreadcrumbs.js ---
+
+--- FILE: shared\hooks\useTheme.js ---
+import { useState, useEffect } from 'react';
+
+export const THEMES = {
+	LIGHT: 'light',
+	// DARK: 'dark',
+	DND: 'dnd',
+};
+
+export function useTheme() {
+	const [theme, setTheme] = useState(() => {
+		const stored = localStorage.getItem('app-theme');
+		return stored || THEMES.LIGHT;
+	});
+
+	useEffect(() => {
+		const root = window.document.documentElement;
+		// Remove old themes
+		Object.values(THEMES).forEach((t) => root.removeAttribute('data-theme'));
+
+		// Apply new theme
+		if (theme !== THEMES.LIGHT) {
+			root.setAttribute('data-theme', theme);
+		}
+
+		localStorage.setItem('app-theme', theme);
+	}, [theme]);
+
+	const cycleTheme = () => {
+		const themes = Object.values(THEMES);
+		const currentIndex = themes.indexOf(theme);
+		const nextIndex = (currentIndex + 1) % themes.length;
+		setTheme(themes[nextIndex]);
+	};
+
+	return { theme, setTheme, cycleTheme };
+}
+
+--- END OF shared\hooks\useTheme.js ---
+
+--- FILE: shared\utils\imageUtils.js ---
+/**
+ * Centralized image URL resolution
+ * Used by: EntityViewModel, EntityIndex, TooltipCard
+ */
+
+const IMAGE_KEYS = {
+	background: ['background_image', 'background', 'Background', 'Background_image'],
+	icon: ['icon', 'Icon', 'token', 'Token', 'portrait', 'Portrait'],
+	any: ['background_image', 'background', 'image', 'Image', 'portrait', 'Portrait', 'icon', 'Icon'],
+};
+
+/**
+ * Extract value from nested attribute structure
+ */
+const extractValue = (val) => {
+	if (!val) return null;
+	if (typeof val === 'string') return val;
+	if (Array.isArray(val)) return val[0]?.value || val[0];
+	if (typeof val === 'object' && val.value) return val.value;
+	return null;
+};
+
+/**
+ * Resolve image URL from attributes object
+ * @param {Object} attributes - Entity attributes
+ * @param {'background' | 'icon' | 'any'} type - Type of image to find
+ * @returns {string|null} - Resolved URL or null
+ */
+export const resolveImageUrl = (attributes, type = 'any') => {
+	if (!attributes) return null;
+
+	const keys = IMAGE_KEYS[type] || IMAGE_KEYS.any;
+
+	for (const key of keys) {
+		const val = attributes[key] || attributes[key.toLowerCase()];
+		const rawUrl = extractValue(val);
+
+		if (rawUrl) {
+			// Clean path and prepend base URL
+			const cleanPath = rawUrl
+				.trim()
+				.replace(/(\.\.\/)+/g, '')
+				.replace(/^\//, '');
+
+			return `${import.meta.env.BASE_URL}${cleanPath}`;
+		}
+	}
+
+	return null;
+};
+
+/**
+ * Safe attribute parser
+ */
+export const parseAttributes = (attrs) => {
+	if (!attrs) return {};
+	if (typeof attrs === 'object') return attrs;
+	try {
+		return JSON.parse(attrs);
+	} catch {
+		return {};
+	}
+};
+
+--- END OF shared\utils\imageUtils.js ---
+
+--- FILE: shared\utils\markdownUtils.js ---
+/**
+ * Markdown-specific Utilities
+ * Header extraction, ToC generation, etc.
+ */
+
+import { generateId } from '@/shared/utils/textUtils';
+
+/**
+ * Extract headers from markdown text
+ * @param {string} markdown - Markdown text
+ * @returns {Array<{depth: number, text: string, id: string}>}
+ */
+export const extractHeaders = (markdown) => {
+	if (!markdown) return [];
+
+	const regex = /^(#{1,3})\s+(.+)$/gm;
+	const headers = [];
+	let match;
+
+	while ((match = regex.exec(markdown)) !== null) {
+		headers.push({
+			depth: match[1].length, // 1, 2, or 3
+			text: match[2].trim(),
+			id: generateId(match[2]),
+		});
+	}
+
+	return headers;
+};
+
+/**
+ * Generate Table of Contents from markdown
+ * @param {string} markdown - Markdown text
+ * @param {number} maxDepth - Maximum heading depth (default 3)
+ * @returns {Array<{depth: number, text: string, id: string}>}
+ */
+export const generateToC = (markdown, maxDepth = 3) => {
+	const headers = extractHeaders(markdown);
+	return headers.filter((h) => h.depth <= maxDepth);
+};
+
+/**
+ * Convert markdown to plain text (strips formatting)
+ * @param {string} markdown - Markdown text
+ * @returns {string}
+ */
+export const markdownToText = (markdown) => {
+	if (!markdown) return '';
+
+	return markdown
+		.replace(/#{1,6}\s+/g, '') // Headers
+		.replace(/\*\*(.+?)\*\*/g, '$1') // Bold
+		.replace(/\*(.+?)\*/g, '$1') // Italic
+		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Links
+		.replace(/`(.+?)`/g, '$1') // Code
+		.replace(/^>\s+/gm, '') // Blockquotes
+		.replace(/^[-*+]\s+/gm, '') // Lists
+		.replace(/^\d+\.\s+/gm, '') // Ordered lists
+		.trim();
+};
+
+/**
+ * Extract excerpt from markdown (first paragraph)
+ * @param {string} markdown - Markdown text
+ * @param {number} maxLength - Maximum length (default 200)
+ * @returns {string}
+ */
+export const extractExcerpt = (markdown, maxLength = 200) => {
+	if (!markdown) return '';
+
+	// Remove headers
+	const withoutHeaders = markdown.replace(/^#{1,6}\s+.+$/gm, '');
+
+	// Get first paragraph
+	const paragraphs = withoutHeaders
+		.split(/\n\n+/)
+		.map((p) => p.trim())
+		.filter(Boolean);
+
+	if (paragraphs.length === 0) return '';
+
+	const firstPara = markdownToText(paragraphs[0]);
+
+	if (firstPara.length <= maxLength) return firstPara;
+	return firstPara.slice(0, maxLength).trim() + '...';
+};
+
+/**
+ * Count words in markdown (excluding formatting)
+ * @param {string} markdown - Markdown text
+ * @returns {number}
+ */
+export const countMarkdownWords = (markdown) => {
+	const plainText = markdownToText(markdown);
+	if (!plainText) return 0;
+	return plainText.trim().split(/\s+/).length;
+};
+
+/**
+ * Parse markdown frontmatter (YAML at start of document)
+ * @param {string} markdown - Markdown with frontmatter
+ * @returns {{frontmatter: Object, content: string}}
+ */
+export const parseFrontmatter = (markdown) => {
+	if (!markdown) return { frontmatter: {}, content: '' };
+
+	const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+	const match = markdown.match(frontmatterRegex);
+
+	if (!match) {
+		return { frontmatter: {}, content: markdown };
+	}
+
+	// Simple YAML parser (key: value pairs only)
+	const frontmatterText = match[1];
+	const frontmatter = {};
+
+	frontmatterText.split('\n').forEach((line) => {
+		const colonIndex = line.indexOf(':');
+		if (colonIndex > 0) {
+			const key = line.slice(0, colonIndex).trim();
+			const value = line.slice(colonIndex + 1).trim();
+			frontmatter[key] = value;
+		}
+	});
+
+	return {
+		frontmatter,
+		content: match[2],
+	};
+};
+
+/**
+ * Add IDs to headers in markdown (for anchor links)
+ * @param {string} markdown - Original markdown
+ * @returns {string} Markdown with header IDs
+ */
+export const addHeaderIds = (markdown) => {
+	if (!markdown) return '';
+
+	return markdown.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, text) => {
+		const id = generateId(text);
+		return `${hashes} ${text} {#${id}}`;
+	});
+};
+
+--- END OF shared\utils\markdownUtils.js ---
+
+--- FILE: shared\utils\textUtils.js ---
+/**
+ * Text Processing Utilities
+ * String manipulation, sanitization, and formatting
+ */
+
+/**
+ * Truncate text to a maximum length with ellipsis
+ * @param {string} text - Text to truncate
+ * @param {number} maxLength - Maximum length
+ * @returns {string}
+ */
+export const truncate = (text, maxLength = 100) => {
+	if (!text || text.length <= maxLength) return text;
+	return text.slice(0, maxLength).trim() + '...';
+};
+
+/**
+ * Sanitize text for safe display
+ * @param {string} text - Text to sanitize
+ * @returns {string}
+ */
+export const sanitizeText = (text) => {
+	if (!text) return '';
+	return String(text).trim();
+};
+
+/**
+ * Convert text to URL-safe slug
+ * @param {string} text - Text to convert
+ * @returns {string}
+ */
+export const slugify = (text) => {
+	if (!text) return '';
+
+	return text
+		.toString()
+		.toLowerCase()
+		.trim()
+		.replace(/\s+/g, '-') // Replace spaces with -
+		.replace(/[^\w-]+/g, '') // Remove non-word chars
+		.replace(/--+/g, '-') // Replace multiple - with single -
+		.replace(/^-+/, '') // Trim - from start
+		.replace(/-+$/, ''); // Trim - from end
+};
+
+/**
+ * Generate a unique ID from text (for headings, anchors)
+ * @param {string} text - Text to convert
+ * @returns {string}
+ */
+export const generateId = (text) => {
+	if (!text) return '';
+
+	return text
+		.toString()
+		.toLowerCase()
+		.trim()
+		.replace(/\s+/g, '-')
+		.replace(/[^\w-]+/g, '')
+		.replace(/--+/g, '-');
+};
+
+/**
+ * Extract plain text from children (for React components)
+ * @param {*} children - React children
+ * @returns {string}
+ */
+export const extractText = (children) => {
+	if (typeof children === 'string') return children;
+	if (Array.isArray(children)) return children.map(extractText).join('');
+	if (children?.props?.children) return extractText(children.props.children);
+	return '';
+};
+
+/**
+ * Capitalize first letter of string
+ * @param {string} text - Text to capitalize
+ * @returns {string}
+ */
+export const capitalize = (text) => {
+	if (!text) return '';
+	return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+/**
+ * Convert snake_case or kebab-case to Title Case
+ * @param {string} text - Text to convert
+ * @returns {string}
+ */
+export const toTitleCase = (text) => {
+	if (!text) return '';
+
+	return text
+		.replace(/[_-]/g, ' ')
+		.split(' ')
+		.map((word) => capitalize(word))
+		.join(' ');
+};
+
+/**
+ * Count words in text
+ * @param {string} text - Text to count
+ * @returns {number}
+ */
+export const wordCount = (text) => {
+	if (!text) return 0;
+	return text.trim().split(/\s+/).length;
+};
+
+/**
+ * Estimate reading time in minutes
+ * @param {string} text - Text to analyze
+ * @param {number} wordsPerMinute - Reading speed (default 200)
+ * @returns {number}
+ */
+export const estimateReadingTime = (text, wordsPerMinute = 200) => {
+	const words = wordCount(text);
+	return Math.ceil(words / wordsPerMinute);
+};
+
+/**
+ * Escape special regex characters
+ * @param {string} str - String to escape
+ * @returns {string}
+ */
+export const escapeRegex = (str) => {
+	return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
+/**
+ * Strip markdown formatting (basic)
+ * @param {string} text - Markdown text
+ * @returns {string} Plain text
+ */
+export const stripMarkdown = (text) => {
+	if (!text) return '';
+
+	return text
+		.replace(/#{1,6}\s+/g, '') // Headers
+		.replace(/\*\*(.+?)\*\*/g, '$1') // Bold
+		.replace(/\*(.+?)\*/g, '$1') // Italic
+		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Links
+		.replace(/`(.+?)`/g, '$1') // Code
+		.replace(/^>\s+/gm, '') // Blockquotes
+		.trim();
+};
+
+/**
+ * Check if text contains markdown formatting
+ * @param {string} text - Text to check
+ * @returns {boolean}
+ */
+export const hasMarkdown = (text) => {
+	if (!text) return false;
+
+	const markdownPatterns = [
+		/#{1,6}\s+/, // Headers
+		/\*\*.*?\*\*/, // Bold
+		/\*.*?\*/, // Italic
+		/\[.*?\]\(.*?\)/, // Links
+		/`.*?`/, // Code
+		/^>\s+/m, // Blockquotes
+		/^[-*+]\s+/m, // Lists
+		/^\d+\.\s+/m, // Ordered lists
+	];
+
+	return markdownPatterns.some((pattern) => pattern.test(text));
+};
+
+--- END OF shared\utils\textUtils.js ---
+
+--- FILE: shared\utils\theme\colorUtils.js ---
+/**
+ * Color and Theme Utilities
+ * Color manipulation, hex/rgb conversion, opacity
+ */
+
+/**
+ * Convert hex color to RGB
+ * @param {string} hex - Hex color (e.g., "#ff0000" or "ff0000")
+ * @returns {{r: number, g: number, b: number}|null}
+ */
+export const hexToRgb = (hex) => {
+	if (!hex) return null;
+
+	// Remove # if present
+	const cleanHex = hex.replace('#', '');
+
+	// Validate hex
+	if (!/^[0-9A-F]{6}$/i.test(cleanHex)) return null;
+
+	return {
+		r: parseInt(cleanHex.slice(0, 2), 16),
+		g: parseInt(cleanHex.slice(2, 4), 16),
+		b: parseInt(cleanHex.slice(4, 6), 16),
+	};
+};
+
+/**
+ * Convert RGB to hex
+ * @param {number} r - Red (0-255)
+ * @param {number} g - Green (0-255)
+ * @param {number} b - Blue (0-255)
+ * @returns {string} Hex color
+ */
+export const rgbToHex = (r, g, b) => {
+	const toHex = (n) => {
+		const hex = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+		return hex.length === 1 ? '0' + hex : hex;
+	};
+
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+/**
+ * Add opacity to hex color
+ * @param {string} hex - Hex color
+ * @param {number} opacity - Opacity (0-1)
+ * @returns {string} rgba() string
+ */
+export const hexWithOpacity = (hex, opacity) => {
+	const rgb = hexToRgb(hex);
+	if (!rgb) return hex;
+
+	return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+};
+
+/**
+ * Lighten a hex color by percentage
+ * @param {string} hex - Hex color
+ * @param {number} percent - Percentage to lighten (0-100)
+ * @returns {string} New hex color
+ */
+export const lightenColor = (hex, percent) => {
+	const rgb = hexToRgb(hex);
+	if (!rgb) return hex;
+
+	const amount = (percent / 100) * 255;
+
+	return rgbToHex(rgb.r + amount, rgb.g + amount, rgb.b + amount);
+};
+
+/**
+ * Darken a hex color by percentage
+ * @param {string} hex - Hex color
+ * @param {number} percent - Percentage to darken (0-100)
+ * @returns {string} New hex color
+ */
+export const darkenColor = (hex, percent) => {
+	const rgb = hexToRgb(hex);
+	if (!rgb) return hex;
+
+	const amount = (percent / 100) * 255;
+
+	return rgbToHex(rgb.r - amount, rgb.g - amount, rgb.b - amount);
+};
+
+/**
+ * Get contrasting text color (black or white) for background
+ * @param {string} hex - Background hex color
+ * @returns {string} '#000000' or '#ffffff'
+ */
+export const getContrastColor = (hex) => {
+	const rgb = hexToRgb(hex);
+	if (!rgb) return '#000000';
+
+	// Calculate relative luminance
+	const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+
+	return luminance > 0.5 ? '#000000' : '#ffffff';
+};
+
+/**
+ * Check if a color is light or dark
+ * @param {string} hex - Hex color
+ * @returns {'light'|'dark'}
+ */
+export const getColorBrightness = (hex) => {
+	return getContrastColor(hex) === '#000000' ? 'light' : 'dark';
+};
+
+/**
+ * Generate color palette from base color
+ * @param {string} hex - Base hex color
+ * @returns {Object} Palette with shades
+ */
+export const generatePalette = (hex) => {
+	return {
+		50: lightenColor(hex, 45),
+		100: lightenColor(hex, 40),
+		200: lightenColor(hex, 30),
+		300: lightenColor(hex, 20),
+		400: lightenColor(hex, 10),
+		500: hex,
+		600: darkenColor(hex, 10),
+		700: darkenColor(hex, 20),
+		800: darkenColor(hex, 30),
+		900: darkenColor(hex, 40),
+	};
+};
+
+/**
+ * Parse CSS color value (hex, rgb, rgba)
+ * @param {string} color - CSS color string
+ * @returns {{r: number, g: number, b: number, a: number}|null}
+ */
+export const parseColor = (color) => {
+	if (!color) return null;
+
+	// Hex
+	if (color.startsWith('#')) {
+		const rgb = hexToRgb(color);
+		return rgb ? { ...rgb, a: 1 } : null;
+	}
+
+	// RGB/RGBA
+	const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+	if (rgbaMatch) {
+		return {
+			r: parseInt(rgbaMatch[1]),
+			g: parseInt(rgbaMatch[2]),
+			b: parseInt(rgbaMatch[3]),
+			a: rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1,
+		};
+	}
+
+	return null;
+};
+
+--- END OF shared\utils\theme\colorUtils.js ---
+
+--- FILE: shared\utils\theme\cssUtils.js ---
+/**
+ * CSS Variable Utilities
+ * Read and write CSS custom properties
+ */
+
+/**
+ * Get CSS variable value from document root
+ * @param {string} name - Variable name (with or without --)
+ * @returns {string} Variable value
+ */
+export const getCSSVariable = (name) => {
+	const varName = name.startsWith('--') ? name : `--${name}`;
+	return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+};
+
+/**
+ * Set CSS variable on document root
+ * @param {string} name - Variable name (with or without --)
+ * @param {string} value - Variable value
+ */
+export const setCSSVariable = (name, value) => {
+	const varName = name.startsWith('--') ? name : `--${name}`;
+	document.documentElement.style.setProperty(varName, value);
+};
+
+/**
+ * Get all theme CSS variables
+ * @returns {Object} Theme variables
+ */
+export const getThemeVariables = () => {
+	return {
+		background: getCSSVariable('--background'),
+		foreground: getCSSVariable('--foreground'),
+		muted: getCSSVariable('--muted'),
+		mutedForeground: getCSSVariable('--muted-foreground'),
+		border: getCSSVariable('--border'),
+		accent: getCSSVariable('--accent'),
+		accentForeground: getCSSVariable('--accent-foreground'),
+	};
+};
+
+/**
+ * Apply theme variables
+ * @param {Object} theme - Theme variable object
+ */
+export const applyTheme = (theme) => {
+	Object.entries(theme).forEach(([key, value]) => {
+		// Convert camelCase to kebab-case
+		const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+		setCSSVariable(cssKey, value);
+	});
+};
+
+/**
+ * Get current theme mode (light/dark/dnd)
+ * @returns {string} Theme mode
+ */
+export const getCurrentTheme = () => {
+	return document.documentElement.getAttribute('data-theme') || 'light';
+};
+
+/**
+ * Set theme mode
+ * @param {string} theme - Theme name (light/dark/dnd)
+ */
+export const setTheme = (theme) => {
+	if (theme === 'light') {
+		document.documentElement.removeAttribute('data-theme');
+	} else {
+		document.documentElement.setAttribute('data-theme', theme);
+	}
+	localStorage.setItem('app-theme', theme);
+};
+
+/**
+ * Get stored theme preference
+ * @returns {string} Stored theme or 'light'
+ */
+export const getStoredTheme = () => {
+	return localStorage.getItem('app-theme') || 'light';
+};
+
+/**
+ * Check if system prefers dark mode
+ * @returns {boolean}
+ */
+export const prefersDarkMode = () => {
+	return window.matchMedia('(prefers-color-scheme: dark)').matches;
+};
+
+/**
+ * Get optimal theme based on preference and system
+ * @returns {string} Theme name
+ */
+export const getOptimalTheme = () => {
+	const stored = getStoredTheme();
+	if (stored !== 'auto') return stored;
+
+	return prefersDarkMode() ? 'dark' : 'light';
+};
+
+--- END OF shared\utils\theme\cssUtils.js ---
+

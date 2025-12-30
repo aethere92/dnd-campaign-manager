@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { Map, BookOpen, MapPin, Image as ImageIcon } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -9,6 +8,7 @@ import { MapRecaps } from './layers/MapRecaps';
 import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
 import { MapLayerControl } from './MapLayerControl';
+import { MapTools } from './MapTools'; // Import the new component
 import { useMapCanvasViewModel } from './useMapCanvasViewModel';
 
 const MapController = ({ bounds, minZoom, config }) => {
@@ -24,7 +24,6 @@ const MapController = ({ bounds, minZoom, config }) => {
 		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
 		if (minZoom !== undefined) map.setMinZoom(minZoom);
 
-		// Smooth transition for navigation, instant for new map
 		map.fitBounds(bounds, {
 			animate: !isNewMap,
 			duration: isNewMap ? 0 : 0.5,
@@ -38,7 +37,8 @@ export const MapCanvas = ({ data, onNavigate }) => {
 	if (!data) return null;
 
 	const { config, bounds, areas } = data;
-	const vm = useMapCanvasViewModel(data); // Use Hook
+	const vm = useMapCanvasViewModel(data);
+	const wrapperRef = useRef(null); // Ref for fullscreen
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
@@ -47,6 +47,7 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	return (
 		<div
+			ref={wrapperRef}
 			style={{
 				height: '100%',
 				width: '100%',
@@ -66,7 +67,7 @@ export const MapCanvas = ({ data, onNavigate }) => {
 				attributionControl={false}
 				zoomControl={false}
 				style={{ height: '100%', width: '100%', background: 'transparent' }}>
-				{/* ... MapController ... */}
+				<MapController bounds={bounds} minZoom={minZoom} config={config} />
 
 				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
 
@@ -76,6 +77,9 @@ export const MapCanvas = ({ data, onNavigate }) => {
 				<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
 
 				<MapLayerControl groups={vm.controlGroups} visibility={vm.visibility} toggleLayer={vm.toggleLayer} />
+
+				{/* New Tools Component */}
+				<MapTools bounds={bounds} containerRef={wrapperRef} />
 			</MapContainer>
 		</div>
 	);

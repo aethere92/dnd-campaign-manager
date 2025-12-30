@@ -1,0 +1,505 @@
+================================================================
+PARTIAL BUNDLE: FEATURES CAMPAIGN
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\campaign\CampaignContext.jsx ---
+import { createContext, useContext } from 'react';
+import { useCampaignPersistence } from './useCampaignPersistence';
+
+const CampaignContext = createContext(null);
+
+export const CampaignProvider = ({ children }) => {
+	const persistence = useCampaignPersistence();
+
+	return <CampaignContext.Provider value={persistence}>{children}</CampaignContext.Provider>;
+};
+
+export const useCampaign = () => {
+	const context = useContext(CampaignContext);
+	if (!context) {
+		throw new Error('useCampaign must be used within CampaignProvider');
+	}
+	return context;
+};
+
+--- END OF features\campaign\CampaignContext.jsx ---
+
+--- FILE: features\campaign\useCampaignPersistence.js ---
+import { useState, useCallback } from 'react';
+
+const STORAGE_KEY = 'campaignId';
+
+// Safe wrapper for environments where localStorage might fail
+const storage = {
+	getItem: (key) => {
+		try {
+			return localStorage.getItem(key) || sessionStorage.getItem(key);
+		} catch {
+			return null;
+		}
+	},
+	setItem: (key, value) => {
+		try {
+			localStorage.setItem(key, value);
+		} catch {
+			sessionStorage.setItem(key, value);
+		}
+	},
+	removeItem: (key) => {
+		try {
+			localStorage.removeItem(key);
+			sessionStorage.removeItem(key);
+		} catch {
+			// ignore
+		}
+	},
+};
+
+export function useCampaignPersistence() {
+	const [campaignId, setCampaignIdState] = useState(() => {
+		return storage.getItem(STORAGE_KEY) || null;
+	});
+
+	const setCampaignId = useCallback((id) => {
+		setCampaignIdState(id);
+		if (id) {
+			storage.setItem(STORAGE_KEY, id);
+		} else {
+			storage.removeItem(STORAGE_KEY);
+		}
+	}, []);
+
+	return { campaignId, setCampaignId };
+}
+
+--- END OF features\campaign\useCampaignPersistence.js ---
+
+--- FILE: features\campaign\useCampaignSelection.js ---
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { getCampaigns } from '@/features/campaign/api/campaignService';
+import { useCampaign } from './CampaignContext';
+// import './types';
+
+export function useCampaignSelection() {
+	const { setCampaignId } = useCampaign();
+	const navigate = useNavigate(); // 2. Initialize hook
+
+	const { data: campaigns, isLoading } = useQuery({
+		queryKey: ['campaigns'],
+		queryFn: getCampaigns,
+	});
+
+	// Sort by ID
+	const sortedCampaigns = (campaigns || []).sort((a, b) => String(a.campaign_id).localeCompare(String(b.campaign_id)));
+
+	const selectCampaign = (id) => {
+		setCampaignId(id);
+		navigate('/'); // 3. Force navigation to the main app route
+	};
+
+	return {
+		isLoading,
+		campaigns: sortedCampaigns,
+		selectCampaign,
+	};
+}
+
+--- END OF features\campaign\useCampaignSelection.js ---
+
+--- FILE: features\campaign\api\campaignService.js ---
+import { supabase } from '@/shared/api/supabaseClient';
+
+export const getCampaigns = async () => {
+	// We fetch campaigns and use a subquery to get names of entities with type 'character'
+	// ARCHITECTURAL UPDATE: Added 'map_data' to check if Atlas should be enabled
+	const { data, error } = await supabase
+		.from('campaigns')
+		.select(
+			`
+            id,
+			campaign_id,
+            name, 
+            description,
+			map_data,
+            characters:entity_complete_view(name)
+        `
+		)
+		.eq('entity_complete_view.type', 'character');
+
+	if (error) throw error;
+
+	// Clean up the nested character structure
+	return data.map((campaign) => ({
+		...campaign,
+		characterNames: campaign.characters?.map((c) => c.name) || [],
+	}));
+};
+
+--- END OF features\campaign\api\campaignService.js ---
+
+--- FILE: features\campaign\components\CampaignCard.jsx ---
+import { BookOpen, ArrowRight, Users } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+
+export const CampaignCard = ({ campaign, onSelect }) => {
+	const initial = (campaign.name?.[0] || 'C').toUpperCase();
+
+	return (
+		<div className='bg-background/80 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all p-6 flex flex-col h-full border-t-4 border-t-amber-600'>
+			{/* ID Badge */}
+			<div className='mb-4 flex justify-between items-start'>
+				<div className='w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 font-serif font-bold text-xl border border-amber-200'>
+					{initial}
+				</div>
+				<span className='text-[10px] font-mono text-gray-400 bg-muted px-2 py-1 rounded'>
+					ID: {campaign.id.slice(0, 8)}...
+				</span>
+			</div>
+
+			<div className='flex-1 mb-6'>
+				<h3 className='text-xl font-bold text-foreground font-serif mb-2'>{campaign.name}</h3>
+				<p className='text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed italic'>
+					{campaign.description || 'A journey into the unknown.'}
+				</p>
+
+				{/* Characters Section */}
+				{campaign.characterNames?.length > 0 && (
+					<div className='pt-4 border-t border-border/50'>
+						<div className='flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wider mb-2'>
+							<Users size={12} />
+							Party Members
+						</div>
+						<div className='flex flex-wrap gap-1'>
+							{campaign.characterNames
+								.filter((name) => name !== 'Party')
+								.map((name, i) => (
+									<span
+										key={i}
+										className='text-[11px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full border border-amber-100'>
+										{name}
+									</span>
+								))}
+						</div>
+					</div>
+				)}
+			</div>
+
+			<div className='mt-auto'>
+				<Button onClick={() => onSelect(campaign.id)} fullWidth variant='primary' icon={ArrowRight}>
+					Enter Campaign
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\campaign\components\CampaignCard.jsx ---
+
+--- FILE: features\campaign\components\CampaignSelect.jsx ---
+import { useCampaignSelection } from '@/features/campaign/useCampaignSelection';
+import { CampaignCard } from './CampaignCard';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+export default function CampaignSelect() {
+	const { campaigns, isLoading, selectCampaign } = useCampaignSelection();
+	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
+
+	if (isLoading) {
+		return (
+			<div className='min-h-screen bg-muted flex flex-col items-center justify-center'>
+				<LoadingSpinner size='lg' text='Consulting the Archives...' />
+			</div>
+		);
+	}
+
+	return (
+		<div
+			className='min-h-screen p-6 md:p-12 font-sans flex items-center justify-center'
+			style={{
+				backgroundImage: 'var(--bg-texture)',
+				backgroundRepeat: 'repeat',
+			}}>
+			<div className='max-w-5xl w-full mx-auto'>
+				{/* Header Section */}
+				<div className='text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
+					<img src={logoPath} alt='Logo' className='h-32 md:h-40 mx-auto mb-8 drop-shadow-2xl' />
+					<h1 className='text-4xl md:text-5xl font-serif font-bold text-foreground mb-4'>Select Campaign</h1>
+					<p className='text-gray-600 text-lg max-w-xl mx-auto'>
+						Choose a world to enter. Your adventures, characters, and chronicles await.
+					</p>
+				</div>
+
+				{/* Grid Section - Centered */}
+				<div className='flex flex-wrap justify-center gap-8'>
+					{campaigns.map((campaign) => (
+						<div key={campaign.id} className='w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.33%-1.5rem)] max-w-sm'>
+							<CampaignCard campaign={campaign} onSelect={selectCampaign} />
+						</div>
+					))}
+
+					{campaigns.length === 0 && (
+						<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-background/50 backdrop-blur-sm'>
+							<p className='text-gray-400 font-serif text-xl'>No campaigns found in the library.</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\campaign\components\CampaignSelect.jsx ---
+

@@ -1,0 +1,586 @@
+================================================================
+PARTIAL BUNDLE: FEATURES NAVIGATION
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\navigation\MainLayout.jsx ---
+import { Outlet } from 'react-router-dom';
+import { Menu, Search } from 'lucide-react'; // Added Search Icon
+import { useMainLayout } from '@/features/navigation/useNavigation';
+import { Sidebar } from './components/Sidebar';
+import DevAdminButton from '@/shared/components/ui/DevAdminButton';
+import Breadcrumbs from '@/shared/components/ui/Breadcrumbs';
+import GlobalSearch from '@/features/search/GlobalSearch';
+import { SearchProvider, useSearch } from '@/features/search/SearchContext'; // Import Provider
+
+// Separate component to access Context inside Provider
+const MobileHeaderActions = ({ vm }) => {
+	const { openSearch } = useSearch();
+
+	return (
+		<div className='lg:hidden flex items-center justify-between p-4 border-b border-border bg-background shrink-0'>
+			<button onClick={() => vm.setSidebarOpen(true)} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
+				<Menu size={20} />
+			</button>
+			<h1 className='text-sm font-serif font-bold'>{vm.campaign?.name || 'Campaign'}</h1>
+
+			{/* NEW: Mobile Search Trigger */}
+			<button onClick={openSearch} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
+				<Search size={20} />
+			</button>
+		</div>
+	);
+};
+
+export default function MainLayout() {
+	const vm = useMainLayout();
+
+	return (
+		<SearchProvider>
+			<div className='flex h-screen bg-background text-foreground overflow-hidden'>
+				<Sidebar vm={vm} />
+				<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col'>
+					{/* Updated Mobile Header */}
+					<MobileHeaderActions vm={vm} />
+
+					<div className='absolute top-4 left-6 z-40 hidden lg:block pointer-events-none'>
+						<div className='pointer-events-auto'>
+							<Breadcrumbs />
+						</div>
+					</div>
+
+					<div className='flex-1 overflow-hidden relative'>
+						<Outlet />
+					</div>
+					<DevAdminButton />
+				</main>
+
+				{/* Search Modal lives here now */}
+				<GlobalSearch />
+			</div>
+		</SearchProvider>
+	);
+}
+
+--- END OF features\navigation\MainLayout.jsx ---
+
+--- FILE: features\navigation\useNavigation.js ---
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getCampaigns } from '@/features/campaign/api/campaignService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { NAV_STRUCTURE } from './config/navConfig';
+// import './types';
+
+export function useMainLayout() {
+	const navigate = useNavigate();
+	const location = useLocation();
+	const { campaignId, setCampaignId } = useCampaign();
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	const { data: campaigns } = useQuery({
+		queryKey: ['campaigns'],
+		queryFn: getCampaigns,
+		staleTime: 1000 * 60 * 10,
+	});
+
+	const currentCampaignData = campaigns?.find((c) => c.id === campaignId);
+
+	const campaign = currentCampaignData
+		? {
+				name: currentCampaignData.name || 'Campaign',
+				initial: (currentCampaignData.name?.[0] || 'C').toUpperCase(),
+		  }
+		: null;
+
+	// --- NEW: Dynamic Document Title ---
+	useEffect(() => {
+		if (campaign?.name) {
+			document.title = `${campaign.name} | Campaign Manager`;
+		}
+		// Reset when unmounting (leaving campaign view)
+		return () => {
+			document.title = 'D&D Campaign Manager';
+		};
+	}, [campaign]);
+	// -----------------------------------
+
+	const navStructure = useMemo(() => {
+		const hasMapData = !!currentCampaignData?.map_data;
+
+		return NAV_STRUCTURE.map((group) => ({
+			...group,
+			items: group.items.filter((item) => {
+				if (item.key === 'atlas') {
+					return hasMapData;
+				}
+				return true;
+			}),
+		})).filter((group) => group.items.length > 0);
+	}, [currentCampaignData]);
+
+	const navigateTo = (path) => {
+		navigate(path);
+		setSidebarOpen(false);
+	};
+
+	const onSwitchCampaign = () => {
+		setCampaignId(null);
+		navigate('/wiki/session');
+	};
+
+	return {
+		sidebarOpen,
+		setSidebarOpen,
+		currentPath: location.pathname,
+		navigateTo,
+		campaign,
+		onSwitchCampaign,
+		navStructure,
+	};
+}
+
+--- END OF features\navigation\useNavigation.js ---
+
+--- FILE: features\navigation\components\Sidebar.jsx ---
+import { clsx } from 'clsx';
+import { Drawer } from '@/shared/components/ui/Drawer'; // Import generic
+import { SidebarHeader } from './SidebarHeader';
+import { SidebarNav } from './SidebarNav';
+import { SidebarFooter } from './SidebarFooter';
+
+export const Sidebar = ({ vm }) => {
+	const { sidebarOpen, setSidebarOpen, campaign, navStructure, currentPath, navigateTo, onSwitchCampaign } = vm;
+
+	const SidebarContent = () => (
+		<div className='flex flex-col h-full bg-muted border-r border-border'>
+			<SidebarHeader campaign={campaign} />
+			<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
+			<SidebarFooter onSwitch={onSwitchCampaign} />
+		</div>
+	);
+
+	return (
+		<>
+			{/* Mobile: Generic Drawer */}
+			<Drawer
+				isOpen={sidebarOpen}
+				onClose={() => setSidebarOpen(false)}
+				title={campaign?.name || 'Menu'}
+				position='left'
+				className='w-72'>
+				<div className='flex flex-col h-full bg-muted'>
+					<SidebarHeader campaign={campaign} />
+					<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
+					<SidebarFooter onSwitch={onSwitchCampaign} />
+				</div>
+			</Drawer>
+
+			{/* Desktop: Static Sidebar */}
+			<aside className='hidden lg:flex w-64 flex-col h-full border-r border-border bg-muted shrink-0'>
+				<SidebarContent />
+			</aside>
+		</>
+	);
+};
+
+--- END OF features\navigation\components\Sidebar.jsx ---
+
+--- FILE: features\navigation\components\SidebarFooter.jsx ---
+import { Moon, Sun, Sword, Settings } from 'lucide-react';
+import { useTheme, THEMES } from '@/shared/hooks/useTheme';
+
+export const SidebarFooter = ({ onSwitch }) => {
+	const { theme, cycleTheme } = useTheme();
+
+	const getThemeIcon = () => {
+		switch (theme) {
+			case THEMES.DARK:
+				return <Moon size={14} className='mr-2' />;
+			case THEMES.DND:
+				return <Sword size={14} className='mr-2' />;
+			default:
+				return <Sun size={14} className='mr-2' />;
+		}
+	};
+
+	const getThemeLabel = () => {
+		switch (theme) {
+			case THEMES.DARK:
+				return 'Dark Mode';
+			case THEMES.DND:
+				return 'D&D PHB';
+			default:
+				return 'Light Mode';
+		}
+	};
+
+	return (
+		<div className='mt-auto p-4 border-t border-border space-y-2 bg-inherit'>
+			<button
+				onClick={cycleTheme}
+				className='flex items-center w-full px-2 py-2 text-xs font-medium text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				{getThemeIcon()}
+				Theme: {getThemeLabel()}
+			</button>
+
+			<button
+				onClick={onSwitch}
+				className='flex items-center w-full px-2 py-2 text-xs text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				<Settings size={14} className='mr-2' />
+				Switch Campaign
+			</button>
+		</div>
+	);
+};
+
+--- END OF features\navigation\components\SidebarFooter.jsx ---
+
+--- FILE: features\navigation\components\SidebarHeader.jsx ---
+import { SearchTrigger } from '@/features/search/components/SearchTrigger';
+
+export const SidebarHeader = ({ campaign }) => {
+	return (
+		<div className='p-4'>
+			{/* Campaign Card */}
+			<div className='hidden lg:flex items-center gap-3 px-2 py-2 mb-4 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors'>
+				<div className='w-8 h-8 rounded bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center text-white font-serif font-bold shadow-sm'>
+					{campaign?.initial || 'C'}
+				</div>
+				<div className='flex-1 min-w-0'>
+					<h2 className='text-sm font-bold text-foreground font-serif'>{campaign?.name || 'Loading...'}</h2>
+				</div>
+			</div>
+
+			{/* Global Search Trigger - Desktop */}
+			<div className='lg:mb-6'>
+				<SearchTrigger />
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\navigation\components\SidebarHeader.jsx ---
+
+--- FILE: features\navigation\components\SidebarNav.jsx ---
+import { clsx } from 'clsx';
+
+export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
+	return (
+		<div className='flex-1 overflow-y-auto px-4 space-y-6'>
+			{structure.map((group) => (
+				<div key={group.title}>
+					<h3 className='px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2'>{group.title}</h3>
+					<div className='space-y-0.5'>
+						{group.items.map((item) => {
+							const isWiki = item.path.startsWith('/wiki/');
+							const active = isWiki ? currentPath.startsWith(item.path) : currentPath === item.path;
+							const Icon = item.Icon;
+							return (
+								<button
+									key={item.path}
+									onClick={() => onNavigate(item.path)}
+									className={clsx(
+										'flex items-center w-full px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
+										active
+											? 'bg-background shadow-sm text-black ring-1 ring-gray-200'
+											: 'text-gray-500 hover:bg-gray-100 hover:text-foreground'
+									)}>
+									<Icon size={16} className={clsx('mr-2', active ? 'text-amber-600' : 'text-gray-400')} />
+									{item.label}
+								</button>
+							);
+						})}
+					</div>
+				</div>
+			))}
+		</div>
+	);
+};
+
+--- END OF features\navigation\components\SidebarNav.jsx ---
+
+--- FILE: features\navigation\config\navConfig.js ---
+import { Map, History, Network, BookOpen, Users, Scroll, Sword, Shield, Home, Calendar } from 'lucide-react';
+
+export const NAV_STRUCTURE = [
+	{
+		title: 'Overview',
+		items: [{ label: 'Dashboard', Icon: Home, path: '/', key: 'dashboard' }],
+	},
+	{
+		title: 'World',
+		items: [
+			{ label: 'Atlas', Icon: Map, path: '/atlas', key: 'atlas' },
+			{ label: 'Timeline', Icon: History, path: '/timeline', key: 'timeline' },
+			{ label: 'Graph', Icon: Network, path: '/relationships', key: 'graph' },
+		],
+	},
+	{
+		title: 'Wiki',
+		items: [
+			{ label: 'Sessions', Icon: BookOpen, path: '/wiki/session', key: 'session' },
+			{ label: 'Characters', Icon: Users, path: '/wiki/character', key: 'character' },
+			{ label: 'NPCs', Icon: Users, path: '/wiki/npc', key: 'npc' },
+			{ label: 'Locations', Icon: Map, path: '/wiki/location', key: 'location' },
+			{ label: 'Factions', Icon: Shield, path: '/wiki/faction', key: 'faction' },
+			{ label: 'Quests', Icon: Scroll, path: '/wiki/quest', key: 'quest' },
+			{ label: 'Encounters', Icon: Sword, path: '/wiki/encounter', key: 'encounter' },
+		],
+	},
+];
+
+--- END OF features\navigation\config\navConfig.js ---
+

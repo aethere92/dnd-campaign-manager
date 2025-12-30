@@ -1,0 +1,3744 @@
+================================================================
+PARTIAL BUNDLE: FEATURES ADMIN
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\admin\api\adminService.js ---
+import { supabase } from '@/shared/api/supabaseClient';
+import { getStrategy } from '@/features/admin/config/adminStrategies';
+
+// Helper to prepare attribute rows
+const prepareAttributeRows = (entityId, data) => {
+	// If we have a prepared list (from the new form logic), use it
+	if (data.attributesList && Array.isArray(data.attributesList)) {
+		return data.attributesList
+			.filter((attr) => attr.name && String(attr.value).trim() !== '')
+			.map((attr) => ({
+				entity_id: entityId,
+				name: attr.name,
+				value: attr.value,
+				is_private: false,
+			}));
+	}
+
+	// Fallback for legacy object format (just in case)
+	if (data.attributes) {
+		return Object.entries(data.attributes)
+			.filter(([_, value]) => value && String(value).trim() !== '')
+			.map(([key, value]) => ({
+				entity_id: entityId,
+				name: key,
+				value: value,
+				is_private: false,
+			}));
+	}
+	return [];
+};
+
+export const createEntity = async (type, data) => {
+	const strategy = getStrategy(type);
+
+	// 1. Prepare Core Payload
+	const corePayload = {};
+
+	// Only add parent campaign_id if it's NOT a campaign itself
+	if (type !== 'campaign') {
+		corePayload.campaign_id = data.campaign_id;
+	}
+
+	// Name/Desc Mapping
+	if (strategy.colMapping) {
+		if (data.name) corePayload[strategy.colMapping.name] = data.name;
+		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+	}
+	if (strategy.primaryTable === 'entities') corePayload.type = type;
+
+	// FIX #4: Extract Special Columns from Attributes (e.g. Campaign ID, Map Data)
+	// We look at the incoming attributesList or attributes object
+	const rawAttributes =
+		data.attributesList ||
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+
+	const attributesToInsert = [];
+
+	rawAttributes.forEach((attr) => {
+		// Does this attribute match a known column in the definitions?
+		// Simple check: For campaigns, 'campaign_id' and 'map_data' are columns.
+		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
+
+		if (isSpecialColumn) {
+			// It's a column! Add to core payload.
+			corePayload[attr.name] = attr.value;
+		} else {
+			// It's a normal attribute. Keep for attributes table.
+			attributesToInsert.push(attr);
+		}
+	});
+
+	console.log('[Admin] Creating:', corePayload);
+
+	// 2. Insert Core
+	const { data: insertedRecord, error: insertError } = await supabase
+		.from(strategy.primaryTable)
+		.insert(corePayload)
+		.select()
+		.single();
+
+	if (insertError) throw insertError;
+	const newId = insertedRecord.id;
+
+	// 3. Insert Remaining Attributes (if any)
+	// Campaigns usually don't use the attributes table, so this might be empty, which is fine.
+	if (attributesToInsert.length > 0 && strategy.primaryTable !== 'campaigns') {
+		const rows = attributesToInsert.map((attr) => ({
+			entity_id: newId,
+			name: attr.name,
+			value: attr.value,
+			is_private: false,
+		}));
+
+		const { error: attrError } = await supabase.from('attributes').insert(rows);
+		if (attrError) throw attrError;
+	}
+
+	return { id: newId, ...insertedRecord };
+};
+
+export const updateEntity = async (type, id, data) => {
+	const strategy = getStrategy(type);
+
+	// 1. Prepare Core Payload
+	const corePayload = {};
+	if (strategy.colMapping) {
+		if (data.name) corePayload[strategy.colMapping.name] = data.name;
+		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+	}
+
+	// FIX: Extract Special Columns from Attributes
+	const rawAttributes =
+		data.attributesList ||
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+
+	const attributesToInsert = [];
+
+	rawAttributes.forEach((attr) => {
+		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
+
+		if (isSpecialColumn) {
+			corePayload[attr.name] = attr.value;
+		} else {
+			attributesToInsert.push(attr);
+		}
+	});
+
+	// 2. Update Core
+	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
+
+	if (updateError) throw updateError;
+
+	// 3. Handle Attributes (Skip for campaigns usually)
+	if (strategy.primaryTable !== 'campaigns') {
+		// Delete old
+		const { error: deleteError } = await supabase.from('attributes').delete().eq('entity_id', id);
+		if (deleteError) throw deleteError;
+
+		// Insert new
+		if (attributesToInsert.length > 0) {
+			const rows = attributesToInsert.map((attr) => ({
+				entity_id: id,
+				name: attr.name,
+				value: attr.value,
+				is_private: false,
+			}));
+			const { error: insertError } = await supabase.from('attributes').insert(rows);
+			if (insertError) throw insertError;
+		}
+	}
+
+	return { success: true };
+};
+
+export const fetchRawEntity = async (type, id) => {
+	const strategy = getStrategy(type);
+
+	// 1. Fetch Core Data
+	const { data: coreData, error: coreError } = await supabase
+		.from(strategy.primaryTable)
+		.select('*')
+		.eq('id', id)
+		.single();
+
+	if (coreError) throw coreError;
+
+	// 2. Fetch Attributes (As List)
+	const { data: attrData, error: attrError } = await supabase
+		.from('attributes')
+		.select('name, value')
+		.eq('entity_id', id);
+
+	if (attrError) throw attrError;
+
+	// 3. Reverse Map Core Columns
+	const formData = { ...coreData };
+	if (strategy.colMapping) {
+		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
+			if (coreData[dbCol] !== undefined) {
+				formData[formField] = coreData[dbCol];
+			}
+		});
+	}
+
+	// 4. FIX: Map Column-based attributes (Campaigns) into the Attribute List
+	// If the strategy says 'campaign_id' is an attribute, but it exists on 'coreData',
+	// we fake it as an attribute so the UI renders it.
+	if (strategy.defaultAttributes) {
+		strategy.defaultAttributes.forEach((defAttr) => {
+			if (coreData[defAttr.key] !== undefined) {
+				attrData.push({
+					name: defAttr.key,
+					value: coreData[defAttr.key],
+				});
+			}
+		});
+	}
+
+	// RETURN RAW ATTRIBUTE LIST
+	// We intentionally do NOT convert to an object here to preserve duplicates
+	return { ...formData, attributesList: attrData };
+};
+
+/**
+ * Fetch all relationships for a specific entity
+ */
+export const fetchRelationships = async (id) => {
+	const { data, error } = await supabase
+		.from('entity_relationships')
+		.select(
+			`
+            id,
+            relationship_type,
+            description,
+            is_bidirectional,
+            is_hidden,
+            target:entities!to_entity_id ( id, name, type )
+        `
+		)
+		.eq('from_entity_id', id);
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Add a new relationship
+ * Note: Your DB trigger 'create_reverse_relationship' handles the reverse link automatically
+ * if is_bidirectional is true.
+ */
+export const addRelationship = async (payload) => {
+	// payload = { from_entity_id, to_entity_id, relationship_type, is_bidirectional }
+	const { data, error } = await supabase.from('entity_relationships').insert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Delete a relationship
+ */
+export const deleteRelationship = async (relId) => {
+	const { error } = await supabase.from('entity_relationships').delete().eq('id', relId);
+
+	if (error) throw error;
+	return true;
+};
+
+/**
+ * Fetch child rows (e.g., session_events)
+ */
+export const fetchChildRows = async (table, foreignKeyCol, parentId, orderBy = 'id') => {
+	const { data, error } = await supabase
+		.from(table)
+		.select('*')
+		.eq(foreignKeyCol, parentId)
+		.order(orderBy, { ascending: true });
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Save a single event.
+ * If no ID, it creates. If ID, it updates.
+ */
+export const upsertSessionEvent = async (eventData) => {
+	// 1. Remove ID if it's a placeholder "new"
+	const payload = { ...eventData };
+	if (String(payload.id).startsWith('new')) {
+		delete payload.id;
+	}
+
+	const { data, error } = await supabase.from('session_events').upsert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Delete a generic row
+ */
+export const deleteRow = async (table, id) => {
+	const { error } = await supabase.from(table).delete().eq('id', id);
+	if (error) throw error;
+	return true;
+};
+
+/**
+ * Save a single quest objective.
+ */
+export const upsertQuestObjective = async (objectiveData) => {
+	// Remove temp ID
+	const payload = { ...objectiveData };
+	if (String(payload.id).startsWith('new')) {
+		delete payload.id;
+	}
+
+	const { data, error } = await supabase.from('quest_objectives').upsert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+export const deleteEntity = async (type, id) => {
+	const strategy = getStrategy(type);
+
+	// 1. Delete Attributes
+	const { error: attrError } = await supabase.from('attributes').delete().eq('entity_id', id);
+
+	if (attrError) console.warn('Attribute delete warning:', attrError);
+
+	// 2. Delete Primary Row (Cascades to 'entities' via DB trigger)
+	const { error: mainError } = await supabase.from(strategy.primaryTable).delete().eq('id', id);
+
+	if (mainError) throw mainError;
+	return true;
+};
+
+export const updateRelationship = async (relId, updates) => {
+	const { error } = await supabase.from('entity_relationships').update(updates).eq('id', relId);
+
+	if (error) throw error;
+	return true;
+};
+
+export const searchEntitiesByName = async (campaignId, query) => {
+	const searchTerm = `%${query}%`;
+
+	// 1. Search Entities (NPCs, Locations, Characters, Factions, Quests, Items)
+	// We strictly search the 'name' column here.
+	const { data: entities } = await supabase
+		.from('entities')
+		.select('id, name, type, description')
+		.eq('campaign_id', campaignId)
+		.ilike('name', searchTerm)
+		.limit(15); // Higher limit
+
+	// 2. Search Sessions (Sessions are often separate)
+	const { data: sessions } = await supabase
+		.from('sessions')
+		.select('id, title, narrative')
+		.eq('campaign_id', campaignId)
+		.ilike('title', searchTerm)
+		.limit(5);
+
+	// Normalize Sessions to match Entity structure
+	const normSessions = (sessions || []).map((s) => ({
+		id: s.id,
+		name: s.title,
+		type: 'session',
+		description: s.narrative,
+	}));
+
+	return [...(entities || []), ...normSessions];
+};
+
+export const getSessionList = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('sessions')
+		.select('id, title')
+		.eq('campaign_id', campaignId)
+		.order('title', { ascending: true }); // Assuming title starts with "01", "02", etc.
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Fetch session events AND their relationships (mentions) efficiently.
+ */
+export const fetchSessionEventsWithRelationships = async (sessionId) => {
+	// 1. Fetch Events
+	const { data: events, error: eventError } = await supabase
+		.from('session_events')
+		.select('*')
+		.eq('session_id', sessionId)
+		.order('event_order', { ascending: true });
+
+	if (eventError) throw eventError;
+	if (!events || events.length === 0) return [];
+
+	// 2. Fetch Relationships for ALL these events at once
+	const eventIds = events.map((e) => e.id);
+	const { data: rels, error: relError } = await supabase
+		.from('entity_relationships')
+		.select(
+			`
+            id,
+            from_entity_id,
+            target:entities!to_entity_id ( id, name, type )
+        `
+		)
+		.in('from_entity_id', eventIds);
+
+	if (relError) throw relError;
+
+	// 3. Group Relationships by Event ID
+	const relMap = {};
+	rels.forEach((r) => {
+		if (!relMap[r.from_entity_id]) relMap[r.from_entity_id] = [];
+		relMap[r.from_entity_id].push(r);
+	});
+
+	// 4. Merge back into Event objects
+	return events.map((e) => ({
+		...e,
+		relationships: relMap[e.id] || [],
+	}));
+};
+
+/**
+ * Fetch encounter actions with resolved actor/target names
+ */
+export const fetchEncounterActions = async (encounterId) => {
+	const { data, error } = await supabase
+		.from('encounter_actions')
+		.select(
+			`
+			*,
+			actor:entities!actor_entity_id(name, type),
+			target:entities!target_entity_id(name, type)
+		`
+		)
+		.eq('encounter_id', encounterId)
+		.order('round_number', { ascending: true })
+		.order('action_order', { ascending: true });
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Upsert an encounter action (turn)
+ */
+export const upsertEncounterAction = async (actionData) => {
+	const payload = { ...actionData };
+
+	// 1. Remove temporary ID
+	if (String(payload.id).startsWith('new')) {
+		delete payload.id;
+	}
+
+	// 2. Remove joined objects (derived data from the fetch) to prevent column errors
+	delete payload.actor;
+	delete payload.target;
+
+	// 3. Ensure numeric types
+	if (payload.round_number) payload.round_number = parseInt(payload.round_number);
+	if (payload.action_order) payload.action_order = parseInt(payload.action_order);
+
+	// 4. Ensure optional UUIDs are null if empty string
+	if (payload.actor_entity_id === '') payload.actor_entity_id = null;
+	if (payload.target_entity_id === '') payload.target_entity_id = null;
+
+	const { data, error } = await supabase.from('encounter_actions').upsert(payload).select().single();
+
+	if (error) throw error;
+	return data;
+};
+
+--- END OF features\admin\api\adminService.js ---
+
+--- FILE: features\admin\components\AdminForm.jsx ---
+import React, { useEffect, useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { useQueryClient } from '@tanstack/react-query'; // CHANGED: Import
+import { getStrategy } from '@/features/admin/config/adminStrategies';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
+import Button from '@/shared/components/ui/Button';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
+
+// Inputs
+import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
+import SmartImageInput from '@/features/admin/components/SmartImageInput';
+
+// Sub-Managers
+import SessionEventManager from './SessionEventManager';
+import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
+import RelationshipManager from '@/features/admin/components/RelationshipManager';
+import EncounterActionManager from './EncounterManager';
+
+export default function AdminForm({ type, id }) {
+	const strategy = getStrategy(type);
+	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient(); // CHANGED: Hook
+	const [isLoading, setIsLoading] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+
+	// ... (useForm setup remains same) ...
+	const {
+		register,
+		control,
+		handleSubmit,
+		reset,
+		watch,
+		setValue,
+		formState: { errors },
+	} = useForm({
+		defaultValues: {
+			attributes: {},
+			customAttributes: [],
+		},
+	});
+	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
+
+	// ... (useEffect loadEntity remains same) ...
+	useEffect(() => {
+		const loadEntity = async () => {
+			setIsLoading(true);
+			try {
+				if (!id) {
+					reset({ attributes: {}, customAttributes: [] });
+					setIsLoading(false);
+					return;
+				}
+				const rawData = await fetchRawEntity(type, id);
+				// ... (Parsing logic remains same) ...
+				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
+				const standardAttrs = {};
+				const customAttrs = [];
+
+				(rawData.attributesList || []).forEach((attr) => {
+					const key = attr.name;
+					const value = attr.value;
+					if (definedKeys.includes(key)) {
+						if (!standardAttrs[key]) standardAttrs[key] = value;
+						else customAttrs.push({ key, value });
+					} else {
+						customAttrs.push({ key, value });
+					}
+				});
+
+				reset({
+					...rawData,
+					attributes: standardAttrs,
+					customAttributes: customAttrs,
+				});
+			} catch (err) {
+				console.error(err);
+				alert('Error loading entity.');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		loadEntity();
+	}, [type, id, reset, strategy]);
+
+	const onSubmit = async (data) => {
+		if (!campaignId && type !== 'campaign') {
+			alert('No Campaign Selected! Select one from the home screen first.');
+			return;
+		}
+
+		// ... (Payload construction remains same) ...
+		const attributesList = [];
+		Object.entries(data.attributes).forEach(([key, value]) => {
+			if (value && String(value).trim() !== '') attributesList.push({ name: key, value });
+		});
+		data.customAttributes.forEach((item) => {
+			if (item.key && item.key.trim() !== '') attributesList.push({ name: item.key, value: item.value });
+		});
+
+		const payload = {
+			...data,
+			attributesList,
+		};
+		delete payload.attributes;
+		delete payload.customAttributes;
+
+		setIsSaving(true);
+		try {
+			if (id) {
+				await updateEntity(type, id, payload);
+			} else {
+				await createEntity(type, { ...payload, campaign_id: campaignId });
+				if (!id) reset();
+			}
+
+			// CHANGED: Invalidate all relevant queries to force a refresh despite strict caching
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey[0];
+					// Invalidate lists, wikis, dashboard, and graph
+					return ['entities', 'entry', 'dashboard', 'graph', 'timeline', 'globalSearch', 'admin-list'].includes(key);
+				},
+			});
+		} catch (error) {
+			alert(`Error: ${error.message}`);
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
+
+	return (
+		// ... (Return JSX remains exactly same) ...
+		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
+			{/* Top Bar */}
+			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
+				<div className='flex items-center gap-2'>
+					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+					<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
+						{id ? 'Edit Mode' : 'Create Mode'}
+					</span>
+				</div>
+				<div className='flex gap-2'>
+					{id && (
+						<Link
+							to={`/wiki/${type}/${id}`}
+							target='_blank'
+							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors'>
+							<ExternalLink size={14} /> View Live
+						</Link>
+					)}
+					<Button type='button' variant='secondary' size='sm' icon={RotateCcw} onClick={() => reset()}>
+						Reset
+					</Button>
+					<Button type='submit' variant='primary' size='sm' icon={Save} disabled={isSaving}>
+						{isSaving ? 'Saving...' : 'Save Changes'}
+					</Button>
+				</div>
+			</div>
+
+			{/* Core Details */}
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
+				<div className='grid grid-cols-1 gap-4'>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
+						<input
+							type='text'
+							{...register('name', { required: true })}
+							className={ADMIN_INPUT_CLASS}
+							placeholder='Entity Name...'
+						/>
+						{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
+					</div>
+
+					{strategy.hasNarrative && (
+						<div>
+							<MarkdownEditor
+								label='Description / Narrative'
+								rows={8}
+								value={watch('description') || ''}
+								onChange={(e) => setValue('description', e.target.value)}
+								placeholder='Write description using Markdown...'
+							/>
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* Attributes */}
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					{strategy.defaultAttributes.map((attr) => (
+						<div key={attr.key}>
+							<label className={ADMIN_LABEL_CLASS}>{attr.label}</label>
+							{attr.type === 'image' ? (
+								<SmartImageInput
+									value={watch(`attributes.${attr.key}`)}
+									onChange={(e) => setValue(`attributes.${attr.key}`, e.target.value)}
+									placeholder='images/...'
+								/>
+							) : attr.type === 'select' ? (
+								<select {...register(`attributes.${attr.key}`)} className={ADMIN_INPUT_CLASS}>
+									<option value=''>Select...</option>
+									{attr.options.map((opt) => (
+										<option key={opt} value={opt}>
+											{opt}
+										</option>
+									))}
+								</select>
+							) : (
+								<input
+									type={attr.type === 'number' ? 'number' : 'text'}
+									{...register(`attributes.${attr.key}`)}
+									className={ADMIN_INPUT_CLASS}
+								/>
+							)}
+						</div>
+					))}
+				</div>
+			</div>
+
+			{/* Custom Attributes */}
+			<div className={ADMIN_SECTION_CLASS}>
+				<div className={ADMIN_HEADER_CLASS}>
+					<span>Custom Attributes</span>
+					<Button
+						type='button'
+						onClick={() => append({ key: '', value: '' })}
+						size='sm'
+						variant='secondary'
+						icon={Plus}>
+						Add New
+					</Button>
+				</div>
+
+				<div className='space-y-2'>
+					{fields.map((field, index) => (
+						<div key={field.id} className='flex gap-3 items-start animate-in fade-in'>
+							<div className='w-1/3'>
+								<input
+									type='text'
+									{...register(`customAttributes.${index}.key`)}
+									placeholder='Key (e.g. SecretIdentity)'
+									className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground`}
+								/>
+							</div>
+							<div className='flex-1'>
+								<input
+									type='text'
+									{...register(`customAttributes.${index}.value`)}
+									placeholder='Value'
+									className={ADMIN_INPUT_CLASS}
+								/>
+							</div>
+							<button
+								type='button'
+								onClick={() => remove(index)}
+								className='p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'>
+								<Trash2 size={16} />
+							</button>
+						</div>
+					))}
+					{fields.length === 0 && (
+						<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
+					)}
+				</div>
+			</div>
+
+			{/* Sub Managers */}
+			{id && type === 'session' && <SessionEventManager sessionId={id} />}
+			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
+			{id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
+			{id && <RelationshipManager entityId={id} />}
+		</form>
+	);
+}
+
+--- END OF features\admin\components\AdminForm.jsx ---
+
+--- FILE: features\admin\components\AdminFormStyles.js ---
+export const ADMIN_INPUT_CLASS =
+	'w-full px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-muted-foreground/40 transition-all shadow-sm';
+
+export const ADMIN_LABEL_CLASS =
+	'block text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1.5 ml-0.5';
+
+export const ADMIN_SECTION_CLASS = 'bg-background border border-border rounded-xl p-5 shadow-sm space-y-4 relative';
+
+export const ADMIN_HEADER_CLASS =
+	'text-base font-serif font-bold text-foreground border-b border-border/60 pb-2 mb-4 flex items-center justify-between tracking-tight';
+
+--- END OF features\admin\components\AdminFormStyles.js ---
+
+--- FILE: features\admin\components\EncounterManager.jsx ---
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, Edit2, Save, X, Swords, Skull, Target, Zap, HeartHandshake } from 'lucide-react'; // Added HeartHandshake
+import { fetchEncounterActions, upsertEncounterAction, deleteRow } from '@/features/admin/api/adminService';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import EntitySearch from './EntitySearch';
+import Button from '@/shared/components/ui/Button';
+
+export default function EncounterActionManager({ encounterId }) {
+	const [actions, setActions] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [editingId, setEditingId] = useState(null);
+	const [formData, setFormData] = useState({});
+
+	useEffect(() => {
+		if (encounterId) loadActions();
+	}, [encounterId]);
+
+	const loadActions = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchEncounterActions(encounterId);
+			setActions(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddNew = () => {
+		const lastAction = actions[actions.length - 1];
+		const nextRound = lastAction ? lastAction.round_number : 1;
+		const nextOrder = lastAction ? lastAction.action_order + 1 : 1;
+
+		const newAction = {
+			id: `new-${Date.now()}`,
+			encounter_id: encounterId,
+			round_number: nextRound,
+			action_order: nextOrder,
+			actor_name: '',
+			action_description: '',
+			action_type: 'attack',
+			result: '',
+			effect: '',
+			is_friendly: false, // Default to hostile
+		};
+		setActions([...actions, newAction]);
+		handleEdit(newAction);
+	};
+
+	const handleEdit = (action) => {
+		setEditingId(action.id);
+		setFormData({ ...action });
+	};
+
+	const handleSave = async () => {
+		try {
+			await upsertEncounterAction(formData);
+			setEditingId(null);
+			loadActions();
+		} catch (e) {
+			alert('Error saving action: ' + e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Delete this turn?')) return;
+		if (String(id).startsWith('new')) {
+			setActions(actions.filter((a) => a.id !== id));
+			return;
+		}
+		try {
+			await deleteRow('encounter_actions', id);
+			loadActions();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	const setActor = (entity) =>
+		setFormData((prev) => ({ ...prev, actor_entity_id: entity.id, actor_name: entity.name }));
+	const setTarget = (entity) =>
+		setFormData((prev) => ({ ...prev, target_entity_id: entity.id, target_name: entity.name }));
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
+				<span className='flex items-center gap-2'>
+					<Swords size={18} className='text-red-600' /> Combat Tracker
+				</span>
+				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+					Add Turn
+				</Button>
+			</div>
+
+			<div className='space-y-4'>
+				{actions.map((action) => {
+					const isFriendly = action.is_friendly;
+					const theme = isFriendly
+						? {
+								border: 'border-emerald-200 hover:border-emerald-300',
+								bg: 'bg-emerald-50/20',
+								accentText: 'text-emerald-700',
+								badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+						  }
+						: {
+								border: 'border-red-200 hover:border-red-300',
+								bg: 'bg-background',
+								accentText: 'text-red-700',
+								badge: 'bg-red-50 text-red-700 border-red-100',
+						  };
+
+					return (
+						<div key={action.id} className='group'>
+							{editingId === action.id ? (
+								/* --- EDIT MODE --- */
+								<div className='bg-muted/30 border border-border rounded-lg p-4 space-y-3 animate-in fade-in shadow-sm'>
+									{/* Row 1: Timing & Type */}
+									<div className='flex gap-3 items-end'>
+										<div className='w-16'>
+											<label className={ADMIN_LABEL_CLASS}>Round</label>
+											<input
+												type='number'
+												className={ADMIN_INPUT_CLASS}
+												value={formData.round_number}
+												onChange={(e) => setFormData({ ...formData, round_number: e.target.value })}
+											/>
+										</div>
+										<div className='w-16'>
+											<label className={ADMIN_LABEL_CLASS}>Order</label>
+											<input
+												type='number'
+												className={ADMIN_INPUT_CLASS}
+												value={formData.action_order}
+												onChange={(e) => setFormData({ ...formData, action_order: e.target.value })}
+											/>
+										</div>
+										<div className='flex-1'>
+											<label className={ADMIN_LABEL_CLASS}>Action Type</label>
+											<select
+												className={ADMIN_INPUT_CLASS}
+												value={formData.action_type || 'attack'}
+												onChange={(e) => setFormData({ ...formData, action_type: e.target.value })}>
+												<option value='attack'>Attack</option>
+												<option value='action'>Action</option>
+												<option value='bonus_action'>Bonus Action</option>
+												<option value='spell'>Spell</option>
+												<option value='move'>Movement</option>
+												<option value='item'>Item Interaction</option>
+												<option value='check'>Skill Check</option>
+												<option value='save'>Saving Throw</option>
+												<option value='legendary'>Legendary Action</option>
+												<option value='lair'>Lair Action</option>
+											</select>
+										</div>
+										<label className='flex items-center gap-2 cursor-pointer select-none border border-border rounded-md px-3 py-2 bg-background h-[38px] hover:border-emerald-300 transition-colors'>
+											<input
+												type='checkbox'
+												checked={formData.is_friendly || false}
+												onChange={(e) => setFormData({ ...formData, is_friendly: e.target.checked })}
+												className='w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer'
+											/>
+											<span className='text-xs font-bold text-foreground'>Friendly?</span>
+										</label>
+									</div>
+
+									{/* Row 2: Actor & Target */}
+									<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+										<div>
+											<label className={ADMIN_LABEL_CLASS}>Actor (Who?)</label>
+											{formData.actor_entity_id ? (
+												<div className='flex gap-2 items-center'>
+													<input
+														className={`${ADMIN_INPUT_CLASS} bg-emerald-50 font-medium`}
+														readOnly
+														value={formData.actor_name || 'Linked Entity'}
+													/>
+													<Button
+														size='sm'
+														variant='ghost'
+														onClick={() => setFormData({ ...formData, actor_entity_id: null, actor_name: '' })}>
+														Change
+													</Button>
+												</div>
+											) : (
+												<div className='space-y-1'>
+													<EntitySearch onSelect={setActor} />
+													<input
+														type='text'
+														placeholder='Or type manual name...'
+														className={ADMIN_INPUT_CLASS}
+														value={formData.actor_name || ''}
+														onChange={(e) => setFormData({ ...formData, actor_name: e.target.value })}
+													/>
+												</div>
+											)}
+										</div>
+
+										<div>
+											<label className={ADMIN_LABEL_CLASS}>Target (Whom?)</label>
+											{formData.target_entity_id ? (
+												<div className='flex gap-2 items-center'>
+													<input
+														className={`${ADMIN_INPUT_CLASS} bg-red-50 font-medium`}
+														readOnly
+														value={formData.target_name || 'Linked Entity'}
+													/>
+													<Button
+														size='sm'
+														variant='ghost'
+														onClick={() => setFormData({ ...formData, target_entity_id: null, target_name: '' })}>
+														Change
+													</Button>
+												</div>
+											) : (
+												<div className='space-y-1'>
+													<EntitySearch onSelect={setTarget} />
+													<input
+														type='text'
+														placeholder='Or type manual name...'
+														className={ADMIN_INPUT_CLASS}
+														value={formData.target_name || ''}
+														onChange={(e) => setFormData({ ...formData, target_name: e.target.value })}
+													/>
+												</div>
+											)}
+										</div>
+									</div>
+
+									{/* Row 3: Description */}
+									<div>
+										<label className={ADMIN_LABEL_CLASS}>Description</label>
+										<textarea
+											rows={2}
+											className={ADMIN_INPUT_CLASS}
+											value={formData.action_description || ''}
+											onChange={(e) => setFormData({ ...formData, action_description: e.target.value })}
+											placeholder='Uses Multiattack...'
+										/>
+									</div>
+
+									{/* Row 4: Result & Effect */}
+									<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+										<div>
+											<label className={ADMIN_LABEL_CLASS}>Result (Hit/Miss/Save)</label>
+											<input
+												type='text'
+												className={ADMIN_INPUT_CLASS}
+												value={formData.result || ''}
+												onChange={(e) => setFormData({ ...formData, result: e.target.value })}
+												placeholder='e.g., Hit (24), Crit, Failed Save'
+											/>
+										</div>
+										<div>
+											<label className={ADMIN_LABEL_CLASS}>Effect (Damage/Status)</label>
+											<input
+												type='text'
+												className={ADMIN_INPUT_CLASS}
+												value={formData.effect || ''}
+												onChange={(e) => setFormData({ ...formData, effect: e.target.value })}
+												placeholder='e.g., 23 slashing dmg, Prone'
+											/>
+										</div>
+									</div>
+
+									<div className='flex justify-end gap-3 pt-2'>
+										<Button
+											onClick={() => {
+												setEditingId(null);
+												loadActions();
+											}}
+											variant='ghost'
+											size='sm'
+											icon={X}>
+											Cancel
+										</Button>
+										<Button onClick={handleSave} variant='primary' size='sm' icon={Save}>
+											Save Turn
+										</Button>
+									</div>
+								</div>
+							) : (
+								/* --- VIEW MODE --- */
+								<div
+									className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${theme.bg} ${theme.border}`}>
+									<div className='flex flex-col items-center justify-center w-10 shrink-0'>
+										<span className='text-[9px] font-bold uppercase text-muted-foreground'>Round</span>
+										<span className={`text-lg font-serif font-bold ${theme.accentText}`}>{action.round_number}</span>
+									</div>
+
+									<div className='flex-1 min-w-0'>
+										<div className='flex items-center gap-2 mb-1 flex-wrap'>
+											<span className='text-sm font-bold text-foreground'>{action.actor_name || 'Unknown Actor'}</span>
+
+											{/* Friendly/Hostile Icon Indicator */}
+											{isFriendly ? (
+												<HeartHandshake size={14} className='text-emerald-500' title='Friendly Action' />
+											) : (
+												<span className='text-[10px] uppercase tracking-wider text-muted-foreground'>used</span>
+											)}
+
+											<span className={`px-1.5 py-0.5 border rounded text-[10px] font-bold uppercase ${theme.badge}`}>
+												{action.action_type}
+											</span>
+											{action.target_name && (
+												<>
+													<span className='text-[10px] text-muted-foreground'>on</span>
+													<span className='text-sm font-medium text-foreground'>{action.target_name}</span>
+												</>
+											)}
+										</div>
+
+										<p className='text-xs text-muted-foreground mb-1'>{action.action_description}</p>
+
+										<div className='flex items-center gap-2 mt-2'>
+											{action.result && (
+												<div className='flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200'>
+													<Target size={12} /> {action.result}
+												</div>
+											)}
+											{action.effect && (
+												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-800 bg-red-50 px-2 py-0.5 rounded border border-red-100'>
+													<Zap size={12} /> {action.effect}
+												</div>
+											)}
+										</div>
+									</div>
+
+									<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+										<button
+											onClick={() => handleEdit(action)}
+											className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+											<Edit2 size={16} />
+										</button>
+										<button
+											onClick={() => handleDelete(action.id)}
+											className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+											<Trash2 size={16} />
+										</button>
+									</div>
+								</div>
+							)}
+						</div>
+					);
+				})}
+
+				{actions.length === 0 && !loading && (
+					<div className='text-center py-8 text-muted-foreground text-sm italic'>No combat turns recorded yet.</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\EncounterManager.jsx ---
+
+--- FILE: features\admin\components\EntitySearch.jsx ---
+import React, { useState, useEffect, useRef } from 'react';
+import { searchEntitiesByName } from '@/features/admin/api/adminService'; // <--- NEW IMPORT
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { Search, X, Loader2 } from 'lucide-react';
+
+export default function EntitySearch({ onSelect }) {
+	const { campaignId } = useCampaign();
+	const [query, setQuery] = useState('');
+	const [results, setResults] = useState([]);
+	const [isOpen, setIsOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const wrapperRef = useRef(null);
+
+	// Close on click outside
+	useEffect(() => {
+		function handleClickOutside(event) {
+			if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+				setIsOpen(false);
+			}
+		}
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, [wrapperRef]);
+
+	useEffect(() => {
+		const doSearch = async () => {
+			if (query.length < 2) {
+				setResults([]);
+				return;
+			}
+			setIsLoading(true);
+			try {
+				// <--- USE NEW SERVICE HERE
+				const flat = await searchEntitiesByName(campaignId, query);
+
+				// Client-side Sorting: Exact Match > Starts With > Includes
+				flat.sort((a, b) => {
+					const nameA = (a.name || '').toLowerCase();
+					const nameB = (b.name || '').toLowerCase();
+					const q = query.toLowerCase();
+
+					// 1. Exact Match Priority
+					if (nameA === q && nameB !== q) return -1;
+					if (nameB === q && nameA !== q) return 1;
+
+					// 2. Starts With Priority
+					if (nameA.startsWith(q) && !nameB.startsWith(q)) return -1;
+					if (nameB.startsWith(q) && !nameA.startsWith(q)) return 1;
+
+					// 3. Shortest Name Priority (Less noise)
+					return nameA.length - nameB.length;
+				});
+
+				setResults(flat);
+				setIsOpen(true);
+			} catch (error) {
+				console.error('Search failed', error);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		const timeout = setTimeout(doSearch, 300);
+		return () => clearTimeout(timeout);
+	}, [query, campaignId]);
+
+	const handleSelect = (item) => {
+		onSelect(item);
+		setQuery('');
+		setIsOpen(false);
+	};
+
+	return (
+		<div className='relative w-full' ref={wrapperRef}>
+			{/* Label removed inside component for cleaner Bulk UI */}
+
+			<div className='relative'>
+				<input
+					autoFocus
+					type='text'
+					value={query}
+					onChange={(e) => {
+						setQuery(e.target.value);
+						if (!isOpen) setIsOpen(true);
+					}}
+					placeholder='Search by name...'
+					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm transition-shadow'
+				/>
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={14} />
+
+				{query && (
+					<button
+						onClick={() => {
+							setQuery('');
+							setIsOpen(false);
+						}}
+						className='absolute right-2 top-2 text-muted-foreground hover:text-foreground p-0.5 rounded'>
+						<X size={14} />
+					</button>
+				)}
+			</div>
+
+			{/* Dropdown Results */}
+			{isOpen && (results.length > 0 || isLoading) && (
+				<div className='absolute z-50 w-full mt-1 bg-white border border-border rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-100'>
+					{isLoading ? (
+						<div className='p-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-2'>
+							<Loader2 size={14} className='animate-spin' /> Searching...
+						</div>
+					) : (
+						results.map((item) => (
+							<button
+								key={item.id}
+								type='button'
+								onClick={() => handleSelect(item)}
+								className='w-full text-left px-3 py-2 hover:bg-amber-50 border-b border-border/50 last:border-0 transition-colors group'>
+								<div className='font-bold text-sm text-foreground group-hover:text-amber-800 truncate'>{item.name}</div>
+								<div className='flex items-center gap-2'>
+									<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded group-hover:bg-amber-100/50'>
+										{item.type}
+									</span>
+									{/* Description Snippet */}
+									<span className='text-[10px] text-muted-foreground/60 truncate max-w-[200px]'>
+										{item.description ? item.description.substring(0, 50) : ''}
+									</span>
+								</div>
+							</button>
+						))
+					)}
+				</div>
+			)}
+
+			{isOpen && !isLoading && results.length === 0 && query.length >= 2 && (
+				<div className='absolute z-50 w-full mt-1 bg-white border border-border rounded-lg shadow-xl p-3 text-center text-xs text-muted-foreground'>
+					No results for "{query}"
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\EntitySearch.jsx ---
+
+--- FILE: features\admin\components\EventTagger.jsx ---
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Loader2 } from 'lucide-react';
+import EntitySearch from './EntitySearch';
+import { fetchRelationships, addRelationship, deleteRelationship } from '@/features/admin/api/adminService';
+
+export default function EventTagger({ eventId }) {
+	const [tags, setTags] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [isAdding, setIsAdding] = useState(false);
+
+	// If it's a temporary event (unsaved), we can't tag yet
+	const isTemp = String(eventId).startsWith('new-');
+
+	useEffect(() => {
+		if (!isTemp) loadTags();
+	}, [eventId]);
+
+	const loadTags = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchRelationships(eventId);
+			setTags(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAdd = async (target) => {
+		if (tags.find((t) => t.target?.id === target.id)) return;
+
+		setIsAdding(true);
+		try {
+			await addRelationship({
+				from_entity_id: eventId,
+				to_entity_id: target.id,
+				relationship_type: 'mention', // Standard type for events
+				is_bidirectional: false,
+			});
+			loadTags();
+		} catch (e) {
+			alert(e.message);
+		} finally {
+			setIsAdding(false);
+		}
+	};
+
+	const handleRemove = async (relId) => {
+		try {
+			await deleteRelationship(relId);
+			setTags(tags.filter((t) => t.id !== relId));
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	if (isTemp) {
+		return <div className='text-xs text-amber-600 bg-amber-50 p-2 rounded'>Save this event to enable tagging.</div>;
+	}
+
+	return (
+		<div className='space-y-2 mt-2 pt-2 border-t border-border/50'>
+			<label className='text-[10px] font-bold uppercase text-muted-foreground'>Mentions / Related Entities</label>
+
+			{/* Tag List */}
+			<div className='flex flex-wrap gap-2 mb-2'>
+				{tags.map((rel) => (
+					<div
+						key={rel.id}
+						className='flex items-center gap-1 bg-white border border-border px-2 py-1 rounded-md text-xs shadow-sm'>
+						<span className='font-medium text-foreground'>{rel.target?.name}</span>
+						<span className='text-[9px] text-muted-foreground uppercase'>{rel.target?.type}</span>
+						<button onClick={() => handleRemove(rel.id)} className='ml-1 text-gray-400 hover:text-red-500'>
+							<X size={12} />
+						</button>
+					</div>
+				))}
+				{loading && <Loader2 size={14} className='animate-spin text-muted-foreground' />}
+			</div>
+
+			{/* Search Input */}
+			<div className='max-w-xs'>
+				<EntitySearch onSelect={handleAdd} />
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\EventTagger.jsx ---
+
+--- FILE: features\admin\components\ImageLibraryModal.jsx ---
+import React, { useState } from 'react';
+import { Search, Image as ImageIcon, FolderOpen, RefreshCw } from 'lucide-react';
+import { Drawer } from '@/shared/components/ui/Drawer';
+import { ADMIN_INPUT_CLASS } from './AdminFormStyles';
+// IMPORT THE GENERATED FILE
+import imageLibraryData from '../config/imageManifest.json';
+
+export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
+	const [searchTerm, setSearchTerm] = useState('');
+
+	// Use the dynamic data from the script
+	const filteredLibrary = imageLibraryData
+		.map((cat) => ({
+			...cat,
+			files: cat.files.filter((f) => f.toLowerCase().includes(searchTerm.toLowerCase())),
+		}))
+		.filter((cat) => cat.files.length > 0);
+
+	return (
+		<Drawer isOpen={isOpen} onClose={onClose} title='Image Library' position='right'>
+			<div className='p-4 space-y-6'>
+				<div className='relative'>
+					<Search className='absolute left-3 top-2.5 text-muted-foreground' size={14} />
+					<input
+						type='text'
+						placeholder='Search for image or category...'
+						className={ADMIN_INPUT_CLASS + ' pl-9'}
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						autoFocus
+					/>
+				</div>
+
+				<div className='space-y-8 pb-20'>
+					{filteredLibrary.map((group) => (
+						<div key={group.category} className='space-y-3 animate-in fade-in slide-in-from-bottom-1 duration-300'>
+							<h3 className='text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2'>
+								<FolderOpen size={10} className='text-amber-600' />
+								{group.category}
+								<span className='text-[8px] font-normal lowercase tracking-normal bg-muted px-1.5 rounded-full'>
+									{group.files.length} images
+								</span>
+							</h3>
+
+							<div className='grid grid-cols-3 sm:grid-cols-4 gap-2'>
+								{group.files.map((file) => {
+									const fullPath = `${group.path}${file}`;
+									const previewUrl = `${import.meta.env.BASE_URL}${fullPath}`;
+
+									return (
+										<button
+											key={file}
+											type='button'
+											title={file}
+											onClick={() => {
+												onSelect(fullPath);
+												onClose();
+											}}
+											className='group relative aspect-square rounded-md border border-border bg-white overflow-hidden hover:border-amber-500 hover:ring-2 hover:ring-amber-500/20 transition-all shadow-sm'>
+											<img
+												src={previewUrl}
+												alt={file}
+												className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500'
+												loading='lazy'
+											/>
+											{/* Hover Overlay with filename */}
+											<div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1'>
+												<p className='text-[7px] text-white truncate w-full text-center font-mono'>{file}</p>
+											</div>
+										</button>
+									);
+								})}
+							</div>
+						</div>
+					))}
+
+					{filteredLibrary.length === 0 && (
+						<div className='text-center py-20 opacity-30 flex flex-col items-center'>
+							<ImageIcon size={40} strokeWidth={1} />
+							<p className='text-xs mt-2'>No matching images found.</p>
+						</div>
+					)}
+				</div>
+			</div>
+		</Drawer>
+	);
+}
+
+--- END OF features\admin\components\ImageLibraryModal.jsx ---
+
+--- FILE: features\admin\components\MarkdownEditor.jsx ---
+import React, { useState, useRef, useEffect } from 'react';
+import { Eye, Edit3, Wand2, X, AtSign } from 'lucide-react';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import EntitySearch from './EntitySearch';
+import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+
+export default function MarkdownEditor({ label, value, onChange, placeholder, rows = 8 }) {
+	const [mode, setMode] = useState('write');
+	const [showSearch, setShowSearch] = useState(false);
+	const textareaRef = useRef(null);
+
+	const handleInputChange = (e) => {
+		const newValue = e.target.value;
+		const selectionStart = e.target.selectionStart;
+		onChange(e);
+
+		// Detect '@' trigger
+		const charBefore = newValue.charAt(selectionStart - 1);
+		if (charBefore === '@') {
+			setShowSearch(true);
+		}
+	};
+
+	const handleInsertEntity = (entity) => {
+		const textarea = textareaRef.current;
+		const textToInsert = `[:: ${entity.name} ::](#entity/${entity.id}/${entity.type})`;
+
+		if (textarea) {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const currentText = value || '';
+
+			let insertPos = start;
+			let beforeText = currentText.substring(0, start);
+			const afterText = currentText.substring(end);
+
+			if (beforeText.endsWith('@')) {
+				beforeText = beforeText.slice(0, -1);
+				insertPos = start - 1;
+			}
+
+			const newValue = beforeText + textToInsert + afterText;
+			onChange({ target: { value: newValue } });
+
+			// Return focus and fix cursor position
+			setTimeout(() => {
+				textarea.focus();
+				const newCursorPos = insertPos + textToInsert.length;
+				textarea.setSelectionRange(newCursorPos, newCursorPos);
+			}, 0);
+		}
+		setShowSearch(false);
+	};
+
+	return (
+		<div className='relative flex flex-col'>
+			<div className='flex items-end justify-between mb-1.5'>
+				<label className={ADMIN_LABEL_CLASS}>{label}</label>
+				<div className='flex bg-muted/50 rounded-md p-0.5 border border-border shadow-sm'>
+					<button
+						type='button'
+						onClick={() => setShowSearch(!showSearch)}
+						className={`px-2 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1.5 transition-all ${
+							showSearch
+								? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
+								: 'text-muted-foreground hover:text-foreground'
+						}`}>
+						<AtSign size={12} /> Mentions
+					</button>
+					<div className='w-px bg-border mx-1 my-1' />
+					<button
+						type='button'
+						onClick={() => setMode('write')}
+						className={`px-2 py-1 text-[10px] font-bold uppercase rounded transition-all ${
+							mode === 'write'
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'
+						}`}>
+						Write
+					</button>
+					<button
+						type='button'
+						onClick={() => setMode('preview')}
+						className={`px-2 py-1 text-[10px] font-bold uppercase rounded transition-all ${
+							mode === 'preview'
+								? 'bg-background text-foreground shadow-sm'
+								: 'text-muted-foreground hover:text-foreground'
+						}`}>
+						Preview
+					</button>
+				</div>
+			</div>
+
+			<div className='relative'>
+				{/* FLOATING MENTION MODAL - Now Absolute and Z-Indexed to prevent layout push */}
+				{showSearch && (
+					<div className='absolute inset-x-0 top-0 z-50 p-3 bg-background border border-amber-300 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-150'>
+						<div className='flex justify-between items-center mb-2'>
+							<span className='text-[10px] font-bold uppercase text-amber-600 tracking-widest flex items-center gap-1'>
+								<Wand2 size={10} /> Link Entity
+							</span>
+							<button onClick={() => setShowSearch(false)} className='text-muted-foreground hover:text-red-500'>
+								<X size={14} />
+							</button>
+						</div>
+						<EntitySearch onSelect={handleInsertEntity} autoFocus />
+					</div>
+				)}
+
+				{mode === 'write' ? (
+					<textarea
+						ref={textareaRef}
+						rows={rows}
+						className={`${ADMIN_INPUT_CLASS} font-mono text-xs leading-relaxed min-h-[150px] resize-y`}
+						value={value}
+						onChange={handleInputChange}
+						placeholder={placeholder}
+					/>
+				) : (
+					<div className='w-full px-4 py-3 bg-muted/10 border border-border rounded-md min-h-[150px] prose prose-sm max-w-none'>
+						{value ? (
+							<SmartMarkdown>{value}</SmartMarkdown>
+						) : (
+							<span className='text-muted-foreground italic text-xs'>Nothing to preview.</span>
+						)}
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\MarkdownEditor.jsx ---
+
+--- FILE: features\admin\components\QuestObjectiveManager.jsx ---
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, Edit2, Save, X, Target, CheckCircle2, Circle, Calendar } from 'lucide-react';
+import { fetchChildRows, upsertQuestObjective, deleteRow, getSessionList } from '@/features/admin/api/adminService'; // Import getSessionList
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import Button from '@/shared/components/ui/Button';
+
+export default function QuestObjectiveManager({ questId }) {
+	const { campaignId } = useCampaign();
+	const [objectives, setObjectives] = useState([]);
+	const [sessions, setSessions] = useState([]); // Store session options
+	const [loading, setLoading] = useState(false);
+	const [editingId, setEditingId] = useState(null);
+	const [formData, setFormData] = useState({});
+
+	useEffect(() => {
+		if (questId) {
+			loadObjectives();
+			loadSessions();
+		}
+	}, [questId]);
+
+	const loadObjectives = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchChildRows('quest_objectives', 'quest_id', questId, 'order_index');
+			setObjectives(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const loadSessions = async () => {
+		if (!campaignId) return;
+		try {
+			const data = await getSessionList(campaignId);
+			setSessions(data);
+		} catch (e) {
+			console.error('Failed to load sessions', e);
+		}
+	};
+
+	const handleAddNew = () => {
+		const nextOrder = objectives.length > 0 ? Math.max(...objectives.map((o) => o.order_index || 0)) + 1 : 1;
+		const newObj = {
+			id: `new-${Date.now()}`,
+			quest_id: questId,
+			objective_name: '', // Title
+			description: '',
+			objective_update: '', // Resolution text
+			status: 'pending',
+			order_index: nextOrder,
+			completed_session_id: null,
+		};
+		setObjectives([...objectives, newObj]);
+		handleEdit(newObj);
+	};
+
+	const handleEdit = (obj) => {
+		setEditingId(obj.id);
+		setFormData({ ...obj });
+	};
+
+	const handleSave = async () => {
+		try {
+			await upsertQuestObjective(formData);
+			setEditingId(null);
+			loadObjectives();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Delete?')) return;
+		if (String(id).startsWith('new')) {
+			setObjectives(objectives.filter((o) => o.id !== id));
+			return;
+		}
+		try {
+			await deleteRow('quest_objectives', id);
+			loadObjectives();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex justify-between`}>
+				<span className='flex items-center gap-2'>
+					<Target size={18} className='text-blue-600' /> Objectives
+				</span>
+				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+					Add Objective
+				</Button>
+			</div>
+
+			<div className='space-y-3'>
+				{objectives.map((obj) => (
+					<div key={obj.id} className='group'>
+						{editingId === obj.id ? (
+							/* --- EDIT MODE --- */
+							<div className='bg-muted/30 border border-blue-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+								{/* Row 1: Order, Title, Status */}
+								<div className='flex gap-3'>
+									<div className='w-16'>
+										<label className={ADMIN_LABEL_CLASS}>#</label>
+										<input
+											type='number'
+											className={ADMIN_INPUT_CLASS}
+											value={formData.order_index}
+											onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
+										/>
+									</div>
+									<div className='flex-1'>
+										<label className={ADMIN_LABEL_CLASS}>Title (Name)</label>
+										<input
+											type='text'
+											className={`${ADMIN_INPUT_CLASS} font-bold`}
+											autoFocus
+											value={formData.objective_name || ''}
+											onChange={(e) => setFormData({ ...formData, objective_name: e.target.value })}
+											placeholder='Short summary...'
+										/>
+									</div>
+									<div className='w-32'>
+										<label className={ADMIN_LABEL_CLASS}>Status</label>
+										<select
+											className={ADMIN_INPUT_CLASS}
+											value={formData.status}
+											onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
+											<option value='pending'>Pending</option>
+											<option value='completed'>Completed</option>
+											<option value='failed'>Failed</option>
+										</select>
+									</div>
+								</div>
+
+								{/* Row 2: Description */}
+								<div>
+									<label className={ADMIN_LABEL_CLASS}>Description</label>
+									<textarea
+										rows={2}
+										className={ADMIN_INPUT_CLASS}
+										value={formData.description || ''}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+										placeholder='What needs to be done?'
+									/>
+								</div>
+
+								{/* Row 3: Updates & Session */}
+								<div className='grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border/50 pt-3'>
+									<div>
+										<label className={ADMIN_LABEL_CLASS}>Resolution / Update Text</label>
+										<textarea
+											rows={2}
+											className={ADMIN_INPUT_CLASS}
+											value={formData.objective_update || ''}
+											onChange={(e) => setFormData({ ...formData, objective_update: e.target.value })}
+											placeholder='How was it resolved?'
+										/>
+									</div>
+									<div>
+										<label className={ADMIN_LABEL_CLASS}>Completed In Session</label>
+										<select
+											className={ADMIN_INPUT_CLASS}
+											value={formData.completed_session_id || ''}
+											onChange={(e) => setFormData({ ...formData, completed_session_id: e.target.value || null })}>
+											<option value=''>-- None --</option>
+											{sessions.map((s) => (
+												<option key={s.id} value={s.id}>
+													{s.title}
+												</option>
+											))}
+										</select>
+									</div>
+								</div>
+
+								<div className='flex justify-end gap-2 pt-2'>
+									<Button
+										onClick={() => {
+											setEditingId(null);
+											loadObjectives();
+										}}
+										variant='ghost'
+										size='sm'
+										icon={X}>
+										Cancel
+									</Button>
+									<Button onClick={handleSave} variant='primary' size='sm' icon={Save}>
+										Save Objective
+									</Button>
+								</div>
+							</div>
+						) : (
+							/* --- VIEW MODE --- */
+							<div
+								className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
+									obj.status === 'completed'
+										? 'bg-emerald-50/50 border-emerald-200'
+										: 'bg-background border-border hover:border-blue-300'
+								}`}>
+								<span className='font-mono text-xs font-bold opacity-40 w-5 mt-1'>#{obj.order_index}</span>
+
+								<div className='shrink-0 mt-0.5'>
+									{obj.status === 'completed' ? (
+										<CheckCircle2 size={18} className='text-emerald-600' />
+									) : (
+										<Circle size={18} className='text-muted-foreground' />
+									)}
+								</div>
+
+								<div className='flex-1 min-w-0'>
+									{obj.objective_name && (
+										<div className='font-bold text-sm text-foreground mb-0.5'>{obj.objective_name}</div>
+									)}
+									<div
+										className={`text-sm ${obj.status === 'completed' ? 'text-muted-foreground' : 'text-foreground'}`}>
+										{obj.description}
+									</div>
+
+									{/* Resolution & Session Badges */}
+									{(obj.objective_update || obj.completed_session_id) && (
+										<div className='mt-2 flex flex-col gap-1'>
+											{obj.objective_update && (
+												<div className='text-xs text-emerald-700 bg-emerald-100/50 px-2 py-1 rounded border border-emerald-100 italic'>
+													"{obj.objective_update}"
+												</div>
+											)}
+											{obj.completed_session_id && (
+												<div className='flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground'>
+													<Calendar size={10} />
+													Session: {sessions.find((s) => s.id === obj.completed_session_id)?.title || 'Unknown'}
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+
+								<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+									<button
+										onClick={() => handleEdit(obj)}
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+										title='Edit Event'>
+										<Edit2 size={18} />
+									</button>
+									<button
+										onClick={() => handleDelete(obj.id)}
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										title='Delete Event'>
+										<Trash2 size={18} />
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				))}
+
+				{objectives.length === 0 && !loading && (
+					<div className='text-center py-6 text-muted-foreground text-sm italic'>No objectives defined yet.</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\QuestObjectiveManager.jsx ---
+
+--- FILE: features\admin\components\RelationshipManager.jsx ---
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+	Trash2,
+	Link as LinkIcon,
+	ArrowRightLeft,
+	ArrowRight,
+	Save,
+	X,
+	Edit2,
+	Layers,
+	EyeOff,
+	Shield,
+	Sword,
+	MapPin,
+	Flag,
+	User,
+	Users,
+	Briefcase,
+	BookOpen,
+	Gem,
+	Calendar,
+} from 'lucide-react';
+import EntitySearch from '@/features/admin/components/EntitySearch';
+import {
+	fetchRelationships,
+	addRelationship,
+	deleteRelationship,
+	updateRelationship,
+} from '@/features/admin/api/adminService';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS } from './AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+
+// --- CONFIGURATION ---
+
+// 1. Group Headers (By Entity Type)
+const ENTITY_GROUPS = {
+	character: { label: 'Characters', icon: Users, color: 'text-rose-600', bg: 'bg-rose-50' },
+	npc: { label: 'NPCs', icon: User, color: 'text-amber-600', bg: 'bg-amber-50' },
+	location: { label: 'Locations', icon: MapPin, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+	faction: { label: 'Factions', icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50' },
+	quest: { label: 'Quests', icon: Flag, color: 'text-blue-600', bg: 'bg-blue-50' },
+	session: { label: 'Sessions', icon: BookOpen, color: 'text-slate-600', bg: 'bg-slate-50' },
+	item: { label: 'Items', icon: Gem, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+	event: { label: 'Events', icon: Calendar, color: 'text-orange-600', bg: 'bg-orange-50' },
+	default: { label: 'Other Entities', icon: LinkIcon, color: 'text-gray-600', bg: 'bg-gray-50' },
+};
+
+const GROUP_ORDER = ['character', 'npc', 'faction', 'location', 'quest', 'item', 'session', 'event'];
+
+// 2. Item Styles (By Relationship Type) - Keeps the "Ally/Enemy" visual context
+const REL_STYLES = {
+	Ally: { color: 'text-emerald-700', bg: 'bg-emerald-100/50', border: 'border-emerald-400' },
+	Friend: { color: 'text-emerald-700', bg: 'bg-emerald-100/50', border: 'border-emerald-400' },
+	Enemy: { color: 'text-red-700', bg: 'bg-red-100/50', border: 'border-red-400' },
+	Rival: { color: 'text-red-700', bg: 'bg-red-100/50', border: 'border-red-400' },
+	Located_In: { color: 'text-amber-700', bg: 'bg-amber-100/50', border: 'border-amber-400' },
+	Parent_Location: { color: 'text-amber-700', bg: 'bg-amber-100/50', border: 'border-amber-400' },
+	Quest_Giver: { color: 'text-blue-700', bg: 'bg-blue-100/50', border: 'border-blue-400' },
+	Participant: { color: 'text-blue-700', bg: 'bg-blue-100/50', border: 'border-blue-400' },
+	Generic: { color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-300' },
+};
+
+export default function RelationshipManager({ entityId }) {
+	const [relationships, setRelationships] = useState([]);
+	const [loading, setLoading] = useState(false);
+
+	// BULK ADD STATE
+	const [pendingTargets, setPendingTargets] = useState([]);
+	const [type, setType] = useState('Generic');
+	const [isBidirectional, setIsBidirectional] = useState(false);
+	const [isHidden, setIsHidden] = useState(false);
+	const [isAdding, setIsAdding] = useState(false);
+
+	// EDIT STATE
+	const [editingId, setEditingId] = useState(null);
+	const [editForm, setEditForm] = useState({});
+
+	useEffect(() => {
+		if (entityId) loadRelationships();
+	}, [entityId]);
+
+	const loadRelationships = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchRelationships(entityId);
+			setRelationships(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// --- GROUPING LOGIC (By Entity Type) ---
+	const grouped = useMemo(() => {
+		const groups = {};
+		relationships.forEach((rel) => {
+			// Group by Target Entity Type (e.g. 'npc', 'location')
+			const entityType = rel.target?.type?.toLowerCase() || 'default';
+			// Map to config key or fallback
+			const groupKey = ENTITY_GROUPS[entityType] ? entityType : 'default';
+
+			if (!groups[groupKey]) groups[groupKey] = [];
+			groups[groupKey].push(rel);
+		});
+		return groups;
+	}, [relationships]);
+
+	// --- HANDLERS ---
+	const handleSelectTarget = (item) => {
+		if (pendingTargets.find((t) => t.id === item.id) || item.id === entityId) return;
+		setPendingTargets([...pendingTargets, item]);
+	};
+	const removePending = (id) => setPendingTargets(pendingTargets.filter((t) => t.id !== id));
+
+	const handleBulkAdd = async () => {
+		if (pendingTargets.length === 0) return;
+		setIsAdding(true);
+		try {
+			await Promise.all(
+				pendingTargets.map((target) =>
+					addRelationship({
+						from_entity_id: entityId,
+						to_entity_id: target.id,
+						relationship_type: type,
+						is_bidirectional: isBidirectional,
+						is_hidden: isHidden,
+					})
+				)
+			);
+			setPendingTargets([]);
+			setType('Generic');
+			loadRelationships();
+		} catch (e) {
+			alert('Error: ' + e.message);
+		} finally {
+			setIsAdding(false);
+		}
+	};
+
+	const handleUpdate = async () => {
+		try {
+			await updateRelationship(editingId, {
+				relationship_type: editForm.relationship_type,
+				is_bidirectional: editForm.is_bidirectional,
+				is_hidden: editForm.is_hidden,
+			});
+			setEditingId(null);
+			loadRelationships();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Remove link?')) return;
+		try {
+			await deleteRelationship(id);
+			loadRelationships();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	if (!entityId) return null;
+
+	// Dropdown options
+	const relationshipTypes = [
+		'member_of',
+		'leadership_relation',
+		'part_of',
+		'affiliated_with',
+		'family_relation',
+		'romantic_relation',
+		'professional_relation',
+		'located_in',
+		'parent_location',
+		'residence_relation',
+		'workplace_relation',
+		'ownership_relation',
+		'quest_giver',
+		'quest_objective',
+		'quest_update',
+		'quest_participant',
+		'quest_location',
+		'hostile_to',
+		'knowledge_of',
+		'encountered',
+	];
+
+	// Helper to get sort order including "Other" groups not in explicit list
+	const sortedGroupKeys = [...GROUP_ORDER, ...Object.keys(grouped).filter((k) => !GROUP_ORDER.includes(k))];
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<h2 className={`${ADMIN_HEADER_CLASS} flex items-center gap-2`}>
+				<LinkIcon size={18} className='text-amber-600' /> Relationships
+			</h2>
+
+			{/* --- ADD NEW SECTION --- */}
+			<div className='bg-muted/30 p-4 rounded-lg mb-6 border border-border shadow-sm'>
+				<div className='flex items-center justify-between mb-3'>
+					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2'>
+						<Layers size={12} /> Bulk Connect
+					</h3>
+					{pendingTargets.length > 0 && (
+						<span className='text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100'>
+							{pendingTargets.length} Ready
+						</span>
+					)}
+				</div>
+
+				<div className='space-y-4'>
+					<div className='w-full'>
+						<EntitySearch onSelect={handleSelectTarget} />
+					</div>
+
+					{pendingTargets.length > 0 && (
+						<div className='flex flex-wrap gap-2 p-3 bg-background border border-border rounded-md'>
+							{pendingTargets.map((t) => (
+								<div
+									key={t.id}
+									className='flex items-center gap-2 bg-amber-50 text-amber-900 px-2 py-1 rounded border border-amber-200 text-xs font-medium'>
+									<span className='uppercase text-[9px] text-amber-700/60 font-bold'>{t.type}</span>
+									<span>{t.name}</span>
+									<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800'>
+										✕
+									</button>
+								</div>
+							))}
+						</div>
+					)}
+
+					<div className='flex flex-col md:flex-row gap-3 items-end pt-2 border-t border-border/50'>
+						<div className='flex-1 w-full grid grid-cols-2 gap-4'>
+							<div>
+								<label className='block text-[10px] uppercase font-bold text-muted-foreground mb-1'>Type</label>
+								<select value={type} onChange={(e) => setType(e.target.value)} className={ADMIN_INPUT_CLASS}>
+									{relationshipTypes.map((t) => (
+										<option key={t} value={t}>
+											{t.replace('_', ' ')}
+										</option>
+									))}
+								</select>
+							</div>
+							<div className='flex flex-col gap-2 pb-1'>
+								<label className='flex items-center gap-2 cursor-pointer select-none'>
+									<input
+										type='checkbox'
+										checked={isBidirectional}
+										onChange={(e) => setIsBidirectional(e.target.checked)}
+										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
+									/>
+									<span className='text-xs text-muted-foreground font-medium'>2-Way</span>
+								</label>
+								<label className='flex items-center gap-2 cursor-pointer select-none'>
+									<input
+										type='checkbox'
+										checked={isHidden}
+										onChange={(e) => setIsHidden(e.target.checked)}
+										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
+									/>
+									<span className='text-xs text-muted-foreground font-medium flex items-center gap-1'>
+										Hidden <EyeOff size={10} />
+									</span>
+								</label>
+							</div>
+						</div>
+						<Button
+							onClick={handleBulkAdd}
+							disabled={pendingTargets.length === 0 || isAdding}
+							size='sm'
+							variant='primary'
+							className='w-full md:w-auto min-w-[100px]'>
+							{isAdding ? 'Saving...' : `Add ${pendingTargets.length > 0 ? `(${pendingTargets.length})` : ''}`}
+						</Button>
+					</div>
+				</div>
+			</div>
+
+			{/* --- LIST SECTION (GROUPED BY ENTITY TYPE) --- */}
+			<div className='space-y-6'>
+				{relationships.length === 0 && (
+					<div className='p-4 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
+						No relationships connected.
+					</div>
+				)}
+
+				{sortedGroupKeys.map((groupKey) => {
+					const items = grouped[groupKey];
+					if (!items || items.length === 0) return null;
+
+					const groupConfig = ENTITY_GROUPS[groupKey] || ENTITY_GROUPS.default;
+					const GroupIcon = groupConfig.icon;
+
+					return (
+						<div key={groupKey} className='animate-in fade-in slide-in-from-bottom-2 duration-500'>
+							{/* Group Header */}
+							<h3
+								className={`text-[11px] font-bold uppercase tracking-widest mb-3 border-b border-border/60 pb-1 flex items-center gap-2 ${groupConfig.color} opacity-90`}>
+								<GroupIcon size={14} /> {groupConfig.label}
+								<span className='ml-auto text-[9px] bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground'>
+									{items.length}
+								</span>
+							</h3>
+
+							<div className='grid grid-cols-1 gap-2'>
+								{items.map((rel) => {
+									// Item Style based on Relationship Type (Ally/Enemy)
+									const style = REL_STYLES[rel.relationship_type] || REL_STYLES.Generic;
+
+									return (
+										<div
+											key={rel.id}
+											className={`group border rounded-lg transition-all bg-background hover:shadow-sm ${
+												editingId === rel.id ? 'border-amber-400 ring-1 ring-amber-400' : 'border-border'
+											}`}>
+											{editingId === rel.id ? (
+												/* EDIT MODE */
+												<div className='grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center p-2 bg-muted/20'>
+													<div className='font-bold text-sm text-foreground truncate min-w-0'>{rel.target?.name}</div>
+
+													<div className='w-36'>
+														<select
+															className={`${ADMIN_INPUT_CLASS} py-1 h-8 text-xs`}
+															value={editForm.relationship_type}
+															onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
+															{relationshipTypes.map((t) => (
+																<option key={t} value={t}>
+																	{t.replace('_', ' ')}
+																</option>
+															))}
+														</select>
+													</div>
+
+													<div className='flex flex-col gap-1 px-2'>
+														<label className='flex items-center gap-1 cursor-pointer'>
+															<input
+																type='checkbox'
+																checked={editForm.is_bidirectional}
+																onChange={(e) => setEditForm({ ...editForm, is_bidirectional: e.target.checked })}
+															/>
+															<span className='text-[10px] uppercase text-muted-foreground'>2-Way</span>
+														</label>
+														<label className='flex items-center gap-1 cursor-pointer'>
+															<input
+																type='checkbox'
+																checked={editForm.is_hidden}
+																onChange={(e) => setEditForm({ ...editForm, is_hidden: e.target.checked })}
+															/>
+															<span className='text-[10px] uppercase text-muted-foreground'>Hidden</span>
+														</label>
+													</div>
+
+													<div className='flex gap-1'>
+														<Button onClick={handleUpdate} size='sm' variant='primary' icon={Save} className='h-9 px-3'>
+															Save
+														</Button>
+														<Button
+															onClick={() => setEditingId(null)}
+															size='sm'
+															variant='ghost'
+															icon={X}
+															className='h-9 px-3'>
+															Cancel
+														</Button>
+													</div>
+												</div>
+											) : (
+												/* VIEW MODE */
+												<div className={`flex items-center justify-between p-1 pl-0`}>
+													<div className='flex items-center gap-3 min-w-0 pl-3'>
+														<div className='flex items-center gap-2'>
+															<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
+															{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden' />}
+															{rel.is_bidirectional && (
+																<ArrowRightLeft size={12} className='text-muted-foreground/50' title='Bidirectional' />
+															)}
+														</div>
+														<div className='flex items-center gap-1.5 mt-0.5'>
+															{/* Relationship Type Badge */}
+															<span
+																className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
+																{rel.relationship_type.replace('_', ' ')}
+															</span>
+														</div>
+													</div>
+													<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2'>
+														<button
+															onClick={() => {
+																setEditingId(rel.id);
+																setEditForm({
+																	relationship_type: rel.relationship_type,
+																	is_bidirectional: rel.is_bidirectional,
+																	is_hidden: rel.is_hidden,
+																});
+															}}
+															className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+															<Edit2 size={18} />
+														</button>
+														<button
+															onClick={() => handleDelete(rel.id)}
+															className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+															<Trash2 size={18} />
+														</button>
+													</div>
+												</div>
+											)}
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\RelationshipManager.jsx ---
+
+--- FILE: features\admin\components\SessionEventManager.jsx ---
+import React, { useEffect, useState } from 'react';
+import { Plus, Trash2, Edit2, Save, X, Calendar } from 'lucide-react';
+import {
+	fetchChildRows,
+	upsertSessionEvent,
+	deleteRow,
+	fetchSessionEventsWithRelationships,
+} from '@/features/admin/api/adminService';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+import EventTagger from './EventTagger';
+
+const EVENT_TYPES = [
+	'combat',
+	'social',
+	'quest_started',
+	'quest_progressed',
+	'travel',
+	'location_discovered',
+	'location_visited',
+	'npc_encountered',
+	'faction_discovered',
+	'investigation',
+	'backstory',
+	'discovery',
+	'vision',
+	'shopping',
+	'special_event',
+];
+
+export default function SessionEventManager({ sessionId }) {
+	const [events, setEvents] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [editingId, setEditingId] = useState(null);
+	const [formData, setFormData] = useState({});
+
+	useEffect(() => {
+		if (sessionId) loadEvents();
+	}, [sessionId]);
+
+	const loadEvents = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchSessionEventsWithRelationships(sessionId);
+			setEvents(data);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleAddNew = () => {
+		const nextOrder = events.length > 0 ? Math.max(...events.map((e) => e.event_order || 0)) + 1 : 1;
+		const newEvent = {
+			id: `new-${Date.now()}`,
+			session_id: sessionId,
+			title: '',
+			description: '',
+			event_type: 'travel',
+			event_order: nextOrder,
+		};
+		setEvents([...events, newEvent]);
+		handleEdit(newEvent);
+	};
+
+	const handleEdit = (event) => {
+		setEditingId(event.id);
+		setFormData({ ...event });
+	};
+
+	const handleSave = async () => {
+		try {
+			const { relationships, ...payload } = formData;
+			await upsertSessionEvent(payload);
+			setEditingId(null);
+			loadEvents();
+		} catch (e) {
+			alert('Error saving event: ' + e.message);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm('Delete this event?')) return;
+		if (String(id).startsWith('new')) {
+			setEvents(events.filter((e) => e.id !== id));
+			return;
+		}
+		try {
+			await deleteRow('session_events', id);
+			loadEvents();
+		} catch (e) {
+			alert(e.message);
+		}
+	};
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
+				<span className='flex items-center gap-2'>
+					<Calendar size={18} className='text-amber-600' /> Session Timeline
+				</span>
+				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+					Add Event
+				</Button>
+			</div>
+
+			<div className='space-y-3'>
+				{events.map((evt) => (
+					<div key={evt.id} className='group'>
+						{editingId === evt.id ? (
+							/* --- EDIT MODE --- */
+							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+								<div className='flex gap-3'>
+									<div className='w-16'>
+										<label className={ADMIN_LABEL_CLASS}>Order</label>
+										<input
+											type='number'
+											className={ADMIN_INPUT_CLASS}
+											value={formData.event_order}
+											onChange={(e) => setFormData({ ...formData, event_order: parseInt(e.target.value) })}
+										/>
+									</div>
+									<div className='flex-1'>
+										<label className={ADMIN_LABEL_CLASS}>Title</label>
+										<input
+											type='text'
+											className={`${ADMIN_INPUT_CLASS} font-bold`}
+											autoFocus
+											value={formData.title}
+											onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+										/>
+									</div>
+									<div className='w-1/3'>
+										<label className={ADMIN_LABEL_CLASS}>Type</label>
+										<select
+											className={ADMIN_INPUT_CLASS}
+											value={formData.event_type}
+											onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}>
+											{EVENT_TYPES.map((t) => (
+												<option key={t} value={t}>
+													{t.replace(/_/g, ' ')}
+												</option>
+											))}
+										</select>
+									</div>
+								</div>
+
+								<div>
+									<label className={ADMIN_LABEL_CLASS}>Description</label>
+									<textarea
+										rows={3}
+										className={ADMIN_INPUT_CLASS}
+										value={formData.description || ''}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+									/>
+								</div>
+
+								<EventTagger eventId={evt.id} />
+
+								<div className='flex justify-end gap-3 border-t border-border/50 pt-3'>
+									<Button
+										onClick={() => {
+											setEditingId(null);
+											loadEvents();
+										}}
+										variant='ghost'
+										icon={X}>
+										Cancel
+									</Button>
+									<Button onClick={handleSave} variant='primary' icon={Save}>
+										Save Changes
+									</Button>
+								</div>
+							</div>
+						) : (
+							/* --- VIEW MODE --- */
+							<div className='flex items-start gap-3 p-3 bg-background border border-border rounded-lg hover:border-amber-300 transition-colors'>
+								<div className='shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground border border-border'>
+									{evt.event_order}
+								</div>
+								<div className='flex-1 min-w-0'>
+									<div className='flex items-center gap-2 mb-1'>
+										<span className='text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-muted text-muted-foreground rounded border border-border'>
+											{evt.event_type ? evt.event_type.replace(/_/g, ' ') : 'Event'}
+										</span>
+										<h4 className='font-bold text-sm text-foreground'>{evt.title}</h4>
+									</div>
+									<p className='text-xs text-muted-foreground line-clamp-2'>{evt.description}</p>
+									{evt.relationships && evt.relationships.length > 0 && (
+										<div className='flex flex-wrap gap-1.5 mt-1'>
+											{evt.relationships.map((rel) => (
+												<div
+													key={rel.id}
+													className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-white border border-border text-[10px] text-muted-foreground shadow-sm select-none'>
+													<span className='font-medium text-foreground'>{rel.target?.name}</span>
+													<span className='text-[9px] opacity-60 uppercase'>{rel.target?.type}</span>
+												</div>
+											))}
+										</div>
+									)}
+								</div>
+
+								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
+									<button
+										onClick={() => handleEdit(evt)}
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+										<Edit2 size={18} />
+									</button>
+									<button
+										onClick={() => handleDelete(evt.id)}
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+										<Trash2 size={18} />
+									</button>
+								</div>
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\SessionEventManager.jsx ---
+
+--- FILE: features\admin\components\SmartImageInput.jsx ---
+import React, { useState } from 'react';
+import { Image as ImageIcon, X, Link as LinkIcon, Search } from 'lucide-react';
+import { ADMIN_INPUT_CLASS } from './AdminFormStyles';
+import ImageLibraryModal from './ImageLibraryModal';
+
+const resolvePreviewUrl = (url) => {
+	if (!url) return null;
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+export default function SmartImageInput({ value, onChange, placeholder, ...props }) {
+	const [isPickerOpen, setIsPickerOpen] = useState(false);
+	const previewUrl = resolvePreviewUrl(value);
+
+	return (
+		<div className='space-y-2'>
+			<div className='flex gap-2 items-center'>
+				<div className='relative flex-1 group'>
+					<div className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50'>
+						<LinkIcon size={14} />
+					</div>
+					<input
+						type='text'
+						className={`${ADMIN_INPUT_CLASS} pl-9 pr-20`} // Extra padding for buttons
+						placeholder={placeholder || 'images/path/to/file.png'}
+						value={value || ''}
+						onChange={onChange}
+						{...props}
+					/>
+
+					{/* Actions inside input */}
+					<div className='absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5'>
+						{value && (
+							<button
+								type='button'
+								onClick={() => onChange({ target: { value: '' } })}
+								className='p-1.5 text-muted-foreground hover:text-red-500 transition-colors'
+								title='Clear'>
+								<X size={14} />
+							</button>
+						)}
+						<button
+							type='button'
+							onClick={() => setIsPickerOpen(true)}
+							className='p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-all'
+							title='Browse Library'>
+							<Search size={14} strokeWidth={3} />
+						</button>
+					</div>
+				</div>
+
+				{/* Visual Preview */}
+				<div className='shrink-0 w-10 h-10 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden shadow-sm'>
+					{previewUrl ? (
+						<img
+							src={previewUrl}
+							alt='Preview'
+							className='w-full h-full object-cover'
+							onError={(e) => {
+								e.target.style.display = 'none';
+							}}
+						/>
+					) : (
+						<ImageIcon size={16} className='text-muted-foreground/20' />
+					)}
+				</div>
+			</div>
+
+			<ImageLibraryModal
+				isOpen={isPickerOpen}
+				onClose={() => setIsPickerOpen(false)}
+				onSelect={(path) => onChange({ target: { value: path } })}
+			/>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\SmartImageInput.jsx ---
+
+--- FILE: features\admin\config\adminStrategies.js ---
+export const ADMIN_STRATEGIES = {
+	// 0. CAMPAIGN (Meta Entity)
+	campaign: {
+		label: 'Campaign',
+		type: 'campaign',
+		primaryTable: 'campaigns',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true, // Use Markdown for description
+		defaultAttributes: [
+			{ key: 'campaign_id', label: 'Campaign ID (Integer)', type: 'number' }, // Required by your schema
+			{ key: 'map_data', label: 'Map Data (JSON)', type: 'text' }, // Advanced: map config
+		],
+	},
+
+	// 1. NPC
+	npc: {
+		label: 'NPC',
+		type: 'npc',
+		primaryTable: 'npcs',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'race', label: 'Race/Ancestry', type: 'text' },
+			{ key: 'class', label: 'Class/Occupation', type: 'text' },
+			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy', 'Unknown'] },
+			{ key: 'status', label: 'Status', type: 'text' },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 2. LOCATION
+	location: {
+		label: 'Location',
+		type: 'location',
+		primaryTable: 'locations',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 3. SESSION
+	session: {
+		label: 'Session',
+		type: 'session',
+		primaryTable: 'sessions',
+		colMapping: { name: 'title', description: 'narrative' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'session_number', label: 'Session Number', type: 'number' },
+			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
+		],
+	},
+
+	// 4. QUEST
+	quest: {
+		label: 'Quest',
+		type: 'quest',
+		primaryTable: 'quests',
+		colMapping: { name: 'title', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed', 'Failed', 'Pending'] },
+			{
+				key: 'quest type',
+				label: 'Quest Type',
+				type: 'select',
+				options: ['Main Quest', 'Side Quest', 'Personal Quest'],
+			},
+			{ key: 'priority', label: 'Priority', type: 'select', options: ['Critical', 'High', 'Medium', 'Low', 'Trivial'] },
+		],
+	},
+
+	// 5. FACTION
+	faction: {
+		label: 'Faction',
+		type: 'faction',
+		primaryTable: 'factions',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'leader', label: 'Leader', type: 'text' },
+			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy'] },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 6. ITEM
+	item: {
+		label: 'Item',
+		type: 'item',
+		primaryTable: 'items',
+		colMapping: { name: 'name', description: 'description' },
+		defaultAttributes: [
+			{
+				key: 'type',
+				label: 'Type',
+				type: 'select',
+				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Item', 'Key Item', 'Treasure'],
+			},
+			{
+				key: 'rarity',
+				label: 'Rarity',
+				type: 'select',
+				options: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'],
+			},
+			{ key: 'value', label: 'Gold Value', type: 'text' },
+			{ key: 'attunement', label: 'Attunement?', type: 'select', options: ['Yes', 'No'] },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 7. CHARACTER (The Party)
+	character: {
+		label: 'Character',
+		type: 'character',
+		primaryTable: 'characters',
+		// 'background' is usually the column name for description in D&D schemas
+		// If your table uses 'description', change 'background' to 'description'
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'race', label: 'Race', type: 'text' },
+			{ key: 'class', label: 'Class', type: 'text' },
+			{ key: 'level', label: 'Level', type: 'number' },
+			{ key: 'speed', label: 'Speed', type: 'text' },
+			{ key: 'hit points', label: 'Hit Points', type: 'text' },
+			{ key: 'armor class', label: 'Armor Class', type: 'text' },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+		],
+	},
+
+	// 8. ENCOUNTER
+	encounter: {
+		label: 'Encounter',
+		type: 'encounter',
+		primaryTable: 'encounters',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{
+				key: 'status',
+				label: 'Status',
+				type: 'select',
+				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
+			},
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	default: {
+		label: 'Entity',
+		primaryTable: 'entities',
+		colMapping: { name: 'name', description: 'description' },
+		defaultAttributes: [],
+	},
+};
+
+export const getStrategy = (type) => {
+	return ADMIN_STRATEGIES[type] || ADMIN_STRATEGIES.default;
+};
+
+--- END OF features\admin\config\adminStrategies.js ---
+
+--- FILE: features\admin\config\imageLibrary.js ---
+export const IMAGE_LIBRARY = [
+	{
+		category: 'Icons',
+		path: 'images/icons/',
+		// Example list: In a real app, you can generate this JSON via a script
+		// or just list your primary D&D icons here.
+		files: ['npc.png', 'location.png', 'quest.png', 'faction.png', 'encounter.png', 'item.png'],
+	},
+	{
+		category: 'Backgrounds',
+		path: 'images/backgrounds/',
+		files: ['forest.jpg', 'dungeon.jpg', 'city.jpg', 'tavern.jpg', 'map_parchment.jpg'],
+	},
+	{
+		category: 'Tokens',
+		path: 'images/tokens/',
+		files: ['party_token.png', 'enemy_token.png'],
+	},
+];
+
+--- END OF features\admin\config\imageLibrary.js ---
+
+--- FILE: features\admin\config\imageManifest.json ---
+[
+  {
+    "category": "Assets > Character_backgrounds > Campaign_002",
+    "path": "images/assets/character_backgrounds/campaign_002/",
+    "files": [
+      "bonnie_bg.jpeg",
+      "kaedin_bg.jpg",
+      "olek_bg.jpg",
+      "soshi_bg.jpeg"
+    ]
+  },
+  {
+    "category": "Assets > Character_thumbnails > Campaign_001",
+    "path": "images/assets/character_thumbnails/campaign_001/",
+    "files": [
+      "aenwyn.jpeg",
+      "aethere.jpeg",
+      "alezander.jpeg",
+      "nora.png",
+      "samantha.jpeg",
+      "smasherina.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Character_thumbnails > Campaign_002",
+    "path": "images/assets/character_thumbnails/campaign_002/",
+    "files": [
+      "bonnie.jpeg",
+      "kaedin.jpeg",
+      "norr.jpeg",
+      "olek.jpeg",
+      "soshi.jpeg"
+    ]
+  },
+  {
+    "category": "Assets > Encounter_backgrounds > Campaign_002",
+    "path": "images/assets/encounter_backgrounds/campaign_002/",
+    "files": [
+      "demonic_ambush_bg.jpg",
+      "hydra_encounter_bg.jpg",
+      "thylacoleo_ambush_bg.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Location_backgrounds > Campaign_002",
+    "path": "images/assets/location_backgrounds/campaign_002/",
+    "files": [
+      "avarthel_grove_bg.jpg",
+      "drellin_ferry_bg.jpg",
+      "grackledorn_bg.jpg",
+      "neverwinter_bg.jpg",
+      "strategic_bridge.jpg",
+      "underground_temple_complex.jpg",
+      "wrath_keep_bg.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Npc_backgrounds > Campaign_002",
+    "path": "images/assets/npc_backgrounds/campaign_002/",
+    "files": [
+      "avarthel_bg.jpg",
+      "soranna_bg.jpg",
+      "yoghurt_bg.jpg"
+    ]
+  },
+  {
+    "category": "Custom-icons",
+    "path": "images/custom-icons/",
+    "files": [
+      "arrowDirectionDown.png",
+      "arrowDirectionLeft.png",
+      "arrowDirectionRight.png",
+      "arrowDirectionUp.png",
+      "city.png",
+      "cityBarbarian.png",
+      "cityCapital.png",
+      "cityDruid.png",
+      "cityDwarves.png",
+      "cityElves.png",
+      "cityHalflings.png",
+      "cityLizard.png",
+      "cityPort.png",
+      "fort.png",
+      "fortTower.png",
+      "iconPortal.png",
+      "mageTower.png",
+      "poiAlchemist.png",
+      "poiBed.png",
+      "poiBramble.png",
+      "poiCave.png",
+      "poiCombat.png",
+      "poiDanger.png",
+      "poiFarm.png",
+      "poiGenericNPC.png",
+      "poiInn.png",
+      "poiLandmarkCitadel.png",
+      "poiLandmarkCity.png",
+      "poiLandmarkFarm.png",
+      "poiMine.png",
+      "poiRuin.png",
+      "poiShip.png",
+      "poiWaterfall.png",
+      "shadow.png",
+      "templeCathedral.png",
+      "templeEldath.png",
+      "templeMonolith.png",
+      "templePyramid.png",
+      "templeShrine.png",
+      "templeZiggurat.png",
+      "town.png",
+      "townBarbarian.png",
+      "townDock.png",
+      "townDruid.png",
+      "townDwarves.png",
+      "townElves.png",
+      "townHalflings.png",
+      "townLizard.png",
+      "townMill.png",
+      "tradeAlchemy.png",
+      "tradeCamp.png",
+      "tradeCampLarge.png",
+      "tradeForge.png",
+      "tradeHunter.png",
+      "tradeShop.png",
+      "tradeStable.png",
+      "tradeWatchtower.png"
+    ]
+  },
+  {
+    "category": "General",
+    "path": "images/",
+    "files": [
+      "background_texture.png"
+    ]
+  },
+  {
+    "category": "Icons",
+    "path": "images/icons/",
+    "files": [
+      "avian.png",
+      "bonnie.png",
+      "deity.png",
+      "dwarf.png",
+      "earth_genasi.png",
+      "elemental.png",
+      "encounter.png",
+      "faction.png",
+      "feline.png",
+      "female.png",
+      "gnome.png",
+      "goblin.png",
+      "hobgoblin.png",
+      "kaedin.png",
+      "location.png",
+      "male.png",
+      "monster.png",
+      "norr.png",
+      "ogre.png",
+      "olek.png",
+      "other.png",
+      "party.png",
+      "phoenix.png",
+      "quest.png",
+      "quickling.png",
+      "rat.png",
+      "session.png",
+      "soshi.png",
+      "tabaxi.png",
+      "unknown.png"
+    ]
+  },
+  {
+    "category": "Overlays > Korinis_island",
+    "path": "images/overlays/korinis_island/",
+    "files": [
+      "korinis_island_penal_colony_chapel.png",
+      "korinis_island_penal_colony_merchants_cave.png",
+      "korinis_island_penal_colony_mine_cave.png",
+      "korinis_island_penal_colony_mine_cave_v2.png",
+      "korinis_island_penal_colony_paladin_barracks.png",
+      "korinis_island_penal_colony_spider_cave.png"
+    ]
+  }
+]
+--- END OF features\admin\config\imageManifest.json ---
+
+--- FILE: features\admin\layouts\AdminLayout.jsx ---
+import React from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+
+const NavItem = ({ to, icon: Icon, label }) => {
+	// ... (existing code) ...
+	const location = useLocation();
+	const isActive = location.pathname.includes(to);
+
+	return (
+		<Link
+			to={to}
+			className={clsx(
+				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
+				isActive
+					? 'bg-amber-100 text-amber-900 shadow-sm ring-1 ring-amber-200'
+					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+			)}>
+			<Icon size={15} className={isActive ? 'text-amber-700' : 'opacity-70'} />
+			{label}
+		</Link>
+	);
+};
+
+export default function AdminLayout() {
+	const { campaignId, setCampaignId } = useCampaign();
+	const navigate = useNavigate();
+
+	// ... (existing handleSwitch logic) ...
+	const handleSwitch = () => {
+		if (confirm('Go to Campaign Selection screen?')) {
+			setCampaignId(null);
+			navigate('/select-campaign');
+		}
+	};
+
+	return (
+		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans'>
+			{/* Sidebar */}
+			<aside className='w-56 bg-background border-r border-border flex flex-col shrink-0'>
+				{/* ... (existing sidebar content) ... */}
+				<div className='p-4 border-b border-border bg-muted/20'>
+					<div className='flex items-center gap-2 text-amber-700'>
+						<div className='p-1.5 bg-amber-100 rounded-md'>
+							<Database size={18} />
+						</div>
+						<h2 className='font-serif font-bold text-lg leading-none'>DM Console</h2>
+					</div>
+				</div>
+
+				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
+					{/* ... (existing nav items) ... */}
+					<div className='px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						System
+					</div>
+					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Entities
+					</div>
+					<NavItem to='/dm/manage/character' icon={Users} label='Characters' />
+					<NavItem to='/dm/manage/npc' icon={Users} label='NPCs' />
+					<NavItem to='/dm/manage/location' icon={MapPin} label='Locations' />
+					<NavItem to='/dm/manage/faction' icon={Shield} label='Factions' />
+					<NavItem to='/dm/manage/item' icon={Gem} label='Items' />
+					<NavItem to='/dm/manage/encounter' icon={Sword} label='Encounters' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Campaign
+					</div>
+					<NavItem to='/dm/manage/session' icon={BookOpen} label='Sessions' />
+					<NavItem to='/dm/manage/quest' icon={Scroll} label='Quests' />
+				</nav>
+
+				<div className='p-3 border-t border-border space-y-1'>
+					{/* ... (existing footer buttons) ... */}
+					{campaignId && (
+						<Link
+							to='/'
+							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors'
+							title={`Return to Campaign ID: ${campaignId}`}>
+							<Play size={14} /> Enter Campaign
+						</Link>
+					)}
+
+					<button
+						onClick={handleSwitch}
+						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors text-left'>
+						<LogOut size={14} /> Campaign Select
+					</button>
+				</div>
+			</aside>
+
+			{/* Main Content */}
+			<main className='flex-1 h-full overflow-y-auto bg-muted/10 custom-scrollbar'>
+				<div className='mx-auto'>
+					<Outlet />
+				</div>
+			</main>
+		</div>
+	);
+}
+
+--- END OF features\admin\layouts\AdminLayout.jsx ---
+
+--- FILE: features\admin\pages\EntityEditorPage.jsx ---
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import AdminForm from '@/features/admin/components/AdminForm'; // Import the form
+
+export default function EntityEditorPage() {
+	const { type, id } = useParams();
+
+	return (
+		<div className='max-w-5xl mx-auto'>
+			{/* Page Header */}
+			<div className='mb-6'>
+				<h1 className='text-2xl font-serif font-bold text-foreground capitalize'>
+					{id ? `Edit ${type}` : `Create New ${type}`}
+				</h1>
+				<p className='text-sm text-muted-foreground'>
+					{id ? `ID: ${id}` : 'Fill in the details below to create a new entry.'}
+				</p>
+			</div>
+
+			{/* The Dynamic Form */}
+			<AdminForm
+				type={type}
+				id={id}
+				key={`${type}-${id || 'new'}`} // <--- This forces a complete rebuild when type changes
+			/>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\EntityEditorPage.jsx ---
+
+--- FILE: features\admin\pages\EntityListPage.jsx ---
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Edit, Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { getEntities } from '@/domain/entity/api/entityService';
+import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import Button from '@/shared/components/ui/Button';
+import EntityBadge from '@/domain/entity/components/EntityBadge';
+
+export default function EntityListPage() {
+	const { type } = useParams();
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const [search, setSearch] = useState('');
+	const [isCloning, setIsCloning] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(null);
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	const { data, isLoading, refetch } = useQuery({
+		queryKey: ['admin-list', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: !!campaignId,
+	});
+
+	const filtered = (data || []).filter((item) =>
+		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
+	);
+
+	// ... (Handlers handleDuplicate and handleDelete remain same) ...
+	const handleDuplicate = async (originalId) => {
+		if (!confirm('Create a copy of this entity?')) return;
+		setIsCloning(originalId);
+		try {
+			const raw = await fetchRawEntity(normalizedType, originalId);
+			const copyData = {
+				...raw,
+				name: raw.name ? `${raw.name} (Copy)` : undefined,
+				title: raw.title ? `${raw.title} (Copy)` : undefined,
+				campaign_id: campaignId,
+			};
+			const result = await createEntity(normalizedType, copyData);
+			navigate(`/dm/editor/${normalizedType}/${result.id}`);
+		} catch (e) {
+			console.error('Duplication failed:', e);
+			alert('Failed to duplicate: ' + e.message);
+			setIsCloning(false);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm(`Are you sure you want to delete this ${normalizedType}? This cannot be undone.`)) return;
+		setIsDeleting(id);
+		try {
+			await deleteEntity(normalizedType, id);
+			refetch();
+		} catch (e) {
+			alert('Delete failed: ' + e.message);
+		} finally {
+			setIsDeleting(null);
+		}
+	};
+
+	return (
+		<div className='space-y-4 animate-in fade-in duration-300'>
+			{/* Header Toolbar */}
+			<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+				<h1 className='text-2xl font-serif font-bold text-foreground capitalize flex items-center gap-2'>
+					{type}s
+					<span className='text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
+						{data?.length || 0}
+					</span>
+				</h1>
+				<Link to={`/dm/editor/${normalizedType}`}>
+					<Button variant='primary' icon={Plus} size='sm'>
+						Create New
+					</Button>
+				</Link>
+			</div>
+
+			{/* Search Bar */}
+			<div className='relative'>
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={16} />
+				<input
+					type='text'
+					placeholder={`Filter ${type}s...`}
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					className='w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm placeholder:text-muted-foreground/50'
+				/>
+			</div>
+
+			{/* Entity List */}
+			<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
+				<div className='divide-y divide-border'>
+					{isLoading ? (
+						<div className='p-12 flex justify-center text-muted-foreground'>
+							<Loader2 className='animate-spin text-amber-600' />
+						</div>
+					) : filtered.length === 0 ? (
+						<div className='p-12 text-center text-muted-foreground text-sm italic bg-muted/10'>
+							{search ? `No matches for "${search}"` : `No ${type}s found. Create one to get started.`}
+						</div>
+					) : (
+						filtered.map((item) => (
+							<div
+								key={item.id}
+								// CHANGED: Added virtual-list-item class for CSS native virtualization
+								className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+								{/* Left: Info */}
+								<div className='flex items-center gap-3 min-w-0 flex-1'>
+									<div className='min-w-0'>
+										<div className='flex items-center gap-2'>
+											<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
+											{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+										</div>
+										<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
+											{item.summary || item.narrative || item.description || 'No description'}
+										</div>
+									</div>
+								</div>
+
+								{/* Right: Actions */}
+								<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+									<EntityBadge
+										type={item.type}
+										size='sm'
+										variant='outline'
+										className='opacity-50 hidden sm:inline-flex'
+									/>
+									<button
+										onClick={() => handleDuplicate(item.id)}
+										disabled={isCloning === item.id}
+										className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
+										title='Duplicate'>
+										{isCloning === item.id ? (
+											<Loader2 size={16} className='animate-spin text-amber-600' />
+										) : (
+											<Copy size={16} />
+										)}
+									</button>
+									<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
+										<Button
+											variant='ghost'
+											size='sm'
+											icon={Edit}
+											className='h-8 px-2 text-muted-foreground hover:text-foreground'>
+											Edit
+										</Button>
+									</Link>
+									<button
+										onClick={() => handleDelete(item.id)}
+										disabled={isDeleting === item.id}
+										className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										title='Delete'>
+										{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
+									</button>
+								</div>
+							</div>
+						))
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\EntityListPage.jsx ---
+
+--- FILE: features\admin\pages\SplitPaneManager.jsx ---
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { getEntities } from '@/domain/entity/api/entityService';
+import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import AdminForm from '@/features/admin/components/AdminForm';
+import Button from '@/shared/components/ui/Button';
+
+export default function SplitPaneManager() {
+	const { type, id } = useParams();
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const [search, setSearch] = useState('');
+
+	// Action States
+	const [isCloning, setIsCloning] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(null);
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// 1. Fetch List Data
+	const {
+		data: entities,
+		isLoading,
+		refetch,
+	} = useQuery({
+		queryKey: ['admin-list', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: normalizedType === 'campaign' || !!campaignId,
+	});
+
+	const filtered = (entities || []).filter((item) =>
+		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
+	);
+
+	// --- ACTIONS ---
+
+	const handleDuplicate = async (originalId, e) => {
+		e.stopPropagation(); // Prevent navigation
+		if (!confirm('Create a copy?')) return;
+
+		setIsCloning(originalId);
+		try {
+			const raw = await fetchRawEntity(normalizedType, originalId);
+			// Fix: Check for attributesList vs attributes object structure from fetchRawEntity
+			// fetchRawEntity returns { ..., attributes: {...} } OR { ..., attributesList: [...] } depending on version
+			// The service handles formatting for createEntity, we just need to modify the name.
+
+			const copyData = {
+				...raw,
+				name: raw.name ? `${raw.name} (Copy)` : undefined,
+				title: raw.title ? `${raw.title} (Copy)` : undefined,
+				campaign_id: campaignId,
+			};
+
+			// If ID exists in raw data, remove it so DB creates new one
+			delete copyData.id;
+
+			const result = await createEntity(normalizedType, copyData);
+			refetch(); // Refresh list
+			navigate(`/dm/manage/${normalizedType}/${result.id}`);
+		} catch (e) {
+			alert('Failed to duplicate: ' + e.message);
+		} finally {
+			setIsCloning(false);
+		}
+	};
+
+	const handleDelete = async (itemId, e) => {
+		e.stopPropagation(); // Prevent navigation
+		if (!confirm('Delete this entry?')) return;
+
+		setIsDeleting(itemId);
+		try {
+			await deleteEntity(normalizedType, itemId);
+			refetch();
+			// If we deleted the currently selected item, go back to "Create New"
+			if (id === itemId) {
+				navigate(`/dm/manage/${normalizedType}`);
+			}
+		} catch (e) {
+			alert('Delete failed: ' + e.message);
+		} finally {
+			setIsDeleting(null);
+		}
+	};
+
+	return (
+		<div className='flex h-[100vh] overflow-hidden bg-muted/10'>
+			{/* --- LEFT PANE: LIST --- */}
+			<div className='w-80 flex flex-col border-r border-border bg-background shrink-0 shadow-sm z-10'>
+				{/* Header & Search */}
+				<div className='p-3 border-b border-border space-y-3 bg-muted/10'>
+					<div className='flex items-center justify-between'>
+						<h2 className='text-lg font-serif font-bold capitalize text-foreground flex items-center gap-2'>
+							{type}s
+							<span className='text-xs font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
+								{entities?.length || 0}
+							</span>
+						</h2>
+						<Button
+							onClick={() => navigate(`/dm/manage/${normalizedType}`)}
+							size='sm'
+							variant='primary'
+							icon={Plus}
+							className='h-7 px-2 text-xs'>
+							New
+						</Button>
+					</div>
+					<div className='relative'>
+						<Search className='absolute left-2.5 top-2 text-muted-foreground/60' size={14} />
+						<input
+							type='text'
+							placeholder='Filter list...'
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							className='w-full pl-8 pr-3 py-1.5 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm'
+						/>
+					</div>
+				</div>
+
+				{/* Scrollable List */}
+				<div className='flex-1 overflow-y-auto custom-scrollbar'>
+					{isLoading ? (
+						<div className='p-8 flex justify-center'>
+							<Loader2 className='animate-spin text-amber-600' />
+						</div>
+					) : filtered.length === 0 ? (
+						<div className='p-6 text-center text-xs text-muted-foreground italic'>No matches.</div>
+					) : (
+						<div className='divide-y divide-border/40'>
+							{filtered.map((item) => {
+								const isActive = id === item.id;
+								return (
+									<div
+										key={item.id}
+										onClick={() => navigate(`/dm/manage/${normalizedType}/${item.id}`)}
+										className={`group relative flex items-center w-full text-left transition-all cursor-pointer ${
+											isActive ? 'bg-amber-50/80' : 'bg-background hover:bg-muted/50'
+										}`}>
+										{/* Active Marker Strip */}
+										<div
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500' : 'bg-transparent'}`}
+										/>
+
+										{/* Main Content Area */}
+										<div className='flex-1 py-3 pl-4 pr-2 min-w-0'>
+											<div
+												className={`font-bold text-sm truncate mb-0.5 ${
+													isActive ? 'text-amber-900' : 'text-foreground'
+												}`}>
+												{item.name || item.title}
+											</div>
+											<div className='flex items-center justify-between'>
+												<div className='text-[10px] text-muted-foreground truncate w-full'>
+													{item.summary || item.narrative || item.description || 'No description'}
+												</div>
+												{/* Status Dot */}
+												{item.status && (
+													<div
+														title={item.status}
+														className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+															item.status.toLowerCase().includes('active')
+																? 'bg-emerald-500'
+																: item.status.toLowerCase().includes('dead')
+																? 'bg-red-500'
+																: 'bg-slate-300'
+														}`}
+													/>
+												)}
+											</div>
+										</div>
+
+										{/* Action Buttons (Visible on Hover) */}
+										<div
+											className={`flex flex-col gap-1 pr-1 pl-1 ${
+												isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+											} transition-opacity`}>
+											<button
+												onClick={(e) => handleDuplicate(item.id, e)}
+												className='p-1 text-muted-foreground hover:text-blue-600 hover:bg-blue-100 rounded'
+												title='Duplicate'>
+												{isCloning === item.id ? <Loader2 size={12} className='animate-spin' /> : <Copy size={12} />}
+											</button>
+											<button
+												onClick={(e) => handleDelete(item.id, e)}
+												className='p-1 text-muted-foreground hover:text-red-600 hover:bg-red-100 rounded'
+												title='Delete'>
+												{isDeleting === item.id ? <Loader2 size={12} className='animate-spin' /> : <Trash2 size={12} />}
+											</button>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* --- RIGHT PANE: EDITOR --- */}
+			<div className='flex-1 overflow-y-auto bg-muted/10 p-4 md:p-8 custom-scrollbar'>
+				<div className='max-w-4xl mx-auto'>
+					<AdminForm key={`${normalizedType}-${id || 'new'}`} type={normalizedType} id={id} />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\SplitPaneManager.jsx ---
+

@@ -1,0 +1,469 @@
+================================================================
+PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\table-of-contents\TableOfContents.jsx ---
+import { useState } from 'react';
+import { clsx } from 'clsx';
+import { List, AlignLeft } from 'lucide-react';
+import { useTocObserver } from './hooks/useTocObserver';
+import { useTocScroll } from './hooks/useTocScroll';
+import { TocItem } from './components/TocItem';
+import { TocMobileDrawer } from './components/TocMobileDrawer';
+
+export const TableOfContents = ({
+	items,
+	className,
+	visibilityClass = 'hidden 2xl:block',
+	mobileToggleClass = '2xl:hidden',
+}) => {
+	const [isOpen, setIsOpen] = useState(false);
+
+	// Hooks
+	const activeId = useTocObserver(items.map((i) => i.id));
+	const { scrollToId } = useTocScroll(() => setIsOpen(false));
+
+	if (!items || items.length === 0) return null;
+
+	const renderList = () => (
+		<div className='flex flex-col space-y-0.5'>
+			{items.map((item) => (
+				<TocItem key={item.id} item={item} isActive={activeId === item.id} onClick={scrollToId} />
+			))}
+		</div>
+	);
+
+	return (
+		<>
+			{/* --- DESKTOP VIEW --- */}
+			{/* 
+				Sticky Positioning Logic:
+				- top-40 (160px): Increased from top-32 to ensure no overlap with sticky TabContainers or Headers.
+				- self-start: Critical for CSS Grid contexts (like Timeline) to prevent the item from stretching 
+				  to full height, which breaks sticky behavior.
+			*/}
+			<div className={clsx(visibilityClass, 'sticky top-90 w-64 shrink-0 self-start', className)}>
+				<div className='max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pb-10 pr-2'>
+					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-gray-400'>
+						<AlignLeft size={12} />
+						<span>On this Page</span>
+					</div>
+					<nav>{renderList()}</nav>
+				</div>
+			</div>
+
+			{/* --- MOBILE/TABLET TOGGLE --- */}
+			<div className={clsx('fixed bottom-6 right-6 z-40', mobileToggleClass)}>
+				<button
+					onClick={() => setIsOpen(true)}
+					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
+					aria-label='Open Table of Contents'>
+					<List size={20} />
+				</button>
+			</div>
+
+			{/* --- MOBILE DRAWER --- */}
+			<TocMobileDrawer
+				isOpen={isOpen}
+				items={items}
+				activeId={activeId}
+				onClose={() => setIsOpen(false)}
+				onScrollTo={scrollToId}
+			/>
+		</>
+	);
+};
+
+--- END OF features\table-of-contents\TableOfContents.jsx ---
+
+--- FILE: features\table-of-contents\components\TocItem.jsx ---
+import { clsx } from 'clsx';
+
+export const TocItem = ({ item, isActive, onClick }) => {
+	return (
+		<button
+			onClick={() => onClick(item.id)}
+			className={clsx(
+				'group flex items-start text-left w-full py-1.5 transition-all duration-200 border-l-[3px] px-4',
+				isActive
+					? 'border-amber-600 text-amber-700 font-bold bg-amber-50/50'
+					: 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300'
+			)}>
+			<span className={clsx('text-[13px] leading-snug', item.depth === 3 && 'ml-3 opacity-90 text-[12px]')}>
+				{item.text}
+			</span>
+		</button>
+	);
+};
+
+--- END OF features\table-of-contents\components\TocItem.jsx ---
+
+--- FILE: features\table-of-contents\components\TocMobileDrawer.jsx ---
+import { Drawer } from '@/shared/components/ui/Drawer';
+import { TocItem } from './TocItem';
+
+export const TocMobileDrawer = ({ isOpen, items, activeId, onClose, onScrollTo }) => {
+	return (
+		<Drawer isOpen={isOpen} onClose={onClose} title='Table of Contents' position='right'>
+			<div className='py-4 flex flex-col space-y-0.5'>
+				{items.map((item) => (
+					<TocItem key={item.id} item={item} isActive={activeId === item.id} onClick={onScrollTo} />
+				))}
+			</div>
+		</Drawer>
+	);
+};
+
+--- END OF features\table-of-contents\components\TocMobileDrawer.jsx ---
+
+--- FILE: features\table-of-contents\hooks\useTocObserver.js ---
+import { useState, useEffect, useRef } from 'react';
+
+export function useTocObserver(itemIds) {
+	const [activeId, setActiveId] = useState('');
+	const observer = useRef(null);
+	const headingsMap = useRef(new Map());
+
+	useEffect(() => {
+		// 1. Safety Check
+		if (!itemIds || itemIds.length === 0) return;
+
+		// 2. The Callback
+		const handleObserver = (entries) => {
+			entries.forEach((entry) => {
+				// Store all intersecting states in a map
+				headingsMap.current.set(entry.target.id, entry);
+			});
+
+			// 3. Determine the "Winner"
+			// We find the first visible heading from the top
+			const visibleHeadings = [];
+
+			headingsMap.current.forEach((entry) => {
+				if (entry.isIntersecting) {
+					visibleHeadings.push(entry);
+				}
+			});
+
+			if (visibleHeadings.length > 0) {
+				// Sort by their position relative to the top of the viewport
+				// The one closest to 0 (top) without being way off-screen is the winner
+				visibleHeadings.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+				// Pick the top-most visible one
+				setActiveId(visibleHeadings[0].target.id);
+			} else {
+				// Edge case: User scrolled past a section but next one hasn't entered.
+				// We keep the last active ID or check if we are at the very top.
+				const scrollY = window.scrollY;
+				if (scrollY < 100 && itemIds.length > 0) {
+					setActiveId(itemIds[0]);
+				}
+			}
+		};
+
+		// 4. Initialize Observer
+		// rootMargin: '-10% 0px -80% 0px' creates a "reading line" at the top of the screen.
+		// An element must cross this top zone to trigger the update.
+		observer.current = new IntersectionObserver(handleObserver, {
+			rootMargin: '-80px 0px -80% 0px',
+			threshold: [0, 1],
+		});
+
+		// 5. Observe elements
+		itemIds.forEach((id) => {
+			const el = document.getElementById(id);
+			if (el) {
+				observer.current.observe(el);
+			}
+		});
+
+		return () => {
+			if (observer.current) observer.current.disconnect();
+			headingsMap.current.clear();
+		};
+	}, [itemIds]);
+
+	return activeId;
+}
+
+--- END OF features\table-of-contents\hooks\useTocObserver.js ---
+
+--- FILE: features\table-of-contents\hooks\useTocScroll.js ---
+import { useCallback } from 'react';
+
+export function useTocScroll(callback) {
+	const scrollToId = useCallback(
+		(id) => {
+			const element = document.getElementById(id);
+
+			if (element) {
+				// CSS 'scroll-margin-top' handles the offset (sticky header)
+				element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+				// Optional callback (e.g., to close mobile drawer)
+				if (callback) callback();
+			} else {
+				console.warn(`[ToC] Target element not found: #${id}`);
+			}
+		},
+		[callback]
+	);
+
+	return { scrollToId };
+}
+
+--- END OF features\table-of-contents\hooks\useTocScroll.js ---
+

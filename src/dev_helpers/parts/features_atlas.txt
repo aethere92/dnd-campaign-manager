@@ -1,0 +1,991 @@
+================================================================
+PARTIAL BUNDLE: FEATURES ATLAS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\atlas\MapPage.jsx ---
+import { useMapData } from './useMapData';
+import { MapCanvas } from './components/MapCanvas';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+export default function MapView() {
+	const { data, navigateToMap, isLoading, currentMapKey } = useMapData();
+
+	if (isLoading) {
+		return (
+			<div className='h-full flex items-center justify-center bg-[#1a1412]'>
+				<LoadingSpinner text='Unrolling the parchment...' className='text-amber-500' />
+			</div>
+		);
+	}
+
+	return <MapCanvas data={data} onNavigate={navigateToMap} currentMapKey={currentMapKey} />;
+}
+
+--- END OF features\atlas\MapPage.jsx ---
+
+--- FILE: features\atlas\useMapData.js ---
+import { useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { getMapConfig } from './utils/mapNavigation';
+
+export function useMapData() {
+	const { campaignData } = useCampaign();
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const currentMapKey = searchParams.get('map') || 'world_map';
+
+	const mapConfig = useMemo(() => {
+		const sourceData = campaignData?.map_data || null;
+		return getMapConfig(currentMapKey, sourceData);
+	}, [currentMapKey, campaignData]);
+
+	const viewData = useMemo(() => {
+		if (!mapConfig) return null;
+
+		const { metadata, annotations, paths, areas, overlays } = mapConfig;
+
+		// --- MATH FIX ---
+		const scaleFactor = Math.pow(2, metadata.sizes.maxZoom);
+		const bounds = [
+			[-metadata.sizes.imageHeight / scaleFactor, 0],
+			[0, metadata.sizes.imageWidth / scaleFactor],
+		];
+
+		// --- MARKER FLATTENING ---
+		const markers = [];
+		if (annotations) {
+			Object.entries(annotations).forEach(([categoryKey, category]) => {
+				if (category.items) {
+					category.items.forEach((item) => {
+						markers.push({
+							...item,
+							category: category.name,
+							categoryId: categoryKey,
+							position: [Number(item.lat), Number(item.lng)],
+						});
+					});
+				}
+			});
+		}
+
+		// 3. Process Areas
+		const mapAreas = [];
+		if (areas) {
+			Object.values(areas).forEach((category) => {
+				category.items.forEach((area) => {
+					mapAreas.push({
+						...area,
+						positions: area.points.map((p) => p.coordinates),
+					});
+				});
+			});
+		}
+
+		return {
+			config: metadata,
+			bounds,
+			markers,
+			sessions: paths || [],
+			areas: mapAreas,
+			overlays: overlays || [],
+		};
+	}, [mapConfig]);
+
+	const navigateToMap = (mapKey) => {
+		setSearchParams({ map: mapKey });
+	};
+
+	return {
+		data: viewData,
+		currentMapKey,
+		navigateToMap,
+		isLoading: false, // FIX: Since we're using static data, never loading
+	};
+}
+
+--- END OF features\atlas\useMapData.js ---
+
+--- FILE: features\atlas\components\MapCanvas.jsx ---
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { Map, BookOpen, MapPin, Image as ImageIcon } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+import { MapMarkers } from './layers/MapMarkers';
+import { MapRecaps } from './layers/MapRecaps';
+import { MapAreas } from './layers/MapAreas';
+import { MapOverlays } from './layers/MapOverlays';
+import { MapLayerControl } from './MapLayerControl';
+import { useMapCanvasViewModel } from './useMapCanvasViewModel';
+
+const MapController = ({ bounds, minZoom, config }) => {
+	const map = useMap();
+	const prevConfigRef = useRef();
+
+	useEffect(() => {
+		if (!bounds) return;
+
+		const isNewMap = prevConfigRef.current !== config.path;
+		prevConfigRef.current = config.path;
+
+		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
+		if (minZoom !== undefined) map.setMinZoom(minZoom);
+
+		// Smooth transition for navigation, instant for new map
+		map.fitBounds(bounds, {
+			animate: !isNewMap,
+			duration: isNewMap ? 0 : 0.5,
+		});
+	}, [map, bounds, minZoom, config.path]);
+
+	return null;
+};
+
+export const MapCanvas = ({ data, onNavigate }) => {
+	if (!data) return null;
+
+	const { config, bounds, areas } = data;
+	const vm = useMapCanvasViewModel(data); // Use Hook
+
+	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
+	const minZoom = 0;
+	const bgValue = config.backgroundColor || '#1a1412';
+	const isImage = bgValue.includes('url') || bgValue.includes('gradient');
+
+	return (
+		<div
+			style={{
+				height: '100%',
+				width: '100%',
+				backgroundColor: isImage ? '#1a1412' : bgValue,
+				backgroundImage: isImage ? bgValue : 'none',
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				backgroundRepeat: 'no-repeat',
+			}}>
+			<MapContainer
+				center={[0, 0]}
+				zoom={minZoom}
+				crs={L.CRS.Simple}
+				minZoom={minZoom}
+				maxZoom={config.sizes.maxZoom}
+				scrollWheelZoom={true}
+				attributionControl={false}
+				zoomControl={false}
+				style={{ height: '100%', width: '100%', background: 'transparent' }}>
+				{/* ... MapController ... */}
+
+				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
+
+				<MapOverlays overlays={vm.visibleOverlays} />
+				{vm.showAreas && <MapAreas areas={areas} />}
+				<MapRecaps sessions={vm.visibleSessions} />
+				<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
+
+				<MapLayerControl groups={vm.controlGroups} visibility={vm.visibility} toggleLayer={vm.toggleLayer} />
+			</MapContainer>
+		</div>
+	);
+};
+
+--- END OF features\atlas\components\MapCanvas.jsx ---
+
+--- FILE: features\atlas\components\MapLayerControl.jsx ---
+import { useState, useEffect, useRef } from 'react';
+import { Layers, ChevronDown, ChevronRight, Eye, EyeOff, Check } from 'lucide-react';
+import { clsx } from 'clsx';
+import L from 'leaflet';
+
+// Reusable styled Group Header matching Sidebar aesthetics
+const Group = ({ label, icon: Icon, children, defaultOpen = true }) => {
+	const [isOpen, setIsOpen] = useState(defaultOpen);
+	if (!children || children.length === 0) return null;
+
+	return (
+		<div className='mb-2'>
+			<button
+				onClick={(e) => {
+					e.stopPropagation();
+					setIsOpen(!isOpen);
+				}}
+				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
+				<span className='mr-1 opacity-70'>{isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}</span>
+				<span className='flex items-center gap-1.5'>
+					{Icon && <Icon size={12} />}
+					{label}
+				</span>
+			</button>
+			{isOpen && <div className='pl-2 space-y-0.5 border-l border-black/5 ml-1'>{children}</div>}
+		</div>
+	);
+};
+
+// Toggle Item with explicit Checkmark UI
+const ToggleItem = ({ label, checked, onChange }) => (
+	<div
+		className='flex items-center gap-2 cursor-pointer group px-2 py-1 hover:bg-black/5 rounded-md transition-colors select-none'
+		onClick={(e) => {
+			e.stopPropagation();
+			onChange();
+		}}>
+		{/* Custom Checkbox UI - Reduced size */}
+		<div
+			className={clsx(
+				'w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center transition-all shadow-sm shrink-0',
+				checked ? 'bg-amber-600 border-amber-700 text-white' : 'bg-white border-gray-300 group-hover:border-amber-400'
+			)}>
+			{checked && <Check size={10} strokeWidth={3.5} />}
+		</div>
+
+		<span
+			className={clsx(
+				'text-[11px] font-medium leading-tight pt-0.5 font-sans',
+				checked ? 'text-foreground' : 'text-gray-500'
+			)}>
+			{label}
+		</span>
+	</div>
+);
+
+export const MapLayerControl = ({ groups, visibility, toggleLayer }) => {
+	const [expanded, setExpanded] = useState(true);
+	const containerRef = useRef(null);
+
+	// Prevent Leaflet map interactions when clicking inside this control
+	useEffect(() => {
+		if (containerRef.current) {
+			L.DomEvent.disableClickPropagation(containerRef.current);
+			L.DomEvent.disableScrollPropagation(containerRef.current);
+		}
+	}, []);
+
+	return (
+		<div className='leaflet-top leaflet-right font-sans' style={{ pointerEvents: 'none', zIndex: 1000 }}>
+			<div
+				ref={containerRef}
+				className={clsx(
+					'leaflet-control m-3 transition-all duration-200 ease-in-out',
+					// Theme colors
+					'bg-[#fdfbf7] border border-[#c9c2b8] rounded-lg shadow-xl overflow-hidden'
+				)}
+				style={{ pointerEvents: 'auto' }}>
+				{/* Header */}
+				<div
+					className='flex items-center justify-between p-2.5 bg-[#f2efe9] border-b border-[#c9c2b8] cursor-pointer min-w-[180px]'
+					onClick={() => setExpanded(!expanded)}>
+					<div className='flex items-center gap-2 text-xs font-serif font-bold text-amber-900'>
+						<Layers size={14} />
+						<span>Atlas Layers</span>
+					</div>
+					<button className='p-0.5 hover:bg-black/5 rounded text-amber-900/70'>
+						{expanded ? <Eye size={12} /> : <EyeOff size={12} />}
+					</button>
+				</div>
+
+				{/* Content */}
+				{expanded && (
+					<div className='p-2 max-h-[60vh] overflow-y-auto w-56 custom-scrollbar bg-background/50'>
+						{groups.overlays?.length > 0 && (
+							<Group label='Overlays' icon={groups.icons.overlays} defaultOpen={false}>
+								{groups.overlays.map((l) => (
+									<ToggleItem
+										key={l.id}
+										label={l.label}
+										checked={!!visibility[l.id]}
+										onChange={() => toggleLayer(l.id)}
+									/>
+								))}
+							</Group>
+						)}
+
+						{groups.sessions?.length > 0 && (
+							<Group label='Journal & Paths' icon={groups.icons.sessions} defaultOpen={false}>
+								{groups.sessions.map((l) => (
+									<ToggleItem
+										key={l.id}
+										label={l.label}
+										checked={!!visibility[l.id]}
+										onChange={() => toggleLayer(l.id)}
+									/>
+								))}
+							</Group>
+						)}
+
+						{groups.markers?.length > 0 && (
+							<Group label='Map Markers' icon={groups.icons.markers} defaultOpen={true}>
+								{groups.markers.map((cat) => (
+									<ToggleItem
+										key={cat.id}
+										label={cat.label}
+										checked={!!visibility[cat.id]}
+										onChange={() => toggleLayer(cat.id)}
+									/>
+								))}
+							</Group>
+						)}
+
+						<div className='mt-2 pt-2 border-t border-black/5'>
+							<ToggleItem
+								label='Show Areas & Regions'
+								checked={!!visibility['areas']}
+								onChange={() => toggleLayer('areas')}
+							/>
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\atlas\components\MapLayerControl.jsx ---
+
+--- FILE: features\atlas\components\useMapCanvasViewModel.js ---
+import { useState, useEffect, useMemo } from 'react';
+import { BookOpen, MapPin, Image as ImageIcon, Map as MapIcon } from 'lucide-react';
+
+export function useMapCanvasViewModel(data) {
+	// 1. Initialize Visibility
+	const [visibility, setVisibility] = useState(() => {
+		const init = { areas: false };
+		if (!data) return init;
+
+		// Initialize marker categories to TRUE
+		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean);
+		uniqueCats.forEach((cat) => {
+			init[`marker-${cat}`] = true;
+		});
+
+		// Sessions/Overlays: OFF by default
+		data.sessions.forEach((s) => (init[`session-${s.name}`] = false));
+		data.overlays.forEach((o) => (init[`overlay-${o.name}`] = false));
+
+		return init;
+	});
+
+	// Sync with data updates
+	useEffect(() => {
+		if (!data) return;
+		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean);
+		setVisibility((prev) => {
+			const next = { ...prev };
+			let changed = false;
+			uniqueCats.forEach((cat) => {
+				const key = `marker-${cat}`;
+				if (next[key] === undefined) {
+					next[key] = true;
+					changed = true;
+				}
+			});
+			return changed ? next : prev;
+		});
+	}, [data?.markers]);
+
+	const toggleLayer = (id) => {
+		setVisibility((prev) => ({ ...prev, [id]: !prev[id] }));
+	};
+
+	// 2. Control Groups Configuration
+	const controlGroups = useMemo(() => {
+		if (!data) return {};
+		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean).sort();
+
+		return {
+			overlays: data.overlays.map((o) => ({ id: `overlay-${o.name}`, label: o.name })),
+			sessions: data.sessions.map((s) => ({ id: `session-${s.name}`, label: s.name })),
+			markers: uniqueCats.map((c) => ({ id: `marker-${c}`, label: c })),
+			icons: {
+				overlays: ImageIcon,
+				sessions: BookOpen,
+				markers: MapPin,
+				areas: MapIcon,
+			},
+		};
+	}, [data]);
+
+	// 3. Filter Layers
+	const visibleMarkers = useMemo(
+		() => data?.markers.filter((m) => visibility[`marker-${m.category}`]) || [],
+		[data, visibility]
+	);
+	const visibleSessions = useMemo(
+		() => data?.sessions.filter((s) => visibility[`session-${s.name}`]) || [],
+		[data, visibility]
+	);
+	const visibleOverlays = useMemo(
+		() => data?.overlays.filter((o) => visibility[`overlay-${o.name}`]) || [],
+		[data, visibility]
+	);
+
+	return {
+		visibility,
+		toggleLayer,
+		controlGroups,
+		visibleMarkers,
+		visibleSessions,
+		visibleOverlays,
+		showAreas: visibility['areas'],
+	};
+}
+
+--- END OF features\atlas\components\useMapCanvasViewModel.js ---
+
+--- FILE: features\atlas\components\layers\MapAreas.jsx ---
+import { Polygon, Tooltip } from 'react-leaflet';
+
+export const MapAreas = ({ areas }) => {
+	if (!areas || areas.length === 0) return null;
+
+	return (
+		<>
+			{areas.map((area, idx) => (
+				<Polygon
+					key={`${area.name}-${idx}`}
+					positions={area.positions}
+					pathOptions={{
+						color: area.lineColor || 'transparent',
+						fillColor: area.interiorColor || '#ff0000',
+						fillOpacity: 0.3,
+						weight: 1,
+					}}>
+					<Tooltip
+						permanent
+						direction='center'
+						className='bg-transparent border-0 shadow-none font-serif text-lg font-bold text-white drop-shadow-md text-center'>
+						<div style={{ transform: `rotate(${area.textRotation || '0deg'})` }}>{area.name}</div>
+					</Tooltip>
+				</Polygon>
+			))}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapAreas.jsx ---
+
+--- FILE: features\atlas\components\layers\MapMarkers.jsx ---
+import { Marker, Popup } from 'react-leaflet';
+import { ArrowRight, MapPin, Skull, Castle, User, Tent, Sparkles } from 'lucide-react';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+
+/**
+ * Resolves Lucide Icons for the Popup header based on Category
+ */
+const getCategoryIcon = (category) => {
+	const cat = category?.toLowerCase() || '';
+	if (cat.includes('combat') || cat.includes('danger') || cat.includes('encounter')) return Skull;
+	if (cat.includes('citie') || cat.includes('town')) return Castle;
+	if (cat.includes('npc') || cat.includes('people')) return User;
+	if (cat.includes('camp')) return Tent;
+	if (cat.includes('magic') || cat.includes('shrine')) return Sparkles;
+	return MapPin;
+};
+
+export const MapMarkers = ({ markers, onNavigate }) => {
+	if (!markers || markers.length === 0) return null;
+
+	return (
+		<>
+			{markers.map((marker, idx) => {
+				const CategoryIcon = getCategoryIcon(marker.category);
+				const leafletIcon = resolveMarkerIcon(marker);
+
+				return (
+					<Marker key={`${marker.label}-${idx}`} position={marker.position} icon={leafletIcon}>
+						<Popup closeButton={true}>
+							<div className='flex flex-col w-[260px] font-sans bg-background'>
+								{/* Header */}
+								<div className='px-4 pt-4 pb-2 pr-7 flex items-start justify-between gap-3'>
+									<div>
+										<span className='text-[10px] font-bold uppercase tracking-wider text-amber-600/90 block mb-1'>
+											{marker.category}
+										</span>
+										<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
+									</div>
+									<div className='shrink-0 p-1.5 rounded-lg shadow-sm border border-amber-200 bg-amber-50 text-amber-700'>
+										<CategoryIcon size={16} strokeWidth={2} />
+									</div>
+								</div>
+
+								<div className='h-px w-full bg-border/50 my-1' />
+
+								{/* Description */}
+								<div className='px-4 py-2'>
+									{marker.description ? (
+										<p className='text-xs text-gray-600 leading-relaxed line-clamp-6'>{marker.description}</p>
+									) : (
+										<p className='text-xs text-gray-400 italic'>No details available.</p>
+									)}
+								</div>
+
+								{/* Navigation Link (Map-to-Map) */}
+								{marker.mapLink && (
+									<div className='mt-2 bg-muted/50 p-2 border-t border-border flex justify-end rounded-b-lg'>
+										<button
+											onClick={() => onNavigate(marker.mapLink)}
+											className='text-[10px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer'>
+											Enter Location <ArrowRight size={10} />
+										</button>
+									</div>
+								)}
+							</div>
+						</Popup>
+					</Marker>
+				);
+			})}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapMarkers.jsx ---
+
+--- FILE: features\atlas\components\layers\MapOverlays.jsx ---
+import { ImageOverlay } from 'react-leaflet';
+
+export const MapOverlays = ({ overlays }) => {
+	if (!overlays || overlays.length === 0) return null;
+
+	return (
+		<>
+			{overlays.map((overlay, idx) => (
+				<ImageOverlay
+					key={`${overlay.name}-${idx}`}
+					url={`${import.meta.env.BASE_URL}${overlay.image}`}
+					bounds={overlay.bounds}
+					opacity={1}
+				/>
+			))}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapOverlays.jsx ---
+
+--- FILE: features\atlas\components\layers\MapRecaps.jsx ---
+import { Polyline, Marker, Popup } from 'react-leaflet';
+import { Calendar } from 'lucide-react';
+import { createDotIcon } from '@/features/atlas/utils/markerUtils'; // Import
+
+export const MapRecaps = ({ sessions }) => {
+	if (!sessions || sessions.length === 0) return null;
+
+	return (
+		<>
+			{sessions.map((session, idx) => (
+				<div key={session.name}>
+					<Polyline
+						positions={session.points.map((p) => p.coordinates)}
+						pathOptions={{ color: session.lineColor || '#d97706', weight: 3, dashArray: '8, 8', opacity: 0.7 }}
+					/>
+
+					{session.points
+						.filter((p) => p.text)
+						.map((point, pIdx) => (
+							<Marker
+								key={`${session.name}-p-${pIdx}`}
+								position={point.coordinates}
+								icon={createDotIcon(session.lineColor || '#d97706')}>
+								<Popup>{/* ... Popup content ... */}</Popup>
+							</Marker>
+						))}
+				</div>
+			))}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapRecaps.jsx ---
+
+--- FILE: features\atlas\config\mapConfig.js ---
+export const MAP_CONFIG = {
+	defaultCenter: [51.505, -0.09],
+	defaultZoom: 13,
+	tileLayer: {
+		// Dark Matter theme matches your D&D aesthetic
+		url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+		attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+	},
+	style: {
+		height: '100%',
+		width: '100%',
+		background: '#111',
+	},
+};
+
+--- END OF features\atlas\config\mapConfig.js ---
+
+--- FILE: features\atlas\utils\mapNavigation.js ---
+import { CAMPAIGN_01, CAMPAIGN_01_ALIASES } from '@/features/atlas/data/campaign_01';
+
+/**
+ * Resolves the configuration object for a specific map key.
+ * Handles aliases (e.g. 'korinis_island' -> 'world_maps.submaps...')
+ */
+export const getMapConfig = (mapKey, campaignData) => {
+	// 1. If we have dynamic campaign data from Supabase/Context, use it.
+	// Otherwise fallback to the static file.
+	const rootData = campaignData || CAMPAIGN_01;
+
+	// 2. Resolve Alias
+	const fullPath = CAMPAIGN_01_ALIASES[mapKey] || mapKey || 'world_map';
+	const pathParts = fullPath.split('.');
+
+	// 3. Traverse
+	// Note: We skip 'submaps' keyword if it appears in the path to make traversal robust
+	// but based on your alias structure, we just follow the dots exactly.
+	try {
+		const config = pathParts.reduce((current, key) => {
+			return current && current[key] ? current[key] : null;
+		}, rootData);
+
+		return config;
+	} catch (e) {
+		console.error(`Failed to load map config for: ${mapKey}`, e);
+		return null;
+	}
+};
+
+/**
+ * Helper to calculate map bounds based on image size
+ */
+export const calculateBounds = (imageWidth, imageHeight) => {
+	// In CRS.Simple, [0,0] is usually bottom-left.
+	// We map [0,0] to top-left for easier mental mapping if needed,
+	// but standard Leaflet CRS.Simple treats Y as going up.
+	// Typically: [[0,0], [height, width]]
+	return [
+		[-imageHeight, 0],
+		[0, imageWidth],
+	];
+};
+
+--- END OF features\atlas\utils\mapNavigation.js ---
+
+--- FILE: features\atlas\utils\markerUtils.js ---
+import L from 'leaflet';
+
+// Singleton for invisible/interactive-only markers
+export const invisibleIcon = L.divIcon({
+	className: 'bg-transparent border-none',
+	html: '<div style="width: 100%; height: 100%;"></div>',
+	iconSize: [20, 20],
+	iconAnchor: [10, 10],
+	popupAnchor: [0, -10],
+});
+
+// Text Label Marker Generator
+export const createTextMarker = (label, fontSize) => {
+	const sizeStyle = fontSize ? `${fontSize}px` : '1.5rem';
+	return L.divIcon({
+		className: 'map-text-marker',
+		html: `
+            <div style="transform: translate(-50%, -50%); width: max-content; text-align: center; display: flex; justify-content: center; align-items: center;">
+                <span style="font-family: 'Inter', sans-serif; text-transform: uppercase; font-weight: 600; font-size: ${sizeStyle}; color: #2c1a0e; text-shadow: 0 0 4px #fdfbf7, 0 0 8px #fdfbf7, 0 0 15px #fdfbf7; pointer-events: auto; cursor: pointer; white-space: nowrap;">
+                    ${label}
+                </span>
+            </div>`,
+		iconSize: [0, 0],
+		iconAnchor: [0, 0],
+		popupAnchor: [0, -10],
+	});
+};
+
+// Custom Image Icon Generator
+export const createCustomIcon = (iconName) => {
+	return L.divIcon({
+		className: 'custom-marker-icon',
+		html: `
+            <div class="group relative flex flex-col items-center">
+                <div class="w-8 h-8 transition-transform group-hover:-translate-y-1 duration-200">
+                    <img src="${import.meta.env.BASE_URL}images/custom-icons/${iconName}.png" 
+                         class="w-full h-full object-contain drop-shadow-md filter" />
+                </div>
+            </div>`,
+		iconSize: [32, 32],
+		iconAnchor: [16, 32],
+		popupAnchor: [0, -28],
+	});
+};
+
+// Logic Hub: Resolves the appropriate Leaflet icon
+export const resolveMarkerIcon = (marker) => {
+	const { icon, type, label, fontSize } = marker;
+
+	// 1. Text Marker (Check both 'type' and 'icon' properties per your original code)
+	if (type === 'text' || icon === 'text') {
+		return createTextMarker(label, fontSize);
+	}
+
+	// 2. Invisible / Null Icon (Interactive only)
+	if (!icon) {
+		return invisibleIcon;
+	}
+
+	// 3. Custom Image Icon (Fallback to your specific images folder)
+	return createCustomIcon(icon);
+};
+
+// For session paths/dots
+export const createDotIcon = (color) =>
+	L.divIcon({
+		className: 'path-dot',
+		html: `<div style="background-color: ${color};" class="w-3 h-3 rounded-full border-2 border-white shadow-sm"></div>`,
+		iconSize: [12, 12],
+		iconAnchor: [6, 6],
+	});
+
+--- END OF features\atlas\utils\markerUtils.js ---
+

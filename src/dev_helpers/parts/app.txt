@@ -1,0 +1,660 @@
+================================================================
+PARTIAL BUNDLE: APP
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: app\App.jsx ---
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { TooltipProvider } from '@/features/smart-tooltip/TooltipContext';
+import { CampaignProvider, useCampaign } from '@/features/campaign/CampaignContext';
+import ErrorBoundary from '@/shared/components/ErrorBoundary';
+import { AppRoutes } from './AppRoutes';
+
+function AppContent() {
+	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient();
+
+	// 1. Set global texture
+	useEffect(() => {
+		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.png`;
+		document.documentElement.style.setProperty('--bg-texture', `url('${texturePath}')`);
+	}, []);
+
+	// 2. Set Default App Title
+	useEffect(() => {
+		document.title = 'D&D Campaign Manager';
+	}, []);
+
+	// 3. Clear cache when campaign changes
+	useEffect(() => {
+		if (campaignId) {
+			queryClient.invalidateQueries({
+				predicate: (query) => {
+					const key = query.queryKey[0];
+					return ['entities', 'entry', 'timeline', 'graph', 'entityIndex', 'globalSearch'].includes(key);
+				},
+			});
+		}
+	}, [campaignId, queryClient]);
+
+	return (
+		<TooltipProvider>
+			<AppRoutes />
+		</TooltipProvider>
+	);
+}
+
+export default function App() {
+	return (
+		<ErrorBoundary>
+			<CampaignProvider>
+				<AppContent />
+			</CampaignProvider>
+		</ErrorBoundary>
+	);
+}
+
+--- END OF app\App.jsx ---
+
+--- FILE: app\AppRoutes.jsx ---
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { RouteLoading } from './components/RouteLoading';
+
+const CampaignSelect = lazy(() => import('@/features/campaign/components/CampaignSelect'));
+const MainLayout = lazy(() => import('@/features/navigation/MainLayout'));
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
+const MapPage = lazy(() => import('@/features/atlas/MapPage'));
+const TimelinePage = lazy(() => import('@/features/timeline/TimelinePage'));
+const GraphPage = lazy(() => import('@/features/graph/GraphPage'));
+const WikiLayout = lazy(() => import('@/features/wiki/WikiLayout'));
+const WikiDetailPage = lazy(() => import('@/features/wiki/pages/WikiDetailPage'));
+const WikiLandingPage = lazy(() => import('@/features/wiki/pages/WikiLandingPage'));
+
+// Admin Features
+const AdminLayout = lazy(() => import('@/features/admin/layouts/AdminLayout'));
+const SplitPaneManager = lazy(() => import('@/features/admin/pages/SplitPaneManager'));
+
+export const AppRoutes = () => {
+	const { campaignId } = useCampaign();
+	const isDev = import.meta.env.DEV;
+
+	return (
+		<Suspense fallback={<RouteLoading text='Loading Application...' />}>
+			<Routes>
+				{/* Admin Console */}
+				{isDev && (
+					<Route path='/dm' element={<AdminLayout />}>
+						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
+						<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
+					</Route>
+				)}
+
+				{/* Campaign Selection */}
+				<Route path='/select-campaign' element={<CampaignSelect />} />
+
+				{/* Main App */}
+				{campaignId ? (
+					<Route path='/' element={<MainLayout />}>
+						<Route index element={<DashboardPage />} />
+
+						<Route path='atlas/:mapId' element={<MapPage />} />
+						<Route path='atlas' element={<Navigate to='/atlas/world_map' replace />} />
+						<Route path='timeline' element={<TimelinePage />} />
+						<Route path='relationships' element={<GraphPage />} />
+
+						<Route path='wiki/:type' element={<WikiLayout />}>
+							<Route index element={<WikiLandingPage />} />
+							<Route path=':entityId' element={<WikiDetailPage />} />
+						</Route>
+
+						<Route path='*' element={<Navigate to='/' replace />} />
+					</Route>
+				) : (
+					<Route path='*' element={<Navigate to='/select-campaign' replace />} />
+				)}
+			</Routes>
+		</Suspense>
+	);
+};
+
+--- END OF app\AppRoutes.jsx ---
+
+--- FILE: app\components\RouteLoading.jsx ---
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+export const RouteLoading = ({ text }) => (
+	<div className='flex items-center justify-center h-full min-h-screen bg-muted'>
+		<LoadingSpinner size='lg' text={text} />
+	</div>
+);
+
+--- END OF app\components\RouteLoading.jsx ---
+
+--- FILE: app\styles\global.css ---
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+
+@theme {
+	--font-sans: 'Inter', sans-serif;
+	--font-serif: 'Inter', serif;
+	--font-display: 'Crimson Text', serif;
+	--color-border: var(--border);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+}
+
+:root {
+	--background: #ffffff;
+	--foreground: #0f172a;
+	--muted: #f8fafc;
+	--border: #e2e8f0;
+	--accent: #d97706;
+}
+
+[data-theme='dark'] {
+	--background: #020617;
+	--foreground: #f1f5f9;
+	--muted: #0f172a;
+	--border: #1e293b;
+	--accent: #f59e0b;
+}
+
+[data-theme='dnd'] {
+	/* D&D BOOK PALETTE */
+	--background: #fdfbf7;
+	--foreground: #1b1b1b;
+	--muted: #f2efe9;
+	--muted-foreground: #5f5a52;
+	--border: #c9c2b8;
+	--accent: #8b1e1e;
+	--accent-foreground: #ffffff;
+	--font-sans: 'Inter', sans-serif;
+	--font-serif: 'Inter', serif;
+}
+
+/* --- HEADER GRADIENT CLASS --- */
+/* Gradient that blends into the page background based on theme */
+.header-gradient {
+	background: linear-gradient(to top, #ffffff 0%, transparent 100%);
+}
+
+[data-theme='dnd'] .header-gradient {
+	background: linear-gradient(to top, #fdfbf7 0%, transparent 100%);
+}
+
+[data-theme='dark'] .header-gradient {
+	background: linear-gradient(to top, #020617 0%, transparent 100%);
+}
+
+/* --- HEADER BACKGROUND --- */
+/* Default dark background for header images */
+.header-bg-fallback {
+	background: linear-gradient(to bottom right, #1e293b, #0f172a);
+}
+
+[data-theme='dnd'] .header-bg-fallback {
+	background: linear-gradient(to bottom right, #8b7355, #5c4a3a);
+}
+
+[data-theme='dark'] .header-bg-fallback {
+	background: linear-gradient(to bottom right, #1e293b, #0f172a);
+}
+
+/* --- D&D TEXTURE OVERRIDE --- */
+/* Applies the texture to any element using bg-background when in D&D mode */
+[data-theme='dnd'] .bg-background {
+	background-color: var(--background); /* Fallback color */
+	background-image: var(--bg-texture); /* Injected via JS */
+	background-repeat: repeat;
+}
+
+[data-theme='dnd'] .prose {
+	font-family: var(--font-sans);
+	color: var(--foreground);
+	line-height: 1.6;
+}
+
+[data-theme='dnd'] .prose h1,
+[data-theme='dnd'] .prose h2,
+[data-theme='dnd'] .prose h3 {
+	font-family: var(--font-serif);
+	font-weight: 700;
+	color: var(--accent);
+	letter-spacing: 0.01em;
+}
+
+[data-theme='dnd'] .prose h1 {
+	border-bottom: 2px solid var(--accent);
+}
+
+[data-theme='dnd'] .prose h2 {
+	border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dnd'] .prose h3 {
+	color: #4a0f0f;
+}
+[data-theme='dnd'] .prose p {
+	font-family: var(--font-sans);
+}
+[data-theme='dnd'] .dnd-sidebar-box {
+	background: var(--muted);
+	border: 1.5px solid var(--border);
+	border-left: 6px solid var(--accent);
+	font-family: var(--font-sans);
+}
+
+[data-theme='dnd'] .dnd-sidebar-box h4 {
+	font-family: var(--font-serif);
+	font-size: 0.95rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--accent);
+}
+[data-theme='dnd'] .dnd-stat-row {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	font-size: 0.9rem;
+}
+
+[data-theme='dnd'] .dnd-stat-row:last-child {
+	border-bottom: none;
+}
+[data-theme='dnd'] .prose table {
+	border-collapse: collapse;
+	width: 100%;
+	font-family: var(--font-sans);
+	font-size: 0.9rem;
+}
+
+[data-theme='dnd'] .prose th {
+	background: var(--accent);
+	color: white;
+	text-align: left;
+	font-weight: 600;
+}
+
+[data-theme='dnd'] .prose td {
+	border-bottom: 1px solid var(--border);
+}
+
+[data-theme='dnd'] .prose tbody tr:nth-child(even) {
+	background: rgba(0, 0, 0, 0.03);
+}
+[data-theme='dnd'] .prose blockquote {
+	border-left: 4px solid var(--accent);
+	color: #4b1c1c;
+	font-style: italic;
+	background: none;
+}
+[data-theme='dnd'] .prose ul {
+	list-style: disc;
+}
+
+[data-theme='dnd'] .prose ol li::marker {
+	color: var(--accent);
+	font-weight: 600;
+}
+[data-theme='dnd'] .prose code {
+	font-family: var(--font-sans);
+	font-size: 0.85em;
+	background: rgba(0, 0, 0, 0.05);
+	border-radius: 3px;
+}
+[data-theme='dnd'] .prose hr {
+	border: none;
+	border-top: 2px solid var(--border);
+}
+[data-theme='dnd'] .prose a:not(:has(svg)) {
+	color: var(--accent);
+}
+
+[data-theme='dnd'] .prose a:hover {
+	color: #5f1111;
+}
+
+/* Fix for ToC highlight overlap with sticky headers */
+.scroll-mt-20 {
+	scroll-margin-top: 5rem;
+}
+
+/* Ensure our smart headers in markdown also have margin */
+h1[id],
+h2[id],
+h3[id] {
+	scroll-margin-top: 8rem;
+}
+
+/* Custom scrollbar for ToC to keep it elegant */
+.custom-scrollbar::-webkit-scrollbar {
+	width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: #e2e8f0;
+	border-radius: 10px;
+}
+
+/* 1. Popup Container (The Card) */
+.leaflet-popup-content-wrapper {
+	background: var(--background) !important;
+	color: var(--foreground) !important;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem !important; /* rounded-lg */
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important; /* shadow-xl */
+	font-family: var(--font-sans);
+	padding: 0 !important; /* Remove default padding to let us control it */
+	overflow: hidden;
+}
+
+/* 2. Popup Content (The Text) */
+.leaflet-popup-content {
+	margin: 0 !important;
+	line-height: 1.6;
+}
+
+/* 3. The Little Triangle Tip */
+.leaflet-popup-tip {
+	background: var(--background) !important;
+	box-shadow: none !important;
+	border: 1px solid var(--border); /* Optional: might look weird depending on rotation */
+}
+
+/* 4. Close Button */
+.leaflet-container a.leaflet-popup-close-button {
+	color: var(--muted-foreground) !important;
+	font-size: 1.2rem !important;
+	padding: 4px !important;
+	top: 4px !important;
+	right: 4px !important;
+	background: transparent !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+	color: var(--accent) !important;
+}
+
+/* 5. Tooltips (Area Names) */
+.leaflet-tooltip {
+	background-color: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	color: rgba(255, 255, 255, 0.9); /* Default to light text for map overlay */
+	font-family: var(--font-serif);
+	font-weight: 700;
+	font-size: 1.1rem;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* --- PERFORMANCE UTILITY --- */
+/* Native browser optimization to skip rendering off-screen content */
+.virtual-list-item {
+	content-visibility: auto;
+	contain-intrinsic-size: 80px; /* Approximate height of an admin list item */
+}
+
+--- END OF app\styles\global.css ---
+

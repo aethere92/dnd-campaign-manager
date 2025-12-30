@@ -1,0 +1,929 @@
+================================================================
+DEPENDENCY GRAPH
+Generated: 2025-12-30 12:38:25
+================================================================
+
+### IMPORT RELATIONSHIPS
+
+
+app\App.jsx:
+  → ./AppRoutes
+  → @/features/campaign/CampaignContext
+  → @/features/smart-tooltip/TooltipContext
+  → @/shared/components/ErrorBoundary
+  → @tanstack/react-query
+  → react
+
+app\AppRoutes.jsx:
+  → ./components/RouteLoading
+  → @/features/admin/layouts/AdminLayout
+  → @/features/admin/pages/SplitPaneManager
+  → @/features/atlas/MapPage
+  → @/features/campaign/CampaignContext
+  → @/features/campaign/components/CampaignSelect
+  → @/features/dashboard/DashboardPage
+  → @/features/graph/GraphPage
+  → @/features/navigation/MainLayout
+  → @/features/timeline/TimelinePage
+  → @/features/wiki/WikiLayout
+  → @/features/wiki/pages/WikiDetailPage
+  → @/features/wiki/pages/WikiLandingPage
+  → react
+  → react-router-dom
+
+app\components\RouteLoading.jsx:
+  → @/shared/components/ui/LoadingSpinner
+
+dev_helpers\check_imports.js:
+  → fs
+  → path
+  → url
+
+dev_helpers\refactor.js:
+  → fs
+  → path
+  → url
+
+domain\entity\api\entityService.js:
+  → @/domain/entity/utils/attributeParser
+  → @/features/campaign/api/campaignService
+  → @/shared/api/supabaseClient
+
+domain\entity\components\EntityBadge.jsx:
+  → @/domain/entity/config/entityStyles
+  → @/domain/entity/config/entityTypes
+  → clsx
+
+domain\entity\components\EntityIcon.jsx:
+  → @/domain/entity/config/entityIcons
+  → @/domain/entity/config/entityStyles
+  → clsx
+
+domain\entity\components\EntityLink.jsx:
+  → ./EntityIcon
+  → @/domain/entity/config/entityStyles
+  → @/features/smart-tooltip/TooltipContext
+  → clsx
+  → react
+  → react-router-dom
+
+domain\entity\components\EntityStatusIcon.jsx:
+  → @/domain/entity/utils/statusUtils
+  → clsx
+
+domain\entity\config\entityColors.js:
+  → ./entityTypes
+
+domain\entity\config\entityConfig.js:
+  → ./entityColors
+  → ./entityIcons
+  → ./entityStyles
+  → ./entityTypes
+
+domain\entity\config\entityIcons.js:
+  → ./entityTypes
+  → @/domain/entity/utils/attributeParser
+
+domain\entity\config\entityStyles.js:
+  → ./entityTypes
+
+domain\entity\utils\statusUtils.js:
+  → @/domain/entity/utils/attributeParser
+  → lucide-react
+
+features\admin\api\adminService.js:
+  → @/features/admin/config/adminStrategies
+  → @/shared/api/supabaseClient
+
+features\admin\components\AdminForm.jsx:
+  → ./AdminFormStyles
+  → ./EncounterManager
+  → ./SessionEventManager
+  → @/features/admin/api/adminService
+  → @/features/admin/components/MarkdownEditor
+  → @/features/admin/components/QuestObjectiveManager
+  → @/features/admin/components/RelationshipManager
+  → @/features/admin/components/SmartImageInput
+  → @/features/admin/config/adminStrategies
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → @tanstack/react-query
+  → lucide-react
+  → react
+  → react-hook-form
+  → react-router-dom
+
+features\admin\components\EncounterManager.jsx:
+  → ./AdminFormStyles
+  → ./EntitySearch
+  → @/features/admin/api/adminService
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\components\EntitySearch.jsx:
+  → @/features/admin/api/adminService
+  → @/features/campaign/CampaignContext
+  → lucide-react
+  → react
+
+features\admin\components\EventTagger.jsx:
+  → ./EntitySearch
+  → @/features/admin/api/adminService
+  → lucide-react
+  → react
+
+features\admin\components\ImageLibraryModal.jsx:
+  → ../config/imageManifest.json
+  → ./AdminFormStyles
+  → @/shared/components/ui/Drawer
+  → lucide-react
+  → react
+
+features\admin\components\MarkdownEditor.jsx:
+  → ./AdminFormStyles
+  → ./EntitySearch
+  → @/features/smart-text/SmartMarkdown
+  → lucide-react
+  → react
+
+features\admin\components\QuestObjectiveManager.jsx:
+  → ./AdminFormStyles
+  → @/features/admin/api/adminService
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\components\RelationshipManager.jsx:
+  → ./AdminFormStyles
+  → @/features/admin/components/EntitySearch
+  → @/shared/components/ui/Button
+  → react
+
+features\admin\components\SessionEventManager.jsx:
+  → ./AdminFormStyles
+  → ./EventTagger
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\components\SmartImageInput.jsx:
+  → ./AdminFormStyles
+  → ./ImageLibraryModal
+  → lucide-react
+  → react
+
+features\admin\layouts\AdminLayout.jsx:
+  → @/features/campaign/CampaignContext
+  → clsx
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\admin\pages\EntityEditorPage.jsx:
+  → @/features/admin/components/AdminForm
+  → react
+  → react-router-dom
+
+features\admin\pages\EntityListPage.jsx:
+  → @/domain/entity/api/entityService
+  → @/domain/entity/components/EntityBadge
+  → @/features/admin/api/adminService
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → @tanstack/react-query
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\admin\pages\SplitPaneManager.jsx:
+  → @/domain/entity/api/entityService
+  → @/features/admin/api/adminService
+  → @/features/admin/components/AdminForm
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → @tanstack/react-query
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\atlas\MapPage.jsx:
+  → ./components/MapCanvas
+  → ./useMapData
+  → @/shared/components/ui/LoadingSpinner
+
+features\atlas\components\MapCanvas.jsx:
+  → ./MapLayerControl
+  → ./layers/MapAreas
+  → ./layers/MapMarkers
+  → ./layers/MapOverlays
+  → ./layers/MapRecaps
+  → ./useMapCanvasViewModel
+  → leaflet
+  → lucide-react
+  → react
+  → react-leaflet
+
+features\atlas\components\MapLayerControl.jsx:
+  → clsx
+  → leaflet
+  → lucide-react
+  → react
+
+features\atlas\components\layers\MapAreas.jsx:
+  → react-leaflet
+
+features\atlas\components\layers\MapMarkers.jsx:
+  → @/features/atlas/utils/markerUtils
+  → lucide-react
+  → react-leaflet
+
+features\atlas\components\layers\MapOverlays.jsx:
+  → react-leaflet
+
+features\atlas\components\layers\MapRecaps.jsx:
+  → @/features/atlas/utils/markerUtils
+  → lucide-react
+  → react-leaflet
+
+features\atlas\components\useMapCanvasViewModel.js:
+  → lucide-react
+  → react
+
+features\atlas\useMapData.js:
+  → ./utils/mapNavigation
+  → @/features/campaign/CampaignContext
+  → react
+  → react-router-dom
+
+features\atlas\utils\mapNavigation.js:
+  → @/features/atlas/data/campaign_01
+
+features\atlas\utils\markerUtils.js:
+  → leaflet
+
+features\campaign\CampaignContext.jsx:
+  → ./useCampaignPersistence
+  → react
+
+features\campaign\api\campaignService.js:
+  → @/shared/api/supabaseClient
+
+features\campaign\components\CampaignCard.jsx:
+  → @/shared/components/ui/Button
+  → lucide-react
+
+features\campaign\components\CampaignSelect.jsx:
+  → ./CampaignCard
+  → @/features/campaign/useCampaignSelection
+  → @/shared/components/ui/LoadingSpinner
+
+features\campaign\useCampaignPersistence.js:
+  → react
+
+features\campaign\useCampaignSelection.js:
+  → ./CampaignContext
+  → @/features/campaign/api/campaignService
+  → @tanstack/react-query
+  → react-router-dom
+
+features\dashboard\DashboardPage.jsx:
+  → ./components/ActiveQuestsWidget
+  → ./components/CampaignHero
+  → ./components/LatestSessionCard
+  → ./components/QuickInsights
+  → ./components/RecentEncountersWidget
+  → ./components/RecentSessionsList
+  → @/features/campaign/CampaignContext
+  → @/features/dashboard/api/dashboardService
+  → @/shared/components/ui/LoadingSpinner
+  → @tanstack/react-query
+
+features\dashboard\api\dashboardService.js:
+  → @/domain/entity/utils/attributeParser
+  → @/shared/api/supabaseClient
+
+features\dashboard\components\ActiveQuestsWidget.jsx:
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\dashboard\components\CampaignHero.jsx:
+  → clsx
+  → lucide-react
+
+features\dashboard\components\LatestSessionCard.jsx:
+  → @/domain/entity/config/entityConfig
+  → @/shared/components/ui/SectionDivider
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\dashboard\components\QuickInsights.jsx:
+  → clsx
+  → lucide-react
+
+features\dashboard\components\RecentEncountersWidget.jsx:
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\dashboard\components\RecentSessionsList.jsx:
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\dashboard\components\SessionRecapCard.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/config/entityConfig
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\graph\GraphPage.jsx:
+  → ./components/CytoscapeCanvas
+  → ./components/GraphLegend
+  → ./useGraphView
+  → @/shared/components/ui/LoadingSpinner
+
+features\graph\api\graphService.js:
+  → @/shared/api/supabaseClient
+
+features\graph\components\CytoscapeCanvas.jsx:
+  → @/features/graph/config/graphStyles
+  → cytoscape
+  → cytoscape-fcose
+  → react
+  → react-router-dom
+
+features\graph\components\GraphLegend.jsx:
+  → @/domain/entity/config/entityConfig
+
+features\graph\useGraphView.js:
+  → ./utils/graphMapper
+  → @/features/campaign/CampaignContext
+  → @/features/graph/api/graphService
+  → @tanstack/react-query
+  → react
+
+features\graph\utils\graphMapper.js:
+  → @/domain/entity/config/entityConfig
+  → @/domain/entity/utils/statusUtils
+  → @/shared/utils/imageUtils
+
+features\navigation\MainLayout.jsx:
+  → ./components/Sidebar
+  → @/features/navigation/useNavigation
+  → @/features/search/GlobalSearch
+  → @/features/search/SearchContext
+  → @/shared/components/ui/Breadcrumbs
+  → @/shared/components/ui/DevAdminButton
+  → lucide-react
+  → react-router-dom
+
+features\navigation\components\Sidebar.jsx:
+  → ./SidebarFooter
+  → ./SidebarHeader
+  → ./SidebarNav
+  → @/shared/components/ui/Drawer
+  → clsx
+
+features\navigation\components\SidebarFooter.jsx:
+  → @/shared/hooks/useTheme
+  → lucide-react
+
+features\navigation\components\SidebarHeader.jsx:
+  → @/features/search/components/SearchTrigger
+
+features\navigation\components\SidebarNav.jsx:
+  → clsx
+
+features\navigation\config\navConfig.js:
+  → lucide-react
+
+features\navigation\useNavigation.js:
+  → ./config/navConfig
+  → @/features/campaign/CampaignContext
+  → @/features/campaign/api/campaignService
+  → @tanstack/react-query
+  → react
+  → react-router-dom
+
+features\search\GlobalSearch.jsx:
+  → ./components/SearchModal
+  → ./useGlobalSearch
+  → react
+
+features\search\SearchContext.jsx:
+  → react
+
+features\search\api\searchService.js:
+  → @/shared/api/supabaseClient
+
+features\search\components\SearchModal.jsx:
+  → ./SearchFooter
+  → ./SearchResults
+  → lucide-react
+  → react-dom
+
+features\search\components\SearchResultItem.jsx:
+  → clsx
+
+features\search\components\SearchResults.jsx:
+  → ./SearchResultItem
+  → clsx
+  → lucide-react
+
+features\search\components\SearchTrigger.jsx:
+  → @/features/search/SearchContext
+  → lucide-react
+
+features\search\useGlobalSearch.js:
+  → ./SearchContext
+  → @/domain/entity/config/entityConfig
+  → @/features/campaign/CampaignContext
+  → @/features/search/api/searchService
+  → @/features/search/utils/searchMapper
+  → @tanstack/react-query
+  → react
+  → react-router-dom
+
+features\search\utils\searchMapper.js:
+  → @/domain/entity/utils/attributeParser
+
+features\smart-text\SmartMarkdown.jsx:
+  → ./components/EntityEmbed
+  → ./components/SmartEntityLink
+  → ./useSmartText
+  → @/shared/utils/textUtils
+  → react-markdown
+
+features\smart-text\components\EntityEmbed.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/features/smart-text/useEntityIndex
+  → @/shared/utils/imageUtils
+  → clsx
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\smart-text\components\SmartEntityLink.jsx:
+  → @/domain/entity/components/EntityLink
+  → @/features/smart-text/useEntityIndex
+
+features\smart-text\useEntityIndex.js:
+  → @/domain/entity/api/entityService
+  → @/domain/entity/utils/entityUtils
+  → @/features/campaign/CampaignContext
+  → @/shared/utils/imageUtils
+  → @tanstack/react-query
+
+features\smart-text\useSmartText.js:
+  → ./useEntityIndex
+  → react
+
+features\smart-tooltip\TooltipContainer.jsx:
+  → ./components/TooltipCard
+  → @/domain/entity/api/entityService
+  → @/domain/entity/utils/attributeParser
+  → @tanstack/react-query
+  → react-dom
+
+features\smart-tooltip\TooltipContext.jsx:
+  → ./TooltipContainer
+  → ./useTooltipState
+  → react
+
+features\smart-tooltip\components\TooltipCard.jsx:
+  → @/domain/entity/config/entityConfig
+  → @/domain/entity/utils/attributeParser
+  → @/features/smart-tooltip/useSmartPosition
+  → @/shared/utils/imageUtils
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\smart-tooltip\useSmartPosition.js:
+  → react
+
+features\smart-tooltip\useTooltipState.js:
+  → react
+
+features\table-of-contents\TableOfContents.jsx:
+  → ./components/TocItem
+  → ./components/TocMobileDrawer
+  → ./hooks/useTocObserver
+  → ./hooks/useTocScroll
+  → clsx
+  → lucide-react
+  → react
+
+features\table-of-contents\components\TocItem.jsx:
+  → clsx
+
+features\table-of-contents\components\TocMobileDrawer.jsx:
+  → ./TocItem
+  → @/shared/components/ui/Drawer
+
+features\table-of-contents\hooks\useTocObserver.js:
+  → react
+
+features\table-of-contents\hooks\useTocScroll.js:
+  → react
+
+features\timeline\TimelinePage.jsx:
+  → ./components/TimelineSession
+  → ./useTimelineView
+  → @/features/table-of-contents/TableOfContents
+
+features\timeline\api\timelineService.js:
+  → @/domain/entity/utils/attributeParser
+  → @/shared/api/supabaseClient
+
+features\timeline\components\TimelineEvent.jsx:
+  → @/domain/entity/config/entityConfig
+  → @/features/smart-text/SmartMarkdown
+  → clsx
+  → lucide-react
+  → react
+
+features\timeline\components\TimelineSession.jsx:
+  → ./TimelineEvent
+  → lucide-react
+
+features\timeline\useTimelineView.js:
+  → ./types
+  → ./utils/eventStyles
+  → @/features/campaign/CampaignContext
+  → @/features/timeline/api/timelineService
+  → @tanstack/react-query
+  → react
+
+features\timeline\utils\eventStyles.js:
+  → @/domain/entity/config/entityStyles
+
+features\wiki\WikiLayout.jsx:
+  → ./useWikiNavigation
+  → @/features/wiki/components/navigation/WikiSidebar
+  → react-router-dom
+
+features\wiki\api\wikiService.js:
+  → @/shared/api/supabaseClient
+
+features\wiki\components\EncounterTimeline.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/components/EntityLink
+  → @/features/smart-text/SmartMarkdown
+  → clsx
+  → react
+
+features\wiki\components\EntityBody.jsx:
+  → ./EncounterTimeline
+  → ./EntityHistory
+  → ./QuestObjectives
+  → @/features/smart-text/SmartMarkdown
+  → @/shared/components/ui/SectionDivider
+  → clsx
+  → lucide-react
+
+features\wiki\components\EntityHeader.jsx:
+  → @/domain/entity/components/EntityBadge
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/config/entityStyles
+  → clsx
+  → lucide-react
+  → react
+  → react-dom
+  → react-router-dom
+
+features\wiki\components\EntityHistory.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → clsx
+  → lucide-react
+
+features\wiki\components\EntitySidebar.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/components/EntityLink
+  → @/shared/utils/textUtils
+  → clsx
+  → lucide-react
+  → react
+
+features\wiki\components\QuestObjectives.jsx:
+  → @/domain/entity/components/EntityLink
+  → @/features/smart-text/SmartMarkdown
+  → clsx
+  → react
+
+features\wiki\components\SessionMentions.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/components/EntityLink
+  → @/domain/entity/config/entityConfig
+  → clsx
+
+features\wiki\components\WikiEntryView.jsx:
+  → @/features/wiki/components/EntityHeader
+  → @/features/wiki/layouts/SessionLayout
+  → @/features/wiki/layouts/StandardLayout
+  → @/features/wiki/useEntityView
+
+features\wiki\components\landing\EntityGridCard.jsx:
+  → @/domain/entity/utils/attributeParser
+  → @/domain/entity/utils/statusUtils
+  → @/shared/utils/imageUtils
+  → clsx
+  → react-router-dom
+
+features\wiki\components\landing\EntityTableGroup.jsx:
+  → @/domain/entity/components/EntityBadge
+  → @/domain/entity/utils/attributeParser
+  → @/domain/entity/utils/statusUtils
+  → @/shared/utils/imageUtils
+  → clsx
+  → lucide-react
+  → react-router-dom
+
+features\wiki\components\landing\Swimlane.jsx:
+  → ./EntityGridCard
+  → lucide-react
+  → react-router-dom
+
+features\wiki\components\navigation\SidebarEmptyState.jsx:
+  → @/shared/components/ui/EmptyState
+  → lucide-react
+
+features\wiki\components\navigation\WikiSidebar.jsx:
+  → ./WikiSidebarHeader
+  → ./WikiSidebarList
+  → clsx
+  → react
+
+features\wiki\components\navigation\WikiSidebarHeader.jsx:
+  → clsx
+  → lucide-react
+
+features\wiki\components\navigation\WikiSidebarList.jsx:
+  → ./SidebarEmptyState
+  → ./sidebar/CollapsibleGroup
+  → ./sidebar/EntityListItem
+  → ./sidebar/SidebarTreeItem
+  → @/shared/components/ui/LoadingSpinner
+
+features\wiki\components\navigation\sidebar\CollapsibleGroup.jsx:
+  → ./EntityListItem
+  → lucide-react
+  → react
+
+features\wiki\components\navigation\sidebar\EntityListItem.jsx:
+  → ./PriorityIcon
+  → ./StatusIcon
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/config/entityIcons
+  → @/shared/utils/imageUtils
+  → clsx
+  → react-router-dom
+
+features\wiki\components\navigation\sidebar\PriorityIcon.jsx:
+  → lucide-react
+
+features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx:
+  → ./StatusIcon
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/config/entityIcons
+  → @/shared/utils/imageUtils
+  → clsx
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\wiki\components\navigation\sidebar\StatusIcon.jsx:
+  → @/domain/entity/utils/statusUtils
+
+features\wiki\config\viewStrategies.js:
+  → lucide-react
+
+features\wiki\hooks\useEntityContent.js:
+  → @/domain/entity/utils/attributeParser
+  → @/domain/entity/utils/entityUtils
+  → @/features/wiki/utils/eventMapper
+  → react
+
+features\wiki\hooks\useEntityFetching.js:
+  → @/domain/entity/api/entityService
+  → @/features/campaign/CampaignContext
+  → @tanstack/react-query
+
+features\wiki\hooks\useEntityGrouping.js:
+  → @/features/wiki/config/groupingConfig
+  → @/features/wiki/utils/wikiUtils
+  → react
+
+features\wiki\hooks\useEntityHeader.js:
+  → @/domain/entity/config/entityConfig
+  → @/domain/entity/utils/attributeParser
+  → @/features/wiki/utils/attributeMapper
+  → @/shared/utils/imageUtils
+  → @/shared/utils/textUtils
+  → react
+
+features\wiki\hooks\useEntitySidebar.js:
+  → @/features/wiki/utils/relationshipMapper
+  → react
+
+features\wiki\layouts\SessionLayout.jsx:
+  → @/features/table-of-contents/TableOfContents
+  → @/features/wiki/components/EntityBody
+  → @/features/wiki/components/SessionMentions
+  → @/shared/components/layout/SplitView
+  → @/shared/components/layout/TabContainer
+  → @/shared/utils/markdownUtils
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\wiki\layouts\StandardLayout.jsx:
+  → @/features/wiki/components/EntityBody
+  → @/features/wiki/components/EntitySidebar
+  → lucide-react
+  → vaul
+
+features\wiki\pages\WikiDetailPage.jsx:
+  → @/features/wiki/api/wikiService
+  → @/features/wiki/components/WikiEntryView
+  → @/features/wiki/utils/wikiEntryMapper
+  → @/shared/components/ui/LoadingSpinner
+  → @tanstack/react-query
+  → react-router-dom
+
+features\wiki\pages\WikiLandingPage.jsx:
+  → ../components/landing/EntityTableGroup
+  → ../components/landing/Swimlane
+  → @/domain/entity/config/entityConfig
+  → @/features/wiki/config/viewStrategies
+  → @/features/wiki/hooks/useEntityFetching
+  → @/features/wiki/hooks/useEntityGrouping
+  → @/shared/components/ui/LoadingSpinner
+  → clsx
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\wiki\useEntityView.js:
+  → ./hooks/useEntityContent
+  → ./hooks/useEntityHeader
+  → ./hooks/useEntitySidebar
+  → @/features/wiki/utils/attributeMapper
+  → @/shared/utils/imageUtils
+  → react
+
+features\wiki\useWikiNavigation.js:
+  → ./hooks/useEntityFetching
+  → ./hooks/useEntityGrouping
+  → @/domain/entity/config/entityConfig
+  → react
+  → react-router-dom
+
+features\wiki\utils\relationshipMapper.js:
+  → @/domain/entity/config/entityConfig
+
+features\wiki\utils\wikiEntryMapper.js:
+  → @/domain/entity/utils/attributeParser
+  → @/shared/utils/imageUtils
+
+features\wiki\utils\wikiUtils.js:
+  → @/domain/entity/utils/attributeParser
+  → @/domain/entity/utils/entityUtils
+  → @/domain/entity/utils/statusUtils
+
+main.jsx:
+  → @/app/App
+  → @tanstack/react-query
+  → react
+  → react-dom/client
+  → react-router-dom
+
+shared\api\supabaseClient.js:
+  → @supabase/supabase-js
+
+shared\components\ErrorBoundary.jsx:
+  → ./ui/Button
+  → lucide-react
+  → react
+
+shared\components\layout\CollapsibleSection.jsx:
+  → clsx
+  → lucide-react
+  → react
+
+shared\components\layout\SplitView.jsx:
+  → clsx
+
+shared\components\layout\TabContainer.jsx:
+  → clsx
+  → react
+
+shared\components\markdown\MarkdownRenderer.jsx:
+  → @/shared/utils/textUtils
+  → react-markdown
+
+shared\components\markdown\MarkdownWithToC.jsx:
+  → ./MarkdownRenderer
+  → @/features/table-of-contents/TableOfContents
+  → @/shared/utils/markdownUtils
+  → react
+
+shared\components\ui\Breadcrumbs.jsx:
+  → @/shared/hooks/useBreadcrumbs
+  → clsx
+  → lucide-react
+  → react
+  → react-router-dom
+
+shared\components\ui\Button.jsx:
+  → clsx
+
+shared\components\ui\Card.jsx:
+  → clsx
+
+shared\components\ui\DevAdminButton.jsx:
+  → lucide-react
+  → react
+  → react-router-dom
+
+shared\components\ui\Drawer.jsx:
+  → clsx
+  → lucide-react
+  → react
+  → react-dom
+
+shared\components\ui\EmptyState.jsx:
+  → clsx
+
+shared\components\ui\LoadingSpinner.jsx:
+  → clsx
+  → lucide-react
+
+shared\components\ui\SectionDivider.jsx:
+  → lucide-react
+
+shared\hooks\useBreadcrumbs.js:
+  → @/domain/entity/config/entityConfig
+  → @/features/smart-text/useEntityIndex
+  → @/shared/utils/textUtils
+  → react
+  → react-router-dom
+
+shared\hooks\useTheme.js:
+  → react
+
+shared\utils\markdownUtils.js:
+  → @/shared/utils/textUtils
+
+
+### DEPENDENCY STATISTICS
+
+Most imported files (relative imports):
+  ./AdminFormStyles: 8 imports
+  ./entityTypes: 4 imports
+  ./EntitySearch: 3 imports
+  ./StatusIcon: 2 imports
+  ./AppRoutes: 1 imports
+  ./components/RouteLoading: 1 imports
+  ./EntityIcon: 1 imports
+  ./entityIcons: 1 imports
+  ./entityColors: 1 imports
+  ./entityStyles: 1 imports
+  ./SessionEventManager: 1 imports
+  ./EncounterManager: 1 imports
+  ../config/imageManifest.json: 1 imports
+  ./EventTagger: 1 imports
+  ./ImageLibraryModal: 1 imports
+  ./useMapData: 1 imports
+  ./components/MapCanvas: 1 imports
+  ./utils/mapNavigation: 1 imports
+  ./layers/MapMarkers: 1 imports
+  ./layers/MapRecaps: 1 imports
+
+
+Files with most outgoing dependencies:
+  features\admin\components\AdminForm.jsx: 16 imports
+  app\AppRoutes.jsx: 15 imports
+  features\wiki\pages\WikiLandingPage.jsx: 11 imports
+  features\atlas\components\MapCanvas.jsx: 10 imports
+  features\dashboard\DashboardPage.jsx: 10 imports
+  features\admin\pages\EntityListPage.jsx: 9 imports
+  features\admin\pages\SplitPaneManager.jsx: 9 imports
+  features\wiki\layouts\SessionLayout.jsx: 9 imports
+  features\navigation\MainLayout.jsx: 8 imports
+  features\search\useGlobalSearch.js: 8 imports
+  features\wiki\components\EntityHeader.jsx: 8 imports
+  features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports
+  features\smart-text\components\EntityEmbed.jsx: 7 imports
+  features\smart-tooltip\components\TooltipCard.jsx: 7 imports
+  features\table-of-contents\TableOfContents.jsx: 7 imports
+  features\wiki\components\EntityBody.jsx: 7 imports
+  features\wiki\components\landing\EntityTableGroup.jsx: 7 imports
+  features\wiki\components\navigation\sidebar\EntityListItem.jsx: 7 imports
+  app\App.jsx: 6 imports
+  domain\entity\components\EntityLink.jsx: 6 imports

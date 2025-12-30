@@ -1,0 +1,697 @@
+================================================================
+PARTIAL BUNDLE: FEATURES GRAPH
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\graph\GraphPage.jsx ---
+import { useGraphViewModel } from './useGraphView';
+import { GraphLegend } from './components/GraphLegend';
+import { CytoscapeCanvas } from './components/CytoscapeCanvas';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+export default function RelationshipGraph() {
+	const { elements, isLoading } = useGraphViewModel();
+
+	if (isLoading) {
+		return (
+			<div className='h-full flex items-center justify-center'>
+				<LoadingSpinner text='Analyzing Connections...' />
+			</div>
+		);
+	}
+
+	return (
+		// IMPLEMENTATION: Constellation Background via CSS radial-gradient
+		<div
+			className='h-full w-full relative bg-background overflow-hidden'
+			style={{
+				backgroundImage:
+					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
+			{/* Overlay UI */}
+			<GraphLegend />
+
+			{/* The Graph Layer */}
+			<CytoscapeCanvas elements={elements} />
+		</div>
+	);
+}
+
+--- END OF features\graph\GraphPage.jsx ---
+
+--- FILE: features\graph\useGraphView.js ---
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { getGraphData } from '@/features/graph/api/graphService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { transformGraphData } from './utils/graphMapper'; // Import transform
+// import './types';
+
+export function useGraphViewModel() {
+	const { campaignId } = useCampaign();
+
+	const { data: rawEntities, isLoading } = useQuery({
+		queryKey: ['graph', campaignId],
+		queryFn: () => getGraphData(campaignId),
+		enabled: !!campaignId,
+	});
+
+	// Use the pure transform function
+	const elements = useMemo(() => {
+		return transformGraphData(rawEntities);
+	}, [rawEntities]);
+
+	return { elements, isLoading };
+}
+
+--- END OF features\graph\useGraphView.js ---
+
+--- FILE: features\graph\api\graphService.js ---
+import { supabase } from '@/shared/api/supabaseClient';
+
+export const getGraphData = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('entity_complete_view')
+		.select('id, name, type, relationships, attributes')
+		.eq('campaign_id', campaignId);
+
+	if (error) {
+		console.error('Graph Fetch Error:', error);
+		return [];
+	}
+	return data || [];
+};
+
+--- END OF features\graph\api\graphService.js ---
+
+--- FILE: features\graph\components\CytoscapeCanvas.jsx ---
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import cytoscape from 'cytoscape';
+import fcose from 'cytoscape-fcose'; // IMPLEMENTATION: fCoSE
+import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
+
+// Register the layout extension
+cytoscape.use(fcose);
+
+export const CytoscapeCanvas = ({ elements }) => {
+	const containerRef = useRef(null);
+	const cyRef = useRef(null);
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		// 1. Initialize Cytoscape
+		cyRef.current = cytoscape({
+			container: containerRef.current,
+			elements: [],
+			style: CYTOSCAPE_STYLES,
+			layout: LAYOUT_CONFIG,
+			wheelSensitivity: 3,
+			minZoom: 0.2,
+			maxZoom: 3,
+			autoungrabify: true, // CHANGED: Set to true to disable node dragging
+		});
+
+		const cy = cyRef.current;
+
+		// --- EVENT HANDLERS ---
+
+		// 1. Click Node: Highlight Connections
+		cy.on('tap', 'node', (evt) => {
+			const node = evt.target;
+
+			// Clear previous states
+			cy.elements().removeClass('highlighted dimmed');
+
+			const connectedEdges = node.connectedEdges();
+			const connectedNodes = connectedEdges.connectedNodes();
+
+			// Dim everything else
+			cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
+
+			// Highlight selection
+			node.addClass('highlighted');
+			connectedNodes.addClass('highlighted');
+			connectedEdges.addClass('highlighted');
+		});
+
+		// 2. Click Background: Reset
+		cy.on('tap', (evt) => {
+			if (evt.target === cy) {
+				cy.elements().removeClass('highlighted dimmed');
+			}
+		});
+
+		// 3. IMPLEMENTATION: Double Click to Navigate
+		cy.on('dblclick', 'node', (evt) => {
+			const node = evt.target;
+			const { id, type } = node.data();
+			if (id && type) {
+				navigate(`/wiki/${type}/${id}`);
+			}
+		});
+
+		return () => {
+			if (cyRef.current) {
+				cyRef.current.destroy();
+				cyRef.current = null;
+			}
+		};
+	}, [navigate]);
+
+	// 2. Handle Data Updates
+	useEffect(() => {
+		if (!cyRef.current || !elements) return;
+
+		const cy = cyRef.current;
+
+		cy.batch(() => {
+			cy.elements().remove();
+			cy.add(elements);
+		});
+
+		if (elements.length > 0) {
+			// Run fCoSE layout
+			cy.layout(LAYOUT_CONFIG).run();
+		}
+	}, [elements]);
+
+	return <div ref={containerRef} className='absolute inset-0 w-full h-full' />;
+};
+
+--- END OF features\graph\components\CytoscapeCanvas.jsx ---
+
+--- FILE: features\graph\components\GraphLegend.jsx ---
+import { ENTITY_CONFIG } from '@/domain/entity/config/entityConfig'; // Adjust path
+
+export const GraphLegend = () => {
+	// Filter out the 'default' config to keep legend clean
+	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity');
+
+	return (
+		<div className='absolute top-4 left-4 z-10 bg-background/90 p-3 rounded shadow border border-border backdrop-blur pointer-events-none select-none'>
+			<h2 className='text-xs font-bold uppercase text-gray-400 mb-2'>Legend</h2>
+			<div className='space-y-1.5'>
+				{legendItems.map((config) => (
+					<div key={config.label} className='flex items-center gap-2 text-xs font-medium text-gray-600'>
+						<div className='w-2.5 h-2.5 rounded-full shadow-sm' style={{ backgroundColor: config.color }} />
+						{config.label}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\graph\components\GraphLegend.jsx ---
+
+--- FILE: features\graph\config\graphStyles.js ---
+export const CYTOSCAPE_STYLES = [
+	// --- MAJOR NODES (Hubs/VIPs) ---
+	{
+		selector: 'node',
+		style: {
+			label: 'data(label)',
+			'border-color': 'data(color)',
+			'background-image': 'data(image)',
+			'background-fit': 'cover',
+			'border-width': 2,
+			width: 'mapData(degree, 3, 20, 30, 50)',
+			height: 'mapData(degree, 3, 20, 30, 50)',
+			'font-family': 'Inter, sans-serif',
+			'font-size': 14,
+			'font-weight': 'bold',
+			'text-valign': 'bottom',
+			'text-margin-y': 6,
+			'text-background-color': '#fdfbf7',
+			'text-background-opacity': 0.8,
+			'text-background-padding': 3,
+			'text-background-shape': 'roundrectangle',
+			color: '#1f2937',
+			'text-wrap': 'ellipsis',
+			'text-max-width': 100,
+			'transition-property': 'opacity, width, height',
+			'transition-duration': '0.3s',
+		},
+	},
+	// --- MINOR NODES (Dots) ---
+	{
+		selector: 'node.minor',
+		style: {
+			// ADJUSTED: Increased from 14 to 20 for better visibility
+			width: 20,
+			height: 20,
+			// 'background-image': 'none', // Hide Icon
+			'background-color': 'data(color)', // Use entity color as fill
+			'border-width': 1,
+			'border-color': 'data(color)',
+			'font-size': 10,
+			'text-margin-y': 4,
+			'text-background-opacity': 0, // No background for text to reduce clutter
+			color: '#4b5563', // Gray text
+		},
+	},
+	// --- EDGES ---
+	{
+		selector: 'edge',
+		style: {
+			'line-color': 'data(color)',
+			'target-arrow-color': 'data(color)',
+			'curve-style': 'bezier',
+			width: 1,
+			opacity: 0.2, // Slightly more transparent to handle overlap
+			'arrow-scale': 0.6,
+			'target-arrow-shape': 'triangle',
+			events: 'no',
+		},
+	},
+	// --- INTERACTION STATES ---
+	{
+		selector: '.dimmed',
+		style: {
+			opacity: 0.05,
+			'text-opacity': 0.1,
+			'border-opacity': 0.1,
+			'background-opacity': 0.1,
+		},
+	},
+	{
+		selector: '.highlighted',
+		style: {
+			'z-index': 9999,
+			'text-wrap': 'wrap',
+		},
+	},
+	{
+		selector: 'edge.highlighted',
+		style: {
+			width: 2,
+			opacity: 1,
+		},
+	},
+];
+
+// PERFORMANCE: Switch to fCoSE layout with "High Spacing" profile
+export const LAYOUT_CONFIG = {
+	name: 'fcose',
+	quality: 'default',
+	randomize: false,
+	animate: false,
+	animationDuration: 1000,
+	fit: true,
+	padding: 50,
+
+	// CRITICAL: Tells the physics engine to treat the node as "Icon + Text Label" size
+	// instead of just "Icon" size.
+	nodeDimensionsIncludeLabels: true,
+
+	// --- PHYSICS SETTINGS (Aggressive Spacing) ---
+
+	// 1. REPULSION (The "Personal Space" Force)
+	// Drastically increased. This ensures that even if two nodes are connected,
+	// the text labels push against each other to prevent overlap.
+	nodeRepulsion: (node) => {
+		const degree = node.data('degree') || 0;
+		// Base: 40,000 (was 6,500)
+		// Per Connection: 5,000 (was 1,500)
+		return 40000 + degree * 5000;
+	},
+
+	// 2. EDGE LENGTH (The "Leash" Length)
+	// Increased to ensure hubs with many connections have a wider circumference.
+	idealEdgeLength: (edge) => {
+		const d1 = edge.source().data('degree') || 0;
+		const d2 = edge.target().data('degree') || 0;
+		const maxDegree = Math.max(d1, d2);
+
+		// Base: 150 (was 100)
+		// Per Degree: 30 (was 15)
+		return 150 + maxDegree * 30;
+	},
+
+	// 3. ELASTICITY
+	// Lower = Stretcher edges. Allows Repulsion to win over Edge Length.
+	edgeElasticity: (edge) => 0.1,
+
+	// 4. GRAVITY (The "Centering" Force)
+	// Lowered significantly. This stops the graph from collapsing on itself.
+	gravity: 0.25, // (was 0.25)
+	gravityRange: 3.8,
+
+	// 5. ITERATIONS
+	// More time for the simulation to resolve collisions
+	numIter: 2500,
+
+	// Disconnected components spacing
+	tile: true,
+	tilingPaddingVertical: 100,
+	tilingPaddingHorizontal: 100,
+};
+
+--- END OF features\graph\config\graphStyles.js ---
+
+--- FILE: features\graph\utils\graphMapper.js ---
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
+
+const INK_COLORS = {
+	ALLY: '#4d7c0f',
+	ENEMY: '#7f1d1d',
+	NEUTRAL: '#78716c',
+};
+
+const FALLBACK_ICON_PATH = 'images/icons';
+
+export const transformGraphData = (rawEntities) => {
+	if (!rawEntities || rawEntities.length === 0) return [];
+
+	const entities = rawEntities.filter((e) => {
+		const type = e.type?.toLowerCase();
+		return type !== 'session_event' && type !== 'event';
+	});
+
+	const nodes = [];
+	const edges = [];
+	const entityIds = new Set(entities.map((e) => e.id));
+	const connectedNodeIds = new Set();
+	const uniqueEdgeTracker = new Set();
+	const degreeMap = new Map();
+
+	// Pass 1: Edges
+	entities.forEach((entity) => {
+		(entity.relationships || []).forEach((rel) => {
+			if (!entityIds.has(rel.entity_id)) return;
+
+			const [id1, id2] = [entity.id, rel.entity_id].sort();
+			const edgeKey = `${id1}-${id2}`;
+
+			if (uniqueEdgeTracker.has(edgeKey)) return;
+			uniqueEdgeTracker.add(edgeKey);
+
+			connectedNodeIds.add(entity.id);
+			connectedNodeIds.add(rel.entity_id);
+
+			degreeMap.set(entity.id, (degreeMap.get(entity.id) || 0) + 1);
+			degreeMap.set(rel.entity_id, (degreeMap.get(rel.entity_id) || 0) + 1);
+
+			const rank = getAffinityRank(rel.type);
+			let edgeColor = INK_COLORS.NEUTRAL;
+			if (rank === 1) edgeColor = INK_COLORS.ALLY;
+			if (rank === 3) edgeColor = INK_COLORS.ENEMY;
+
+			edges.push({
+				group: 'edges',
+				data: {
+					id: `e-${edgeKey}`,
+					source: entity.id,
+					target: rel.entity_id,
+					color: edgeColor,
+				},
+			});
+		});
+	});
+
+	// Pass 2: Nodes
+	entities.forEach((entity) => {
+		if (!connectedNodeIds.has(entity.id)) return;
+
+		const config = getEntityConfig(entity.type);
+		const finalIconUrl = resolveImageUrl(entity.attributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
+		const degree = degreeMap.get(entity.id) || 1;
+		const isMinor = degree < 3;
+
+		nodes.push({
+			group: 'nodes',
+			classes: isMinor ? 'minor' : 'major',
+			data: {
+				id: entity.id,
+				label: entity.name,
+				color: config.color,
+				image: finalIconUrl,
+				type: entity.type,
+				degree: degree,
+			},
+		});
+	});
+
+	return [...nodes, ...edges];
+};
+
+--- END OF features\graph\utils\graphMapper.js ---
+

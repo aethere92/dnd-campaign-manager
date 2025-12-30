@@ -1,0 +1,708 @@
+================================================================
+PARTIAL BUNDLE: FEATURES SMART-TEXT
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  dev_helpers/
+    check_imports.js
+    refactor.js
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartImageInput.jsx
+      config/
+        adminStrategies.js
+        imageLibrary.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        SplitPaneManager.jsx
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      components/
+        MapCanvas.jsx
+        MapLayerControl.jsx
+        useMapCanvasViewModel.js
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+      config/
+        mapConfig.js
+      data/
+      utils/
+        mapNavigation.js
+        markerUtils.js
+    campaign/
+      CampaignContext.jsx
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveQuestsWidget.jsx
+        CampaignHero.jsx
+        LatestSessionCard.jsx
+        QuickInsights.jsx
+        RecentEncountersWidget.jsx
+        RecentSessionsList.jsx
+        SessionRecapCard.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\smart-text\SmartMarkdown.jsx ---
+import ReactMarkdown from 'react-markdown';
+import { useSmartText } from './useSmartText';
+import { SmartEntityLink } from './components/SmartEntityLink';
+import { EntityEmbed } from './components/EntityEmbed'; // New Import
+import { generateId, extractText } from '@/shared/utils/textUtils';
+
+export default function SmartMarkdown({ children, ...props }) {
+	// ... (Existing safety check logic) ...
+	let safeText = children;
+	if (Array.isArray(children)) {
+		safeText = children.join('');
+	} else if (typeof children !== 'string' && children !== null && children !== undefined) {
+		safeText = String(children);
+	}
+
+	const processedText = useSmartText(safeText);
+
+	const HeadingRenderer = ({ level, children }) => {
+		const text = extractText(children);
+		const id = generateId(text);
+		const Tag = `h${level}`;
+		return <Tag id={id}>{children}</Tag>;
+	};
+
+	return (
+		<ReactMarkdown
+			{...props}
+			components={{
+				...props.components,
+				h1: (props) => <HeadingRenderer level={1} {...props} />,
+				h2: (props) => <HeadingRenderer level={2} {...props} />,
+				h3: (props) => <HeadingRenderer level={3} {...props} />,
+
+				// UPGRADED LINK RENDERER
+				a: ({ href, children }) => {
+					// 1. Check for Entity Link Protocol
+					if (href && href.startsWith('#entity/')) {
+						const parts = href.split('/');
+						const id = parts[1];
+						const type = parts[2] || 'default';
+
+						// Check content for Embed Pattern: ":: Label ::"
+						const textContent = String(children);
+						const isEmbed = textContent.startsWith('::') && textContent.endsWith('::');
+
+						if (isEmbed) {
+							// Clean the label (remove ::)
+							const label = textContent.replace(/^::\s*|\s*::$/g, '');
+							return <EntityEmbed id={id} type={type} label={label} />;
+						}
+
+						return (
+							<SmartEntityLink id={id} type={type}>
+								{children}
+							</SmartEntityLink>
+						);
+					}
+
+					// 2. External Links
+					return (
+						<a href={href} className='text-blue-600 hover:underline' target='_blank' rel='noopener noreferrer'>
+							{children}
+						</a>
+					);
+				},
+			}}>
+			{processedText}
+		</ReactMarkdown>
+	);
+}
+
+--- END OF features\smart-text\SmartMarkdown.jsx ---
+
+--- FILE: features\smart-text\useEntityIndex.js ---
+import { useQuery } from '@tanstack/react-query';
+import { getEntityIndex } from '@/domain/entity/api/entityService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { getParentId } from '@/domain/entity/utils/entityUtils'; // You added this util previously
+
+export function useEntityIndex() {
+	const { campaignId } = useCampaign();
+
+	const { data } = useQuery({
+		queryKey: ['entityIndex', campaignId],
+		queryFn: async () => {
+			const rawData = await getEntityIndex(campaignId);
+
+			const list = [];
+			const map = new Map();
+
+			rawData.forEach((entity) => {
+				const attrs = parseAttributes(entity.attributes);
+				const lightEntity = {
+					...entity,
+					// Pre-calculate hierarchy once
+					parentId: getParentId(entity),
+					// Resolve Icon once
+					iconUrl: resolveImageUrl(attrs, 'icon'),
+				};
+
+				// Remove heavy relationships array to save memory
+				delete lightEntity.relationships;
+
+				list.push(lightEntity);
+				map.set(entity.id, lightEntity);
+			});
+
+			// Return optimized structures
+			return {
+				list: list.sort((a, b) => b.name.length - a.name.length),
+				map,
+			};
+		},
+		staleTime: 1000 * 60 * 30, // 30 mins
+		enabled: !!campaignId,
+	});
+
+	// Default return shape
+	return data || { list: [], map: new Map() };
+}
+
+--- END OF features\smart-text\useEntityIndex.js ---
+
+--- FILE: features\smart-text\useSmartText.js ---
+import { useMemo } from 'react';
+import { useEntityIndex } from './useEntityIndex';
+
+/**
+ * Escape special regex characters
+ */
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Find non-overlapping entity mentions in text
+ */
+const findEntityMatches = (text, entityIndex) => {
+	const matches = [];
+	const processedRanges = [];
+
+	// Sort by length DESC
+	const sortedEntities = [...entityIndex].sort((a, b) => b.name.length - a.name.length);
+
+	for (const entity of sortedEntities) {
+		const pattern = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
+		let match;
+
+		while ((match = pattern.exec(text)) !== null) {
+			const start = match.index;
+			const end = start + match[0].length;
+
+			const overlaps = processedRanges.some(
+				(range) =>
+					(start >= range.start && start < range.end) ||
+					(end > range.start && end <= range.end) ||
+					(start <= range.start && end >= range.end)
+			);
+
+			if (!overlaps) {
+				matches.push({ start, end, text: match[0], entity });
+				processedRanges.push({ start, end });
+			}
+		}
+	}
+
+	return matches.sort((a, b) => a.start - b.start);
+};
+
+const replaceMatches = (text, matches) => {
+	if (matches.length === 0) return text;
+	let result = '';
+	let lastIndex = 0;
+	for (const match of matches) {
+		result += text.slice(lastIndex, match.start);
+		result += `[${match.text}](#entity/${match.entity.id}/${match.entity.type})`;
+		lastIndex = match.end;
+	}
+	result += text.slice(lastIndex);
+	return result;
+};
+
+export function useSmartText(text) {
+	const { list: entityIndex } = useEntityIndex();
+
+	const shouldProcess = useMemo(() => {
+		if (!text || typeof text !== 'string' || text.length < 3) return false;
+		if (!entityIndex || entityIndex.length === 0) return false;
+		return true;
+	}, [text, entityIndex]);
+
+	return useMemo(() => {
+		if (!shouldProcess) return text || '';
+
+		try {
+			// CRITICAL FIX: Split by existing Markdown links to protect them
+			// Matches [text](url) pattern. The capturing group () keeps the delimiter in the result array.
+			// This regex is basic but handles standard single-line links.
+			const linkProtectionRegex = /(\[.*?\]\(.*?\))/g;
+			const parts = text.split(linkProtectionRegex);
+
+			// Process only the parts that ARE NOT links
+			const processedParts = parts.map((part) => {
+				// Simple check: does it look like a markdown link?
+				if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
+					return part; // Return existing link as-is (Protected)
+				}
+
+				// Otherwise, auto-link entities in this plain text segment
+				const matches = findEntityMatches(part, entityIndex);
+				return replaceMatches(part, matches);
+			});
+
+			return processedParts.join('');
+		} catch (err) {
+			console.error('SmartMarkdown processing error:', err);
+			return text;
+		}
+	}, [text, entityIndex, shouldProcess]);
+}
+
+--- END OF features\smart-text\useSmartText.js ---
+
+--- FILE: features\smart-text\components\EntityEmbed.jsx ---
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { clsx } from 'clsx';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+
+// Utility to calculate brightness from an image
+const getImageBrightness = (imageUrl) => {
+	return new Promise((resolve) => {
+		const img = new Image();
+		img.crossOrigin = 'Anonymous';
+
+		img.onload = () => {
+			try {
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext('2d');
+
+				canvas.width = 100;
+				canvas.height = 100;
+
+				ctx.drawImage(img, 0, 0, 100, 100);
+				const imageData = ctx.getImageData(0, 0, 100, 100);
+				const data = imageData.data;
+
+				let totalBrightness = 0;
+				let pixelCount = 0;
+
+				for (let i = 0; i < data.length; i += 4) {
+					const r = data[i];
+					const g = data[i + 1];
+					const b = data[i + 2];
+					const a = data[i + 3];
+
+					if (a < 125) continue;
+
+					const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+					totalBrightness += brightness;
+					pixelCount++;
+				}
+
+				const avgBrightness = totalBrightness / pixelCount;
+				resolve(avgBrightness);
+			} catch (e) {
+				resolve(200);
+			}
+		};
+
+		img.onerror = () => {
+			resolve(200);
+		};
+
+		img.src = imageUrl;
+	});
+};
+
+export const EntityEmbed = ({ id, type, label }) => {
+	const navigate = useNavigate();
+	// FIX: Destructure the 'map' from the new hook signature
+	const { map: entityMap } = useEntityIndex();
+
+	// FIX: Use .get() (O(1) speed) instead of .find()
+	const entity = entityMap.get(id);
+	const resolvedLabel = label || entity?.name || 'Unknown Entity';
+
+	// Resolve Images
+	const attributes = parseAttributes(entity?.attributes);
+	const customIcon = entity?.iconUrl || resolveImageUrl(attributes, 'icon');
+	const bgImage = resolveImageUrl(attributes, 'background');
+
+	// State for brightness detection
+	const [isDarkBackground, setIsDarkBackground] = useState(false);
+	const [isAnalyzing, setIsAnalyzing] = useState(!!bgImage);
+
+	// Analyze background image brightness
+	useEffect(() => {
+		if (!bgImage) {
+			setIsAnalyzing(false);
+			return;
+		}
+
+		setIsAnalyzing(true);
+
+		getImageBrightness(bgImage).then((brightness) => {
+			setIsDarkBackground(brightness < 127.5);
+			setIsAnalyzing(false);
+		});
+	}, [bgImage]);
+
+	// Border Color Logic (Left Side Only)
+	const getBorderColor = () => {
+		switch (type) {
+			case 'encounter':
+				return 'border-l-red-600';
+			case 'quest':
+				return 'border-l-blue-600';
+			case 'location':
+				return 'border-l-emerald-600';
+			default:
+				return 'border-l-amber-600';
+		}
+	};
+
+	const getActionLabel = () => {
+		switch (type) {
+			case 'encounter':
+				return 'View Encounter';
+			case 'quest':
+				return 'View Quest';
+			case 'location':
+				return 'View Map';
+			default:
+				return 'View Entity';
+		}
+	};
+
+	return (
+		<span
+			role='button'
+			onClick={(e) => {
+				e.preventDefault();
+				navigate(`/wiki/${type}/${id}`);
+			}}
+			className={clsx(
+				// Layout & Base (Changed to flex to behave like block context within span)
+				'group relative w-full h-[30px] my-4 cursor-pointer select-none overflow-hidden',
+				'flex rounded-md transition-all duration-200',
+
+				// Borders
+				'border border-border/60 border-l-[3px]',
+				getBorderColor(),
+
+				// Background (Default White if no image)
+				!bgImage && 'bg-background hover:bg-muted/30',
+
+				// Hover Effects
+				'hover:shadow hover:border-l-4'
+			)}>
+			{/* BACKGROUND IMAGE LAYER */}
+			{bgImage && (
+				<span
+					className='absolute inset-0 bg-cover bg-center opacity-80 group-hover:scale-105 transition-transform duration-500 block'
+					style={{ backgroundImage: `url('${bgImage}')` }}
+				/>
+			)}
+
+			{/* CONTENT LAYER */}
+			<span className='relative z-10 flex items-center gap-2 pl-2 pr-3 h-full w-full'>
+				{/* Icon - Adaptive color, no background */}
+				<span
+					className={clsx(
+						'shrink-0 flex items-center justify-center opacity-90 group-hover:opacity-100 transition-all duration-200',
+						isAnalyzing ? 'opacity-0' : 'opacity-100'
+					)}
+					style={{
+						filter: bgImage
+							? isDarkBackground
+								? 'brightness(0) invert(1)' // White for dark backgrounds
+								: 'brightness(0)' // Black for light backgrounds
+							: 'none',
+					}}>
+					<EntityIcon
+						type={type}
+						customIconUrl={customIcon}
+						size={16}
+						inline={true}
+						className='object-cover rounded-full'
+					/>
+				</span>
+
+				{/* Label */}
+				<span
+					className={clsx(
+						'font-serif font-bold text-[12px] truncate leading-none flex-1 pt-0.5 block',
+						'transition-colors duration-200',
+						isAnalyzing ? 'opacity-0' : 'opacity-100',
+						bgImage ? (isDarkBackground ? 'text-white' : 'text-black') : 'text-foreground'
+					)}>
+					{resolvedLabel}
+				</span>
+
+				{/* Right Side Action */}
+				<span
+					className={clsx(
+						'text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 shrink-0 transition-colors',
+						isAnalyzing ? 'opacity-0' : 'opacity-100',
+						bgImage
+							? isDarkBackground
+								? 'text-white/90 group-hover:text-white'
+								: 'text-black/90 group-hover:text-black'
+							: 'text-muted-foreground/60 group-hover:text-amber-700'
+					)}>
+					{getActionLabel()} <ArrowRight size={10} />
+				</span>
+			</span>
+		</span>
+	);
+};
+
+--- END OF features\smart-text\components\EntityEmbed.jsx ---
+
+--- FILE: features\smart-text\components\SmartEntityLink.jsx ---
+/**
+ * SmartEntityLink - MIGRATED to use EntityLink component
+ * This is now just a thin wrapper that adds entity index lookup
+ */
+
+import EntityLink from '@/domain/entity/components/EntityLink';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+
+export const SmartEntityLink = ({ id, type, children }) => {
+	// FIX: Destructure the 'map' from the new hook signature
+	const { map: entityMap } = useEntityIndex();
+
+	// FIX: Use .get() (O(1) speed) instead of .find()
+	const entity = entityMap.get(id);
+	const customIconUrl = entity?.iconUrl;
+
+	return (
+		<EntityLink id={id} type={type} customIconUrl={customIconUrl} inline>
+			{children}
+		</EntityLink>
+	);
+};
+
+--- END OF features\smart-text\components\SmartEntityLink.jsx ---
+
