@@ -16,6 +16,7 @@ const WikiLandingPage = lazy(() => import('@/features/wiki/pages/WikiLandingPage
 // Admin Features
 const AdminLayout = lazy(() => import('@/features/admin/layouts/AdminLayout'));
 const SplitPaneManager = lazy(() => import('@/features/admin/pages/SplitPaneManager'));
+const BulkReplaceTool = lazy(() => import('@/features/admin/pages/BulkReplaceTool'));
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
@@ -29,6 +30,7 @@ export const AppRoutes = () => {
 					<Route path='/dm' element={<AdminLayout />}>
 						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
 						<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
+						<Route path='tools/replace' element={<BulkReplaceTool />} />
 					</Route>
 				)}
 

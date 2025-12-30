@@ -1,7 +1,20 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
+import {
+	Database,
+	Users,
+	MapPin,
+	BookOpen,
+	Scroll,
+	ArrowLeft,
+	Shield,
+	Gem,
+	LogOut,
+	Play,
+	Sword,
+	Replace,
+} from 'lucide-react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 
 const NavItem = ({ to, icon: Icon, label }) => {
@@ -56,6 +69,7 @@ export default function AdminLayout() {
 						System
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
+					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities

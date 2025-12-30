@@ -1,34 +1,6 @@
 import { supabase } from '@/shared/api/supabaseClient';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
 
-// Helper to prepare attribute rows
-const prepareAttributeRows = (entityId, data) => {
-	// If we have a prepared list (from the new form logic), use it
-	if (data.attributesList && Array.isArray(data.attributesList)) {
-		return data.attributesList
-			.filter((attr) => attr.name && String(attr.value).trim() !== '')
-			.map((attr) => ({
-				entity_id: entityId,
-				name: attr.name,
-				value: attr.value,
-				is_private: false,
-			}));
-	}
-
-	// Fallback for legacy object format (just in case)
-	if (data.attributes) {
-		return Object.entries(data.attributes)
-			.filter(([_, value]) => value && String(value).trim() !== '')
-			.map(([key, value]) => ({
-				entity_id: entityId,
-				name: key,
-				value: value,
-				is_private: false,
-			}));
-	}
-	return [];
-};
-
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 
@@ -457,4 +429,131 @@ export const upsertEncounterAction = async (actionData) => {
 
 	if (error) throw error;
 	return data;
+};
+
+/**
+ * Scans the entire campaign for a term and returns a list of proposed changes.
+ * Includes: Entities, Sessions, Attributes, Events, and Objectives.
+ */
+export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
+	if (!findTerm.trim()) return [];
+	const term = findTerm.trim();
+	const regex = new RegExp(term, 'gi');
+	const matches = [];
+
+	// 1. Scan Entities (Characters, NPCs, etc)
+	const { data: ent } = await supabase
+		.from('entities')
+		.select('id, name, type, description')
+		.eq('campaign_id', campaignId);
+	ent?.forEach((row) => {
+		['name', 'description'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'entities',
+					id: row.id,
+					field,
+					context: `${row.type}: ${row.name}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 2. Scan Sessions
+	const { data: sess } = await supabase.from('sessions').select('id, title, narrative').eq('campaign_id', campaignId);
+	sess?.forEach((row) => {
+		[
+			['title', 'title'],
+			['narrative', 'narrative'],
+		].forEach(([field, label]) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'sessions',
+					id: row.id,
+					field,
+					context: `Session: ${row.title}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 3. Scan Attributes (linked via entity)
+	const { data: attr } = await supabase
+		.from('attributes')
+		.select('id, name, value, entity:entities!inner(name, type, campaign_id)')
+		.eq('entities.campaign_id', campaignId);
+	attr?.forEach((row) => {
+		if (row.value?.toLowerCase().includes(term.toLowerCase())) {
+			matches.push({
+				table: 'attributes',
+				id: row.id,
+				field: 'value',
+				context: `${row.entity.type} Attribute: ${row.name}`,
+				original: row.value,
+				proposal: row.value.replace(regex, replaceTerm),
+			});
+		}
+	});
+
+	// 4. Scan Session Events (linked via session)
+	const { data: evts } = await supabase
+		.from('session_events')
+		.select('id, title, description, session:sessions!inner(title, campaign_id)')
+		.eq('sessions.campaign_id', campaignId);
+	evts?.forEach((row) => {
+		['title', 'description'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'session_events',
+					id: row.id,
+					field,
+					context: `Event in ${row.session.title}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 5. Scan Quest Objectives (linked via quest/entity)
+	const { data: objs } = await supabase
+		.from('quest_objectives')
+		.select('id, objective_name, description, objective_update, quest:entities!inner(name, campaign_id)')
+		.eq('entities.campaign_id', campaignId);
+	objs?.forEach((row) => {
+		['objective_name', 'description', 'objective_update'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'quest_objectives',
+					id: row.id,
+					field,
+					context: `Objective in ${row.quest.name}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	return matches;
+};
+
+/**
+ * Takes a list of confirmed changes and executes updates.
+ */
+export const executeBulkReplace = async (changeList) => {
+	const results = { count: 0 };
+	// Process in sequence to avoid Supabase rate limits on heavy campaigns
+	for (const change of changeList) {
+		const { error } = await supabase
+			.from(change.table)
+			.update({ [change.field]: change.proposal })
+			.eq('id', change.id);
+		if (!error) results.count++;
+	}
+	return results;
 };

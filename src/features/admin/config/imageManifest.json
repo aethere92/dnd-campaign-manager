@@ -58,7 +58,10 @@
     "category": "Assets > Map_backgrounds",
     "path": "images/assets/map_backgrounds/",
     "files": [
-      "drellin_ferry_map.png"
+      "brindol_map.jpg",
+      "drellin_ferry_map.jpg",
+      "elsir_vale_map.jpg",
+      "witchwood_map.jpg"
     ]
   },
   {
