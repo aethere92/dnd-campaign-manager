@@ -37,7 +37,7 @@ export const TableOfContents = ({
 				- self-start: Critical for CSS Grid contexts (like Timeline) to prevent the item from stretching 
 				  to full height, which breaks sticky behavior.
 			*/}
-			<div className={clsx(visibilityClass, 'sticky top-70 w-64 shrink-0 self-start', className)}>
+			<div className={clsx(visibilityClass, 'sticky top-90 w-64 shrink-0 self-start', className)}>
 				<div className='max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pb-10 pr-2'>
 					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-gray-400'>
 						<AlignLeft size={12} />

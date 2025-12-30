@@ -19,6 +19,7 @@ INSTRUCTIONS FOR AI:
     styles/
       global.css
   dev_helpers/
+    check_imports.js
     refactor.js
   domain/
     entity/
@@ -186,6 +187,7 @@ INSTRUCTIONS FOR AI:
         WikiEntryView.jsx
         landing/
           EntityGridCard.jsx
+          EntityTableGroup.jsx
           Swimlane.jsx
         navigation/
           SidebarEmptyState.jsx
@@ -703,6 +705,61 @@ h3[id] {
 }
 
 --- END OF app\styles\global.css ---
+
+--- FILE: dev_helpers\check_imports.js ---
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Adjust this to your source root (e.g., '../src' or '../')
+const ROOT_DIR = path.resolve(__dirname, '../');
+
+const IGNORE_DIRS = ['node_modules', '.git', 'dist', 'dev_helpers'];
+
+function scanDir(dir) {
+	const files = fs.readdirSync(dir);
+
+	files.forEach((file) => {
+		if (IGNORE_DIRS.includes(file)) return;
+
+		const fullPath = path.join(dir, file);
+		const stat = fs.statSync(fullPath);
+
+		if (stat.isDirectory()) {
+			scanDir(fullPath);
+		} else if (file.endsWith('.jsx') || file.endsWith('.js')) {
+			checkFile(fullPath);
+		}
+	});
+}
+
+function checkFile(filePath) {
+	const content = fs.readFileSync(filePath, 'utf-8');
+	const lines = content.split('\n');
+
+	lines.forEach((line, index) => {
+		// Check for relative parent imports
+		if (line.includes("from '../") || line.includes('from "../')) {
+			console.warn(`⚠️  Relative Import found in ${path.basename(filePath)}:${index + 1}`);
+			console.warn(`   ${line.trim()}`);
+		}
+
+		// Check for old specific paths that we know were refactored
+		if (line.includes('utils/text/') || line.includes('features/app-core')) {
+			console.error(`🚨 DEAD PATH REFERENCE in ${path.basename(filePath)}:${index + 1}`);
+			console.error(`   ${line.trim()}`);
+		}
+	});
+}
+
+console.log('🔍 Scanning for legacy code patterns...');
+scanDir(ROOT_DIR);
+console.log('✅ Scan complete.');
+
+--- END OF dev_helpers\check_imports.js ---
 
 --- FILE: dev_helpers\refactor.js ---
 import fs from 'fs';
@@ -6156,7 +6213,7 @@ export const MapAreas = ({ areas }) => {
 --- FILE: features\atlas\components\layers\MapMarkers.jsx ---
 import { Marker, Popup } from 'react-leaflet';
 import { ArrowRight, MapPin, Skull, Castle, User, Tent, Sparkles } from 'lucide-react';
-import { resolveMarkerIcon } from '../../utils/markerUtils';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
 /**
  * Resolves Lucide Icons for the Popup header based on Category
@@ -6254,7 +6311,7 @@ export const MapOverlays = ({ overlays }) => {
 --- FILE: features\atlas\components\layers\MapRecaps.jsx ---
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import { Calendar } from 'lucide-react';
-import { createDotIcon } from '../../utils/markerUtils'; // Import
+import { createDotIcon } from '@/features/atlas/utils/markerUtils'; // Import
 
 export const MapRecaps = ({ sessions }) => {
 	if (!sessions || sessions.length === 0) return null;
@@ -6305,7 +6362,7 @@ export const MAP_CONFIG = {
 --- END OF features\atlas\config\mapConfig.js ---
 
 --- FILE: features\atlas\utils\mapNavigation.js ---
-import { CAMPAIGN_01, CAMPAIGN_01_ALIASES } from '../data/campaign_01';
+import { CAMPAIGN_01, CAMPAIGN_01_ALIASES } from '@/features/atlas/data/campaign_01';
 
 /**
  * Resolves the configuration object for a specific map key.
@@ -6621,7 +6678,7 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 --- END OF features\campaign\components\CampaignCard.jsx ---
 
 --- FILE: features\campaign\components\CampaignSelect.jsx ---
-import { useCampaignSelection } from '../useCampaignSelection';
+import { useCampaignSelection } from '@/features/campaign/useCampaignSelection';
 import { CampaignCard } from './CampaignCard';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
@@ -7807,7 +7864,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose'; // IMPLEMENTATION: fCoSE
-import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '../config/graphStyles';
+import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
 
 // Register the layout extension
 cytoscape.use(fcose);
@@ -9006,7 +9063,7 @@ export const SearchResults = ({ vm }) => {
 
 --- FILE: features\search\components\SearchTrigger.jsx ---
 import { Search } from 'lucide-react';
-import { useSearch } from '../SearchContext'; // Import Context
+import { useSearch } from '@/features/search/SearchContext'; // Import Context
 
 export const SearchTrigger = ({ className }) => {
 	const { openSearch } = useSearch();
@@ -9295,7 +9352,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '@/domain/entity/components/EntityIcon';
-import { useEntityIndex } from '../useEntityIndex';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 
 // Utility to calculate brightness from an image
@@ -9499,7 +9556,7 @@ export const EntityEmbed = ({ id, type, label }) => {
  */
 
 import EntityLink from '@/domain/entity/components/EntityLink';
-import { useEntityIndex } from '../useEntityIndex';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
 
 export const SmartEntityLink = ({ id, type, children }) => {
 	// FIX: Destructure the 'map' from the new hook signature
@@ -9799,7 +9856,7 @@ import { clsx } from 'clsx';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { ArrowRight } from 'lucide-react';
-import { useSmartPosition } from '../useSmartPosition';
+import { useSmartPosition } from '@/features/smart-tooltip/useSmartPosition';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
@@ -10134,7 +10191,7 @@ export function useTocScroll(callback) {
 --- FILE: features\timeline\TimelinePage.jsx ---
 import { useTimelineViewModel } from './useTimelineView';
 import { TimelineSession } from './components/TimelineSession';
-import { TableOfContents } from '../table-of-contents/TableOfContents';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 
 export default function TimelineView() {
 	const { sessions, isLoading } = useTimelineViewModel();
@@ -11873,13 +11930,10 @@ export default function WikiEntityView({ entity }) {
 
 --- FILE: features\wiki\components\landing\EntityGridCard.jsx ---
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
-import { getEntityDescription } from '@/domain/entity/utils/entityUtils';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
-import EntityIcon from '@/domain/entity/components/EntityIcon';
 
 // Helper: Description Extraction
 const resolveDescription = (entity, attributes) => {
@@ -11929,12 +11983,12 @@ export const EntityGridCard = ({ entity, config, context }) => {
 		<Link
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
-				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-15',
+				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
 				'hover:border-accent/50 hover:shadow-sm hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
 			{/* Left: Image/Icon Square */}
-			<div className='w-15 shrink-0 relative bg-muted/30 border-r border-border/50'>
+			<div className='w-20 shrink-0 relative bg-muted/30 border-r border-border/50'>
 				{imageUrl ? (
 					<>
 						<img
@@ -11968,6 +12022,120 @@ export const EntityGridCard = ({ entity, config, context }) => {
 };
 
 --- END OF features\wiki\components\landing\EntityGridCard.jsx ---
+
+--- FILE: features\wiki\components\landing\EntityTableGroup.jsx ---
+import { Link } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { ArrowRight, CornerDownRight } from 'lucide-react';
+import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
+import EntityBadge from '@/domain/entity/components/EntityBadge';
+import { parseAttributes } from '@/shared/utils/imageUtils';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
+export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
+	if (!items || items.length === 0) return null;
+
+	return (
+		<div className='mb-8 animate-in fade-in duration-500'>
+			{/* Group Header */}
+			<div className='flex items-center gap-2 border-b border-border/60 pb-2 mb-3'>
+				{parentTitle && (
+					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest'>
+						{parentTitle}
+						<CornerDownRight size={10} className='translate-y-px opacity-50' />
+					</div>
+				)}
+				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
+					{title}
+					{link && (
+						<Link
+							to={link}
+							className='text-muted-foreground/20 hover:text-accent transition-colors'
+							title={`View ${title}`}>
+							<ArrowRight size={12} />
+						</Link>
+					)}
+				</h2>
+				<span className='text-[9px] font-bold bg-muted px-1.5 py-px rounded text-muted-foreground/60 ml-auto'>
+					{items.length}
+				</span>
+			</div>
+
+			{/* Table Container */}
+			<div className='bg-background border border-border rounded-lg overflow-hidden shadow-sm'>
+				<table className='w-full text-left text-sm'>
+					<thead className='bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider border-b border-border'>
+						<tr>
+							<th className='px-4 py-2 w-[40%]'>Name</th>
+							<th className='px-4 py-2 w-[20%]'>Status</th>
+							<th className='px-4 py-2 hidden md:table-cell'>Details</th>
+						</tr>
+					</thead>
+					<tbody className='divide-y divide-border/50'>
+						{items.map((entity) => {
+							const status = getStatusInfo(entity);
+							const attributes = parseAttributes(entity.attributes);
+							const role = getAttributeValue(attributes, ['role', 'occupation', 'class', 'type']) || entity.type;
+
+							// Check if row needs highlighting
+							const isSpecialStatus = status.isDead || status.isFailed || status.rank === 1 || status.rank === 3;
+
+							return (
+								<tr key={entity.id} className='group hover:bg-muted/30 transition-colors'>
+									<td className='px-4 py-2.5'>
+										<Link
+											to={`/wiki/${entity.type}/${entity.id}`}
+											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-accent transition-colors'>
+											{/* Small colored indicator bar */}
+											{isSpecialStatus && (
+												<div
+													className={clsx(
+														'w-1 h-4 rounded-full shrink-0',
+														status.isDead || status.isFailed
+															? 'bg-red-500'
+															: status.rank === 1
+															? 'bg-emerald-500'
+															: status.rank === 3
+															? 'bg-red-600'
+															: 'bg-gray-300'
+													)}
+												/>
+											)}
+											{entity.name}
+										</Link>
+									</td>
+									<td className='px-4 py-2.5'>
+										{status.display && (
+											<span
+												className={clsx(
+													'inline-flex items-center text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border',
+													status.isDead || status.isFailed
+														? 'bg-red-50 text-red-700 border-red-100'
+														: 'bg-muted text-muted-foreground border-border'
+												)}>
+												{status.display}
+											</span>
+										)}
+									</td>
+									<td className='px-4 py-2.5 hidden md:table-cell'>
+										<div className='flex items-center gap-2'>
+											<EntityBadge type={entity.type} size='sm' variant='subtle' />
+											<span className='text-xs text-muted-foreground truncate max-w-[200px]'>
+												{role !== entity.type ? role : ''}
+											</span>
+										</div>
+									</td>
+								</tr>
+							);
+						})}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\landing\EntityTableGroup.jsx ---
 
 --- FILE: features\wiki\components\landing\Swimlane.jsx ---
 import { Link } from 'react-router-dom';
@@ -12005,8 +12173,8 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 				</span>
 			</div>
 
-			{/* Grid */}
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3'>
+			{/* Grid - Reverted to Standard Responsive Grid */}
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3'>
 				{items.map((entity) => (
 					<EntityGridCard key={entity.id} entity={entity} config={config} context={context} />
 				))}
@@ -12768,7 +12936,7 @@ export function useEntityFetching(type) {
 
 --- FILE: features\wiki\hooks\useEntityGrouping.js ---
 import { useMemo } from 'react';
-import { GROUPING_CONFIG } from '../config/groupingConfig';
+import { GROUPING_CONFIG } from '@/features/wiki/config/groupingConfig';
 import { transformEntityToViewModel } from '@/features/wiki/utils/wikiUtils';
 
 // --- TREE BUILDER HELPER ---
@@ -13015,9 +13183,9 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom'; // CHANGED: Replaces useState
 import { BookOpen, History, Network } from 'lucide-react';
 import TabContainer from '@/shared/components/layout/TabContainer';
-import { EntityBody, EntityHistory } from '../components/EntityBody';
-import { SessionMentions } from '../components/SessionMentions';
-import { TableOfContents } from '../../table-of-contents/TableOfContents';
+import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
+import { SessionMentions } from '@/features/wiki/components/SessionMentions';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import { extractHeaders } from '@/shared/utils/markdownUtils';
 import { ThreeColumnLayout } from '@/shared/components/layout/SplitView';
 
@@ -13125,8 +13293,8 @@ export default function SessionLayout({ viewModel }) {
 --- FILE: features\wiki\layouts\StandardLayout.jsx ---
 import { Drawer } from 'vaul';
 import { Info, X } from 'lucide-react';
-import { EntitySidebar } from '../components/EntitySidebar';
-import { EntityBody } from '../components/EntityBody';
+import { EntitySidebar } from '@/features/wiki/components/EntitySidebar';
+import { EntityBody } from '@/features/wiki/components/EntityBody';
 
 export default function StandardLayout({ viewModel }) {
 	if (!viewModel) return null;
@@ -13231,13 +13399,14 @@ export default function WikiEntryPage() {
 
 --- FILE: features\wiki\pages\WikiLandingPage.jsx ---
 import { useParams } from 'react-router-dom';
-import { Search, Folder } from 'lucide-react';
+import { Search, Folder, LayoutGrid, List } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useEntityFetching } from '@/features/wiki/hooks/useEntityFetching';
 import { useEntityGrouping } from '@/features/wiki/hooks/useEntityGrouping';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
-import { getSwimlanes, getStrategyMode } from '@/features/wiki/config/viewStrategies'; // Import Logic
-import { Swimlane } from '../components/landing/Swimlane'; // Import UI
+import { getSwimlanes, getStrategyMode } from '@/features/wiki/config/viewStrategies';
+import { Swimlane } from '../components/landing/Swimlane';
+import { EntityTableGroup } from '../components/landing/EntityTableGroup';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { clsx } from 'clsx';
 
@@ -13246,15 +13415,16 @@ export default function WikiLandingPage() {
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
 	const { entities, isLoading } = useEntityFetching(normalizedType);
+
+	// STATE: View Mode ('grid' or 'table')
+	const [viewMode, setViewMode] = useState('grid');
 	const [search, setSearch] = useState('');
 
 	const config = getEntityConfig(normalizedType);
 	const mode = getStrategyMode(normalizedType);
 
-	// Use Grouping Hook
 	const groups = useEntityGrouping(entities, normalizedType, search);
 
-	// Transform Data
 	const swimlanes = useMemo(() => {
 		return getSwimlanes(groups, normalizedType);
 	}, [groups, normalizedType]);
@@ -13264,7 +13434,7 @@ export default function WikiLandingPage() {
 	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
 
 	return (
-		<div className='p-6 md:p-12 max-w-[1600px] mx-auto min-h-full'>
+		<div className='p-6 md:p-12 max-w-[1920px] mx-auto min-h-full'>
 			{/* Header */}
 			<div className='flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-border pb-6'>
 				<div className='flex items-center gap-4'>
@@ -13284,39 +13454,85 @@ export default function WikiLandingPage() {
 					</div>
 				</div>
 
-				<div className='relative w-full md:w-72'>
-					<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
-					<input
-						type='text'
-						placeholder={`Search ${config.labelPlural}...`}
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						className='w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
-					/>
+				{/* Controls Area */}
+				<div className='flex sm:flex-row gap-3 w-full md:w-auto'>
+					{/* View Toggle */}
+					<div className='flex bg-muted p-1 rounded-lg border border-border/50 shrink-0 self-start sm:self-auto'>
+						<button
+							onClick={() => setViewMode('grid')}
+							className={clsx(
+								'p-1.5 rounded-md transition-all',
+								viewMode === 'grid'
+									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
+									: 'text-muted-foreground hover:text-foreground'
+							)}
+							title='Grid View'>
+							<LayoutGrid size={16} />
+						</button>
+						<button
+							onClick={() => setViewMode('table')}
+							className={clsx(
+								'p-1.5 rounded-md transition-all',
+								viewMode === 'table'
+									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
+									: 'text-muted-foreground hover:text-foreground'
+							)}
+							title='Table View'>
+							<List size={16} />
+						</button>
+					</div>
+
+					{/* Search Bar */}
+					<div className='relative w-full md:w-72'>
+						<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
+						<input
+							type='text'
+							placeholder={`Search ${config.labelPlural}...`}
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							className='w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
+						/>
+					</div>
 				</div>
 			</div>
 
-			{/* Content */}
-			<div className='pb-20'>
-				{swimlanes.map((lane) => (
-					<Swimlane
-						key={lane.id}
-						title={lane.title}
-						parentTitle={lane.parentTitle}
-						link={lane.link}
-						items={lane.items}
-						config={config}
-						context={mode}
-					/>
-				))}
+			{/* CONTENT SWITCHER */}
+			{viewMode === 'grid' ? (
+				// --- GRID VIEW (Reverted to Standard List of Swimlanes) ---
+				<div className='pb-20'>
+					{swimlanes.map((lane) => (
+						<Swimlane
+							key={lane.id}
+							title={lane.title}
+							parentTitle={lane.parentTitle}
+							link={lane.link}
+							items={lane.items}
+							config={config}
+							context={mode}
+						/>
+					))}
+				</div>
+			) : (
+				// --- TABLE LIST VIEW ---
+				<div className='max-w-5xl mx-auto pb-20'>
+					{swimlanes.map((lane) => (
+						<EntityTableGroup
+							key={lane.id}
+							title={lane.title}
+							parentTitle={lane.parentTitle}
+							link={lane.link}
+							items={lane.items}
+						/>
+					))}
+				</div>
+			)}
 
-				{totalCount === 0 && (
-					<div className='text-center py-32 opacity-40 flex flex-col items-center gap-4 border-2 border-dashed border-border rounded-xl'>
-						<Folder size={48} strokeWidth={1} />
-						<p className='text-lg font-serif text-muted-foreground'>No entries found.</p>
-					</div>
-				)}
-			</div>
+			{totalCount === 0 && (
+				<div className='text-center py-32 opacity-40 flex flex-col items-center gap-4 border-2 border-dashed border-border rounded-xl mt-8'>
+					<Folder size={48} strokeWidth={1} />
+					<p className='text-lg font-serif text-muted-foreground'>No entries found.</p>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -14267,8 +14483,8 @@ export function InlineMarkdown({ children, ...props }) {
 
 --- FILE: shared\components\markdown\MarkdownWithToC.jsx ---
 import { useMemo } from 'react';
-import { extractHeaders } from '../../utils/text/markdownHelpers';
-import { TableOfContents } from '../../features/table-of-contents/TableOfContents';
+import { extractHeaders } from '@/shared/utils/markdownUtils';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import MarkdownRenderer from './MarkdownRenderer';
 
 /**
