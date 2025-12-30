@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
-import { getEntityDescription } from '@/domain/entity/utils/entityUtils';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
-import EntityIcon from '@/domain/entity/components/EntityIcon';
 
 // Helper: Description Extraction
 const resolveDescription = (entity, attributes) => {
@@ -55,12 +52,12 @@ export const EntityGridCard = ({ entity, config, context }) => {
 		<Link
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
-				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-15',
+				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
 				'hover:border-accent/50 hover:shadow-sm hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
 			{/* Left: Image/Icon Square */}
-			<div className='w-15 shrink-0 relative bg-muted/30 border-r border-border/50'>
+			<div className='w-20 shrink-0 relative bg-muted/30 border-r border-border/50'>
 				{imageUrl ? (
 					<>
 						<img
