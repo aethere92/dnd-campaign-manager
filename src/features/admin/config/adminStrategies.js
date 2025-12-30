@@ -148,6 +148,7 @@ export const ADMIN_STRATEGIES = {
 				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
 			},
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 

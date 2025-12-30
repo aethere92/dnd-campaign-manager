@@ -93,6 +93,18 @@ export const useEntityContent = (entity, attributes, sections) => {
 		const specificMapPath = getAttributeValue(attributes, ['map_image', 'tactical_map', 'map']);
 		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
 
+		// 2. NEW: Resolve Tactical Map Markers
+		const rawMarkers = getAttributeValue(attributes, 'map_markers');
+		let parsedMarkers = [];
+		if (rawMarkers) {
+			try {
+				// Parse the JSON string stored in the attribute
+				parsedMarkers = typeof rawMarkers === 'string' ? JSON.parse(rawMarkers) : rawMarkers;
+			} catch (e) {
+				console.warn('Failed to parse map_markers JSON', e);
+			}
+		}
+
 		// Process events
 		const events = transformEvents(entity.events);
 
@@ -112,6 +124,7 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mentions,
 			levelUp,
 			mapImageUrl: finalMapUrl,
+			mapMarkers: parsedMarkers,
 		};
 	}, [entity, attributes, sections]);
 };

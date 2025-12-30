@@ -36,7 +36,6 @@ export const CAMPAIGN_01 = {
 				imageWidth: 8192,
 				imageHeight: 8192,
 			},
-			backgroundColor: `linear-gradient(rgba(26, 20, 18, 0.97), rgba(26, 20, 18, 0.97)),url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='%23241c1a' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E")`,
 		},
 		annotations: {
 			points_of_interest: {

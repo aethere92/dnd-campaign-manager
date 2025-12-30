@@ -59,8 +59,11 @@
     "path": "images/assets/map_backgrounds/",
     "files": [
       "brindol_map.jpg",
+      "demonic_ambush_map.png",
       "drellin_ferry_map.jpg",
       "elsir_vale_map.jpg",
+      "strategic_bridge_map.png",
+      "vraath_courtyard_map.png",
       "witchwood_map.jpg"
     ]
   },

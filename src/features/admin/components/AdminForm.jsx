@@ -18,6 +18,7 @@ import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
 import EncounterActionManager from './EncounterManager';
+import TacticalMapManager from './TacticalMapManager';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
@@ -133,6 +134,23 @@ export default function AdminForm({ type, id }) {
 
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
+	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
+	const customAttrs = watch('customAttributes') || [];
+	const standardMarkers = watch('attributes.map_markers');
+	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
+	const activeMarkersValue = standardMarkers || customMarkers || '[]';
+
+	const handleMarkersChange = (jsonValue) => {
+		// Check if map_markers exists in custom list, update it there
+		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
+		if (customIdx >= 0) {
+			setValue(`customAttributes.${customIdx}.value`, jsonValue);
+		} else {
+			// Otherwise set in standard attributes
+			setValue('attributes.map_markers', jsonValue);
+		}
+	};
+
 	return (
 		// ... (Return JSX remains exactly same) ...
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
@@ -190,6 +208,10 @@ export default function AdminForm({ type, id }) {
 					)}
 				</div>
 			</div>
+
+			{mapImageUrl && (
+				<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
+			)}
 
 			{/* Attributes */}
 			<div className={ADMIN_SECTION_CLASS}>

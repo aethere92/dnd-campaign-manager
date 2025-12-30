@@ -40,7 +40,16 @@ const LevelUpBanner = ({ level }) => {
 	);
 };
 
-export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp, mapImageUrl }) => {
+export const EntityBody = ({
+	summary,
+	sections,
+	history,
+	objectives,
+	combatRounds,
+	levelUp,
+	mapImageUrl,
+	mapMarkers,
+}) => {
 	return (
 		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
@@ -58,7 +67,7 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 			{mapImageUrl && mapImageUrl.length > 0 && (
 				<>
 					<SectionDivider />
-					<EntityMiniMap imageUrl={mapImageUrl} title={'Test'} />
+					<EntityMiniMap imageUrl={mapImageUrl} markers={mapMarkers} />
 				</>
 			)}
 

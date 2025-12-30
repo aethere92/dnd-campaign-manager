@@ -312,3 +312,62 @@ h3[id] {
 	content-visibility: auto;
 	contain-intrinsic-size: 80px; /* Approximate height of an admin list item */
 }
+
+/* 1. Reset Leaflet Popups for custom styling */
+.leaflet-popup-content-wrapper {
+	background: var(--background) !important;
+	color: var(--foreground) !important;
+	border-radius: 12px !important;
+	padding: 0 !important;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2) !important;
+}
+
+.leaflet-popup-content {
+	margin: 0 !important;
+	min-width: 200px !important;
+}
+
+.leaflet-popup-tip {
+	background: var(--background) !important;
+	border: 1px solid var(--border);
+}
+
+/* 2. Custom Marker Popup Interior */
+.marker-popup-card {
+	display: flex;
+	flex-direction: column;
+}
+
+.marker-popup-header {
+	padding: 12px 16px 8px 16px;
+	background: var(--muted);
+	border-bottom: 1px solid var(--border);
+}
+
+.marker-popup-category {
+	font-size: 9px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+	color: var(--accent);
+	display: block;
+	margin-bottom: 2px;
+}
+
+.marker-popup-title {
+	font-family: var(--font-serif);
+	font-weight: 700;
+	font-size: 16px;
+	line-height: 1.2;
+	color: var(--foreground);
+}
+
+.marker-popup-body {
+	padding: 12px 16px;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--muted-foreground);
+	font-style: italic;
+}

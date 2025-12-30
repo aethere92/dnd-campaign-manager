@@ -42,8 +42,8 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
-	const bgValue = config.backgroundColor || '#1a1412';
-	const isImage = bgValue.includes('url') || bgValue.includes('gradient');
+	// const bgValue = config.backgroundColor || '#1a1412';
+	// const isImage = bgValue.includes('url') || bgValue.includes('gradient');
 
 	return (
 		<div
@@ -51,11 +51,16 @@ export const MapCanvas = ({ data, onNavigate }) => {
 			style={{
 				height: '100%',
 				width: '100%',
-				backgroundColor: isImage ? '#1a1412' : bgValue,
-				backgroundImage: isImage ? bgValue : 'none',
-				backgroundSize: 'cover',
-				backgroundPosition: 'center',
-				backgroundRepeat: 'no-repeat',
+				// backgroundColor: isImage ? '#1a1412' : bgValue,
+				// backgroundImage: isImage ? bgValue : 'none',
+				// backgroundSize: 'cover',
+				// backgroundPosition: 'center',
+				// backgroundRepeat: 'no-repeat',
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
 			}}>
 			<MapContainer
 				center={[0, 0]}

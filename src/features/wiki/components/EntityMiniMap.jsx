@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, ImageOverlay, useMap } from 'react-leaflet';
+import { MapContainer, ImageOverlay, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Map as MapIcon, Maximize, Minimize } from 'lucide-react';
 import { clsx } from 'clsx';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
 /**
@@ -27,7 +28,7 @@ const MapController = ({ bounds, activeFullscreen }) => {
 	return null;
 };
 
-export const EntityMiniMap = ({ imageUrl, title }) => {
+export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 	const [dimensions, setDimensions] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [isFullscreen, setIsFullscreen] = useState(false);
@@ -127,6 +128,22 @@ export const EntityMiniMap = ({ imageUrl, title }) => {
 					{/* PASS activeFullscreen to the controller */}
 					<MapController bounds={dimensions} activeFullscreen={activeFullscreen} />
 					<ImageOverlay url={imageUrl} bounds={dimensions} />
+
+					{markers.map((m, idx) => (
+						<Marker key={idx} position={[m.lat, m.lng]} icon={resolveMarkerIcon(m)}>
+							{m.label && (
+								<Popup>
+									<div className='marker-popup-card'>
+										<div className='marker-popup-header'>
+											<span className='marker-popup-category'>{m.category || 'POI'}</span>
+											<div className='marker-popup-title'>{m.label}</div>
+										</div>
+										{m.description && <div className='marker-popup-body'>{m.description}</div>}
+									</div>
+								</Popup>
+							)}
+						</Marker>
+					))}
 				</MapContainer>
 
 				<div className='absolute top-3 right-3 z-[1000]'>

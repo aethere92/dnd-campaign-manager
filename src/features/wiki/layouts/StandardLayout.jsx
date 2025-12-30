@@ -24,6 +24,7 @@ export default function StandardLayout({ viewModel }) {
 							objectives={viewModel.content.objectives}
 							combatRounds={viewModel.content.combatRounds}
 							mapImageUrl={viewModel.content.mapImageUrl}
+							mapMarkers={viewModel.content.mapMarkers}
 						/>
 					</div>
 				</div>
