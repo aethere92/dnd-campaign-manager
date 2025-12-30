@@ -1,8 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getTooltipData } from '../../services/entities'; // Use Service
+import { getTooltipData } from '@/domain/entity/api/entityService';
 import { TooltipCard } from './components/TooltipCard';
-import { getAttributeValue } from '../../utils/entity/attributeParser';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 	const targetId = target?.id;

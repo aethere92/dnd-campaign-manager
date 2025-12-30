@@ -1,4 +1,4 @@
-import { Drawer } from '../../../components/ui/Drawer';
+import { Drawer } from '@/shared/components/ui/Drawer';
 import { TocItem } from './TocItem';
 
 export const TocMobileDrawer = ({ isOpen, items, activeId, onClose, onScrollTo }) => {

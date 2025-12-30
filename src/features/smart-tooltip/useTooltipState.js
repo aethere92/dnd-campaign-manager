@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import './types';
+// import './types';
 
 export function useTooltipState() {
 	const [activeTooltip, setActiveTooltip] = useState(null);

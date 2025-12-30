@@ -3,8 +3,8 @@
  * This is now just a thin wrapper that adds entity index lookup
  */
 
-import EntityLink from '../../../components/entity/EntityLink';
-import { useEntityIndex } from '../useEntityIndex';
+import EntityLink from '@/domain/entity/components/EntityLink';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
 
 export const SmartEntityLink = ({ id, type, children }) => {
 	// FIX: Destructure the 'map' from the new hook signature

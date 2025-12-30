@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, Swords, Users, MapPin, Scroll } from 'lucide-react';
 import { clsx } from 'clsx';
-import EntityIcon from '../../../components/entity/EntityIcon';
-import { getEntityConfig } from '../../../config/entity';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 
 export const SessionRecapCard = ({ session, featured = false }) => {
 	// Extract highlights (events with most mentions or specific types)

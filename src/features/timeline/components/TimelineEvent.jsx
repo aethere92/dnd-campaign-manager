@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '../../../config/entity';
-import SmartMarkdown from '../../smart-text/SmartMarkdown';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { Diamond } from 'lucide-react';
 
 export const TimelineEvent = ({ event }) => {

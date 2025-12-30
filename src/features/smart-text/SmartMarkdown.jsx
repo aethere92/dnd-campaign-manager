@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import { useSmartText } from './useSmartText';
 import { SmartEntityLink } from './components/SmartEntityLink';
 import { EntityEmbed } from './components/EntityEmbed'; // New Import
-import { generateId, extractText } from '../../utils/text/textProcessing';
+import { generateId, extractText } from '@/shared/utils/textUtils';
 
 export default function SmartMarkdown({ children, ...props }) {
 	// ... (Existing safety check logic) ...

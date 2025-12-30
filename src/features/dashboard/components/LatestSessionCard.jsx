@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, Sparkles, MapPin, Users, Scroll, Swords } from 'lucide-react';
 import { clsx } from 'clsx';
-import EntityIcon from '../../../components/entity/EntityIcon';
-import { getEntityConfig } from '../../../config/entity';
-import { SectionDivider } from '../../../components/ui/SectionDivider';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 
 export const LatestSessionCard = ({ session }) => {
 	const keyEvents = session.events

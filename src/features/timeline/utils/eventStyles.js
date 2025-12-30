@@ -1,4 +1,4 @@
-import { getEntityStyles } from '../../../config/entity';
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
 import {
 	Sword,
 	Skull,

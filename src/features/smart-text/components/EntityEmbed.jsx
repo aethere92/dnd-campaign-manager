@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
-import EntityIcon from '../../../components/entity/EntityIcon';
-import { useEntityIndex } from '../useEntityIndex';
-import { resolveImageUrl, parseAttributes } from '../../../utils/image/imageResolver';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 
 // Utility to calculate brightness from an image
 const getImageBrightness = (imageUrl) => {

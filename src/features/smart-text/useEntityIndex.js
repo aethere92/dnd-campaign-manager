@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEntityIndex } from '../../services/entities';
-import { useCampaign } from '../../features/campaign-session/CampaignContext';
-import { resolveImageUrl, parseAttributes } from '../../utils/image/imageResolver';
-import { getParentId } from '../../utils/entity/entityHelpers'; // You added this util previously
+import { getEntityIndex } from '@/domain/entity/api/entityService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { getParentId } from '@/domain/entity/utils/entityUtils'; // You added this util previously
 
 export function useEntityIndex() {
 	const { campaignId } = useCampaign();

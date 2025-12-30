@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '../../../config/entity';
-import { getAttributeValue } from '../../../utils/entity/attributeParser';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { ArrowRight } from 'lucide-react';
-import { useSmartPosition } from '../useSmartPosition';
-import { resolveImageUrl, parseAttributes } from '../../../utils/image/imageResolver';
+import { useSmartPosition } from '@/features/smart-tooltip/useSmartPosition';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
 	const navigate = useNavigate();
