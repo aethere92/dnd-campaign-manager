@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Target, CheckCircle2, Circle, Calendar } from 'lucide-react';
 import { fetchChildRows, upsertQuestObjective, deleteRow, getSessionList } from '@/features/admin/api/adminService'; // Import getSessionList
-import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './AdminFormStyles';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import Button from '@/shared/components/ui/Button';
 
@@ -88,8 +88,8 @@ export default function QuestObjectiveManager({ questId }) {
 	};
 
 	return (
-		<div className={SECTION_CLASS}>
-			<div className={`${HEADER_CLASS} flex justify-between`}>
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex justify-between`}>
 				<span className='flex items-center gap-2'>
 					<Target size={18} className='text-blue-600' /> Objectives
 				</span>
@@ -107,19 +107,19 @@ export default function QuestObjectiveManager({ questId }) {
 								{/* Row 1: Order, Title, Status */}
 								<div className='flex gap-3'>
 									<div className='w-16'>
-										<label className={LABEL_CLASS}>#</label>
+										<label className={ADMIN_LABEL_CLASS}>#</label>
 										<input
 											type='number'
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.order_index}
 											onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
 										/>
 									</div>
 									<div className='flex-1'>
-										<label className={LABEL_CLASS}>Title (Name)</label>
+										<label className={ADMIN_LABEL_CLASS}>Title (Name)</label>
 										<input
 											type='text'
-											className={`${INPUT_CLASS} font-bold`}
+											className={`${ADMIN_INPUT_CLASS} font-bold`}
 											autoFocus
 											value={formData.objective_name || ''}
 											onChange={(e) => setFormData({ ...formData, objective_name: e.target.value })}
@@ -127,9 +127,9 @@ export default function QuestObjectiveManager({ questId }) {
 										/>
 									</div>
 									<div className='w-32'>
-										<label className={LABEL_CLASS}>Status</label>
+										<label className={ADMIN_LABEL_CLASS}>Status</label>
 										<select
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.status}
 											onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
 											<option value='pending'>Pending</option>
@@ -141,10 +141,10 @@ export default function QuestObjectiveManager({ questId }) {
 
 								{/* Row 2: Description */}
 								<div>
-									<label className={LABEL_CLASS}>Description</label>
+									<label className={ADMIN_LABEL_CLASS}>Description</label>
 									<textarea
 										rows={2}
-										className={INPUT_CLASS}
+										className={ADMIN_INPUT_CLASS}
 										value={formData.description || ''}
 										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
 										placeholder='What needs to be done?'
@@ -154,19 +154,19 @@ export default function QuestObjectiveManager({ questId }) {
 								{/* Row 3: Updates & Session */}
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border/50 pt-3'>
 									<div>
-										<label className={LABEL_CLASS}>Resolution / Update Text</label>
+										<label className={ADMIN_LABEL_CLASS}>Resolution / Update Text</label>
 										<textarea
 											rows={2}
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.objective_update || ''}
 											onChange={(e) => setFormData({ ...formData, objective_update: e.target.value })}
 											placeholder='How was it resolved?'
 										/>
 									</div>
 									<div>
-										<label className={LABEL_CLASS}>Completed In Session</label>
+										<label className={ADMIN_LABEL_CLASS}>Completed In Session</label>
 										<select
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.completed_session_id || ''}
 											onChange={(e) => setFormData({ ...formData, completed_session_id: e.target.value || null })}>
 											<option value=''>-- None --</option>

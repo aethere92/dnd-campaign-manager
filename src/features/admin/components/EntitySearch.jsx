@@ -76,6 +76,7 @@ export default function EntitySearch({ onSelect }) {
 
 			<div className='relative'>
 				<input
+					autoFocus
 					type='text'
 					value={query}
 					onChange={(e) => {

@@ -1,0 +1,184 @@
+[
+  {
+    "category": "Assets > Character_backgrounds > Campaign_002",
+    "path": "images/assets/character_backgrounds/campaign_002/",
+    "files": [
+      "bonnie_bg.jpeg",
+      "kaedin_bg.jpg",
+      "olek_bg.jpg",
+      "soshi_bg.jpeg"
+    ]
+  },
+  {
+    "category": "Assets > Character_thumbnails > Campaign_001",
+    "path": "images/assets/character_thumbnails/campaign_001/",
+    "files": [
+      "aenwyn.jpeg",
+      "aethere.jpeg",
+      "alezander.jpeg",
+      "nora.png",
+      "samantha.jpeg",
+      "smasherina.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Character_thumbnails > Campaign_002",
+    "path": "images/assets/character_thumbnails/campaign_002/",
+    "files": [
+      "bonnie.jpeg",
+      "kaedin.jpeg",
+      "norr.jpeg",
+      "olek.jpeg",
+      "soshi.jpeg"
+    ]
+  },
+  {
+    "category": "Assets > Encounter_backgrounds > Campaign_002",
+    "path": "images/assets/encounter_backgrounds/campaign_002/",
+    "files": [
+      "demonic_ambush_bg.jpg",
+      "hydra_encounter_bg.jpg",
+      "thylacoleo_ambush_bg.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Location_backgrounds > Campaign_002",
+    "path": "images/assets/location_backgrounds/campaign_002/",
+    "files": [
+      "avarthel_grove_bg.jpg",
+      "drellin_ferry_bg.jpg",
+      "grackledorn_bg.jpg",
+      "neverwinter_bg.jpg",
+      "strategic_bridge.jpg",
+      "underground_temple_complex.jpg",
+      "wrath_keep_bg.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Npc_backgrounds > Campaign_002",
+    "path": "images/assets/npc_backgrounds/campaign_002/",
+    "files": [
+      "avarthel_bg.jpg",
+      "soranna_bg.jpg",
+      "yoghurt_bg.jpg"
+    ]
+  },
+  {
+    "category": "Custom-icons",
+    "path": "images/custom-icons/",
+    "files": [
+      "arrowDirectionDown.png",
+      "arrowDirectionLeft.png",
+      "arrowDirectionRight.png",
+      "arrowDirectionUp.png",
+      "city.png",
+      "cityBarbarian.png",
+      "cityCapital.png",
+      "cityDruid.png",
+      "cityDwarves.png",
+      "cityElves.png",
+      "cityHalflings.png",
+      "cityLizard.png",
+      "cityPort.png",
+      "fort.png",
+      "fortTower.png",
+      "iconPortal.png",
+      "mageTower.png",
+      "poiAlchemist.png",
+      "poiBed.png",
+      "poiBramble.png",
+      "poiCave.png",
+      "poiCombat.png",
+      "poiDanger.png",
+      "poiFarm.png",
+      "poiGenericNPC.png",
+      "poiInn.png",
+      "poiLandmarkCitadel.png",
+      "poiLandmarkCity.png",
+      "poiLandmarkFarm.png",
+      "poiMine.png",
+      "poiRuin.png",
+      "poiShip.png",
+      "poiWaterfall.png",
+      "shadow.png",
+      "templeCathedral.png",
+      "templeEldath.png",
+      "templeMonolith.png",
+      "templePyramid.png",
+      "templeShrine.png",
+      "templeZiggurat.png",
+      "town.png",
+      "townBarbarian.png",
+      "townDock.png",
+      "townDruid.png",
+      "townDwarves.png",
+      "townElves.png",
+      "townHalflings.png",
+      "townLizard.png",
+      "townMill.png",
+      "tradeAlchemy.png",
+      "tradeCamp.png",
+      "tradeCampLarge.png",
+      "tradeForge.png",
+      "tradeHunter.png",
+      "tradeShop.png",
+      "tradeStable.png",
+      "tradeWatchtower.png"
+    ]
+  },
+  {
+    "category": "General",
+    "path": "images/",
+    "files": [
+      "background_texture.png"
+    ]
+  },
+  {
+    "category": "Icons",
+    "path": "images/icons/",
+    "files": [
+      "avian.png",
+      "bonnie.png",
+      "deity.png",
+      "dwarf.png",
+      "earth_genasi.png",
+      "elemental.png",
+      "encounter.png",
+      "faction.png",
+      "feline.png",
+      "female.png",
+      "gnome.png",
+      "goblin.png",
+      "hobgoblin.png",
+      "kaedin.png",
+      "location.png",
+      "male.png",
+      "monster.png",
+      "norr.png",
+      "ogre.png",
+      "olek.png",
+      "other.png",
+      "party.png",
+      "phoenix.png",
+      "quest.png",
+      "quickling.png",
+      "rat.png",
+      "session.png",
+      "soshi.png",
+      "tabaxi.png",
+      "unknown.png"
+    ]
+  },
+  {
+    "category": "Overlays > Korinis_island",
+    "path": "images/overlays/korinis_island/",
+    "files": [
+      "korinis_island_penal_colony_chapel.png",
+      "korinis_island_penal_colony_merchants_cave.png",
+      "korinis_island_penal_colony_mine_cave.png",
+      "korinis_island_penal_colony_mine_cave_v2.png",
+      "korinis_island_penal_colony_paladin_barracks.png",
+      "korinis_island_penal_colony_spider_cave.png"
+    ]
+  }
+]

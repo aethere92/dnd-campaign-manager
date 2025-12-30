@@ -7,7 +7,7 @@ import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api
 import Button from '@/shared/components/ui/Button';
 import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { INPUT_CLASS, LABEL_CLASS, SECTION_CLASS, HEADER_CLASS } from './AdminFormStyles';
+import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
 // Inputs
 import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
@@ -163,15 +163,15 @@ export default function AdminForm({ type, id }) {
 			</div>
 
 			{/* Core Details */}
-			<div className={SECTION_CLASS}>
-				<h2 className={HEADER_CLASS}>Core Details</h2>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
 				<div className='grid grid-cols-1 gap-4'>
 					<div>
-						<label className={LABEL_CLASS}>Name / Title</label>
+						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
 						<input
 							type='text'
 							{...register('name', { required: true })}
-							className={INPUT_CLASS}
+							className={ADMIN_INPUT_CLASS}
 							placeholder='Entity Name...'
 						/>
 						{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
@@ -192,12 +192,12 @@ export default function AdminForm({ type, id }) {
 			</div>
 
 			{/* Attributes */}
-			<div className={SECTION_CLASS}>
-				<h2 className={HEADER_CLASS}>{strategy.label} Attributes</h2>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 					{strategy.defaultAttributes.map((attr) => (
 						<div key={attr.key}>
-							<label className={LABEL_CLASS}>{attr.label}</label>
+							<label className={ADMIN_LABEL_CLASS}>{attr.label}</label>
 							{attr.type === 'image' ? (
 								<SmartImageInput
 									value={watch(`attributes.${attr.key}`)}
@@ -205,7 +205,7 @@ export default function AdminForm({ type, id }) {
 									placeholder='images/...'
 								/>
 							) : attr.type === 'select' ? (
-								<select {...register(`attributes.${attr.key}`)} className={INPUT_CLASS}>
+								<select {...register(`attributes.${attr.key}`)} className={ADMIN_INPUT_CLASS}>
 									<option value=''>Select...</option>
 									{attr.options.map((opt) => (
 										<option key={opt} value={opt}>
@@ -217,7 +217,7 @@ export default function AdminForm({ type, id }) {
 								<input
 									type={attr.type === 'number' ? 'number' : 'text'}
 									{...register(`attributes.${attr.key}`)}
-									className={INPUT_CLASS}
+									className={ADMIN_INPUT_CLASS}
 								/>
 							)}
 						</div>
@@ -226,8 +226,8 @@ export default function AdminForm({ type, id }) {
 			</div>
 
 			{/* Custom Attributes */}
-			<div className={SECTION_CLASS}>
-				<div className={HEADER_CLASS}>
+			<div className={ADMIN_SECTION_CLASS}>
+				<div className={ADMIN_HEADER_CLASS}>
 					<span>Custom Attributes</span>
 					<Button
 						type='button'
@@ -247,7 +247,7 @@ export default function AdminForm({ type, id }) {
 									type='text'
 									{...register(`customAttributes.${index}.key`)}
 									placeholder='Key (e.g. SecretIdentity)'
-									className={`${INPUT_CLASS} font-bold text-muted-foreground`}
+									className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground`}
 								/>
 							</div>
 							<div className='flex-1'>
@@ -255,7 +255,7 @@ export default function AdminForm({ type, id }) {
 									type='text'
 									{...register(`customAttributes.${index}.value`)}
 									placeholder='Value'
-									className={INPUT_CLASS}
+									className={ADMIN_INPUT_CLASS}
 								/>
 							</div>
 							<button

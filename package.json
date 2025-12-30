@@ -4,9 +4,9 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"lint": "eslint .",
+		"generate:images": "node scripts/generate-image-manifest.js",
+		"dev": "npm run generate:images && vite",
+		"build": "npm run generate:images && vite build",
 		"preview": "vite preview"
 	},
 	"dependencies": {

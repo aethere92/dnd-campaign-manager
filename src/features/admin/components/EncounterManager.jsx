@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Swords, Skull, Target, Zap, HeartHandshake } from 'lucide-react'; // Added HeartHandshake
 import { fetchEncounterActions, upsertEncounterAction, deleteRow } from '@/features/admin/api/adminService';
-import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './AdminFormStyles';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 import EntitySearch from './EntitySearch';
 import Button from '@/shared/components/ui/Button';
 
@@ -83,8 +83,8 @@ export default function EncounterActionManager({ encounterId }) {
 		setFormData((prev) => ({ ...prev, target_entity_id: entity.id, target_name: entity.name }));
 
 	return (
-		<div className={SECTION_CLASS}>
-			<div className={`${HEADER_CLASS} flex items-center justify-between`}>
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
 				<span className='flex items-center gap-2'>
 					<Swords size={18} className='text-red-600' /> Combat Tracker
 				</span>
@@ -118,27 +118,27 @@ export default function EncounterActionManager({ encounterId }) {
 									{/* Row 1: Timing & Type */}
 									<div className='flex gap-3 items-end'>
 										<div className='w-16'>
-											<label className={LABEL_CLASS}>Round</label>
+											<label className={ADMIN_LABEL_CLASS}>Round</label>
 											<input
 												type='number'
-												className={INPUT_CLASS}
+												className={ADMIN_INPUT_CLASS}
 												value={formData.round_number}
 												onChange={(e) => setFormData({ ...formData, round_number: e.target.value })}
 											/>
 										</div>
 										<div className='w-16'>
-											<label className={LABEL_CLASS}>Order</label>
+											<label className={ADMIN_LABEL_CLASS}>Order</label>
 											<input
 												type='number'
-												className={INPUT_CLASS}
+												className={ADMIN_INPUT_CLASS}
 												value={formData.action_order}
 												onChange={(e) => setFormData({ ...formData, action_order: e.target.value })}
 											/>
 										</div>
 										<div className='flex-1'>
-											<label className={LABEL_CLASS}>Action Type</label>
+											<label className={ADMIN_LABEL_CLASS}>Action Type</label>
 											<select
-												className={INPUT_CLASS}
+												className={ADMIN_INPUT_CLASS}
 												value={formData.action_type || 'attack'}
 												onChange={(e) => setFormData({ ...formData, action_type: e.target.value })}>
 												<option value='attack'>Attack</option>
@@ -167,11 +167,11 @@ export default function EncounterActionManager({ encounterId }) {
 									{/* Row 2: Actor & Target */}
 									<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 										<div>
-											<label className={LABEL_CLASS}>Actor (Who?)</label>
+											<label className={ADMIN_LABEL_CLASS}>Actor (Who?)</label>
 											{formData.actor_entity_id ? (
 												<div className='flex gap-2 items-center'>
 													<input
-														className={`${INPUT_CLASS} bg-emerald-50 font-medium`}
+														className={`${ADMIN_INPUT_CLASS} bg-emerald-50 font-medium`}
 														readOnly
 														value={formData.actor_name || 'Linked Entity'}
 													/>
@@ -188,7 +188,7 @@ export default function EncounterActionManager({ encounterId }) {
 													<input
 														type='text'
 														placeholder='Or type manual name...'
-														className={INPUT_CLASS}
+														className={ADMIN_INPUT_CLASS}
 														value={formData.actor_name || ''}
 														onChange={(e) => setFormData({ ...formData, actor_name: e.target.value })}
 													/>
@@ -197,11 +197,11 @@ export default function EncounterActionManager({ encounterId }) {
 										</div>
 
 										<div>
-											<label className={LABEL_CLASS}>Target (Whom?)</label>
+											<label className={ADMIN_LABEL_CLASS}>Target (Whom?)</label>
 											{formData.target_entity_id ? (
 												<div className='flex gap-2 items-center'>
 													<input
-														className={`${INPUT_CLASS} bg-red-50 font-medium`}
+														className={`${ADMIN_INPUT_CLASS} bg-red-50 font-medium`}
 														readOnly
 														value={formData.target_name || 'Linked Entity'}
 													/>
@@ -218,7 +218,7 @@ export default function EncounterActionManager({ encounterId }) {
 													<input
 														type='text'
 														placeholder='Or type manual name...'
-														className={INPUT_CLASS}
+														className={ADMIN_INPUT_CLASS}
 														value={formData.target_name || ''}
 														onChange={(e) => setFormData({ ...formData, target_name: e.target.value })}
 													/>
@@ -229,10 +229,10 @@ export default function EncounterActionManager({ encounterId }) {
 
 									{/* Row 3: Description */}
 									<div>
-										<label className={LABEL_CLASS}>Description</label>
+										<label className={ADMIN_LABEL_CLASS}>Description</label>
 										<textarea
 											rows={2}
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.action_description || ''}
 											onChange={(e) => setFormData({ ...formData, action_description: e.target.value })}
 											placeholder='Uses Multiattack...'
@@ -242,20 +242,20 @@ export default function EncounterActionManager({ encounterId }) {
 									{/* Row 4: Result & Effect */}
 									<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 										<div>
-											<label className={LABEL_CLASS}>Result (Hit/Miss/Save)</label>
+											<label className={ADMIN_LABEL_CLASS}>Result (Hit/Miss/Save)</label>
 											<input
 												type='text'
-												className={INPUT_CLASS}
+												className={ADMIN_INPUT_CLASS}
 												value={formData.result || ''}
 												onChange={(e) => setFormData({ ...formData, result: e.target.value })}
 												placeholder='e.g., Hit (24), Crit, Failed Save'
 											/>
 										</div>
 										<div>
-											<label className={LABEL_CLASS}>Effect (Damage/Status)</label>
+											<label className={ADMIN_LABEL_CLASS}>Effect (Damage/Status)</label>
 											<input
 												type='text'
-												className={INPUT_CLASS}
+												className={ADMIN_INPUT_CLASS}
 												value={formData.effect || ''}
 												onChange={(e) => setFormData({ ...formData, effect: e.target.value })}
 												placeholder='e.g., 23 slashing dmg, Prone'

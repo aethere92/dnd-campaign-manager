@@ -27,7 +27,7 @@ import {
 	deleteRelationship,
 	updateRelationship,
 } from '@/features/admin/api/adminService';
-import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS } from './AdminFormStyles';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS } from './AdminFormStyles';
 import Button from '@/shared/components/ui/Button';
 
 // --- CONFIGURATION ---
@@ -192,8 +192,8 @@ export default function RelationshipManager({ entityId }) {
 	const sortedGroupKeys = [...GROUP_ORDER, ...Object.keys(grouped).filter((k) => !GROUP_ORDER.includes(k))];
 
 	return (
-		<div className={SECTION_CLASS}>
-			<h2 className={`${HEADER_CLASS} flex items-center gap-2`}>
+		<div className={ADMIN_SECTION_CLASS}>
+			<h2 className={`${ADMIN_HEADER_CLASS} flex items-center gap-2`}>
 				<LinkIcon size={18} className='text-amber-600' /> Relationships
 			</h2>
 
@@ -235,7 +235,7 @@ export default function RelationshipManager({ entityId }) {
 						<div className='flex-1 w-full grid grid-cols-2 gap-4'>
 							<div>
 								<label className='block text-[10px] uppercase font-bold text-muted-foreground mb-1'>Type</label>
-								<select value={type} onChange={(e) => setType(e.target.value)} className={INPUT_CLASS}>
+								<select value={type} onChange={(e) => setType(e.target.value)} className={ADMIN_INPUT_CLASS}>
 									{relationshipTypes.map((t) => (
 										<option key={t} value={t}>
 											{t.replace('_', ' ')}
@@ -322,7 +322,7 @@ export default function RelationshipManager({ entityId }) {
 
 													<div className='w-36'>
 														<select
-															className={`${INPUT_CLASS} py-1 h-8 text-xs`}
+															className={`${ADMIN_INPUT_CLASS} py-1 h-8 text-xs`}
 															value={editForm.relationship_type}
 															onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
 															{relationshipTypes.map((t) => (

@@ -6,7 +6,7 @@ import {
 	deleteRow,
 	fetchSessionEventsWithRelationships,
 } from '@/features/admin/api/adminService';
-import { SECTION_CLASS, HEADER_CLASS, INPUT_CLASS, LABEL_CLASS } from './AdminFormStyles';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 import Button from '@/shared/components/ui/Button';
 import EventTagger from './EventTagger';
 
@@ -95,8 +95,8 @@ export default function SessionEventManager({ sessionId }) {
 	};
 
 	return (
-		<div className={SECTION_CLASS}>
-			<div className={`${HEADER_CLASS} flex items-center justify-between`}>
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
 				<span className='flex items-center gap-2'>
 					<Calendar size={18} className='text-amber-600' /> Session Timeline
 				</span>
@@ -113,28 +113,28 @@ export default function SessionEventManager({ sessionId }) {
 							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
 								<div className='flex gap-3'>
 									<div className='w-16'>
-										<label className={LABEL_CLASS}>Order</label>
+										<label className={ADMIN_LABEL_CLASS}>Order</label>
 										<input
 											type='number'
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.event_order}
 											onChange={(e) => setFormData({ ...formData, event_order: parseInt(e.target.value) })}
 										/>
 									</div>
 									<div className='flex-1'>
-										<label className={LABEL_CLASS}>Title</label>
+										<label className={ADMIN_LABEL_CLASS}>Title</label>
 										<input
 											type='text'
-											className={`${INPUT_CLASS} font-bold`}
+											className={`${ADMIN_INPUT_CLASS} font-bold`}
 											autoFocus
 											value={formData.title}
 											onChange={(e) => setFormData({ ...formData, title: e.target.value })}
 										/>
 									</div>
 									<div className='w-1/3'>
-										<label className={LABEL_CLASS}>Type</label>
+										<label className={ADMIN_LABEL_CLASS}>Type</label>
 										<select
-											className={INPUT_CLASS}
+											className={ADMIN_INPUT_CLASS}
 											value={formData.event_type}
 											onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}>
 											{EVENT_TYPES.map((t) => (
@@ -147,10 +147,10 @@ export default function SessionEventManager({ sessionId }) {
 								</div>
 
 								<div>
-									<label className={LABEL_CLASS}>Description</label>
+									<label className={ADMIN_LABEL_CLASS}>Description</label>
 									<textarea
 										rows={3}
-										className={INPUT_CLASS}
+										className={ADMIN_INPUT_CLASS}
 										value={formData.description || ''}
 										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
 									/>

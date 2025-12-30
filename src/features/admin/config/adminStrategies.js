@@ -146,6 +146,7 @@ export const ADMIN_STRATEGIES = {
 				type: 'select',
 				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
 			},
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
