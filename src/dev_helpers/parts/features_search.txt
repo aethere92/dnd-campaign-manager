@@ -66,6 +66,7 @@ PARTIAL BUNDLE: FEATURES SEARCH
       components/
         MapCanvas.jsx
         MapLayerControl.jsx
+        MapTools.jsx
         useMapCanvasViewModel.js
         layers/
           MapAreas.jsx

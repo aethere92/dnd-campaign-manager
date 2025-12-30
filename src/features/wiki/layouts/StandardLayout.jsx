@@ -23,6 +23,7 @@ export default function StandardLayout({ viewModel }) {
 							history={viewModel.content.history}
 							objectives={viewModel.content.objectives}
 							combatRounds={viewModel.content.combatRounds}
+							mapImageUrl={viewModel.content.mapImageUrl}
 						/>
 					</div>
 				</div>

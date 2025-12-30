@@ -5,6 +5,7 @@ import { EntityHistory } from './EntityHistory';
 import { QuestObjectives } from './QuestObjectives';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 import { EncounterTimeline } from './EncounterTimeline';
+import { EntityMiniMap } from '@/features/wiki/components/EntityMiniMap';
 
 // Re-exporting History for use in tabs if needed by parent
 export { EntityHistory } from './EntityHistory';
@@ -39,7 +40,7 @@ const LevelUpBanner = ({ level }) => {
 	);
 };
 
-export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp }) => {
+export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp, mapImageUrl }) => {
 	return (
 		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
@@ -47,12 +48,17 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}
-
 			{/* Quest Objectives */}
 			{objectives && objectives.length > 0 && (
 				<>
 					<SectionDivider />
 					<QuestObjectives objectives={objectives} />
+				</>
+			)}
+			{mapImageUrl && mapImageUrl.length > 0 && (
+				<>
+					<SectionDivider />
+					<EntityMiniMap imageUrl={mapImageUrl} title={'Test'} />
 				</>
 			)}
 
@@ -63,7 +69,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<EncounterTimeline rounds={combatRounds} />
 				</>
 			)}
-
 			{/* Narrative Sections */}
 			{sections.map((prop) => {
 				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
@@ -96,7 +101,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					</div>
 				);
 			})}
-
 			{history && history.length > 0 && (
 				<div className='mt-2'>
 					<SectionDivider />
@@ -106,7 +110,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<EntityHistory events={history} />
 				</div>
 			)}
-
 			{/* Level Up Banner */}
 			{levelUp && <LevelUpBanner level={levelUp} />}
 		</div>

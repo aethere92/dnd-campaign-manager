@@ -137,6 +137,7 @@ export const isIgnoredAttribute = (key) => {
 		'background_image',
 		'background',
 		'is_active',
+		'map_image',
 	];
 
 	return ignoredKeys.includes(key.toLowerCase());

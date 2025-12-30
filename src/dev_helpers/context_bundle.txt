@@ -72,6 +72,7 @@ INSTRUCTIONS FOR AI:
       components/
         MapCanvas.jsx
         MapLayerControl.jsx
+        MapTools.jsx
         useMapCanvasViewModel.js
         layers/
           MapAreas.jsx
@@ -6185,7 +6186,6 @@ export function useMapData() {
 --- FILE: features\atlas\components\MapCanvas.jsx ---
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { Map, BookOpen, MapPin, Image as ImageIcon } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -6194,6 +6194,7 @@ import { MapRecaps } from './layers/MapRecaps';
 import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
 import { MapLayerControl } from './MapLayerControl';
+import { MapTools } from './MapTools'; // Import the new component
 import { useMapCanvasViewModel } from './useMapCanvasViewModel';
 
 const MapController = ({ bounds, minZoom, config }) => {
@@ -6209,7 +6210,6 @@ const MapController = ({ bounds, minZoom, config }) => {
 		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
 		if (minZoom !== undefined) map.setMinZoom(minZoom);
 
-		// Smooth transition for navigation, instant for new map
 		map.fitBounds(bounds, {
 			animate: !isNewMap,
 			duration: isNewMap ? 0 : 0.5,
@@ -6223,7 +6223,8 @@ export const MapCanvas = ({ data, onNavigate }) => {
 	if (!data) return null;
 
 	const { config, bounds, areas } = data;
-	const vm = useMapCanvasViewModel(data); // Use Hook
+	const vm = useMapCanvasViewModel(data);
+	const wrapperRef = useRef(null); // Ref for fullscreen
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
@@ -6232,6 +6233,7 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	return (
 		<div
+			ref={wrapperRef}
 			style={{
 				height: '100%',
 				width: '100%',
@@ -6251,7 +6253,7 @@ export const MapCanvas = ({ data, onNavigate }) => {
 				attributionControl={false}
 				zoomControl={false}
 				style={{ height: '100%', width: '100%', background: 'transparent' }}>
-				{/* ... MapController ... */}
+				<MapController bounds={bounds} minZoom={minZoom} config={config} />
 
 				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
 
@@ -6261,6 +6263,9 @@ export const MapCanvas = ({ data, onNavigate }) => {
 				<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
 
 				<MapLayerControl groups={vm.controlGroups} visibility={vm.visibility} toggleLayer={vm.toggleLayer} />
+
+				{/* New Tools Component */}
+				<MapTools bounds={bounds} containerRef={wrapperRef} />
 			</MapContainer>
 		</div>
 	);
@@ -6417,6 +6422,76 @@ export const MapLayerControl = ({ groups, visibility, toggleLayer }) => {
 };
 
 --- END OF features\atlas\components\MapLayerControl.jsx ---
+
+--- FILE: features\atlas\components\MapTools.jsx ---
+import { useState, useEffect } from 'react';
+import { useMap } from 'react-leaflet';
+import { Maximize, Minimize, Crosshair } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export const MapTools = ({ bounds, containerRef }) => {
+	const map = useMap();
+	const [isFullscreen, setIsFullscreen] = useState(false);
+
+	// Sync state if user presses ESC or browser exit
+	useEffect(() => {
+		const onFullScreenChange = () => {
+			setIsFullscreen(!!document.fullscreenElement);
+		};
+		document.addEventListener('fullscreenchange', onFullScreenChange);
+		return () => document.removeEventListener('fullscreenchange', onFullScreenChange);
+	}, []);
+
+	const handleCenter = (e) => {
+		e.stopPropagation();
+		if (bounds) {
+			map.fitBounds(bounds, { animate: true, duration: 1 });
+		}
+	};
+
+	const toggleFullscreen = (e) => {
+		e.stopPropagation();
+		if (!containerRef?.current) return;
+
+		if (!document.fullscreenElement) {
+			containerRef.current.requestFullscreen().catch((err) => {
+				console.error(`Error attempting to enable fullscreen: ${err.message}`);
+			});
+		} else {
+			document.exitFullscreen();
+		}
+	};
+
+	// Reusable Button Style
+	const Btn = ({ onClick, icon: Icon, title, active }) => (
+		<button
+			onClick={onClick}
+			title={title}
+			className={clsx(
+				'flex items-center justify-center w-8 h-8 transition-colors first:rounded-t-md last:rounded-b-md border-b border-[#c9c2b8] last:border-b-0',
+				'bg-[#fdfbf7] hover:bg-amber-50 text-amber-900',
+				active && 'bg-amber-100 text-amber-800'
+			)}>
+			<Icon size={16} strokeWidth={2.5} />
+		</button>
+	);
+
+	return (
+		<div className='leaflet-top leaflet-left'>
+			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-[#c9c2b8]'>
+				<Btn onClick={handleCenter} icon={Crosshair} title='Center Map' />
+				<Btn
+					onClick={toggleFullscreen}
+					icon={isFullscreen ? Minimize : Maximize}
+					title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+					active={isFullscreen}
+				/>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\atlas\components\MapTools.jsx ---
 
 --- FILE: features\atlas\components\useMapCanvasViewModel.js ---
 import { useState, useEffect, useMemo } from 'react';
@@ -6639,9 +6714,10 @@ export const MapOverlays = ({ overlays }) => {
 --- END OF features\atlas\components\layers\MapOverlays.jsx ---
 
 --- FILE: features\atlas\components\layers\MapRecaps.jsx ---
+import { Fragment } from 'react';
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import { Calendar } from 'lucide-react';
-import { createDotIcon } from '@/features/atlas/utils/markerUtils'; // Import
+import { createDotIcon } from '@/features/atlas/utils/markerUtils';
 
 export const MapRecaps = ({ sessions }) => {
 	if (!sessions || sessions.length === 0) return null;
@@ -6649,7 +6725,7 @@ export const MapRecaps = ({ sessions }) => {
 	return (
 		<>
 			{sessions.map((session, idx) => (
-				<div key={session.name}>
+				<Fragment key={session.name}>
 					<Polyline
 						positions={session.points.map((p) => p.coordinates)}
 						pathOptions={{ color: session.lineColor || '#d97706', weight: 3, dashArray: '8, 8', opacity: 0.7 }}
@@ -6662,10 +6738,23 @@ export const MapRecaps = ({ sessions }) => {
 								key={`${session.name}-p-${pIdx}`}
 								position={point.coordinates}
 								icon={createDotIcon(session.lineColor || '#d97706')}>
-								<Popup>{/* ... Popup content ... */}</Popup>
+								<Popup closeButton={false} className='leaflet-popup-clean'>
+									<div className='flex flex-col w-[200px] font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
+										{/* Header */}
+										<div className='px-3 py-2 bg-amber-50/80 border-b border-amber-100/50 flex items-center gap-2'>
+											<Calendar size={12} className='text-amber-700' />
+											<span className='text-[10px] font-bold uppercase tracking-wider text-amber-900'>
+												{session.name}
+											</span>
+										</div>
+
+										{/* Content */}
+										<div className='p-3 text-xs text-foreground/80 leading-snug'>{point.text}</div>
+									</div>
+								</Popup>
 							</Marker>
 						))}
-				</div>
+				</Fragment>
 			))}
 		</>
 	);
@@ -11637,7 +11726,7 @@ export const EntityHeader = ({ data }) => {
 								'absolute inset-0 w-full h-full object-cover transition-all duration-[2000ms] ease-in-out',
 								// Start position: Center-Top (Focuses on faces/landscapes usually in upper 3rd)
 								// Hover position: True Center (Slow pan effect)
-								'object-[center_30%] group-hover:object-[center_50%] group-hover:scale-105 opacity-90'
+								'object-[center_30%] group-hover:object-[center_50%] group-hover:scale-105'
 							)}
 						/>
 
@@ -11651,7 +11740,7 @@ export const EntityHeader = ({ data }) => {
 				)}
 
 				{/* GRADIENT MASK */}
-				<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/60 via-35% to-transparent pointer-events-none' />
+				<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/60 via-15% to-transparent pointer-events-none' />
 
 				{/* 2. DEVELOPER ACTION BAR */}
 				{isDev && entityId && (

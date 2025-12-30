@@ -1,15 +1,15 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2025-12-30 12:38:25
+Generated: 2025-12-30 13:12:38
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 173
-Total lines: 15,186
-Non-empty lines: 13,400
-Comment lines: 1,367
-Total size: 473,731 bytes (462.63 KB)
+Total files: 174
+Total lines: 15,271
+Non-empty lines: 13,475
+Comment lines: 1,368
+Total size: 476,562 bytes (465.39 KB)
 Average lines per file: 87.8
 
 
@@ -31,9 +31,9 @@ Average lines per file: 87.8
   Size: 4,394 bytes (4.29 KB)
 
 .jsx:
-  Files: 106
-  Lines: 8,406
-  Size: 278,207 bytes (271.69 KB)
+  Files: 107
+  Lines: 8,491
+  Size: 281,038 bytes (274.45 KB)
 
 
 ### LARGEST FILES (by lines)
@@ -83,9 +83,9 @@ features_admin:
   Size: 112,791 bytes (110.15 KB)
 
 features_atlas:
-  Files: 12
-  Lines: 699
-  Size: 21,436 bytes (20.93 KB)
+  Files: 13
+  Lines: 784
+  Size: 24,278 bytes (23.71 KB)
 
 features_campaign:
   Files: 6
@@ -135,7 +135,7 @@ features_timeline:
 features_wiki:
   Files: 40
   Lines: 3,274
-  Size: 104,161 bytes (101.72 KB)
+  Size: 104,150 bytes (101.71 KB)
 
 root:
   Files: 1

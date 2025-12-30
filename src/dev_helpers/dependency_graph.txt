@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2025-12-30 12:38:25
+Generated: 2025-12-30 13:12:38
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -215,13 +215,13 @@ features\atlas\MapPage.jsx:
 
 features\atlas\components\MapCanvas.jsx:
   → ./MapLayerControl
+  → ./MapTools
   → ./layers/MapAreas
   → ./layers/MapMarkers
   → ./layers/MapOverlays
   → ./layers/MapRecaps
   → ./useMapCanvasViewModel
   → leaflet
-  → lucide-react
   → react
   → react-leaflet
 
@@ -230,6 +230,12 @@ features\atlas\components\MapLayerControl.jsx:
   → leaflet
   → lucide-react
   → react
+
+features\atlas\components\MapTools.jsx:
+  → clsx
+  → lucide-react
+  → react
+  → react-leaflet
 
 features\atlas\components\layers\MapAreas.jsx:
   → react-leaflet
@@ -245,6 +251,7 @@ features\atlas\components\layers\MapOverlays.jsx:
 features\atlas\components\layers\MapRecaps.jsx:
   → @/features/atlas/utils/markerUtils
   → lucide-react
+  → react
   → react-leaflet
 
 features\atlas\components\useMapCanvasViewModel.js:

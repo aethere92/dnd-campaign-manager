@@ -66,6 +66,7 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       components/
         MapCanvas.jsx
         MapLayerControl.jsx
+        MapTools.jsx
         useMapCanvasViewModel.js
         layers/
           MapAreas.jsx

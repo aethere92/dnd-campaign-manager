@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 /**
  * Helper: Extract and group mentioned entities from events and direct relationships
@@ -84,6 +85,14 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mainSummary = entity.description;
 		}
 
+		// --- NEW: TACTICAL MAP RESOLUTION ---
+		// We look for common map keys and use resolveImageUrl to handle path cleaning/BaseURL
+		const mapImageUrl = resolveImageUrl(attributes, 'any');
+		// Note: resolveImageUrl(attributes, 'any') checks background_image, image, icon etc.
+		// To be specific to your "crazy idea", let's do a manual check for map-specific keys first:
+		const specificMapPath = getAttributeValue(attributes, ['map_image', 'tactical_map', 'map']);
+		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
+
 		// Process events
 		const events = transformEvents(entity.events);
 
@@ -101,7 +110,8 @@ export const useEntityContent = (entity, attributes, sections) => {
 			sections: sections || [],
 			history: events,
 			mentions,
-			levelUp, // Added to return object
+			levelUp,
+			mapImageUrl: finalMapUrl,
 		};
 	}, [entity, attributes, sections]);
 };

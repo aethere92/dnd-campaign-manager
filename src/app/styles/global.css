@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
+/* --- FILE: app/styles/global.css --- */
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
@@ -6,33 +7,43 @@
 	--font-sans: 'Inter', sans-serif;
 	--font-serif: 'Inter', serif;
 	--font-display: 'Crimson Text', serif;
-	--color-border: var(--border);
+
+	/* Semantic Color Mapping */
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
+	--color-border: var(--border);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
+	--color-card: var(--card);
+	--color-paper: var(--paper);
 }
 
 :root {
 	--background: #ffffff;
 	--foreground: #0f172a;
-	--muted: #f8fafc;
+	--muted: #f1f5f9;
+	--muted-foreground: #64748b;
 	--border: #e2e8f0;
 	--accent: #d97706;
+	--card: #ffffff;
+	--paper: #f8fafc;
 }
 
 [data-theme='dark'] {
+	/* Use deep slates/zincs instead of pure black for a "Pro" look */
 	--background: #020617;
-	--foreground: #f1f5f9;
-	--muted: #0f172a;
-	--border: #1e293b;
+	--foreground: #f8fafc;
+	--muted: #1e293b;
+	--muted-foreground: #94a3b8;
+	--border: #334155;
 	--accent: #f59e0b;
+	--card: #0f172a;
+	--paper: #1e293b;
 }
 
 [data-theme='dnd'] {
-	/* D&D BOOK PALETTE */
 	--background: #fdfbf7;
 	--foreground: #1b1b1b;
 	--muted: #f2efe9;
@@ -40,8 +51,41 @@
 	--border: #c9c2b8;
 	--accent: #8b1e1e;
 	--accent-foreground: #ffffff;
-	--font-sans: 'Inter', sans-serif;
-	--font-serif: 'Inter', serif;
+	--card: #fdfbf7;
+	--paper: #f2efe9;
+}
+
+/* 
+   FIX: Catch-all for hardcoded Slate/Stone styles 
+   This forces elements using "muted" colors to respect the theme.
+*/
+.bg-muted {
+	background-color: var(--muted) !important;
+}
+.text-muted-foreground {
+	color: var(--muted-foreground) !important;
+}
+.border-border {
+	border-color: var(--border) !important;
+}
+
+/* Apply variable-based colors to the prose (Markdown) */
+.prose {
+	--tw-prose-body: var(--foreground);
+	--tw-prose-headings: var(--foreground);
+	--tw-prose-links: var(--accent);
+	--tw-prose-bold: var(--foreground);
+	--tw-prose-counters: var(--muted-foreground);
+	--tw-prose-bullets: var(--accent);
+	--tw-prose-hr: var(--border);
+	--tw-prose-quotes: var(--muted-foreground);
+	--tw-prose-quote-borders: var(--accent);
+	--tw-prose-captions: var(--muted-foreground);
+	--tw-prose-code: var(--foreground);
+	--tw-prose-pre-code: var(--foreground);
+	--tw-prose-pre-bg: var(--muted);
+	--tw-prose-th-borders: var(--border);
+	--tw-prose-td-borders: var(--border);
 }
 
 /* --- HEADER GRADIENT CLASS --- */

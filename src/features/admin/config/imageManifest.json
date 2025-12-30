@@ -55,6 +55,13 @@
     ]
   },
   {
+    "category": "Assets > Map_backgrounds",
+    "path": "images/assets/map_backgrounds/",
+    "files": [
+      "drellin_ferry_map.png"
+    ]
+  },
+  {
     "category": "Assets > Npc_backgrounds > Campaign_002",
     "path": "images/assets/npc_backgrounds/campaign_002/",
     "files": [

@@ -4,7 +4,8 @@ export function Card({ children, className, padding = true, hover = false, ...pr
 	return (
 		<div
 			className={clsx(
-				'bg-[var(--card-bg)] border border-border rounded-lg shadow-sm',
+				// Use semantic variable --card instead of hardcoded white
+				'bg-card text-foreground border border-border rounded-lg shadow-sm',
 				padding && 'p-4',
 				hover && 'transition-shadow hover:shadow-md',
 				className

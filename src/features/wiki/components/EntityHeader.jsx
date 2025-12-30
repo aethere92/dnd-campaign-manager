@@ -78,7 +78,7 @@ export const EntityHeader = ({ data }) => {
 								'absolute inset-0 w-full h-full object-cover transition-all duration-[2000ms] ease-in-out',
 								// Start position: Center-Top (Focuses on faces/landscapes usually in upper 3rd)
 								// Hover position: True Center (Slow pan effect)
-								'object-[center_30%] group-hover:object-[center_50%] group-hover:scale-105 opacity-90'
+								'object-[center_30%] group-hover:object-[center_50%] group-hover:scale-105'
 							)}
 						/>
 
@@ -92,7 +92,7 @@ export const EntityHeader = ({ data }) => {
 				)}
 
 				{/* GRADIENT MASK */}
-				<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/60 via-35% to-transparent pointer-events-none' />
+				<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/60 via-15% to-transparent pointer-events-none' />
 
 				{/* 2. DEVELOPER ACTION BAR */}
 				{isDev && entityId && (

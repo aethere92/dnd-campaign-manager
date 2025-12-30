@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export const THEMES = {
 	LIGHT: 'light',
-	// DARK: 'dark',
+	DARK: 'dark', // RE-ENABLED
 	DND: 'dnd',
 };
 
@@ -14,10 +14,8 @@ export function useTheme() {
 
 	useEffect(() => {
 		const root = window.document.documentElement;
-		// Remove old themes
 		Object.values(THEMES).forEach((t) => root.removeAttribute('data-theme'));
 
-		// Apply new theme
 		if (theme !== THEMES.LIGHT) {
 			root.setAttribute('data-theme', theme);
 		}

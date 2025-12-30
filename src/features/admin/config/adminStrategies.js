@@ -38,6 +38,7 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'type', label: 'Type', type: 'text' },
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 
@@ -154,7 +155,11 @@ export const ADMIN_STRATEGIES = {
 		label: 'Entity',
 		primaryTable: 'entities',
 		colMapping: { name: 'name', description: 'description' },
-		defaultAttributes: [],
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'map_image', label: 'Tactical Map Image', type: 'image' }, // Added this
+			{ key: 'background_image', label: 'Header Background', type: 'image' },
+		],
 	},
 };
 
