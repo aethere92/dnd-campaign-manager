@@ -147,21 +147,13 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 				</MapContainer>
 
 				<div
-					className='absolute z-[10001]'
-					style={
-						activeFullscreen
-							? {
-									// FIX: Move to Top-Right to avoid Chrome iOS Bottom Bar overlay
-									// We add extra padding (env) to clear the Notch/Status Bar
-									top: 'max(1rem, calc(1rem + env(safe-area-inset-top)))',
-									right: 'max(1rem, calc(1rem + env(safe-area-inset-right)))',
-							  }
-							: {
-									// NORMAL: Top-Right
-									top: '1rem',
-									right: '1rem',
-							  }
-					}>
+					className={clsx(
+						// Use Tailwind classes with responsive modifiers for cleaner handling
+						// Mobile: top-20 (5rem/80px) to clear Chrome URL bar
+						// Desktop (lg): top-6 (1.5rem) standard positioning
+						'absolute z-[10060] transition-all duration-300',
+						activeFullscreen ? 'top-20 right-4 lg:top-6 lg:right-6 pr-safe pt-safe' : 'top-4 right-4'
+					)}>
 					<button
 						onClick={toggleFullscreen}
 						className={clsx(
