@@ -152,7 +152,7 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 						// Mobile: top-20 (5rem/80px) to clear Chrome URL bar
 						// Desktop (lg): top-6 (1.5rem) standard positioning
 						'absolute z-[10060] transition-all duration-300',
-						activeFullscreen ? 'top-20 right-4 lg:top-6 lg:right-6 pr-safe pt-safe' : 'top-4 right-4'
+						activeFullscreen ? 'top-[50%] right-4 lg:top-6 lg:right-6 pr-safe pt-safe' : 'top-4 right-4'
 					)}>
 					<button
 						onClick={toggleFullscreen}
