@@ -6,19 +6,34 @@ export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, is
 
 	return (
 		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
-			{/* Title Row - Clickable on mobile */}
+			{/* Title Row */}
 			<div
-				className='flex items-center justify-between cursor-pointer lg:cursor-default select-none h-8'
-				onClick={onToggle}>
+				className={clsx(
+					'flex items-center justify-between h-8 select-none',
+					// FIX: Pointer cursor only on mobile. Default on desktop to indicate non-clickable.
+					'cursor-pointer lg:cursor-default'
+				)}
+				onClick={(e) => {
+					// FIX: Only allow toggle on mobile (width < 1024px)
+					if (window.innerWidth < 1024) {
+						onToggle();
+					}
+				}}>
 				<div className='flex items-center gap-3 min-w-0 w-full'>
 					{Icon && <Icon size={18} className={clsx(textClass, 'shrink-0')} />}
 					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide truncate'>{label}</h1>
-
-					{/* FIX: Render desktop toggle here to avoid overlap */}
-					{renderDesktopToggle && <div className='hidden lg:block shrink-0 ml-auto mr-1'>{renderDesktopToggle()}</div>}
+					{/* Desktop Toggle Button */}
+					{renderDesktopToggle && (
+						<div
+							className='hidden lg:block shrink-0 ml-auto'
+							// FIX: Stop propagation to prevent any parent click handlers
+							onClick={(e) => e.stopPropagation()}>
+							{renderDesktopToggle()}
+						</div>
+					)}
 				</div>
 
-				{/* Mobile Toggle Button - Larger Touch Target */}
+				{/* Mobile Toggle Button */}
 				<button
 					className='lg:hidden text-muted-foreground hover:text-foreground active:bg-black/10 p-2 -mr-2 rounded-md transition-colors'
 					aria-label={isOpen ? 'Collapse' : 'Expand'}>

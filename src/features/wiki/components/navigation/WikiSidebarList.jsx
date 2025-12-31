@@ -17,17 +17,17 @@ export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemCli
 		return <SidebarEmptyState label={config.label} />;
 	}
 
-	// Flatten check for empty search results
 	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
 	if (totalItems === 0) {
 		return <div className='p-6 text-center text-xs text-muted-foreground/70 italic'>No matches found.</div>;
 	}
 
-	// Check if we have standard grouped data (multiple groups with titles)
 	const isGrouped = !groups[0].isTree && (groups.length > 1 || (groups.length === 1 && groups[0].title !== null));
 
 	return (
-		<div className='lg:overflow-y-auto lg:h-full bg-muted py-1 custom-scrollbar'>
+		// FIX: Removed 'pb-10'. The parent flex container handles the scroll bounds now.
+		// Added 'pb-2' just for a tiny bit of visual breathing room at the very end.
+		<div className='bg-muted py-1 pb-2'>
 			{/* MODE 1: TREE (Recursive) */}
 			{groups[0].isTree ? (
 				<div className='px-1 space-y-0.5'>
