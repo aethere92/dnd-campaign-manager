@@ -103,6 +103,7 @@ INSTRUCTIONS FOR AI:
         ActiveQuestsWidget.jsx
         CampaignHero.jsx
         LatestSessionCard.jsx
+        NpcsOfTheMoment.jsx
         QuickInsights.jsx
         RecentEncountersWidget.jsx
         RecentSessionsList.jsx
@@ -571,6 +572,7 @@ export const RouteLoading = ({ text }) => (
 --- END OF app\components\RouteLoading.jsx ---
 
 --- FILE: app\styles\global.css ---
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
@@ -5483,6 +5485,7 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'session_number', label: 'Session Number', type: 'number' },
 			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -5709,6 +5712,13 @@ export const IMAGE_LIBRARY = [
       "avarthel_bg.jpg",
       "soranna_bg.jpg",
       "yoghurt_bg.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Session_backgrounds > Campaign_002",
+    "path": "images/assets/session_backgrounds/campaign_002/",
+    "files": [
+      "session_01_bg.png"
     ]
   },
   {
@@ -8277,8 +8287,8 @@ export const getDashboardData = async (campaignId) => {
 		.select('id, name, created_at')
 		.eq('campaign_id', campaignId)
 		.eq('type', 'encounter')
-		.order('created_at', { ascending: false })
-		.limit(5);
+		.order('created_at', { ascending: false });
+	// .limit(5);
 
 	// Attach session info to encounters via relationships
 	if (recentEncounters && recentEncounters.length > 0) {
@@ -8406,7 +8416,7 @@ export const getDashboardData = async (campaignId) => {
 		sessions: recentSessions,
 		stats,
 		activeQuests: displayedActiveQuests,
-		recentEncounters: recentEncounters || [],
+		recentEncounters: recentEncounters.slice(0, 5) || [],
 	};
 };
 
@@ -8484,7 +8494,7 @@ export const CampaignHero = ({ campaign, stats }) => {
 	return (
 		<div className='relative overflow-hidden border-b border-border bg-background'>
 			{/* Gradient Backdrop - Subtler in dark mode */}
-			<div className='absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background' />
+			<div className='absolute inset-0 bg-gradient-to-br from-amber-500/10 via-background to-background' />
 
 			{/* Background Pattern */}
 			<div
@@ -8499,12 +8509,12 @@ export const CampaignHero = ({ campaign, stats }) => {
 				<div className='flex flex-col md:flex-row md:items-center gap-8'>
 					{/* Logo */}
 					<div className='shrink-0'>
-						<img src={logoPath} alt='Campaign Logo' className='h-32 md:h-40 mx-auto drop-shadow-2xl opacity-100' />
+						<img src={logoPath} alt='Campaign Logo' className='h-32 md:h-40 drop-shadow-2xl opacity-100' />
 					</div>
 
 					{/* Campaign Info */}
-					<div className='flex-1 text-center md:text-left'>
-						<div className='flex items-center justify-center md:justify-start gap-3 mb-3'>
+					<div className='flex-1'>
+						<div className='flex items-center gap-3 mb-3'>
 							<Sparkles size={20} className='text-primary' />
 							<span className='text-xs font-bold uppercase tracking-widest text-primary'>Campaign Chronicle</span>
 						</div>
@@ -8512,14 +8522,14 @@ export const CampaignHero = ({ campaign, stats }) => {
 							{campaign?.name || 'Your Campaign'}
 						</h1>
 						{campaign?.description && (
-							<p className='text-sm md:text-base text-muted-foreground leading-relaxed max-w-2xl mx-auto md:mx-0'>
+							<p className='text-sm md:text-base text-muted-foreground leading-relaxed max-w-2xl'>
 								{campaign.description}
 							</p>
 						)}
 					</div>
 
 					{/* Stats Grid */}
-					<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-2 gap-4 md:gap-6 w-full md:w-auto'>
+					<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-2 gap-4 md:gap-6'>
 						<StatBadge icon={Calendar} label='Sessions' value={stats?.totalSessions || 0} />
 						<StatBadge icon={Swords} label='Encounters' value={stats?.totalEncounters || 0} />
 						<StatBadge icon={Users} label='NPCs Met' value={stats?.uniqueNPCs || 0} />
@@ -8532,7 +8542,7 @@ export const CampaignHero = ({ campaign, stats }) => {
 };
 
 const StatBadge = ({ icon: Icon, label, value }) => (
-	<div className='bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 shadow-sm hover:border-primary/50 transition-colors'>
+	<div className='bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 shadow-sm hover:border-accent/50 transition-colors'>
 		<div className='flex items-center gap-2 text-muted-foreground mb-1'>
 			<Icon size={14} strokeWidth={2.5} />
 			<span className='text-[10px] font-bold uppercase tracking-wider'>{label}</span>
@@ -8696,6 +8706,42 @@ export const LatestSessionCard = ({ session }) => {
 
 --- END OF features\dashboard\components\LatestSessionCard.jsx ---
 
+--- FILE: features\dashboard\components\NpcsOfTheMoment.jsx ---
+import { Link } from 'react-router-dom';
+import { Users } from 'lucide-react';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+
+export const NpcsOfTheMoment = ({ npcs }) => {
+	if (!npcs?.length) return null;
+	const config = getEntityConfig('npc');
+
+	return (
+		<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
+			<div className='px-4 py-3 bg-muted border-b border-border flex items-center justify-between'>
+				<h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
+					<Users size={14} className='text-primary' />
+					NPCs of the Moment
+				</h3>
+			</div>
+			<div className='p-4 flex flex-wrap gap-3'>
+				{npcs.map((npc) => (
+					<Link key={npc.id} to={`/wiki/npc/${npc.id}`} className={`flex flex-col items-center gap-2 group w-20`}>
+						<div
+							className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-transform group-hover:scale-110 ${config.tailwind.bg} ${config.tailwind.border}`}>
+							<span className='text-lg font-bold'>{npc.name[0]}</span>
+						</div>
+						<span className='text-[10px] font-bold text-center text-foreground group-hover:text-primary transition-colors line-clamp-2'>
+							{npc.name}
+						</span>
+					</Link>
+				))}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\dashboard\components\NpcsOfTheMoment.jsx ---
+
 --- FILE: features\dashboard\components\QuickInsights.jsx ---
 import { TrendingUp, Trophy, Map, Users } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -8829,7 +8875,7 @@ export const RecentSessionsList = ({ sessions }) => {
 					<Link
 						key={session.id}
 						to={`/wiki/session/${session.id}`}
-						className='block bg-background border border-border rounded-lg p-4 hover:border-primary/30 hover:shadow-md transition-all group'>
+						className='block bg-background border border-border rounded-lg p-4 hover:border-accent/30 hover:shadow-md transition-all group'>
 						<div className='flex items-start justify-between gap-4'>
 							<div className='flex-1 min-w-0'>
 								<div className='flex items-center gap-2 mb-1'>
@@ -8843,7 +8889,7 @@ export const RecentSessionsList = ({ sessions }) => {
 										</span>
 									)}
 								</div>
-								<h3 className='text-base font-serif font-bold text-foreground mb-1 group-hover:text-primary transition-colors'>
+								<h3 className='text-base font-serif font-bold text-foreground mb-1 group-hover:text-accent transition-colors'>
 									{session.name}
 								</h3>
 								{session.description && (
@@ -8865,7 +8911,7 @@ export const RecentSessionsList = ({ sessions }) => {
 							</div>
 							<ArrowRight
 								size={18}
-								className='shrink-0 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-1 transition-all'
+								className='shrink-0 text-muted-foreground/70 group-hover:text-accent group-hover:translate-x-1 transition-all'
 							/>
 						</div>
 					</Link>
@@ -12611,7 +12657,7 @@ export const EntityHeader = ({ data }) => {
 
 						{/* FIX: Smoother, Longer Gradient Overlay */}
 						{/* Uses a longer fade (via-30% to via-60%) to avoid the "harsh line" effect */}
-						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-20% via-[var(--background)]/20 via-60% to-transparent pointer-events-none' />
+						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-10% via-[var(--background)]/20 via-20% to-transparent pointer-events-none' />
 					</>
 				)}
 
@@ -13767,10 +13813,12 @@ export const WikiSidebar = ({ navigation, className }) => {
 				<div className='hidden lg:flex flex-col h-full border-l border-border bg-muted/50 w-10 shrink-0 z-30 transition-all duration-300 lg:order-2 items-center'>
 					<div className='h-14 w-full flex items-center justify-center border-b border-border/50'>
 						<button
-							onClick={() => setDesktopCollapsed(false)}
+							onClick={(e) => {
+								e.stopPropagation();
+								setDesktopCollapsed(false);
+							}}
 							className='p-1.5 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors'
 							title='Expand Sidebar'>
-							{/* Icon flipped for right-side sidebar */}
 							<PanelLeftClose size={18} />
 						</button>
 					</div>
@@ -13783,8 +13831,6 @@ export const WikiSidebar = ({ navigation, className }) => {
 					'flex flex-col bg-muted border-b border-border',
 					'sticky top-0 w-full z-30', // Mobile
 					'lg:static lg:border-b-0 lg:h-full lg:transition-all lg:duration-300', // Desktop
-					// Dynamic Width Logic:
-					// If collapsed, width becomes 0 and overflow hidden to disappear
 					desktopCollapsed
 						? 'lg:w-0 lg:border-l-0 lg:overflow-hidden opacity-0 lg:opacity-100'
 						: 'lg:w-72 lg:border-l lg:border-border',
@@ -13796,10 +13842,13 @@ export const WikiSidebar = ({ navigation, className }) => {
 					onSearchChange={navigation.setSearch}
 					onToggle={() => setMobileOpen(!mobileOpen)}
 					isOpen={mobileOpen}
-					// FIX: Pass toggle as a render prop to avoid layout overlap
 					renderDesktopToggle={() => (
 						<button
-							onClick={() => setDesktopCollapsed(true)}
+							onClick={(e) => {
+								// FIX: Stop propagation to prevent header click logic
+								e.stopPropagation();
+								setDesktopCollapsed(true);
+							}}
 							className='text-muted-foreground hover:text-primary transition-colors p-0.5 rounded'
 							title='Collapse Sidebar'>
 							<PanelLeftOpen size={18} />
@@ -13811,13 +13860,13 @@ export const WikiSidebar = ({ navigation, className }) => {
 				<div
 					className={clsx(
 						'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
-						'lg:grid-rows-[1fr] lg:static lg:h-full',
+						'lg:flex lg:flex-col lg:flex-1 lg:min-h-0',
 						mobileOpen ? 'grid-rows-[1fr] border-b border-border shadow-xl' : 'grid-rows-[0fr]'
 					)}>
-					<div className='overflow-hidden'>
+					<div className={clsx('overflow-hidden', 'lg:flex lg:flex-col lg:flex-1 lg:h-auto')}>
 						<div
 							className={clsx(
-								'lg:h-full lg:overflow-y-auto',
+								'lg:flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar',
 								mobileOpen && 'max-h-[70dvh] overflow-y-auto custom-scrollbar'
 							)}>
 							<WikiSidebarList
@@ -13856,19 +13905,34 @@ export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, is
 
 	return (
 		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
-			{/* Title Row - Clickable on mobile */}
+			{/* Title Row */}
 			<div
-				className='flex items-center justify-between cursor-pointer lg:cursor-default select-none h-8'
-				onClick={onToggle}>
+				className={clsx(
+					'flex items-center justify-between h-8 select-none',
+					// FIX: Pointer cursor only on mobile. Default on desktop to indicate non-clickable.
+					'cursor-pointer lg:cursor-default'
+				)}
+				onClick={(e) => {
+					// FIX: Only allow toggle on mobile (width < 1024px)
+					if (window.innerWidth < 1024) {
+						onToggle();
+					}
+				}}>
 				<div className='flex items-center gap-3 min-w-0 w-full'>
 					{Icon && <Icon size={18} className={clsx(textClass, 'shrink-0')} />}
 					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide truncate'>{label}</h1>
-
-					{/* FIX: Render desktop toggle here to avoid overlap */}
-					{renderDesktopToggle && <div className='hidden lg:block shrink-0 ml-auto mr-1'>{renderDesktopToggle()}</div>}
+					{/* Desktop Toggle Button */}
+					{renderDesktopToggle && (
+						<div
+							className='hidden lg:block shrink-0 ml-auto'
+							// FIX: Stop propagation to prevent any parent click handlers
+							onClick={(e) => e.stopPropagation()}>
+							{renderDesktopToggle()}
+						</div>
+					)}
 				</div>
 
-				{/* Mobile Toggle Button - Larger Touch Target */}
+				{/* Mobile Toggle Button */}
 				<button
 					className='lg:hidden text-muted-foreground hover:text-foreground active:bg-black/10 p-2 -mr-2 rounded-md transition-colors'
 					aria-label={isOpen ? 'Collapse' : 'Expand'}>
@@ -13914,17 +13978,17 @@ export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemCli
 		return <SidebarEmptyState label={config.label} />;
 	}
 
-	// Flatten check for empty search results
 	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
 	if (totalItems === 0) {
 		return <div className='p-6 text-center text-xs text-muted-foreground/70 italic'>No matches found.</div>;
 	}
 
-	// Check if we have standard grouped data (multiple groups with titles)
 	const isGrouped = !groups[0].isTree && (groups.length > 1 || (groups.length === 1 && groups[0].title !== null));
 
 	return (
-		<div className='lg:overflow-y-auto lg:h-full bg-muted py-1 custom-scrollbar'>
+		// FIX: Removed 'pb-10'. The parent flex container handles the scroll bounds now.
+		// Added 'pb-2' just for a tiny bit of visual breathing room at the very end.
+		<div className='bg-muted py-1 pb-2'>
 			{/* MODE 1: TREE (Recursive) */}
 			{groups[0].isTree ? (
 				<div className='px-1 space-y-0.5'>
@@ -14208,31 +14272,35 @@ export const GROUPING_CONFIG = {
 	encounter: {
 		mode: 'tree',
 		sortItems: (a, b) => {
-			// 1. Folders (Locations) first
 			if (a.type !== b.type) {
 				if (a.type === 'location') return -1;
 				if (b.type === 'location') return 1;
 			}
-			// 2. Then Sort Encounters Alphabetically
 			return a.name.localeCompare(b.name);
 		},
 	},
 	npc: {
-		mode: 'tree', // Changed from groupBy to tree
+		mode: 'tree',
 		sortItems: (a, b) => {
-			// Locations (folders) should generally come first or sort A-Z
 			if (a.type !== b.type) {
-				// Locations first
 				if (a.type === 'location') return -1;
 				if (b.type === 'location') return 1;
 			}
-
-			// For NPCs: Rank by Affinity, then Name
 			if (a.type === 'npc' && b.type === 'npc') {
 				const rankDiff = a.meta.affinityRank - b.meta.affinityRank;
 				if (rankDiff !== 0) return rankDiff;
 			}
-
+			return a.name.localeCompare(b.name);
+		},
+	},
+	// FIX: Added Session grouping configuration
+	session: {
+		groupBy: (item) => item.meta.campaignArc,
+		sortItems: (a, b) => {
+			// Extract numbers from titles (e.g., "01 - Intro") to sort numerically
+			const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+			const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+			if (numA !== numB) return numA - numB;
 			return a.name.localeCompare(b.name);
 		},
 	},
@@ -14280,7 +14348,7 @@ export const VIEW_STRATEGIES = {
 	quest: { mode: 'category' },
 	character: { mode: 'flat' },
 	item: { mode: 'flat' },
-	session: { mode: 'flat' },
+	session: { mode: 'category' },
 };
 
 // Recursive Flattening with Deduplication
@@ -15611,14 +15679,11 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
 import { getParentId } from '@/domain/entity/utils/entityUtils';
 
-// ... (Rest of file remains unchanged) ...
 export function transformEntityToViewModel(entity, type) {
-	// ... existing implementation ...
-	// (This function calls getParentId internally, so no changes needed inside it)
 	// Context type (e.g. 'npc' or 'location')
 	const contextType = type === 'sessions' ? 'session' : type;
 
-	// Actual entity type (e.g. 'location' inside 'npc' view)
+	// Actual entity type
 	const actualType = entity.type || contextType;
 
 	// Extract raw values
@@ -15639,13 +15704,16 @@ export function transformEntityToViewModel(entity, type) {
 	// Extract Priority for Quests
 	const priority = getAttributeValue(entity.attributes, ['Priority', 'priority']) || null;
 
+	// FIX: Extract Campaign Arc for Sessions
+	const campaignArc = getAttributeValue(entity.attributes, ['campaign_arc', 'arc', 'Arc']) || 'General Chronicles';
+
 	// Extract Parent ID using the smarter logic
 	const parentId = getParentId(entity);
 
 	return {
 		id: entity.id,
 		name: entity.name,
-		path: entity.id,
+		path: `/wiki/${contextType}/${entity.id}`,
 		type: actualType,
 
 		status,
@@ -15661,6 +15729,7 @@ export function transformEntityToViewModel(entity, type) {
 			questType,
 			priority,
 			parentId,
+			campaignArc, // Added to meta
 		},
 	};
 }

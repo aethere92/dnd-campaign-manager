@@ -1,39 +1,39 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2025-12-31 16:44:30
+Generated: 2025-12-31 19:21:25
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 177
-Total lines: 16,483
-Non-empty lines: 14,596
-Comment lines: 1,382
-Total size: 511,523 bytes (499.53 KB)
-Average lines per file: 93.1
+Total files: 178
+Total lines: 16,548
+Non-empty lines: 14,660
+Comment lines: 1,379
+Total size: 513,749 bytes (501.71 KB)
+Average lines per file: 93.0
 
 
 ### STATISTICS BY FILE TYPE
 
 .css:
   Files: 1
-  Lines: 449
-  Size: 10,978 bytes (10.72 KB)
+  Lines: 450
+  Size: 11,172 bytes (10.91 KB)
 
 .js:
   Files: 63
-  Lines: 6,225
-  Size: 172,464 bytes (168.42 KB)
+  Lines: 6,231
+  Size: 172,738 bytes (168.69 KB)
 
 .json:
   Files: 1
-  Lines: 142
-  Size: 3,412 bytes (3.33 KB)
+  Lines: 149
+  Size: 3,594 bytes (3.51 KB)
 
 .jsx:
-  Files: 111
-  Lines: 9,540
-  Size: 319,210 bytes (311.73 KB)
+  Files: 112
+  Lines: 9,591
+  Size: 320,786 bytes (313.27 KB)
 
 .sh:
   Files: 1
@@ -44,7 +44,7 @@ Average lines per file: 93.1
 ### LARGEST FILES (by lines)
 
 features\admin\api\adminService.js: 560 lines
-app\styles\global.css: 449 lines
+app\styles\global.css: 450 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
 features\dashboard\api\dashboardService.js: 377 lines
 features\admin\components\EncounterManager.jsx: 354 lines
@@ -62,15 +62,15 @@ features\wiki\components\EntitySidebar.jsx: 201 lines
 features\smart-text\components\EntityEmbed.jsx: 200 lines
 domain\entity\utils\entityUtils.js: 181 lines
 features\wiki\utils\attributeMapper.js: 172 lines
-features\admin\components\TacticalMapManager.jsx: 170 lines
+features\admin\config\adminStrategies.js: 171 lines
 
 
 ### STATISTICS BY CATEGORY
 
 app:
   Files: 4
-  Lines: 572
-  Size: 15,184 bytes (14.83 KB)
+  Lines: 573
+  Size: 15,378 bytes (15.02 KB)
 
 domain_entity:
   Files: 13
@@ -79,8 +79,8 @@ domain_entity:
 
 features_admin:
   Files: 21
-  Lines: 3,831
-  Size: 126,278 bytes (123.32 KB)
+  Lines: 3,839
+  Size: 126,534 bytes (123.57 KB)
 
 features_atlas:
   Files: 14
@@ -93,9 +93,9 @@ features_campaign:
   Size: 7,122 bytes (6.96 KB)
 
 features_dashboard:
-  Files: 9
-  Lines: 1,020
-  Size: 34,428 bytes (33.62 KB)
+  Files: 10
+  Lines: 1,053
+  Size: 35,669 bytes (34.83 KB)
 
 features_graph:
   Files: 7
@@ -134,8 +134,8 @@ features_timeline:
 
 features_wiki:
   Files: 41
-  Lines: 3,655
-  Size: 118,730 bytes (115.95 KB)
+  Lines: 3,678
+  Size: 119,265 bytes (116.47 KB)
 
 root:
   Files: 2

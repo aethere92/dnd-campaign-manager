@@ -106,7 +106,7 @@ export const EntityHeader = ({ data }) => {
 
 						{/* FIX: Smoother, Longer Gradient Overlay */}
 						{/* Uses a longer fade (via-30% to via-60%) to avoid the "harsh line" effect */}
-						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-20% via-[var(--background)]/20 via-60% to-transparent pointer-events-none' />
+						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-10% via-[var(--background)]/20 via-20% to-transparent pointer-events-none' />
 					</>
 				)}
 

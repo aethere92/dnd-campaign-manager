@@ -2,14 +2,11 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
 import { getParentId } from '@/domain/entity/utils/entityUtils';
 
-// ... (Rest of file remains unchanged) ...
 export function transformEntityToViewModel(entity, type) {
-	// ... existing implementation ...
-	// (This function calls getParentId internally, so no changes needed inside it)
 	// Context type (e.g. 'npc' or 'location')
 	const contextType = type === 'sessions' ? 'session' : type;
 
-	// Actual entity type (e.g. 'location' inside 'npc' view)
+	// Actual entity type
 	const actualType = entity.type || contextType;
 
 	// Extract raw values
@@ -30,13 +27,16 @@ export function transformEntityToViewModel(entity, type) {
 	// Extract Priority for Quests
 	const priority = getAttributeValue(entity.attributes, ['Priority', 'priority']) || null;
 
+	// FIX: Extract Campaign Arc for Sessions
+	const campaignArc = getAttributeValue(entity.attributes, ['campaign_arc', 'arc', 'Arc']) || 'General Chronicles';
+
 	// Extract Parent ID using the smarter logic
 	const parentId = getParentId(entity);
 
 	return {
 		id: entity.id,
 		name: entity.name,
-		path: entity.id,
+		path: `/wiki/${contextType}/${entity.id}`,
 		type: actualType,
 
 		status,
@@ -52,6 +52,7 @@ export function transformEntityToViewModel(entity, type) {
 			questType,
 			priority,
 			parentId,
+			campaignArc, // Added to meta
 		},
 	};
 }

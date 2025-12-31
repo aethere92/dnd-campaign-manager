@@ -97,6 +97,7 @@ PARTIAL BUNDLE: ROOT
         ActiveQuestsWidget.jsx
         CampaignHero.jsx
         LatestSessionCard.jsx
+        NpcsOfTheMoment.jsx
         QuickInsights.jsx
         RecentEncountersWidget.jsx
         RecentSessionsList.jsx

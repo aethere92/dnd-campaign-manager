@@ -52,6 +52,7 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'session_number', label: 'Session Number', type: 'number' },
 			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 

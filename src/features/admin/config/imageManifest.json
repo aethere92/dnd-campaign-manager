@@ -85,6 +85,13 @@
     ]
   },
   {
+    "category": "Assets > Session_backgrounds > Campaign_002",
+    "path": "images/assets/session_backgrounds/campaign_002/",
+    "files": [
+      "session_01_bg.png"
+    ]
+  },
+  {
     "category": "General",
     "path": "images/",
     "files": [

@@ -242,8 +242,8 @@ export const getDashboardData = async (campaignId) => {
 		.select('id, name, created_at')
 		.eq('campaign_id', campaignId)
 		.eq('type', 'encounter')
-		.order('created_at', { ascending: false })
-		.limit(5);
+		.order('created_at', { ascending: false });
+	// .limit(5);
 
 	// Attach session info to encounters via relationships
 	if (recentEncounters && recentEncounters.length > 0) {
@@ -371,6 +371,6 @@ export const getDashboardData = async (campaignId) => {
 		sessions: recentSessions,
 		stats,
 		activeQuests: displayedActiveQuests,
-		recentEncounters: recentEncounters || [],
+		recentEncounters: recentEncounters.slice(0, 5) || [],
 	};
 };

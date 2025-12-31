@@ -11,7 +11,7 @@ export const RecentSessionsList = ({ sessions }) => {
 					<Link
 						key={session.id}
 						to={`/wiki/session/${session.id}`}
-						className='block bg-background border border-border rounded-lg p-4 hover:border-primary/30 hover:shadow-md transition-all group'>
+						className='block bg-background border border-border rounded-lg p-4 hover:border-accent/30 hover:shadow-md transition-all group'>
 						<div className='flex items-start justify-between gap-4'>
 							<div className='flex-1 min-w-0'>
 								<div className='flex items-center gap-2 mb-1'>
@@ -25,7 +25,7 @@ export const RecentSessionsList = ({ sessions }) => {
 										</span>
 									)}
 								</div>
-								<h3 className='text-base font-serif font-bold text-foreground mb-1 group-hover:text-primary transition-colors'>
+								<h3 className='text-base font-serif font-bold text-foreground mb-1 group-hover:text-accent transition-colors'>
 									{session.name}
 								</h3>
 								{session.description && (
@@ -47,7 +47,7 @@ export const RecentSessionsList = ({ sessions }) => {
 							</div>
 							<ArrowRight
 								size={18}
-								className='shrink-0 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-1 transition-all'
+								className='shrink-0 text-muted-foreground/70 group-hover:text-accent group-hover:translate-x-1 transition-all'
 							/>
 						</div>
 					</Link>

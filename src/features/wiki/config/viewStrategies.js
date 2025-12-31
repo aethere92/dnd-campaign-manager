@@ -8,7 +8,7 @@ export const VIEW_STRATEGIES = {
 	quest: { mode: 'category' },
 	character: { mode: 'flat' },
 	item: { mode: 'flat' },
-	session: { mode: 'flat' },
+	session: { mode: 'category' },
 };
 
 // Recursive Flattening with Deduplication

@@ -97,6 +97,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         ActiveQuestsWidget.jsx
         CampaignHero.jsx
         LatestSessionCard.jsx
+        NpcsOfTheMoment.jsx
         QuickInsights.jsx
         RecentEncountersWidget.jsx
         RecentSessionsList.jsx
@@ -3192,6 +3193,7 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'session_number', label: 'Session Number', type: 'number' },
 			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -3418,6 +3420,13 @@ export const IMAGE_LIBRARY = [
       "avarthel_bg.jpg",
       "soranna_bg.jpg",
       "yoghurt_bg.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Session_backgrounds > Campaign_002",
+    "path": "images/assets/session_backgrounds/campaign_002/",
+    "files": [
+      "session_01_bg.png"
     ]
   },
   {

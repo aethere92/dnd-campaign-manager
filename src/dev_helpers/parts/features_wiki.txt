@@ -97,6 +97,7 @@ PARTIAL BUNDLE: FEATURES WIKI
         ActiveQuestsWidget.jsx
         CampaignHero.jsx
         LatestSessionCard.jsx
+        NpcsOfTheMoment.jsx
         QuickInsights.jsx
         RecentEncountersWidget.jsx
         RecentSessionsList.jsx
@@ -979,7 +980,7 @@ export const EntityHeader = ({ data }) => {
 
 						{/* FIX: Smoother, Longer Gradient Overlay */}
 						{/* Uses a longer fade (via-30% to via-60%) to avoid the "harsh line" effect */}
-						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-20% via-[var(--background)]/20 via-60% to-transparent pointer-events-none' />
+						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-10% via-[var(--background)]/20 via-20% to-transparent pointer-events-none' />
 					</>
 				)}
 
@@ -2135,10 +2136,12 @@ export const WikiSidebar = ({ navigation, className }) => {
 				<div className='hidden lg:flex flex-col h-full border-l border-border bg-muted/50 w-10 shrink-0 z-30 transition-all duration-300 lg:order-2 items-center'>
 					<div className='h-14 w-full flex items-center justify-center border-b border-border/50'>
 						<button
-							onClick={() => setDesktopCollapsed(false)}
+							onClick={(e) => {
+								e.stopPropagation();
+								setDesktopCollapsed(false);
+							}}
 							className='p-1.5 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors'
 							title='Expand Sidebar'>
-							{/* Icon flipped for right-side sidebar */}
 							<PanelLeftClose size={18} />
 						</button>
 					</div>
@@ -2151,8 +2154,6 @@ export const WikiSidebar = ({ navigation, className }) => {
 					'flex flex-col bg-muted border-b border-border',
 					'sticky top-0 w-full z-30', // Mobile
 					'lg:static lg:border-b-0 lg:h-full lg:transition-all lg:duration-300', // Desktop
-					// Dynamic Width Logic:
-					// If collapsed, width becomes 0 and overflow hidden to disappear
 					desktopCollapsed
 						? 'lg:w-0 lg:border-l-0 lg:overflow-hidden opacity-0 lg:opacity-100'
 						: 'lg:w-72 lg:border-l lg:border-border',
@@ -2164,10 +2165,13 @@ export const WikiSidebar = ({ navigation, className }) => {
 					onSearchChange={navigation.setSearch}
 					onToggle={() => setMobileOpen(!mobileOpen)}
 					isOpen={mobileOpen}
-					// FIX: Pass toggle as a render prop to avoid layout overlap
 					renderDesktopToggle={() => (
 						<button
-							onClick={() => setDesktopCollapsed(true)}
+							onClick={(e) => {
+								// FIX: Stop propagation to prevent header click logic
+								e.stopPropagation();
+								setDesktopCollapsed(true);
+							}}
 							className='text-muted-foreground hover:text-primary transition-colors p-0.5 rounded'
 							title='Collapse Sidebar'>
 							<PanelLeftOpen size={18} />
@@ -2179,13 +2183,13 @@ export const WikiSidebar = ({ navigation, className }) => {
 				<div
 					className={clsx(
 						'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
-						'lg:grid-rows-[1fr] lg:static lg:h-full',
+						'lg:flex lg:flex-col lg:flex-1 lg:min-h-0',
 						mobileOpen ? 'grid-rows-[1fr] border-b border-border shadow-xl' : 'grid-rows-[0fr]'
 					)}>
-					<div className='overflow-hidden'>
+					<div className={clsx('overflow-hidden', 'lg:flex lg:flex-col lg:flex-1 lg:h-auto')}>
 						<div
 							className={clsx(
-								'lg:h-full lg:overflow-y-auto',
+								'lg:flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar',
 								mobileOpen && 'max-h-[70dvh] overflow-y-auto custom-scrollbar'
 							)}>
 							<WikiSidebarList
@@ -2224,19 +2228,34 @@ export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, is
 
 	return (
 		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
-			{/* Title Row - Clickable on mobile */}
+			{/* Title Row */}
 			<div
-				className='flex items-center justify-between cursor-pointer lg:cursor-default select-none h-8'
-				onClick={onToggle}>
+				className={clsx(
+					'flex items-center justify-between h-8 select-none',
+					// FIX: Pointer cursor only on mobile. Default on desktop to indicate non-clickable.
+					'cursor-pointer lg:cursor-default'
+				)}
+				onClick={(e) => {
+					// FIX: Only allow toggle on mobile (width < 1024px)
+					if (window.innerWidth < 1024) {
+						onToggle();
+					}
+				}}>
 				<div className='flex items-center gap-3 min-w-0 w-full'>
 					{Icon && <Icon size={18} className={clsx(textClass, 'shrink-0')} />}
 					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide truncate'>{label}</h1>
-
-					{/* FIX: Render desktop toggle here to avoid overlap */}
-					{renderDesktopToggle && <div className='hidden lg:block shrink-0 ml-auto mr-1'>{renderDesktopToggle()}</div>}
+					{/* Desktop Toggle Button */}
+					{renderDesktopToggle && (
+						<div
+							className='hidden lg:block shrink-0 ml-auto'
+							// FIX: Stop propagation to prevent any parent click handlers
+							onClick={(e) => e.stopPropagation()}>
+							{renderDesktopToggle()}
+						</div>
+					)}
 				</div>
 
-				{/* Mobile Toggle Button - Larger Touch Target */}
+				{/* Mobile Toggle Button */}
 				<button
 					className='lg:hidden text-muted-foreground hover:text-foreground active:bg-black/10 p-2 -mr-2 rounded-md transition-colors'
 					aria-label={isOpen ? 'Collapse' : 'Expand'}>
@@ -2282,17 +2301,17 @@ export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemCli
 		return <SidebarEmptyState label={config.label} />;
 	}
 
-	// Flatten check for empty search results
 	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
 	if (totalItems === 0) {
 		return <div className='p-6 text-center text-xs text-muted-foreground/70 italic'>No matches found.</div>;
 	}
 
-	// Check if we have standard grouped data (multiple groups with titles)
 	const isGrouped = !groups[0].isTree && (groups.length > 1 || (groups.length === 1 && groups[0].title !== null));
 
 	return (
-		<div className='lg:overflow-y-auto lg:h-full bg-muted py-1 custom-scrollbar'>
+		// FIX: Removed 'pb-10'. The parent flex container handles the scroll bounds now.
+		// Added 'pb-2' just for a tiny bit of visual breathing room at the very end.
+		<div className='bg-muted py-1 pb-2'>
 			{/* MODE 1: TREE (Recursive) */}
 			{groups[0].isTree ? (
 				<div className='px-1 space-y-0.5'>
@@ -2576,31 +2595,35 @@ export const GROUPING_CONFIG = {
 	encounter: {
 		mode: 'tree',
 		sortItems: (a, b) => {
-			// 1. Folders (Locations) first
 			if (a.type !== b.type) {
 				if (a.type === 'location') return -1;
 				if (b.type === 'location') return 1;
 			}
-			// 2. Then Sort Encounters Alphabetically
 			return a.name.localeCompare(b.name);
 		},
 	},
 	npc: {
-		mode: 'tree', // Changed from groupBy to tree
+		mode: 'tree',
 		sortItems: (a, b) => {
-			// Locations (folders) should generally come first or sort A-Z
 			if (a.type !== b.type) {
-				// Locations first
 				if (a.type === 'location') return -1;
 				if (b.type === 'location') return 1;
 			}
-
-			// For NPCs: Rank by Affinity, then Name
 			if (a.type === 'npc' && b.type === 'npc') {
 				const rankDiff = a.meta.affinityRank - b.meta.affinityRank;
 				if (rankDiff !== 0) return rankDiff;
 			}
-
+			return a.name.localeCompare(b.name);
+		},
+	},
+	// FIX: Added Session grouping configuration
+	session: {
+		groupBy: (item) => item.meta.campaignArc,
+		sortItems: (a, b) => {
+			// Extract numbers from titles (e.g., "01 - Intro") to sort numerically
+			const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+			const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+			if (numA !== numB) return numA - numB;
 			return a.name.localeCompare(b.name);
 		},
 	},
@@ -2648,7 +2671,7 @@ export const VIEW_STRATEGIES = {
 	quest: { mode: 'category' },
 	character: { mode: 'flat' },
 	item: { mode: 'flat' },
-	session: { mode: 'flat' },
+	session: { mode: 'category' },
 };
 
 // Recursive Flattening with Deduplication
@@ -3979,14 +4002,11 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
 import { getParentId } from '@/domain/entity/utils/entityUtils';
 
-// ... (Rest of file remains unchanged) ...
 export function transformEntityToViewModel(entity, type) {
-	// ... existing implementation ...
-	// (This function calls getParentId internally, so no changes needed inside it)
 	// Context type (e.g. 'npc' or 'location')
 	const contextType = type === 'sessions' ? 'session' : type;
 
-	// Actual entity type (e.g. 'location' inside 'npc' view)
+	// Actual entity type
 	const actualType = entity.type || contextType;
 
 	// Extract raw values
@@ -4007,13 +4027,16 @@ export function transformEntityToViewModel(entity, type) {
 	// Extract Priority for Quests
 	const priority = getAttributeValue(entity.attributes, ['Priority', 'priority']) || null;
 
+	// FIX: Extract Campaign Arc for Sessions
+	const campaignArc = getAttributeValue(entity.attributes, ['campaign_arc', 'arc', 'Arc']) || 'General Chronicles';
+
 	// Extract Parent ID using the smarter logic
 	const parentId = getParentId(entity);
 
 	return {
 		id: entity.id,
 		name: entity.name,
-		path: entity.id,
+		path: `/wiki/${contextType}/${entity.id}`,
 		type: actualType,
 
 		status,
@@ -4029,6 +4052,7 @@ export function transformEntityToViewModel(entity, type) {
 			questType,
 			priority,
 			parentId,
+			campaignArc, // Added to meta
 		},
 	};
 }

@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2025-12-31 16:44:30
+Generated: 2025-12-31 19:21:25
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -345,6 +345,11 @@ features\dashboard\components\LatestSessionCard.jsx:
   → @/domain/entity/config/entityConfig
   → @/shared/components/ui/SectionDivider
   → clsx
+  → lucide-react
+  → react-router-dom
+
+features\dashboard\components\NpcsOfTheMoment.jsx:
+  → @/domain/entity/config/entityConfig
   → lucide-react
   → react-router-dom
 

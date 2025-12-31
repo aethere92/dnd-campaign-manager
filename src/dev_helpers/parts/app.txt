@@ -97,6 +97,7 @@ PARTIAL BUNDLE: APP
         ActiveQuestsWidget.jsx
         CampaignHero.jsx
         LatestSessionCard.jsx
+        NpcsOfTheMoment.jsx
         QuickInsights.jsx
         RecentEncountersWidget.jsx
         RecentSessionsList.jsx
@@ -390,6 +391,7 @@ export const RouteLoading = ({ text }) => (
 --- END OF app\components\RouteLoading.jsx ---
 
 --- FILE: app\styles\global.css ---
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 

@@ -6,31 +6,35 @@ export const GROUPING_CONFIG = {
 	encounter: {
 		mode: 'tree',
 		sortItems: (a, b) => {
-			// 1. Folders (Locations) first
 			if (a.type !== b.type) {
 				if (a.type === 'location') return -1;
 				if (b.type === 'location') return 1;
 			}
-			// 2. Then Sort Encounters Alphabetically
 			return a.name.localeCompare(b.name);
 		},
 	},
 	npc: {
-		mode: 'tree', // Changed from groupBy to tree
+		mode: 'tree',
 		sortItems: (a, b) => {
-			// Locations (folders) should generally come first or sort A-Z
 			if (a.type !== b.type) {
-				// Locations first
 				if (a.type === 'location') return -1;
 				if (b.type === 'location') return 1;
 			}
-
-			// For NPCs: Rank by Affinity, then Name
 			if (a.type === 'npc' && b.type === 'npc') {
 				const rankDiff = a.meta.affinityRank - b.meta.affinityRank;
 				if (rankDiff !== 0) return rankDiff;
 			}
-
+			return a.name.localeCompare(b.name);
+		},
+	},
+	// FIX: Added Session grouping configuration
+	session: {
+		groupBy: (item) => item.meta.campaignArc,
+		sortItems: (a, b) => {
+			// Extract numbers from titles (e.g., "01 - Intro") to sort numerically
+			const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+			const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+			if (numA !== numB) return numA - numB;
 			return a.name.localeCompare(b.name);
 		},
 	},
