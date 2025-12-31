@@ -25,32 +25,34 @@ export const TimelineEvent = ({ event }) => {
 	}, [event.tags]);
 
 	return (
-		<div className='relative flex gap-4 group'>
+		// OPTIMIZATION: Reduced gap on mobile (gap-3 vs gap-4)
+		<div className='relative flex gap-3 md:gap-4 group'>
 			{/* Icon Bubble */}
 			<div
 				className={clsx(
-					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110',
+					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110 bg-background',
 					container
 				)}>
 				<Icon size={14} strokeWidth={2.5} />
 			</div>
 
 			{/* Content */}
-			<div className='flex-1 -mt-1 pb-2'>
-				<h4 className='text-sm font-bold text-gray-800 mb-1 flex items-center gap-2'>
-					{event.title}
-					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-800 border border-border px-1.5 rounded-sm bg-muted ml-auto'>
+			<div className='flex-1 -mt-1 pb-2 min-w-0'>
+				<h4 className='text-sm font-bold text-gray-800 mb-1 flex flex-wrap items-center gap-2'>
+					<span className='mr-auto'>{event.title}</span>
+					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-800 border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
 						{event.typeLabel}
 					</span>
 				</h4>
 
 				{event.description && (
-					<div className='text-sm text-gray-600 leading-relaxed text-pretty text-justify'>
+					// OPTIMIZATION: Removed 'text-justify', added 'text-left' and 'text-pretty'
+					<div className='text-sm text-gray-600 leading-relaxed text-pretty text-left'>
 						<SmartMarkdown>{event.description}</SmartMarkdown>
 					</div>
 				)}
 
-				{/* Grouped Tags with Separators */}
+				{/* Grouped Tags */}
 				{groupedTags.length > 0 && (
 					<div className='flex flex-wrap items-center gap-2 mt-2'>
 						{groupedTags.map((group, groupIndex) => (
@@ -66,7 +68,7 @@ export const TimelineEvent = ({ event }) => {
 											<span
 												key={`${tag.name}-${idx}`}
 												className={clsx(
-													'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default',
+													'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default whitespace-nowrap',
 													styles.bg,
 													styles.text,
 													styles.border
@@ -77,7 +79,7 @@ export const TimelineEvent = ({ event }) => {
 									})}
 								</div>
 
-								{/* Separator (except after last group) */}
+								{/* Separator */}
 								{groupIndex < groupedTags.length - 1 && (
 									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
 								)}

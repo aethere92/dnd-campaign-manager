@@ -151,9 +151,10 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 					style={
 						activeFullscreen
 							? {
-									// FULLSCREEN: Bottom-Right
-									bottom: 'max(2rem, env(safe-area-inset-bottom))',
-									right: 'max(2rem, env(safe-area-inset-right))',
+									// FIX: Move to Top-Right to avoid Chrome iOS Bottom Bar overlay
+									// We add extra padding (env) to clear the Notch/Status Bar
+									top: 'max(1rem, calc(1rem + env(safe-area-inset-top)))',
+									right: 'max(1rem, calc(1rem + env(safe-area-inset-right)))',
 							  }
 							: {
 									// NORMAL: Top-Right

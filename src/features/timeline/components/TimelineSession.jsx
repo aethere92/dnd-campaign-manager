@@ -3,7 +3,8 @@ import { TimelineEvent } from './TimelineEvent';
 
 export const TimelineSession = ({ session }) => {
 	return (
-		<div className='relative pl-8 md:pl-12'>
+		// OPTIMIZATION: Reduced padding (pl-4) on mobile to maximize text width
+		<div className='relative pl-4 md:pl-12'>
 			{/* Session Marker (Circle on the main line) */}
 			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-gray-300 shadow-sm z-10'>
 				<div className='w-2 h-2 rounded-full bg-gray-400' />
@@ -25,6 +26,8 @@ export const TimelineSession = ({ session }) => {
 			{/* Events List */}
 			<div className='space-y-6 relative'>
 				{/* Connector Line for events */}
+				{/* Adjusted left position slightly to align with tighter padding if needed, 
+                    but 15px centers it nicely within the w-8 icon (16px center) roughly */}
 				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-gray-100 -z-10' />
 
 				{session.events.map((event) => (
