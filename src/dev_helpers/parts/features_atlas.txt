@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES ATLAS
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES ATLAS
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -366,6 +361,227 @@ export function useMapData() {
 
 --- END OF features\atlas\useMapData.js ---
 
+--- FILE: features\atlas\components\AtlasSidebar.jsx ---
+import React, { useState } from 'react';
+import { clsx } from 'clsx';
+import {
+	Search,
+	PanelLeftClose,
+	PanelLeftOpen,
+	Map as MapIcon,
+	ChevronRight,
+	ChevronDown,
+	Eye,
+	EyeOff,
+	Crosshair,
+} from 'lucide-react';
+
+/**
+ * Sidebar Group Item
+ */
+const AtlasGroup = ({ group, visibility, onToggleVisibility, onNavigate }) => {
+	const [isExpanded, setIsExpanded] = useState(true);
+	const isGroupVisible = visibility[group.id];
+
+	return (
+		<div className='select-none'>
+			{/* Header */}
+			<div className='flex items-center gap-1 px-3 py-2 hover:bg-black/5 transition-colors group/header sticky top-0 bg-muted/95 backdrop-blur-sm z-10 border-b border-border/40'>
+				{/* Expand Toggle */}
+				<button
+					onClick={() => setIsExpanded(!isExpanded)}
+					className='p-0.5 text-muted-foreground/70 hover:text-foreground'>
+					{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+				</button>
+
+				{/* Title */}
+				<span
+					className={clsx(
+						'flex-1 text-xs font-bold uppercase tracking-wider cursor-pointer truncate',
+						isGroupVisible
+							? 'text-foreground'
+							: 'text-muted-foreground decoration-line-through decoration-muted-foreground/50'
+					)}
+					onClick={() => setIsExpanded(!isExpanded)}>
+					{group.label}
+				</span>
+
+				{/* Layer Visibility Toggle (Global for Group) */}
+				<button
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggleVisibility(group.id);
+					}}
+					className={clsx(
+						'p-1.5 rounded-md transition-all',
+						isGroupVisible ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground/50 hover:text-foreground'
+					)}
+					title={isGroupVisible ? 'Hide Layer' : 'Show Layer'}>
+					{isGroupVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+				</button>
+			</div>
+
+			{/* Marker List */}
+			{isExpanded && (
+				<div className='pl-2 pb-1 pt-0.5 space-y-0.5'>
+					{group.items.map((marker, idx) => {
+						const isItemVisible = visibility[marker.id];
+
+						return (
+							<div
+								key={`${group.id}-${idx}`}
+								className='flex items-center gap-1 pr-2 group/item hover:bg-black/5 rounded-md'>
+								{/* Navigation Button */}
+								<button
+									onClick={() => onNavigate(marker.position)}
+									className='flex-1 flex items-center text-left gap-2 px-2 py-1.5 min-w-0'>
+									<span className='opacity-50 group-hover/item:opacity-100 transition-opacity shrink-0'>
+										<Crosshair size={12} />
+									</span>
+									<span
+										className={clsx(
+											'text-sm font-medium truncate transition-colors',
+											isItemVisible && isGroupVisible ? 'text-foreground' : 'text-muted-foreground opacity-70'
+										)}>
+										{marker.label}
+									</span>
+								</button>
+
+								{/* Individual Visibility Toggle */}
+								<button
+									onClick={() => onToggleVisibility(marker.id)}
+									className={clsx(
+										'p-1 rounded opacity-0 group-hover/item:opacity-100 focus:opacity-100 transition-opacity',
+										isItemVisible ? 'text-muted-foreground hover:text-foreground' : 'text-muted-foreground/50'
+									)}
+									title={isItemVisible ? 'Hide Item' : 'Show Item'}>
+									{isItemVisible ? <Eye size={12} /> : <EyeOff size={12} />}
+								</button>
+							</div>
+						);
+					})}
+					{group.items.length === 0 && (
+						<div className='text-[10px] text-muted-foreground/50 pl-9 italic py-1'>No locations</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+};
+
+export const AtlasSidebar = ({ groups, visibility, onToggleLayer, onFlyTo }) => {
+	const [search, setSearch] = useState('');
+	const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+	const [mobileOpen, setMobileOpen] = useState(false);
+
+	// Filter logic
+	const filteredGroups = groups
+		.map((g) => ({
+			...g,
+			items: g.items.filter((m) => m.label.toLowerCase().includes(search.toLowerCase())),
+		}))
+		.filter((g) => g.items.length > 0 || search === '');
+
+	return (
+		<>
+			{/* COLLAPSED STATE (Desktop) */}
+			{desktopCollapsed && (
+				<div className='hidden lg:flex flex-col h-full border-l border-border bg-muted w-12 shrink-0 z-10 transition-all duration-300'>
+					<div className='p-3 border-b border-border/50 h-14 flex items-center justify-center'>
+						<button
+							onClick={() => setDesktopCollapsed(false)}
+							className='p-1.5 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors'
+							title='Expand Atlas Sidebar'>
+							<PanelLeftClose size={20} />
+						</button>
+					</div>
+					<div className='flex-1 flex items-center justify-center writing-vertical-lr text-xs font-bold text-muted-foreground/50 uppercase tracking-widest py-8 select-none'>
+						Atlas Index
+					</div>
+				</div>
+			)}
+
+			{/* SIDEBAR */}
+			<div
+				className={clsx(
+					'flex flex-col bg-muted border-l border-border transition-all duration-300',
+					// FIX: Removed global 'h-full' here.
+
+					// Desktop Width Logic
+					desktopCollapsed ? 'w-0 overflow-hidden border-none' : 'w-full lg:w-80',
+
+					// Position Logic
+					'absolute top-0 left-0 lg:relative z-[1000] lg:z-0',
+
+					// Height Logic:
+					// Mobile Closed: h-auto (just header)
+					// Mobile Open: h-full (full screen overlay)
+					// Desktop: h-full
+					!mobileOpen ? 'h-auto bottom-auto lg:h-full' : 'h-full'
+				)}>
+				{/* Header */}
+				<div className='p-4 border-b border-border/50 bg-muted flex flex-col gap-3'>
+					<div className='flex items-center justify-between'>
+						<div className='flex items-center gap-2 text-foreground font-serif font-bold'>
+							<MapIcon size={18} className='text-primary' />
+							<span>Atlas Index</span>
+						</div>
+
+						<div className='flex gap-1'>
+							{/* Desktop Collapse */}
+							<button
+								onClick={() => setDesktopCollapsed(true)}
+								className='hidden lg:block p-1 text-muted-foreground hover:text-primary transition-colors'
+								title='Collapse Sidebar'>
+								<PanelLeftOpen size={16} />
+							</button>
+
+							{/* Mobile Toggle */}
+							<button
+								onClick={() => setMobileOpen(!mobileOpen)}
+								className='lg:hidden p-1 text-muted-foreground hover:text-foreground transition-colors'
+								aria-label={mobileOpen ? 'Collapse' : 'Expand'}>
+								{mobileOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+							</button>
+						</div>
+					</div>
+
+					{/* Search - Visible when open */}
+					<div className={clsx('relative', !mobileOpen && 'hidden lg:block')}>
+						<Search className='absolute left-2.5 top-2.5 text-muted-foreground/50' size={14} />
+						<input
+							type='text'
+							placeholder='Search locations...'
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							className='w-full bg-background border border-border rounded-md pl-8 pr-3 py-2 text-sm focus:ring-1 focus:ring-primary/50 focus:border-primary outline-none shadow-sm'
+						/>
+					</div>
+				</div>
+
+				{/* Scrollable Content */}
+				<div className={clsx('flex-1 overflow-y-auto custom-scrollbar bg-muted/30', !mobileOpen && 'hidden lg:block')}>
+					{filteredGroups.map((group) => (
+						<AtlasGroup
+							key={group.id}
+							group={group}
+							visibility={visibility}
+							onToggleVisibility={onToggleLayer}
+							onNavigate={onFlyTo}
+						/>
+					))}
+
+					{filteredGroups.length === 0 && (
+						<div className='p-6 text-center text-xs text-muted-foreground italic'>No locations found.</div>
+					)}
+				</div>
+			</div>
+		</>
+	);
+};
+
+--- END OF features\atlas\components\AtlasSidebar.jsx ---
+
 --- FILE: features\atlas\components\MapCanvas.jsx ---
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
@@ -376,17 +592,18 @@ import { MapMarkers } from './layers/MapMarkers';
 import { MapRecaps } from './layers/MapRecaps';
 import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
-import { MapLayerControl } from './MapLayerControl';
-import { MapTools } from './MapTools'; // Import the new component
+import { MapTools } from './MapTools';
+import { AtlasSidebar } from './AtlasSidebar';
 import { useMapCanvasViewModel } from './useMapCanvasViewModel';
 
-const MapController = ({ bounds, minZoom, config }) => {
+// Controller to handle FlyTo from sidebar
+const MapController = ({ bounds, minZoom, config, flyToTarget }) => {
 	const map = useMap();
 	const prevConfigRef = useRef();
 
+	// Handle initial bounds
 	useEffect(() => {
 		if (!bounds) return;
-
 		const isNewMap = prevConfigRef.current !== config.path;
 		prevConfigRef.current = config.path;
 
@@ -399,6 +616,16 @@ const MapController = ({ bounds, minZoom, config }) => {
 		});
 	}, [map, bounds, minZoom, config.path]);
 
+	// Handle Sidebar FlyTo
+	useEffect(() => {
+		if (flyToTarget) {
+			map.flyTo(flyToTarget, config.sizes.maxZoom - 1, {
+				animate: true,
+				duration: 1.5,
+			});
+		}
+	}, [map, flyToTarget]);
+
 	return null;
 };
 
@@ -407,61 +634,298 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	const { config, bounds, areas } = data;
 	const vm = useMapCanvasViewModel(data);
-	const wrapperRef = useRef(null); // Ref for fullscreen
+	const wrapperRef = useRef(null);
+	const [flyToTarget, setFlyToTarget] = useState(null);
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
-	// const bgValue = config.backgroundColor || '#1a1412';
-	// const isImage = bgValue.includes('url') || bgValue.includes('gradient');
 
 	return (
-		<div
-			ref={wrapperRef}
-			style={{
-				height: '100%',
-				width: '100%',
-				// backgroundColor: isImage ? '#1a1412' : bgValue,
-				// backgroundImage: isImage ? bgValue : 'none',
-				// backgroundSize: 'cover',
-				// backgroundPosition: 'center',
-				// backgroundRepeat: 'no-repeat',
-				backgroundColor: 'var(--background)',
-				backgroundImage:
-					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
-				backgroundSize: '40px 40px, 20px 20px',
-				backgroundPosition: '0 0, 20px 20px',
-			}}>
-			<MapContainer
-				center={[0, 0]}
-				zoom={minZoom}
-				crs={L.CRS.Simple}
-				minZoom={minZoom}
-				maxZoom={config.sizes.maxZoom}
-				scrollWheelZoom={true}
-				attributionControl={false}
-				zoomControl={false}
-				style={{ height: '100%', width: '100%', background: 'transparent' }}>
-				<MapController bounds={bounds} minZoom={minZoom} config={config} />
+		<div className='flex h-full w-full relative overflow-hidden'>
+			{/* MAP AREA - First in DOM (Left side in flex row) */}
+			<div
+				ref={wrapperRef}
+				className='flex-1 relative h-full bg-background'
+				style={{
+					backgroundColor: 'var(--background)',
+					backgroundImage:
+						'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+					backgroundSize: '40px 40px, 20px 20px',
+					backgroundPosition: '0 0, 20px 20px',
+				}}>
+				<MapContainer
+					center={[0, 0]}
+					zoom={minZoom}
+					crs={L.CRS.Simple}
+					minZoom={minZoom}
+					maxZoom={config.sizes.maxZoom}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					zoomControl={false}
+					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					<MapController bounds={bounds} minZoom={minZoom} config={config} flyToTarget={flyToTarget} />
 
-				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
+					<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
 
-				<MapOverlays overlays={vm.visibleOverlays} />
-				{vm.showAreas && <MapAreas areas={areas} />}
-				<MapRecaps sessions={vm.visibleSessions} />
-				<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
+					<MapOverlays overlays={vm.visibleOverlays} />
+					{vm.showAreas && <MapAreas areas={areas} />}
+					<MapRecaps sessions={vm.visibleSessions} />
+					<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
 
-				<MapLayerControl groups={vm.controlGroups} visibility={vm.visibility} toggleLayer={vm.toggleLayer} />
+					<MapTools bounds={bounds} containerRef={wrapperRef} />
+				</MapContainer>
+			</div>
 
-				{/* New Tools Component */}
-				<MapTools bounds={bounds} containerRef={wrapperRef} />
-			</MapContainer>
+			{/* ATLAS SIDEBAR - Second in DOM (Right side) */}
+			<AtlasSidebar
+				groups={vm.sidebarGroups}
+				visibility={vm.visibility}
+				onToggleLayer={vm.toggleLayer}
+				onFlyTo={setFlyToTarget}
+			/>
 		</div>
 	);
 };
 
 --- END OF features\atlas\components\MapCanvas.jsx ---
 
---- FILE: features\atlas\components\MapLayerControl.jsx ---
+--- FILE: features\atlas\components\MapTools.jsx ---
+import { useState, useEffect } from 'react';
+import { useMap } from 'react-leaflet';
+import { Maximize, Minimize, Crosshair } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export const MapTools = ({ bounds, containerRef }) => {
+	const map = useMap();
+	const [isFullscreen, setIsFullscreen] = useState(false);
+
+	// Sync state if user presses ESC or browser exit
+	useEffect(() => {
+		const onFullScreenChange = () => {
+			setIsFullscreen(!!document.fullscreenElement);
+		};
+		document.addEventListener('fullscreenchange', onFullScreenChange);
+		return () => document.removeEventListener('fullscreenchange', onFullScreenChange);
+	}, []);
+
+	const handleCenter = (e) => {
+		e.stopPropagation();
+		if (bounds) {
+			map.fitBounds(bounds, { animate: true, duration: 1 });
+		}
+	};
+
+	const toggleFullscreen = (e) => {
+		e.stopPropagation();
+		if (!containerRef?.current) return;
+
+		if (!document.fullscreenElement) {
+			containerRef.current.requestFullscreen().catch((err) => {
+				console.error(`Error attempting to enable fullscreen: ${err.message}`);
+			});
+		} else {
+			document.exitFullscreen();
+		}
+	};
+
+	// Reusable Button Style
+	const Btn = ({ onClick, icon: Icon, title, active }) => (
+		<button
+			onClick={onClick}
+			title={title}
+			className={clsx(
+				'flex items-center justify-center w-8 h-8 transition-colors first:rounded-t-md last:rounded-b-md border-b last:border-b-0',
+				// FIX: Semantic Theme Colors
+				'bg-card border-border text-muted-foreground hover:bg-muted hover:text-primary',
+				active && 'bg-primary/10 text-primary'
+			)}>
+			<Icon size={16} strokeWidth={2.5} />
+		</button>
+	);
+
+	return (
+		<div className='leaflet-top leaflet-left'>
+			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-border/50'>
+				<Btn onClick={handleCenter} icon={Crosshair} title='Center Map' />
+				<Btn
+					onClick={toggleFullscreen}
+					icon={isFullscreen ? Minimize : Maximize}
+					title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+					active={isFullscreen}
+				/>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\atlas\components\MapTools.jsx ---
+
+--- FILE: features\atlas\components\useMapCanvasViewModel.js ---
+import { useState, useEffect, useMemo } from 'react';
+import { BookOpen, MapPin, Image as ImageIcon, Map as MapIcon } from 'lucide-react';
+
+export function useMapCanvasViewModel(data) {
+	// 1. Initialize Visibility
+	const [visibility, setVisibility] = useState(() => {
+		const init = { areas: false };
+		if (!data) return init;
+
+		// Initialize marker categories
+		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean);
+		uniqueCats.forEach((cat) => {
+			init[`marker-cat-${cat}`] = true;
+		});
+
+		// Initialize individual markers (new)
+		data.markers.forEach((m) => {
+			if (m.label) init[`marker-item-${m.label}`] = true;
+		});
+
+		// Sessions/Overlays: OFF by default
+		data.sessions.forEach((s) => (init[`session-${s.name}`] = false));
+		data.overlays.forEach((o) => (init[`overlay-${o.name}`] = false));
+
+		return init;
+	});
+
+	// Sync with data updates
+	useEffect(() => {
+		if (!data) return;
+		setVisibility((prev) => {
+			const next = { ...prev };
+			let changed = false;
+
+			// Sync Categories
+			const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean);
+			uniqueCats.forEach((cat) => {
+				const key = `marker-cat-${cat}`;
+				if (next[key] === undefined) {
+					next[key] = true;
+					changed = true;
+				}
+			});
+
+			// Sync Items
+			data.markers.forEach((m) => {
+				const key = `marker-item-${m.label}`;
+				if (next[key] === undefined) {
+					next[key] = true;
+					changed = true;
+				}
+			});
+
+			return changed ? next : prev;
+		});
+	}, [data?.markers]);
+
+	const toggleLayer = (id) => {
+		setVisibility((prev) => ({ ...prev, [id]: !prev[id] }));
+	};
+
+	// 2. Control Groups Configuration
+	const sidebarGroups = useMemo(() => {
+		if (!data) return [];
+
+		const groups = [];
+
+		// 1. Sessions
+		if (data.sessions.length > 0) {
+			groups.push({
+				id: 'sessions-group',
+				label: 'Sessions & Paths',
+				items: data.sessions
+					.map((s) => ({
+						label: s.name,
+						id: `session-${s.name}`,
+						position: s.points[0]?.coordinates,
+					}))
+					.filter((i) => i.position),
+			});
+		}
+
+		// 2. Markers by Category
+		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean).sort();
+
+		uniqueCats.forEach((cat) => {
+			const catId = `marker-cat-${cat}`;
+			const catMarkers = data.markers.filter((m) => m.category === cat);
+
+			groups.push({
+				id: catId,
+				label: cat,
+				items: catMarkers.map((m) => ({
+					label: m.label,
+					id: `marker-item-${m.label}`, // Individual ID
+					position: m.position,
+				})),
+			});
+		});
+
+		// 3. Overlays
+		if (data.overlays.length > 0) {
+			groups.push({
+				id: 'overlays-group',
+				label: 'Overlays',
+				items: data.overlays.map((o) => ({
+					label: o.name,
+					id: `overlay-${o.name}`,
+					position: o.bounds[0],
+				})),
+			});
+		}
+
+		// 4. Areas
+		if (data.areas.length > 0) {
+			groups.push({
+				id: 'areas',
+				label: 'Regions & Areas',
+				items: data.areas.map((a) => ({
+					label: a.name,
+					id: 'areas', // Shared ID for all areas for now
+					position: a.positions[0],
+				})),
+			});
+		}
+
+		return groups;
+	}, [data]);
+
+	// 3. Filter Layers
+	// Logic: Marker is visible if Category is ON AND Individual Item is ON
+	const visibleMarkers = useMemo(
+		() =>
+			data?.markers.filter(
+				(m) =>
+					visibility[`marker-cat-${m.category}`] !== false && // Default to true if undefined
+					visibility[`marker-item-${m.label}`] !== false
+			) || [],
+		[data, visibility]
+	);
+
+	const visibleSessions = useMemo(
+		() => data?.sessions.filter((s) => visibility[`session-${s.name}`] || visibility['sessions-group']) || [],
+		[data, visibility]
+	);
+
+	const visibleOverlays = useMemo(
+		() => data?.overlays.filter((o) => visibility[`overlay-${o.name}`] || visibility['overlays-group']) || [],
+		[data, visibility]
+	);
+
+	return {
+		visibility,
+		toggleLayer,
+		sidebarGroups,
+		visibleMarkers,
+		visibleSessions,
+		visibleOverlays,
+		showAreas: visibility['areas'],
+	};
+}
+
+--- END OF features\atlas\components\useMapCanvasViewModel.js ---
+
+--- FILE: features\atlas\components\__MapLayerControl.jsx ---
 import { useState, useEffect, useRef } from 'react';
 import { Layers, ChevronDown, ChevronRight, Eye, EyeOff, Check } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -479,7 +943,7 @@ const Group = ({ label, icon: Icon, children, defaultOpen = true }) => {
 					e.stopPropagation();
 					setIsOpen(!isOpen);
 				}}
-				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
+				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
 				<span className='mr-1 opacity-70'>{isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}</span>
 				<span className='flex items-center gap-1.5'>
 					{Icon && <Icon size={12} />}
@@ -503,7 +967,7 @@ const ToggleItem = ({ label, checked, onChange }) => (
 		<div
 			className={clsx(
 				'w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center transition-all shadow-sm shrink-0',
-				checked ? 'bg-amber-600 border-amber-700 text-white' : 'bg-white border-gray-300 group-hover:border-amber-400'
+				checked ? 'bg-amber-600 border-amber-700 text-white' : 'bg-card border-border group-hover:border-amber-400'
 			)}>
 			{checked && <Check size={10} strokeWidth={3.5} />}
 		</div>
@@ -511,7 +975,7 @@ const ToggleItem = ({ label, checked, onChange }) => (
 		<span
 			className={clsx(
 				'text-[11px] font-medium leading-tight pt-0.5 font-sans',
-				checked ? 'text-foreground' : 'text-gray-500'
+				checked ? 'text-foreground' : 'text-muted-foreground'
 			)}>
 			{label}
 		</span>
@@ -609,167 +1073,7 @@ export const MapLayerControl = ({ groups, visibility, toggleLayer }) => {
 	);
 };
 
---- END OF features\atlas\components\MapLayerControl.jsx ---
-
---- FILE: features\atlas\components\MapTools.jsx ---
-import { useState, useEffect } from 'react';
-import { useMap } from 'react-leaflet';
-import { Maximize, Minimize, Crosshair } from 'lucide-react';
-import { clsx } from 'clsx';
-
-export const MapTools = ({ bounds, containerRef }) => {
-	const map = useMap();
-	const [isFullscreen, setIsFullscreen] = useState(false);
-
-	// Sync state if user presses ESC or browser exit
-	useEffect(() => {
-		const onFullScreenChange = () => {
-			setIsFullscreen(!!document.fullscreenElement);
-		};
-		document.addEventListener('fullscreenchange', onFullScreenChange);
-		return () => document.removeEventListener('fullscreenchange', onFullScreenChange);
-	}, []);
-
-	const handleCenter = (e) => {
-		e.stopPropagation();
-		if (bounds) {
-			map.fitBounds(bounds, { animate: true, duration: 1 });
-		}
-	};
-
-	const toggleFullscreen = (e) => {
-		e.stopPropagation();
-		if (!containerRef?.current) return;
-
-		if (!document.fullscreenElement) {
-			containerRef.current.requestFullscreen().catch((err) => {
-				console.error(`Error attempting to enable fullscreen: ${err.message}`);
-			});
-		} else {
-			document.exitFullscreen();
-		}
-	};
-
-	// Reusable Button Style
-	const Btn = ({ onClick, icon: Icon, title, active }) => (
-		<button
-			onClick={onClick}
-			title={title}
-			className={clsx(
-				'flex items-center justify-center w-8 h-8 transition-colors first:rounded-t-md last:rounded-b-md border-b border-[#c9c2b8] last:border-b-0',
-				'bg-[#fdfbf7] hover:bg-amber-50 text-amber-900',
-				active && 'bg-amber-100 text-amber-800'
-			)}>
-			<Icon size={16} strokeWidth={2.5} />
-		</button>
-	);
-
-	return (
-		<div className='leaflet-top leaflet-left'>
-			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-[#c9c2b8]'>
-				<Btn onClick={handleCenter} icon={Crosshair} title='Center Map' />
-				<Btn
-					onClick={toggleFullscreen}
-					icon={isFullscreen ? Minimize : Maximize}
-					title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-					active={isFullscreen}
-				/>
-			</div>
-		</div>
-	);
-};
-
---- END OF features\atlas\components\MapTools.jsx ---
-
---- FILE: features\atlas\components\useMapCanvasViewModel.js ---
-import { useState, useEffect, useMemo } from 'react';
-import { BookOpen, MapPin, Image as ImageIcon, Map as MapIcon } from 'lucide-react';
-
-export function useMapCanvasViewModel(data) {
-	// 1. Initialize Visibility
-	const [visibility, setVisibility] = useState(() => {
-		const init = { areas: false };
-		if (!data) return init;
-
-		// Initialize marker categories to TRUE
-		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean);
-		uniqueCats.forEach((cat) => {
-			init[`marker-${cat}`] = true;
-		});
-
-		// Sessions/Overlays: OFF by default
-		data.sessions.forEach((s) => (init[`session-${s.name}`] = false));
-		data.overlays.forEach((o) => (init[`overlay-${o.name}`] = false));
-
-		return init;
-	});
-
-	// Sync with data updates
-	useEffect(() => {
-		if (!data) return;
-		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean);
-		setVisibility((prev) => {
-			const next = { ...prev };
-			let changed = false;
-			uniqueCats.forEach((cat) => {
-				const key = `marker-${cat}`;
-				if (next[key] === undefined) {
-					next[key] = true;
-					changed = true;
-				}
-			});
-			return changed ? next : prev;
-		});
-	}, [data?.markers]);
-
-	const toggleLayer = (id) => {
-		setVisibility((prev) => ({ ...prev, [id]: !prev[id] }));
-	};
-
-	// 2. Control Groups Configuration
-	const controlGroups = useMemo(() => {
-		if (!data) return {};
-		const uniqueCats = [...new Set(data.markers.map((m) => m.category))].filter(Boolean).sort();
-
-		return {
-			overlays: data.overlays.map((o) => ({ id: `overlay-${o.name}`, label: o.name })),
-			sessions: data.sessions.map((s) => ({ id: `session-${s.name}`, label: s.name })),
-			markers: uniqueCats.map((c) => ({ id: `marker-${c}`, label: c })),
-			icons: {
-				overlays: ImageIcon,
-				sessions: BookOpen,
-				markers: MapPin,
-				areas: MapIcon,
-			},
-		};
-	}, [data]);
-
-	// 3. Filter Layers
-	const visibleMarkers = useMemo(
-		() => data?.markers.filter((m) => visibility[`marker-${m.category}`]) || [],
-		[data, visibility]
-	);
-	const visibleSessions = useMemo(
-		() => data?.sessions.filter((s) => visibility[`session-${s.name}`]) || [],
-		[data, visibility]
-	);
-	const visibleOverlays = useMemo(
-		() => data?.overlays.filter((o) => visibility[`overlay-${o.name}`]) || [],
-		[data, visibility]
-	);
-
-	return {
-		visibility,
-		toggleLayer,
-		controlGroups,
-		visibleMarkers,
-		visibleSessions,
-		visibleOverlays,
-		showAreas: visibility['areas'],
-	};
-}
-
---- END OF features\atlas\components\useMapCanvasViewModel.js ---
+--- END OF features\atlas\components\__MapLayerControl.jsx ---
 
 --- FILE: features\atlas\components\layers\MapAreas.jsx ---
 import { Polygon, Tooltip } from 'react-leaflet';
@@ -805,46 +1109,131 @@ export const MapAreas = ({ areas }) => {
 
 --- FILE: features\atlas\components\layers\MapMarkers.jsx ---
 import { Marker, Popup } from 'react-leaflet';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen, Map as MapIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { clsx } from 'clsx';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 export const MapMarkers = ({ markers, onNavigate }) => {
+	const navigate = useNavigate();
+	const { map: entityMap } = useEntityIndex();
+
 	if (!markers || markers.length === 0) return null;
 
 	return (
 		<>
 			{markers.map((marker, idx) => {
-				// markerUtils now does the heavy lifting
 				const leafletIcon = resolveMarkerIcon(marker);
+
+				const entityMatch = Array.from(entityMap.values()).find(
+					(e) => e.name.toLowerCase() === marker.label.toLowerCase()
+				);
+
+				const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
+
+				const displayData = {
+					title: marker.label,
+					category:
+						marker.category && marker.category !== 'default'
+							? marker.category
+							: entityMatch
+							? entityMatch.type
+							: 'Point of Interest',
+					description: marker.description
+						? marker.description
+						: entityMatch
+						? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
+						: null,
+					image: entityMatch ? resolveImageUrl(entityAttrs, 'background') : null,
+				};
+
+				const entityConfig = entityMatch ? getEntityConfig(entityMatch.type) : null;
+
+				const handleWikiNav = (e) => {
+					e.stopPropagation();
+					if (entityMatch) {
+						navigate(`/wiki/${entityMatch.type}/${entityMatch.id}`);
+					}
+				};
+
+				const handleMapNav = (e) => {
+					e.stopPropagation();
+					onNavigate(marker.mapLink);
+				};
 
 				return (
 					<Marker key={`${marker.label}-${idx}`} position={marker.position} icon={leafletIcon}>
-						<Popup closeButton={true}>
-							<div className='flex flex-col w-[260px] font-sans bg-background'>
-								<div className='px-4 pt-4 pb-2 pr-7'>
-									<span className='text-[10px] font-bold uppercase tracking-wider text-accent block mb-1'>
-										{marker.category}
-									</span>
-									<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
+						<Popup className='custom-popup-clean' closeButton={false}>
+							<div className='flex flex-col w-full font-sans bg-background rounded-lg overflow-hidden border border-border shadow-sm'>
+								{displayData.image && (
+									<div className='h-24 w-full relative bg-muted'>
+										<img src={displayData.image} alt={displayData.title} className='w-full h-full object-cover' />
+										{/* FIX: Improved Gradient - Stronger fade at bottom for text readability */}
+										<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/80 via-30% to-transparent pointer-events-none' />
+									</div>
+								)}
+
+								<div className={clsx('px-4 pb-3', displayData.image ? 'pt-2 -mt-8 relative z-10' : 'pt-4')}>
+									<div className='flex items-start justify-between gap-2'>
+										<div>
+											<span
+												className={clsx(
+													'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
+													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
+												)}>
+												{displayData.category}
+											</span>
+											{/* FIX: Ensure title text color is always readable (foreground) */}
+											<h3 className='font-serif font-bold text-lg leading-tight text-foreground drop-shadow-sm'>
+												{displayData.title}
+											</h3>
+										</div>
+										{entityConfig && (
+											<div
+												className={clsx(
+													'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
+													entityConfig.tailwind.border,
+													entityConfig.tailwind.text
+												)}>
+												<entityConfig.icon size={14} />
+											</div>
+										)}
+									</div>
+
+									<div className='h-px w-full bg-border/50 my-3' />
+
+									<div className='text-xs text-muted-foreground leading-relaxed max-h-32 overflow-y-auto custom-scrollbar'>
+										{displayData.description || <span className='italic opacity-70'>No details available.</span>}
+									</div>
 								</div>
 
-								<div className='h-px w-full bg-border/50 my-1' />
+								{(marker.mapLink || entityMatch) && (
+									<div className='bg-muted/50 p-2 border-t border-border flex flex-col gap-1'>
+										{marker.mapLink && (
+											<button
+												onClick={handleMapNav}
+												className='w-full flex items-center justify-between px-3 py-1.5 rounded hover:bg-primary/10 text-primary transition-colors text-xs font-bold uppercase tracking-wide group'>
+												<span className='flex items-center gap-2'>
+													<MapIcon size={12} /> Enter Location
+												</span>
+												<ArrowRight size={12} className='group-hover:translate-x-1 transition-transform' />
+											</button>
+										)}
 
-								<div className='px-4 py-2'>
-									{marker.description ? (
-										<p className='text-xs text-muted-foreground leading-relaxed line-clamp-6'>{marker.description}</p>
-									) : (
-										<p className='text-xs text-muted-foreground italic'>No details available.</p>
-									)}
-								</div>
-
-								{marker.mapLink && (
-									<div className='mt-2 bg-muted/50 p-2 border-t border-border flex justify-end rounded-b-lg'>
-										<button
-											onClick={() => onNavigate(marker.mapLink)}
-											className='text-[10px] font-bold text-accent hover:underline flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer'>
-											Enter Location <ArrowRight size={10} />
-										</button>
+										{entityMatch && (
+											<button
+												onClick={handleWikiNav}
+												className='w-full flex items-center justify-between px-3 py-1.5 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-colors text-xs font-semibold group'>
+												<span className='flex items-center gap-2'>
+													<BookOpen size={12} /> View Encyclopedia
+												</span>
+												<ArrowRight size={12} className='opacity-0 group-hover:opacity-100 transition-opacity' />
+											</button>
+										)}
 									</div>
 								)}
 							</div>
@@ -908,7 +1297,7 @@ export const MapRecaps = ({ sessions }) => {
 								<Popup closeButton={false} className='leaflet-popup-clean'>
 									<div className='flex flex-col w-[200px] font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
 										{/* Header */}
-										<div className='px-3 py-2 bg-amber-50/80 border-b border-amber-100/50 flex items-center gap-2'>
+										<div className='px-3 py-2 bg-amber-500/10/80 border-b border-amber-100/50 flex items-center gap-2'>
 											<Calendar size={12} className='text-amber-700' />
 											<span className='text-[10px] font-bold uppercase tracking-wider text-amber-900'>
 												{session.name}

@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -304,7 +299,7 @@ export const TableOfContents = ({
 			*/}
 			<div className={clsx(visibilityClass, 'sticky top-90 w-64 shrink-0 self-start', className)}>
 				<div className='max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pb-10 pr-2'>
-					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-gray-400'>
+					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/70'>
 						<AlignLeft size={12} />
 						<span>On this Page</span>
 					</div>
@@ -316,7 +311,7 @@ export const TableOfContents = ({
 			<div className={clsx('fixed bottom-6 right-6 z-40', mobileToggleClass)}>
 				<button
 					onClick={() => setIsOpen(true)}
-					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
+					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-500/10 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
 					aria-label='Open Table of Contents'>
 					<List size={20} />
 				</button>
@@ -346,8 +341,8 @@ export const TocItem = ({ item, isActive, onClick }) => {
 			className={clsx(
 				'group flex items-start text-left w-full py-1.5 transition-all duration-200 border-l-[3px] px-4',
 				isActive
-					? 'border-amber-600 text-amber-700 font-bold bg-amber-50/50'
-					: 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300'
+					? 'border-amber-600 text-amber-700 font-bold bg-amber-500/10/50'
+					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
 			)}>
 			<span className={clsx('text-[13px] leading-snug', item.depth === 3 && 'ml-3 opacity-90 text-[12px]')}>
 				{item.text}

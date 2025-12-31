@@ -31,14 +31,14 @@ export const ActiveQuestsWidget = ({ quests }) => {
 							<div className='flex items-start gap-3'>
 								<Circle size={16} className='text-blue-500 shrink-0 mt-0.5' strokeWidth={2.5} />
 								<div className='flex-1 min-w-0'>
-									<p className='text-sm font-semibold text-foreground group-hover:text-accent transition-colors mb-1'>
+									<p className='text-sm font-semibold text-foreground group-hover:text-primary transition-colors mb-1'>
 										{quest.name}
 									</p>
 									{progress && (
 										<div className='flex items-center gap-2'>
 											<div className='flex-1 h-1.5 bg-muted rounded-full overflow-hidden border border-border'>
 												<div
-													className='h-full bg-blue-500 transition-all'
+													className='h-full bg-blue-500/100 transition-all'
 													style={{ width: `${(progress.completed / progress.total) * 100}%` }}
 												/>
 											</div>

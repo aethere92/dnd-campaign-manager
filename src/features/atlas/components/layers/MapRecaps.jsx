@@ -25,7 +25,7 @@ export const MapRecaps = ({ sessions }) => {
 								<Popup closeButton={false} className='leaflet-popup-clean'>
 									<div className='flex flex-col w-[200px] font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
 										{/* Header */}
-										<div className='px-3 py-2 bg-amber-50/80 border-b border-amber-100/50 flex items-center gap-2'>
+										<div className='px-3 py-2 bg-amber-500/10/80 border-b border-amber-100/50 flex items-center gap-2'>
 											<Calendar size={12} className='text-amber-700' />
 											<span className='text-[10px] font-bold uppercase tracking-wider text-amber-900'>
 												{session.name}

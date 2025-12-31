@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES GRAPH
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES GRAPH
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES GRAPH
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -281,11 +276,12 @@ export default function RelationshipGraph() {
 
 	return (
 		// IMPLEMENTATION: Constellation Background via CSS radial-gradient
+		// FIX: Replaced #e5e5e5 with var(--border) to fix contrast in dark mode
 		<div
 			className='h-full w-full relative bg-background overflow-hidden'
 			style={{
 				backgroundImage:
-					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
 				backgroundSize: '40px 40px, 20px 20px',
 				backgroundPosition: '0 0, 20px 20px',
 			}}>
@@ -453,10 +449,10 @@ export const GraphLegend = () => {
 
 	return (
 		<div className='absolute top-4 left-4 z-10 bg-background/90 p-3 rounded shadow border border-border backdrop-blur pointer-events-none select-none'>
-			<h2 className='text-xs font-bold uppercase text-gray-400 mb-2'>Legend</h2>
+			<h2 className='text-xs font-bold uppercase text-muted-foreground/70 mb-2'>Legend</h2>
 			<div className='space-y-1.5'>
 				{legendItems.map((config) => (
-					<div key={config.label} className='flex items-center gap-2 text-xs font-medium text-gray-600'>
+					<div key={config.label} className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
 						<div className='w-2.5 h-2.5 rounded-full shadow-sm' style={{ backgroundColor: config.color }} />
 						{config.label}
 					</div>
@@ -482,15 +478,23 @@ export const CYTOSCAPE_STYLES = [
 			width: 'mapData(degree, 3, 20, 30, 50)',
 			height: 'mapData(degree, 3, 20, 30, 50)',
 			'font-family': 'Inter, sans-serif',
-			'font-size': 14,
-			'font-weight': 'bold',
+			'font-size': '10pt',
+			'font-weight': '500',
 			'text-valign': 'bottom',
 			'text-margin-y': 6,
-			'text-background-color': '#fdfbf7',
-			'text-background-opacity': 0.8,
-			'text-background-padding': 3,
+			'letter-spacing': 0,
+
+			// FIX: Hardcode robust colors that work on both backgrounds
+			// Using a semi-transparent white background for text ensures readability
+			// on both the Dark Mode stars and the Parchment texture.
+			'text-background-color': '#ffffff',
+			'text-background-opacity': 0.7,
+			'text-background-padding': 2,
 			'text-background-shape': 'roundrectangle',
-			color: '#1f2937',
+
+			// Dark text is readable against the white text-background
+			color: '#000000',
+
 			'text-wrap': 'ellipsis',
 			'text-max-width': 100,
 			'transition-property': 'opacity, width, height',
@@ -501,17 +505,21 @@ export const CYTOSCAPE_STYLES = [
 	{
 		selector: 'node.minor',
 		style: {
-			// ADJUSTED: Increased from 14 to 20 for better visibility
 			width: 20,
 			height: 20,
-			// 'background-image': 'none', // Hide Icon
-			'background-color': 'data(color)', // Use entity color as fill
+			'background-color': 'data(color)',
 			'border-width': 1,
 			'border-color': 'data(color)',
 			'font-size': 10,
 			'text-margin-y': 4,
-			'text-background-opacity': 0, // No background for text to reduce clutter
-			color: '#4b5563', // Gray text
+
+			// Minor nodes: clear text with white outline (halo)
+			// This is cleaner than a box for small items
+			'text-background-opacity': 0,
+			'text-outline-color': '#ffffff',
+			'text-outline-width': 2,
+			'text-outline-opacity': 0.8,
+			color: '#374151', // Gray-700
 		},
 	},
 	// --- EDGES ---
@@ -522,7 +530,7 @@ export const CYTOSCAPE_STYLES = [
 			'target-arrow-color': 'data(color)',
 			'curve-style': 'bezier',
 			width: 1,
-			opacity: 0.2, // Slightly more transparent to handle overlap
+			opacity: 0.3,
 			'arrow-scale': 0.6,
 			'target-arrow-shape': 'triangle',
 			events: 'no',
@@ -554,7 +562,6 @@ export const CYTOSCAPE_STYLES = [
 	},
 ];
 
-// PERFORMANCE: Switch to fCoSE layout with "High Spacing" profile
 export const LAYOUT_CONFIG = {
 	name: 'fcose',
 	quality: 'default',
@@ -563,49 +570,21 @@ export const LAYOUT_CONFIG = {
 	animationDuration: 1000,
 	fit: true,
 	padding: 50,
-
-	// CRITICAL: Tells the physics engine to treat the node as "Icon + Text Label" size
-	// instead of just "Icon" size.
 	nodeDimensionsIncludeLabels: true,
-
-	// --- PHYSICS SETTINGS (Aggressive Spacing) ---
-
-	// 1. REPULSION (The "Personal Space" Force)
-	// Drastically increased. This ensures that even if two nodes are connected,
-	// the text labels push against each other to prevent overlap.
 	nodeRepulsion: (node) => {
 		const degree = node.data('degree') || 0;
-		// Base: 40,000 (was 6,500)
-		// Per Connection: 5,000 (was 1,500)
 		return 40000 + degree * 5000;
 	},
-
-	// 2. EDGE LENGTH (The "Leash" Length)
-	// Increased to ensure hubs with many connections have a wider circumference.
 	idealEdgeLength: (edge) => {
 		const d1 = edge.source().data('degree') || 0;
 		const d2 = edge.target().data('degree') || 0;
 		const maxDegree = Math.max(d1, d2);
-
-		// Base: 150 (was 100)
-		// Per Degree: 30 (was 15)
 		return 150 + maxDegree * 30;
 	},
-
-	// 3. ELASTICITY
-	// Lower = Stretcher edges. Allows Repulsion to win over Edge Length.
 	edgeElasticity: (edge) => 0.1,
-
-	// 4. GRAVITY (The "Centering" Force)
-	// Lowered significantly. This stops the graph from collapsing on itself.
-	gravity: 0.25, // (was 0.25)
+	gravity: 0.25,
 	gravityRange: 3.8,
-
-	// 5. ITERATIONS
-	// More time for the simulation to resolve collisions
 	numIter: 2500,
-
-	// Disconnected components spacing
 	tile: true,
 	tilingPaddingVertical: 100,
 	tilingPaddingHorizontal: 100,

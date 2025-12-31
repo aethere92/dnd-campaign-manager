@@ -47,8 +47,8 @@ export default function CollapsibleSection({
 			<button
 				onClick={() => setIsOpen(!isOpen)}
 				className={clsx(
-					'w-full flex items-center gap-2 font-semibold uppercase tracking-wider text-gray-500',
-					'hover:text-gray-700 transition-colors select-none',
+					'w-full flex items-center gap-2 font-semibold uppercase tracking-wider text-muted-foreground',
+					'hover:text-foreground/80 transition-colors select-none',
 					sizeClasses[size],
 					headerPadding
 				)}>

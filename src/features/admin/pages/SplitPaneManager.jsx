@@ -138,11 +138,11 @@ export default function SplitPaneManager() {
 										key={item.id}
 										onClick={() => navigate(`/dm/manage/${normalizedType}/${item.id}`)}
 										className={`group relative flex items-center w-full text-left transition-all cursor-pointer ${
-											isActive ? 'bg-amber-50/80' : 'bg-background hover:bg-muted/50'
+											isActive ? 'bg-amber-500/10/80' : 'bg-background hover:bg-muted/50'
 										}`}>
 										{/* Active Marker Strip */}
 										<div
-											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500' : 'bg-transparent'}`}
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500/100' : 'bg-transparent'}`}
 										/>
 
 										{/* Main Content Area */}
@@ -163,9 +163,9 @@ export default function SplitPaneManager() {
 														title={item.status}
 														className={`w-1.5 h-1.5 rounded-full shrink-0 ${
 															item.status.toLowerCase().includes('active')
-																? 'bg-emerald-500'
+																? 'bg-emerald-500/100'
 																: item.status.toLowerCase().includes('dead')
-																? 'bg-red-500'
+																? 'bg-red-500/100'
 																: 'bg-slate-300'
 														}`}
 													/>

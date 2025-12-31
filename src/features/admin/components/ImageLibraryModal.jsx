@@ -56,7 +56,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 												onSelect(fullPath);
 												onClose();
 											}}
-											className='group relative aspect-square rounded-md border border-border bg-white overflow-hidden hover:border-amber-500 hover:ring-2 hover:ring-amber-500/20 transition-all shadow-sm'>
+											className='group relative aspect-square rounded-md border border-border bg-card overflow-hidden hover:border-amber-500 hover:ring-2 hover:ring-amber-500/20 transition-all shadow-sm'>
 											<img
 												src={previewUrl}
 												alt={file}

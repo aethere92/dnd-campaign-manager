@@ -25,7 +25,6 @@ export const TimelineEvent = ({ event }) => {
 	}, [event.tags]);
 
 	return (
-		// OPTIMIZATION: Reduced gap on mobile (gap-3 vs gap-4)
 		<div className='relative flex gap-3 md:gap-4 group'>
 			{/* Icon Bubble */}
 			<div
@@ -38,16 +37,16 @@ export const TimelineEvent = ({ event }) => {
 
 			{/* Content */}
 			<div className='flex-1 -mt-1 pb-2 min-w-0'>
-				<h4 className='text-sm font-bold text-gray-800 mb-1 flex flex-wrap items-center gap-2'>
+				{/* FIX: Title color muted to text-foreground/80 */}
+				<h4 className='text-sm font-bold text-foreground/80 mb-1 flex flex-wrap items-center gap-2'>
 					<span className='mr-auto'>{event.title}</span>
-					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-800 border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
+					<span className='text-[9px] font-normal uppercase tracking-wider text-foreground border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
 						{event.typeLabel}
 					</span>
 				</h4>
 
 				{event.description && (
-					// OPTIMIZATION: Removed 'text-justify', added 'text-left' and 'text-pretty'
-					<div className='text-sm text-gray-600 leading-relaxed text-pretty text-left'>
+					<div className='text-sm text-muted-foreground leading-relaxed text-pretty text-left'>
 						<SmartMarkdown>{event.description}</SmartMarkdown>
 					</div>
 				)}
@@ -68,7 +67,8 @@ export const TimelineEvent = ({ event }) => {
 											<span
 												key={`${tag.name}-${idx}`}
 												className={clsx(
-													'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default whitespace-nowrap',
+													// FIX: Changed font-bold to font-semibold for better legibility
+													'inline-flex items-center gap-1 text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border cursor-default whitespace-nowrap',
 													styles.bg,
 													styles.text,
 													styles.border

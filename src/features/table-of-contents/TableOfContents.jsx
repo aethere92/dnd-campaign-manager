@@ -39,7 +39,7 @@ export const TableOfContents = ({
 			*/}
 			<div className={clsx(visibilityClass, 'sticky top-90 w-64 shrink-0 self-start', className)}>
 				<div className='max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pb-10 pr-2'>
-					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-gray-400'>
+					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/70'>
 						<AlignLeft size={12} />
 						<span>On this Page</span>
 					</div>
@@ -51,7 +51,7 @@ export const TableOfContents = ({
 			<div className={clsx('fixed bottom-6 right-6 z-40', mobileToggleClass)}>
 				<button
 					onClick={() => setIsOpen(true)}
-					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
+					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-500/10 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
 					aria-label='Open Table of Contents'>
 					<List size={20} />
 				</button>

@@ -192,7 +192,7 @@ export default function SessionEventManager({ sessionId }) {
 											{evt.relationships.map((rel) => (
 												<div
 													key={rel.id}
-													className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-white border border-border text-[10px] text-muted-foreground shadow-sm select-none'>
+													className='inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-card border border-border text-[10px] text-muted-foreground shadow-sm select-none'>
 													<span className='font-medium text-foreground'>{rel.target?.name}</span>
 													<span className='text-[9px] opacity-60 uppercase'>{rel.target?.type}</span>
 												</div>
@@ -204,12 +204,12 @@ export default function SessionEventManager({ sessionId }) {
 								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
 									<button
 										onClick={() => handleEdit(evt)}
-										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
 										<Edit2 size={18} />
 									</button>
 									<button
 										onClick={() => handleDelete(evt.id)}
-										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'>
 										<Trash2 size={18} />
 									</button>
 								</div>

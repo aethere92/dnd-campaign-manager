@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES WIKI
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES WIKI
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES WIKI
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -360,13 +355,13 @@ import { WikiSidebar } from '@/features/wiki/components/navigation/WikiSidebar';
 export default function WikiLayout() {
 	const navigation = useWikiNavigation();
 
-	// REMOVED: The useEffect that auto-redirects to findFirstContentEntity
-
 	return (
 		<div className='relative flex flex-col lg:flex-row h-full bg-background overflow-hidden'>
-			<WikiSidebar navigation={navigation} className='lg:w-72 lg:order-2 lg:border-l lg:border-border lg:h-full z-30' />
+			{/* Sidebar - First in DOM for Mobile Top position, Ordered 2nd for Desktop Right position */}
+			<WikiSidebar navigation={navigation} className='lg:order-2 lg:border-l lg:border-border lg:h-full z-30' />
 
-			<div className='flex-1 lg:order-1 overflow-y-auto bg-background relative z-0'>
+			{/* Main Content */}
+			<div className='flex-1 lg:order-1 overflow-y-auto bg-background relative z-0 custom-scrollbar'>
 				<Outlet />
 			</div>
 		</div>
@@ -552,6 +547,7 @@ import { clsx } from 'clsx';
 import EntityIcon from '@/domain/entity/components/EntityIcon';
 import EntityLink from '@/domain/entity/components/EntityLink';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { useTheme } from '@/shared/hooks/useTheme'; // FIX: Import theme hook
 
 // ... (getActionIcon helper remains the same) ...
 const getActionIcon = (type) => {
@@ -580,16 +576,37 @@ const getActionIcon = (type) => {
 const CombatLogEntry = ({ action }) => {
 	const { isFriendly, actor, target, description, result, effect, type } = action;
 	const ActionIcon = getActionIcon(type);
+	const { theme } = useTheme(); // FIX: Use app theme state
 
-	const rowBg = isFriendly ? 'bg-emerald-50/30' : 'bg-red-50/30';
-	const actorColor = isFriendly ? 'text-emerald-800' : 'text-red-900';
+	// FIX: Logic based on explicit App Theme, ignoring System Preference
+	const isDark = theme === 'dark';
+
+	// Background:
+	// - Friendly: None
+	// - Hostile:
+	//    - Dark: Red-900 at 10% (Visible on black)
+	//    - Light/DND: Red-500 at 5% (Subtle on parchment/white)
+	const rowBg = isFriendly ? '' : isDark ? 'bg-red-900/5' : 'bg-red-500/2';
+
+	// Text Colors:
+	// - Dark: Lighter shades (400)
+	// - Light/DND: Darker shades (700)
+	const manualActorColor = isFriendly
+		? isDark
+			? 'text-emerald-400'
+			: 'text-emerald-700'
+		: isDark
+		? 'text-red-400'
+		: 'text-red-700';
+
+	const effectIconColor = isDark ? 'text-amber-500' : 'text-amber-600';
 
 	return (
 		<div
 			className={clsx(
-				'flex items-start gap-2.5 p-2.5 border-b border-stone-200 last:border-0 text-sm transition-colors group',
+				'flex items-start gap-2.5 p-2.5 border-b border-border last:border-0 text-sm transition-colors group',
 				'hover:bg-muted/50',
-				!isFriendly && rowBg
+				rowBg
 			)}>
 			{/* 1. Large Sidebar Icon */}
 			<div className='shrink-0 mt-0.5'>
@@ -606,21 +623,25 @@ const CombatLogEntry = ({ action }) => {
 							id={actor.id}
 							type={actor.type}
 							inline={true}
-							showIcon={true} // ENABLED
-							customIconUrl={actor.iconUrl} // PASSED
-							className={clsx('font-serif font-bold text-sm !no-underline hover:underline', actorColor)}>
+							showIcon={true}
+							customIconUrl={actor.iconUrl}
+							className='font-serif font-bold text-sm !no-underline hover:underline'>
 							{actor.name}
 						</EntityLink>
 					) : (
-						// Manual Entry - Text with Generic Icon
-						<span className={clsx('font-serif font-bold text-sm flex items-center gap-1.5 cursor-default', actorColor)}>
+						// Manual Entry
+						<span
+							className={clsx(
+								'font-serif font-bold text-sm flex items-center gap-1.5 cursor-default',
+								manualActorColor
+							)}>
 							<EntityIcon type={actor.type} size={14} inline />
 							{actor.name}
 						</span>
 					)}
 
 					{/* Action Badge */}
-					<span className='text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider flex border border-stone-200 items-center gap-1 rounded-sm px-1.5'>
+					<span className='text-[10px] uppercase font-bold text-muted-foreground/70 tracking-wider flex border border-border items-center gap-1 rounded-sm px-1.5 bg-background/50'>
 						<ActionIcon size={10} />
 						{type}
 					</span>
@@ -635,9 +656,9 @@ const CombatLogEntry = ({ action }) => {
 									id={target.id}
 									type={target.type}
 									inline={true}
-									showIcon={true} // ENABLED
-									customIconUrl={target.iconUrl} // PASSED
-									className='font-serif font-semibold text-foreground text-sm !no-underline hover:underline hover:text-amber-700'>
+									showIcon={true}
+									customIconUrl={target.iconUrl}
+									className='font-serif font-semibold text-sm !no-underline hover:underline'>
 									{target.name}
 								</EntityLink>
 							) : (
@@ -651,7 +672,7 @@ const CombatLogEntry = ({ action }) => {
 
 					{/* Result Badge */}
 					{result && (
-						<span className='ml-auto text-[10px] font-bold text-foreground/80 bg-background/80 px-1.5 py-0.5 rounded border border-stone-200 whitespace-nowrap'>
+						<span className='ml-auto text-[10px] font-bold text-foreground/80 bg-background/80 px-1.5 py-0.5 rounded border border-border whitespace-nowrap'>
 							{result}
 						</span>
 					)}
@@ -666,9 +687,11 @@ const CombatLogEntry = ({ action }) => {
 
 				{/* Effect */}
 				{effect && (
-					<div className='mt-1 flex items-center gap-1.5 text-xs font-medium text-amber-900/80 w-fit px-1.5 py-0.5 rounded -ml-1'>
-						<CornerDownRight size={10} className='text-amber-600' />
-						<SmartMarkdown components={{ p: 'span' }}>{effect}</SmartMarkdown>
+					<div className='mt-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground w-fit px-1.5 py-0.5 rounded -ml-1'>
+						<CornerDownRight size={10} className={effectIconColor} />
+						<span className='italic opacity-90'>
+							<SmartMarkdown components={{ p: 'span' }}>{effect}</SmartMarkdown>
+						</span>
 					</div>
 				)}
 			</div>
@@ -682,14 +705,14 @@ export const EncounterTimeline = ({ rounds }) => {
 	return (
 		<div className='my-6'>
 			<h3 className='text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2'>
-				<Swords size={14} className='text-accent' /> Combat Log
+				<Swords size={14} className='text-primary' /> Combat Log
 			</h3>
 
-			<div className='border border-stone-200 rounded-lg overflow-hidden bg-background'>
+			<div className='border border-border rounded-lg overflow-hidden bg-background'>
 				{Object.entries(rounds).map(([roundNum, actions]) => (
 					<div key={roundNum}>
 						{/* Round Header */}
-						<div className='bg-muted/80 border-b border-stone-200 px-3 py-1.5 flex items-center justify-between'>
+						<div className='bg-muted/80 border-b border-border px-3 py-1.5 flex items-center justify-between'>
 							<span className='text-xs font-serif font-bold text-foreground'>Round {roundNum}</span>
 							<span className='text-[9px] font-bold uppercase text-muted-foreground tracking-wider'>
 								{actions.length} Turns
@@ -700,7 +723,7 @@ export const EncounterTimeline = ({ rounds }) => {
 						<div
 							className={clsx(
 								'bg-background',
-								Number(roundNum) !== Object.keys(rounds).length && 'border-b border-stone-200'
+								Number(roundNum) !== Object.keys(rounds).length && 'border-b border-border'
 							)}>
 							{actions.map((action) => (
 								<CombatLogEntry key={action.id} action={action} />
@@ -736,12 +759,8 @@ const LevelUpBanner = ({ level }) => {
 			{/* Full Width, Fixed Height (~64px) Banner */}
 			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-amber-700/80 rounded-lg shadow-sm w-full overflow-hidden'>
 				{/* Logo Section - Vertical Center */}
-				<div className='shrink-0 h-full flex items-center px-5 bg-amber-50/50 border-r border-border/40'>
-					<img
-						src={logoPath}
-						alt='Campaign Logo'
-						className='h-12 w-auto object-contain opacity-80 drop-shadow-sm mix-blend-multiply'
-					/>
+				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10/50 border-r border-border/40'>
+					<img src={logoPath} alt='Campaign Logo' className='h-12 w-auto object-contain opacity-80 drop-shadow-sm' />
 				</div>
 
 				{/* Text Content */}
@@ -749,7 +768,7 @@ const LevelUpBanner = ({ level }) => {
 					<h3 className='text-xs font-serif font-bold text-amber-900 uppercase tracking-[0.15em] leading-none m-0! p-0!'>
 						Level Up
 					</h3>
-					<p className='font-serif text-sm text-stone-700 leading-none p-0! m-0!'>
+					<p className='font-serif text-sm text-card-foreground leading-none p-0! m-0!'>
 						The party has reached <span className='font-bold text-foreground'>Level {level}</span>.
 					</p>
 				</div>
@@ -769,7 +788,7 @@ export const EntityBody = ({
 	mapMarkers,
 }) => {
 	return (
-		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
+		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
 				<div className='mb-4'>
 					<SmartMarkdown>{summary}</SmartMarkdown>
@@ -802,7 +821,10 @@ export const EntityBody = ({
 					return (
 						<div key={prop.key}>
 							<SectionDivider />
-							<h3 className='capitalize text-lg mt-0 font-serif text-accent mb-2 font-bold'>{prop.key}</h3>
+							{/* FIX: Changed text-accent (invisible) to text-amber-900/text-foreground for brown/dark headers */}
+							<h3 className='capitalize text-lg mt-0 font-serif text-amber-900 dark:text-foreground mb-2 font-bold'>
+								{prop.key}
+							</h3>
 							<ul className='grid grid-cols-1 gap-1.5 pl-1 list-none my-0'>
 								{prop.value.map((item, idx) => (
 									<li key={idx} className='flex items-start gap-3 m-0 p-0 text-foreground group'>
@@ -821,7 +843,10 @@ export const EntityBody = ({
 				return (
 					<div key={prop.key}>
 						<SectionDivider />
-						<h3 className='capitalize text-lg font-serif text-accent mb-1 mt-0 inline-block pb-0.5'>{prop.key}</h3>
+						{/* FIX: Changed text-accent (invisible) to text-amber-900/text-foreground */}
+						<h3 className='capitalize text-lg font-serif text-amber-900 dark:text-foreground mb-1 mt-0 inline-block pb-0.5'>
+							{prop.key}
+						</h3>
 						<div className='mt-0.5'>
 							<SmartMarkdown>{prop.value}</SmartMarkdown>
 						</div>
@@ -832,7 +857,7 @@ export const EntityBody = ({
 				<div className='mt-2'>
 					<SectionDivider />
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
-						<History size={16} className='text-accent' /> Events
+						<History size={16} className='text-amber-900/70 dark:text-muted-foreground' /> Events
 					</h3>
 					<EntityHistory events={history} />
 				</div>
@@ -907,14 +932,29 @@ export const EntityHeader = ({ data }) => {
 	// Only show edit controls in Dev mode
 	const isDev = import.meta.env.DEV;
 
+	// FIX: Improved "Spotlight" gradient for headers without images
+	// Creates a subtle light source from the top-center that fades into the page background
+	const noImageStyle = !imageUrl
+		? {
+				background: `
+            radial-gradient(
+                80% 100% at 50% -20%, 
+                var(--muted) 0%, 
+                var(--background) 100%
+            )
+        `,
+		  }
+		: {};
+
 	return (
 		<>
 			<div
 				className={clsx(
 					// HEIGHT ADJUSTMENT: Increased base height and md height
-					'h-48 md:h-64 relative group overflow-hidden header-bg-fallback select-none',
-					imageUrl && 'cursor-pointer'
+					'h-48 md:h-64 relative group overflow-hidden select-none',
+					imageUrl ? 'cursor-pointer' : 'border-b border-border/40' // Add subtle border if no image
 				)}
+				style={noImageStyle}
 				onClick={() => imageUrl && setIsLightboxOpen(true)}>
 				{/* 1. BACKGROUND LAYER (Banner) */}
 				{imageUrl && (
@@ -936,11 +976,12 @@ export const EntityHeader = ({ data }) => {
 								<Maximize2 size={16} />
 							</div>
 						</div>
+
+						{/* FIX: Smoother, Longer Gradient Overlay */}
+						{/* Uses a longer fade (via-30% to via-60%) to avoid the "harsh line" effect */}
+						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-20% via-[var(--background)]/20 via-60% to-transparent pointer-events-none' />
 					</>
 				)}
-
-				{/* GRADIENT MASK */}
-				<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/60 via-15% to-transparent pointer-events-none' />
 
 				{/* 2. DEVELOPER ACTION BAR */}
 				{isDev && entityId && (
@@ -961,31 +1002,36 @@ export const EntityHeader = ({ data }) => {
 				{/* 3. CONTENT LAYER */}
 				<div className='absolute bottom-0 left-0 w-full p-4 md:p-6 pointer-events-none'>
 					<div className='max-w-6xl mx-auto flex items-end gap-5'>
-						{/* AVATAR - Slightly larger to match new height */}
-						<div className='hidden md:flex md:items-end pointer-events-auto'>
+						{/* AVATAR - FIX: Size alignment and container logic */}
+						<div className='hidden md:flex md:items-end pointer-events-auto mb-1'>
 							<EntityIcon
 								type={typeLabel.toLowerCase()}
 								customIconUrl={avatarUrl}
-								size={36}
+								// FIX: Passed larger size to component to fill container
+								size={64}
 								showBackground
-								className='w-20 h-20 shadow-xl border-2 border-background/50'
+								// FIX: Adjusted width/height classes to be proportional (w-20/h-20 is 80px)
+								className='w-[84px] h-[84px] shadow-xl border-2 border-background/50 object-cover bg-background'
 							/>
 						</div>
 
 						{/* Title & Status Metadata */}
-						<div className='flex-1 pb-1'>
+						<div className='flex-1 pb-1 min-w-0'>
 							<div className='flex items-center flex-wrap gap-2 mb-2'>
 								{/* Type Badge */}
-								<EntityBadge type={typeLabel.toLowerCase()} size='sm' variant='solid' />
+								<EntityBadge
+									type={typeLabel.toLowerCase()}
+									size='sm'
+									variant='solid'
+									className='bg-background/80 backdrop-blur-sm border-border/50 text-foreground shadow-sm'
+								/>
 
 								{/* Status Badge */}
 								{status.hasStatus && (
 									<span
 										className={clsx(
-											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
-											status.isDead
-												? 'border-red-600 text-red-700 bg-red-50'
-												: 'border-emerald-600 text-emerald-700 bg-emerald-50'
+											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-sm',
+											status.isDead ? 'badge-dead' : 'badge-alive'
 										)}>
 										{status.label}
 									</span>
@@ -995,7 +1041,7 @@ export const EntityHeader = ({ data }) => {
 								{priority && (
 									<span
 										className={clsx(
-											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
+											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-sm',
 											getPriorityStyles(priority)
 										)}>
 										{priority} Priority
@@ -1007,13 +1053,13 @@ export const EntityHeader = ({ data }) => {
 									extraTags.map((tag, i) => (
 										<span
 											key={i}
-											className='px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm bg-white/80 border-slate-300 text-slate-700'>
+											className='px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm bg-card/80 backdrop-blur-sm border-slate-300 text-slate-700 dark:text-slate-300 dark:border-slate-700'>
 											{tag}
 										</span>
 									))}
 							</div>
 
-							<h1 className='text-3xl md:text-5xl font-serif font-bold text-foreground leading-none drop-shadow-sm tracking-tight'>
+							<h1 className='text-3xl md:text-5xl font-serif font-bold text-foreground leading-none drop-shadow-sm tracking-tight break-words'>
 								{title}
 							</h1>
 						</div>
@@ -1063,7 +1109,7 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 						<div className='flex items-center gap-2 mb-1 flex-wrap'>
 							<h4 className='font-bold text-foreground text-sm mt-0.5'>{evt.title}</h4>
 							{showSession && evt.session_number != null && (
-								<span className='inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-auto max-w-[45%] truncate bg-stone-100 text-stone-500 border-stone-200/60'>
+								<span className='inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-auto max-w-[45%] truncate bg-muted text-muted-foreground border-border/60'>
 									<Calendar size={9} />
 									Session {evt.session_number}
 								</span>
@@ -1087,30 +1133,27 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, ImageOverlay, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Map as MapIcon, Maximize, Minimize } from 'lucide-react';
+import { Map as MapIcon, Maximize, Minimize, BookOpen, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
-/**
- * REFACTORED: MapController now handles viewport recalibration
- * when switching in/out of fullscreen modes.
- */
 const MapController = ({ bounds, activeFullscreen }) => {
 	const map = useMap();
-
 	useEffect(() => {
 		if (bounds && map) {
-			// Small timeout ensures the DOM has finished its layout transition (h-96 <-> h-screen)
 			const timer = setTimeout(() => {
 				map.invalidateSize({ animate: true });
 				map.fitBounds(bounds, { padding: [20, 20] });
 			}, 100);
-
 			return () => clearTimeout(timer);
 		}
-	}, [map, bounds, activeFullscreen]); // Re-run when fullscreen toggles
-
+	}, [map, bounds, activeFullscreen]);
 	return null;
 };
 
@@ -1120,18 +1163,17 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
 	const containerRef = useRef(null);
+	const navigate = useNavigate();
+	const { map: entityMap } = useEntityIndex();
 
-	// Unified flag for UI
 	const activeFullscreen = isFullscreen || isPseudoFullscreen;
 
-	// Native Fullscreen Sync
 	useEffect(() => {
 		const handler = () => setIsFullscreen(!!document.fullscreenElement);
 		document.addEventListener('fullscreenchange', handler);
 		return () => document.removeEventListener('fullscreenchange', handler);
 	}, []);
 
-	// iOS Fallback Escape Handler
 	useEffect(() => {
 		const handleEsc = (e) => {
 			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
@@ -1156,10 +1198,8 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 	const toggleFullscreen = (e) => {
 		e.stopPropagation();
 		if (!containerRef.current) return;
-
 		const supportsNative =
 			document.fullscreenEnabled || document.webkitFullscreenEnabled || containerRef.current.requestFullscreen;
-
 		if (supportsNative) {
 			if (!document.fullscreenElement) {
 				containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
@@ -1207,51 +1247,127 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 						width: '100%',
 						backgroundColor: 'var(--background)',
 						backgroundImage:
-							'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+							'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
 						backgroundSize: '40px 40px, 20px 20px',
 						backgroundPosition: '0 0, 20px 20px',
 					}}>
-					{/* PASS activeFullscreen to the controller */}
 					<MapController bounds={dimensions} activeFullscreen={activeFullscreen} />
 					<ImageOverlay url={imageUrl} bounds={dimensions} />
 
-					{markers.map((m, idx) => (
-						<Marker key={idx} position={[m.lat, m.lng]} icon={resolveMarkerIcon(m)}>
-							{m.label && (
-								<Popup>
-									<div className='marker-popup-card'>
-										<div className='marker-popup-header'>
-											<span className='marker-popup-category'>{m.category || 'POI'}</span>
-											<div className='marker-popup-title'>{m.label}</div>
+					{markers.map((marker, idx) => {
+						const entityMatch = Array.from(entityMap.values()).find(
+							(e) => e.name.toLowerCase() === marker.label.toLowerCase()
+						);
+						const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
+
+						const displayData = {
+							title: marker.label,
+							category:
+								marker.category && marker.category !== 'default'
+									? marker.category
+									: entityMatch
+									? entityMatch.type
+									: 'Point of Interest',
+							description: marker.description
+								? marker.description
+								: entityMatch
+								? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
+								: null,
+							image: entityMatch ? resolveImageUrl(entityAttrs, 'background') : null,
+						};
+
+						const entityConfig = entityMatch ? getEntityConfig(entityMatch.type) : null;
+
+						const handleWikiNav = (e) => {
+							e.stopPropagation();
+							if (entityMatch) {
+								navigate(`/wiki/${entityMatch.type}/${entityMatch.id}`);
+							}
+						};
+
+						return (
+							<Marker
+								key={`${marker.label}-${idx}`}
+								position={[marker.lat, marker.lng]}
+								icon={resolveMarkerIcon(marker)}>
+								{marker.label && (
+									<Popup className='custom-popup-clean' closeButton={false}>
+										<div className='flex flex-col w-full font-sans bg-background rounded-lg overflow-hidden border border-border shadow-sm'>
+											{displayData.image && (
+												<div className='h-24 w-full relative bg-muted'>
+													<img
+														src={displayData.image}
+														alt={displayData.title}
+														className='w-full h-full object-cover m-0!'
+													/>
+													{/* FIX: Improved Gradient */}
+													<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/80 via-30% to-transparent pointer-events-none' />
+												</div>
+											)}
+
+											<div className={clsx('px-4 pb-3', displayData.image ? 'pt-2 -mt-8 relative z-10' : 'pt-4')}>
+												<div className='flex items-start justify-between gap-2'>
+													<div>
+														<span
+															className={clsx(
+																'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
+																entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
+															)}>
+															{displayData.category}
+														</span>
+														<h3 className='font-serif font-bold text-lg leading-tight text-foreground drop-shadow-sm m-0!'>
+															{displayData.title}
+														</h3>
+													</div>
+													{entityConfig && (
+														<div
+															className={clsx(
+																'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
+																entityConfig.tailwind.border,
+																entityConfig.tailwind.text
+															)}>
+															<entityConfig.icon size={14} />
+														</div>
+													)}
+												</div>
+
+												<div className='h-px w-full bg-border/50 my-3' />
+
+												<div className='text-xs text-muted-foreground leading-relaxed max-h-32 overflow-y-auto custom-scrollbar'>
+													{displayData.description || <span className='italic opacity-70'>No details available.</span>}
+												</div>
+											</div>
+
+											{entityMatch && (
+												<div className='bg-muted/50 p-2 border-t border-border'>
+													<button
+														onClick={handleWikiNav}
+														className='w-full flex items-center justify-between px-3 py-1.5 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-colors text-xs font-semibold group'>
+														<span className='flex items-center gap-2'>
+															<BookOpen size={12} /> View Encyclopedia
+														</span>
+														<ArrowRight size={12} className='opacity-0 group-hover:opacity-100 transition-opacity' />
+													</button>
+												</div>
+											)}
 										</div>
-										{m.description && <div className='marker-popup-body'>{m.description}</div>}
-									</div>
-								</Popup>
-							)}
-						</Marker>
-					))}
+									</Popup>
+								)}
+							</Marker>
+						);
+					})}
 				</MapContainer>
 
 				<div
-					className='absolute z-[10001]'
-					style={
-						activeFullscreen
-							? {
-									// FULLSCREEN: Bottom-Right
-									bottom: 'max(2rem, env(safe-area-inset-bottom))',
-									right: 'max(2rem, env(safe-area-inset-right))',
-							  }
-							: {
-									// NORMAL: Top-Right
-									top: '1rem',
-									right: '1rem',
-							  }
-					}>
+					className={clsx(
+						'absolute z-[10060] transition-all duration-300',
+						activeFullscreen ? 'top-[50%] right-4 lg:top-6 lg:right-6 pr-safe pt-safe' : 'top-4 right-4'
+					)}>
 					<button
 						onClick={toggleFullscreen}
 						className={clsx(
 							'p-3 rounded-full border border-border shadow-2xl transition-all active:scale-90',
-							'bg-background/95 backdrop-blur-md text-accent hover:bg-accent hover:text-white'
+							'bg-background/95 backdrop-blur-md text-foreground hover:bg-primary hover:text-white'
 						)}
 						title={activeFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
 						{activeFullscreen ? <Minimize size={20} strokeWidth={2.5} /> : <Maximize size={20} strokeWidth={2.5} />}
@@ -1278,10 +1394,12 @@ const AbilityGrid = ({ stats }) => (
 		{stats.map((stat, i) => (
 			<div
 				key={i}
-				className='bg-white/60 border border-stone-200/80 rounded p-1.5 text-center flex flex-col items-center shadow-sm backdrop-blur-sm'>
-				<span className='text-[9px] font-bold text-stone-400 uppercase tracking-widest leading-none'>{stat.name}</span>
-				<span className='text-lg font-bold text-stone-800 leading-none my-1 font-serif'>{stat.score}</span>
-				<span className='text-[10px] font-medium text-stone-500 bg-stone-100 px-1.5 rounded-full'>{stat.mod}</span>
+				className='bg-card/60 border border-border/80 rounded p-1.5 text-center flex flex-col items-center shadow-sm backdrop-blur-sm'>
+				<span className='text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none'>
+					{stat.name}
+				</span>
+				<span className='text-lg font-bold text-foreground leading-none my-1 font-serif'>{stat.score}</span>
+				<span className='text-[10px] font-medium text-muted-foreground bg-muted px-1.5 rounded-full'>{stat.mod}</span>
 			</div>
 		))}
 	</div>
@@ -1292,8 +1410,8 @@ const TagList = ({ tags }) => (
 		{tags.map((item, i) => (
 			<span
 				key={i}
-				className='inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-stone-100 text-stone-700 border border-stone-200/60 shadow-sm'>
-				{toTitleCase(item)} {/* Changed to toTitleCase for consisteny */}
+				className='inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-muted text-card-foreground border border-border/60 shadow-sm'>
+				{toTitleCase(item)}
 			</span>
 		))}
 	</div>
@@ -1302,12 +1420,13 @@ const TagList = ({ tags }) => (
 const StandardTrait = ({ label, value, index }) => (
 	<div
 		className={clsx(
-			'flex justify-between items-baseline px-3 py-2 border-b border-stone-200/40 last:border-0',
-			index % 2 === 0 ? 'bg-white/40' : 'bg-transparent'
+			'flex justify-between items-baseline px-3 py-2 border-b border-border/40 last:border-0',
+			index % 2 === 0 ? 'bg-card/40' : 'bg-transparent'
 		)}>
-		<span className='text-[10px] font-bold uppercase tracking-widest text-stone-500/90 shrink-0 mr-4'>{label}</span>
-		<span className='text-[13px] font-semibold text-stone-800 text-right leading-snug break-words'>
-			{/* Changed to toTitleCase to handle "alive" -> "Alive", "neutral good" -> "Neutral Good" */}
+		<span className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground/90 shrink-0 mr-4'>
+			{label}
+		</span>
+		<span className='text-[13px] font-semibold text-foreground text-right leading-snug break-words'>
 			{typeof value === 'string' ? toTitleCase(value) : value}
 		</span>
 	</div>
@@ -1315,26 +1434,16 @@ const StandardTrait = ({ label, value, index }) => (
 
 // --- HELPER: Connection Badge Colors ---
 const getRoleStyle = (roleStr) => {
-	const r = roleStr?.toLowerCase() || '';
-
-	if (r.includes('enemy') || r.includes('threat') || r.includes('hostile')) {
-		return 'bg-red-50 text-red-700 border-red-200/60';
-	}
-	if (r.includes('ally') || r.includes('allied') || r.includes('friend')) {
-		return 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
-	}
-	if (r.includes('ruled') || r.includes('leader') || r.includes('captain')) {
-		return 'bg-amber-50 text-amber-700 border-amber-200/60';
-	}
-	return 'bg-stone-100 text-stone-500 border-stone-200/60';
+	// FIX: Standardized to generic style for all roles to ensure readability
+	return 'bg-muted text-muted-foreground border-border/60';
 };
 
 // --- NEW COMPONENT: Type Divider ---
 const TypeDivider = ({ label }) => (
 	<div className='flex items-center gap-2 my-3'>
-		<div className='h-px bg-stone-200 flex-1' />
-		<span className='text-[9px] font-bold text-stone-400 uppercase tracking-widest'>{label}</span>
-		<div className='h-px bg-stone-200 flex-1' />
+		<div className='h-px bg-muted flex-1' />
+		<span className='text-[9px] font-bold text-muted-foreground uppercase tracking-widest'>{label}</span>
+		<div className='h-px bg-muted flex-1' />
 	</div>
 );
 
@@ -1378,11 +1487,11 @@ export const EntitySidebar = ({ traits, connections }) => {
 		<div className='space-y-6 font-sans'>
 			{/* 1. Standard Traits Table */}
 			{textTraits.length > 0 && (
-				<div className='bg-stone-50/50 border border-stone-200 rounded-lg overflow-hidden'>
+				<div className='bg-muted/30/50 border border-border/70 rounded-lg overflow-hidden'>
 					{/* Header */}
-					<div className='px-3 py-2 border-b border-stone-200 bg-stone-100/40 flex items-center gap-2'>
-						<Tag size={12} className='text-amber-700' />
-						<h3 className='text-[11px] font-bold text-amber-900/80 uppercase tracking-widest'>Attributes</h3>
+					<div className='px-3 py-2 border-b border-border bg-muted/40 flex items-center gap-2'>
+						<Tag size={12} className='text-primary-muted' />
+						<h3 className='text-[11px] font-bold text-primary-muted uppercase tracking-widest'>Attributes</h3>
 					</div>
 
 					{/* Content */}
@@ -1401,7 +1510,7 @@ export const EntitySidebar = ({ traits, connections }) => {
 						if (prop.displayType === 'stat-grid') {
 							return (
 								<div key={prop.key}>
-									<h3 className='text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1 flex items-center gap-2 ml-1'>
+									<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2 ml-1'>
 										<Activity size={10} /> {prop.key}
 									</h3>
 									<AbilityGrid stats={prop.value} />
@@ -1411,7 +1520,7 @@ export const EntitySidebar = ({ traits, connections }) => {
 						if (prop.displayType === 'tags') {
 							return (
 								<div key={prop.key}>
-									<h3 className='text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1 flex items-center gap-2 ml-1'>
+									<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-2 ml-1'>
 										<Shield size={10} /> {prop.key}
 									</h3>
 									<TagList tags={prop.value} />
@@ -1426,14 +1535,13 @@ export const EntitySidebar = ({ traits, connections }) => {
 			{/* 3. Connections (Grouped with Dividers) */}
 			{groupedConnections.length > 0 && (
 				<div>
-					<h3 className='text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
+					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
 						<Network size={10} /> Connections
 					</h3>
 
 					<div className='space-y-1'>
 						{groupedConnections.map((group, gIdx) => (
 							<div key={group.type}>
-								{/* Divider (skip for first one if desired, currently showing for all as per design pattern) */}
 								<TypeDivider label={group.type} />
 
 								<div className='space-y-2'>
@@ -1445,13 +1553,13 @@ export const EntitySidebar = ({ traits, connections }) => {
 											inline={true}
 											showIcon={false}
 											className={clsx(
-												'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-white/60 !transition-all !cursor-pointer !no-underline',
-												'!border-stone-200 hover:!border-amber-300 hover:!shadow-sm hover:!bg-white',
+												'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline',
+												'!border-border hover:!border-amber-300 hover:!shadow-sm hover:!bg-card',
 												rel.theme.hover
 											)}>
 											<div className='flex items-center gap-2.5 flex-1 min-w-0'>
 												<EntityIcon type={rel.typeLabel} size={14} className='opacity-80 group-hover:opacity-100' />
-												<span className='text-sm font-semibold text-stone-700 truncate group-hover:text-foreground transition-colors'>
+												<span className='text-sm font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
 													{rel.name}
 												</span>
 											</div>
@@ -1508,7 +1616,7 @@ const QuestObjectiveItem = ({ obj }) => {
 		<div
 			className={clsx(
 				'transition-colors border-b border-border/40 last:border-0',
-				isCompleted ? 'bg-emerald-50/10' : isFailed ? 'bg-red-50/10' : 'hover:bg-muted/30'
+				isCompleted ? 'bg-emerald-500/10/10' : isFailed ? 'bg-red-500/10/10' : 'hover:bg-muted/30'
 			)}>
 			{/* --- MAIN ROW --- */}
 			<div
@@ -1540,7 +1648,7 @@ const QuestObjectiveItem = ({ obj }) => {
 						{/* Session Indicator Badge (Inline) */}
 						{hasSession && (
 							<div
-								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200/60'
+								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground border border-border/60'
 								title={`Completed in Session ${obj.completed_session_number - 1}`}>
 								<Calendar size={10} />
 								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number - 1}
@@ -1551,7 +1659,7 @@ const QuestObjectiveItem = ({ obj }) => {
 					<div
 						className={clsx(
 							'text-[13px] leading-snug font-medium transition-colors',
-							isCompleted ? 'text-stone-600' : isFailed ? 'text-red-800/80' : 'text-foreground'
+							isCompleted ? 'text-muted-foreground' : isFailed ? 'text-red-800/80' : 'text-foreground'
 						)}>
 						<SmartMarkdown components={{ p: 'span' }}>{obj.description}</SmartMarkdown>
 					</div>
@@ -1561,7 +1669,7 @@ const QuestObjectiveItem = ({ obj }) => {
 				{hasContent && (
 					<button
 						className={clsx(
-							'shrink-0 text-gray-400 group-hover:text-foreground transition-colors mt-0.5',
+							'shrink-0 text-muted-foreground/70 group-hover:text-foreground transition-colors mt-0.5',
 							isOpen && 'text-foreground'
 						)}>
 						{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -1576,8 +1684,8 @@ const QuestObjectiveItem = ({ obj }) => {
 						{/* Update Text */}
 						{hasUpdate && (
 							<div className='flex gap-2 items-start'>
-								<CornerDownRight size={12} className='shrink-0 mt-1 text-accent opacity-60' />
-								<span className='text-xs text-stone-600 italic leading-relaxed'>
+								<CornerDownRight size={12} className='shrink-0 mt-1 text-primary opacity-60' />
+								<span className='text-xs text-muted-foreground italic leading-relaxed'>
 									<SmartMarkdown>{obj.objective_update}</SmartMarkdown>
 								</span>
 							</div>
@@ -1593,12 +1701,12 @@ export const QuestObjectives = ({ objectives }) => {
 	if (!objectives || objectives.length === 0) return null;
 
 	return (
-		<div className='mb-8 not-prose border border-stone-200 rounded-lg overflow-hidden bg-stone-50/20'>
-			<div className='px-3 py-2 border-b border-stone-200 bg-stone-100/50 flex items-center gap-2'>
+		<div className='mb-8 not-prose border border-border rounded-lg overflow-hidden bg-muted/30/20'>
+			<div className='px-3 py-2 border-b border-border bg-muted/50 flex items-center gap-2'>
 				<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 m-0'>
-					<Target size={12} className='text-accent' /> Quest Objectives
+					<Target size={12} className='text-primary' /> Quest Objectives
 				</h3>
-				<span className='ml-auto text-[9px] font-bold bg-stone-200/60 px-1.5 py-0.5 rounded text-stone-500'>
+				<span className='ml-auto text-[9px] font-bold bg-muted/80 px-1.5 py-0.5 rounded text-muted-foreground'>
 					{objectives.filter((o) => o.status === 'completed').length} / {objectives.length}
 				</span>
 			</div>
@@ -1625,14 +1733,14 @@ const MentionGroup = ({ type, items }) => {
 	const Icon = config.icon;
 
 	return (
-		<div className='border border-stone-200 rounded-lg overflow-hidden bg-stone-50/30 flex flex-col'>
+		<div className='border border-border rounded-lg overflow-hidden bg-muted/30/30 flex flex-col'>
 			{/* Header */}
-			<div className='px-3 py-2 border-b border-stone-200 bg-stone-100/50 flex items-center justify-between shrink-0'>
+			<div className='px-3 py-2 border-b border-border bg-muted/50 flex items-center justify-between shrink-0'>
 				<div className='flex items-center gap-2'>
-					<Icon size={12} className='text-stone-500' />
-					<h3 className='text-[10px] font-bold text-stone-500 uppercase tracking-widest m-0'>{config.labelPlural}</h3>
+					<Icon size={12} className='text-muted-foreground' />
+					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest m-0'>{config.labelPlural}</h3>
 				</div>
-				<span className='text-[9px] font-bold text-stone-400 bg-stone-200/50 px-1.5 py-0.5 rounded-full'>
+				<span className='text-[9px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full'>
 					{items.length}
 				</span>
 			</div>
@@ -1650,16 +1758,16 @@ const MentionGroup = ({ type, items }) => {
 							className={clsx(
 								// Override generic InlineLink styles to make it look like a card
 								'!block !w-full !no-underline !border',
-								'!bg-white/60 !border-stone-200/80 !rounded-md',
+								'!bg-card/60 !border-border/80 !rounded-md',
 								'!px-2 !py-1.5',
 								// Colors
-								'!text-stone-700 hover:!text-foreground',
+								'!text-card-foreground hover:!text-foreground',
 								// Hover states
-								'hover:!bg-white hover:!border-amber-300 hover:!shadow-sm transition-all'
+								'hover:!bg-card hover:!border-amber-300 hover:!shadow-sm transition-all'
 							)}>
 							{/* Inner Layout Wrapper to handle Flex behavior correctly */}
 							<span className='flex items-center gap-2.5 min-w-0'>
-								<EntityIcon type={item.type} size={14} className='opacity-70 text-stone-500 shrink-0' />
+								<EntityIcon type={item.type} size={14} className='opacity-70 text-muted-foreground shrink-0' />
 								<span className='text-[13px] font-semibold truncate'>{item.name}</span>
 							</span>
 						</EntityLink>
@@ -1673,7 +1781,7 @@ const MentionGroup = ({ type, items }) => {
 export const SessionMentions = ({ mentions }) => {
 	if (!mentions || Object.keys(mentions).length === 0) {
 		return (
-			<div className='p-12 text-center text-stone-400 italic border border-dashed border-stone-200 rounded-lg'>
+			<div className='p-12 text-center text-muted-foreground italic border border-dashed border-border rounded-lg'>
 				No linked entities found in this session.
 			</div>
 		);
@@ -1784,7 +1892,7 @@ export const EntityGridCard = ({ entity, config, context }) => {
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
 				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
-				'hover:border-accent/50 hover:shadow-sm hover:bg-muted/10',
+				'hover:shadow-sm hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
 			{/* Left: Image/Icon Square */}
@@ -1799,8 +1907,9 @@ export const EntityGridCard = ({ entity, config, context }) => {
 						<div className='absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors' />
 					</>
 				) : (
-					<div className='w-full h-full flex items-center justify-center bg-stone-100'>
-						<config.icon size={28} className='text-stone-400/70 mix-blend-multiply' strokeWidth={1.5} />
+					<div className='w-full h-full flex items-center justify-center bg-muted'>
+						{/* FIX: Removed 'mix-blend-multiply' to fix invisible icons in Dark Mode */}
+						<config.icon size={28} className='text-muted-foreground/70' strokeWidth={1.5} />
 					</div>
 				)}
 			</div>
@@ -1808,7 +1917,7 @@ export const EntityGridCard = ({ entity, config, context }) => {
 			{/* Right: Content */}
 			<div className='flex-1 px-3 py-2 flex flex-col min-w-0 justify-center'>
 				<div className='flex items-center justify-between gap-2'>
-					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-accent transition-colors truncate'>
+					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
 						{entity.name}
 					</h3>
 				</div>
@@ -1840,9 +1949,11 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 			{/* Group Header */}
 			<div className='flex items-center gap-2 border-b border-border/60 pb-2 mb-3'>
 				{parentTitle && (
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest'>
+					// FIX: Increased opacity from /40 to /80 for visibility
+					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
 						{parentTitle}
-						<CornerDownRight size={10} className='translate-y-px opacity-50' />
+						{/* FIX: Removed opacity-50 to make arrow visible */}
+						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
 					</div>
 				)}
 				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
@@ -1850,7 +1961,7 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 					{link && (
 						<Link
 							to={link}
-							className='text-muted-foreground/20 hover:text-accent transition-colors'
+							className='text-muted-foreground/50 hover:text-primary transition-colors'
 							title={`View ${title}`}>
 							<ArrowRight size={12} />
 						</Link>
@@ -1885,16 +1996,16 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 									<td className='px-4 py-2.5'>
 										<Link
 											to={`/wiki/${entity.type}/${entity.id}`}
-											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-accent transition-colors'>
+											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-primary transition-colors'>
 											{/* Small colored indicator bar */}
 											{isSpecialStatus && (
 												<div
 													className={clsx(
 														'w-1 h-4 rounded-full shrink-0',
 														status.isDead || status.isFailed
-															? 'bg-red-500'
+															? 'bg-red-500/100'
 															: status.rank === 1
-															? 'bg-emerald-500'
+															? 'bg-emerald-500/100'
 															: status.rank === 3
 															? 'bg-red-600'
 															: 'bg-gray-300'
@@ -1910,7 +2021,7 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 												className={clsx(
 													'inline-flex items-center text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border',
 													status.isDead || status.isFailed
-														? 'bg-red-50 text-red-700 border-red-100'
+														? 'bg-red-500/10 text-red-700 border-red-100'
 														: 'bg-muted text-muted-foreground border-border'
 												)}>
 												{status.display}
@@ -1950,9 +2061,10 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 			{/* Header: Compact Visual Hierarchy */}
 			<div className='flex items-center gap-2 border-b border-border/60 pb-1.5 mb-3 group/header'>
 				{parentTitle && (
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest'>
+					// FIX: Increased visibility (was /40)
+					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
 						{parentTitle}
-						<CornerDownRight size={10} className='translate-y-px opacity-50' />
+						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
 					</div>
 				)}
 
@@ -1961,7 +2073,7 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 					{link && (
 						<Link
 							to={link}
-							className='text-muted-foreground/20 hover:text-accent transition-colors'
+							className='text-muted-foreground/50 hover:text-accent transition-colors'
 							title={`View ${title}`}>
 							<ArrowRight size={12} />
 						</Link>
@@ -2008,51 +2120,96 @@ export const SidebarEmptyState = ({ label }) => {
 --- FILE: features\wiki\components\navigation\WikiSidebar.jsx ---
 import { useState } from 'react';
 import { clsx } from 'clsx';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { WikiSidebarHeader } from './WikiSidebarHeader';
 import { WikiSidebarList } from './WikiSidebarList';
 
 export const WikiSidebar = ({ navigation, className }) => {
 	const [mobileOpen, setMobileOpen] = useState(false);
+	const [desktopCollapsed, setDesktopCollapsed] = useState(false);
 
 	return (
-		<div
-			className={clsx(
-				'bg-muted border-b border-border flex flex-col transition-all',
-				'sticky top-0 w-full z-30',
-				'lg:static lg:border-b-0 lg:w-72 lg:order-2 lg:border-l lg:border-border lg:h-full',
-				className
-			)}>
-			{/* Header - Always Visible */}
-			<WikiSidebarHeader
-				config={navigation.config}
-				search={navigation.search}
-				onSearchChange={navigation.setSearch}
-				onToggle={() => setMobileOpen(!mobileOpen)}
-				isOpen={mobileOpen}
-			/>
+		<>
+			{/* COLLAPSED STATE (Slim Bar) */}
+			{desktopCollapsed && (
+				<div className='hidden lg:flex flex-col h-full border-l border-border bg-muted/50 w-10 shrink-0 z-30 transition-all duration-300 lg:order-2 items-center'>
+					<div className='h-14 w-full flex items-center justify-center border-b border-border/50'>
+						<button
+							onClick={() => setDesktopCollapsed(false)}
+							className='p-1.5 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors'
+							title='Expand Sidebar'>
+							{/* Icon flipped for right-side sidebar */}
+							<PanelLeftClose size={18} />
+						</button>
+					</div>
+				</div>
+			)}
 
-			{/* Content - Collapsible on Mobile, Static on Desktop */}
+			{/* FULL SIDEBAR */}
 			<div
 				className={clsx(
-					'bg-muted border-b border-border shadow-xl max-h-[60vh] overflow-y-auto',
-					'lg:static lg:shadow-none lg:border-0 lg:max-h-full lg:flex-1 lg:flex lg:flex-col',
-					// Mobile: Dropdown behavior
-					mobileOpen ? 'absolute top-full left-0 right-0 block' : 'hidden lg:flex'
+					'flex flex-col bg-muted border-b border-border',
+					'sticky top-0 w-full z-30', // Mobile
+					'lg:static lg:border-b-0 lg:h-full lg:transition-all lg:duration-300', // Desktop
+					// Dynamic Width Logic:
+					// If collapsed, width becomes 0 and overflow hidden to disappear
+					desktopCollapsed
+						? 'lg:w-0 lg:border-l-0 lg:overflow-hidden opacity-0 lg:opacity-100'
+						: 'lg:w-72 lg:border-l lg:border-border',
+					className
 				)}>
-				<WikiSidebarList
-					groups={navigation.groups}
-					isLoading={navigation.isLoading}
-					hasItems={navigation.hasItems}
+				<WikiSidebarHeader
 					config={navigation.config}
-					onItemClick={() => setMobileOpen(false)}
+					search={navigation.search}
+					onSearchChange={navigation.setSearch}
+					onToggle={() => setMobileOpen(!mobileOpen)}
+					isOpen={mobileOpen}
+					// FIX: Pass toggle as a render prop to avoid layout overlap
+					renderDesktopToggle={() => (
+						<button
+							onClick={() => setDesktopCollapsed(true)}
+							className='text-muted-foreground hover:text-primary transition-colors p-0.5 rounded'
+							title='Collapse Sidebar'>
+							<PanelLeftOpen size={18} />
+						</button>
+					)}
+				/>
+
+				{/* Content Wrapper */}
+				<div
+					className={clsx(
+						'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+						'lg:grid-rows-[1fr] lg:static lg:h-full',
+						mobileOpen ? 'grid-rows-[1fr] border-b border-border shadow-xl' : 'grid-rows-[0fr]'
+					)}>
+					<div className='overflow-hidden'>
+						<div
+							className={clsx(
+								'lg:h-full lg:overflow-y-auto',
+								mobileOpen && 'max-h-[70dvh] overflow-y-auto custom-scrollbar'
+							)}>
+							<WikiSidebarList
+								groups={navigation.groups}
+								isLoading={navigation.isLoading}
+								hasItems={navigation.hasItems}
+								config={navigation.config}
+								onItemClick={() => setMobileOpen(false)}
+							/>
+						</div>
+					</div>
+				</div>
+
+				{/* Mobile Backdrop */}
+				<div
+					className={clsx(
+						'fixed inset-0 top-[110px] bg-black/40 z-[-1] lg:hidden backdrop-blur-[1px] transition-opacity duration-300',
+						mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+					)}
+					onClick={() => setMobileOpen(false)}
+					style={{ touchAction: 'none' }}
 				/>
 			</div>
-
-			{/* Mobile Backdrop (when expanded) */}
-			{mobileOpen && (
-				<div className='fixed inset-0 bg-black/20 z-[-1] lg:hidden' onClick={() => setMobileOpen(false)} />
-			)}
-		</div>
+		</>
 	);
 };
 
@@ -2062,36 +2219,41 @@ export const WikiSidebar = ({ navigation, className }) => {
 import { Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { clsx } from 'clsx';
 
-export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, isOpen }) => {
+export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, isOpen, renderDesktopToggle }) => {
 	const { Icon, label, textClass } = config;
 
 	return (
 		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
 			{/* Title Row - Clickable on mobile */}
 			<div
-				className='flex items-center justify-between cursor-pointer lg:cursor-default select-none'
+				className='flex items-center justify-between cursor-pointer lg:cursor-default select-none h-8'
 				onClick={onToggle}>
-				<div className='flex items-center gap-2.5'>
-					{Icon && <Icon size={16} className={textClass} />}
-					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide'>{label}</h1>
+				<div className='flex items-center gap-3 min-w-0 w-full'>
+					{Icon && <Icon size={18} className={clsx(textClass, 'shrink-0')} />}
+					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide truncate'>{label}</h1>
+
+					{/* FIX: Render desktop toggle here to avoid overlap */}
+					{renderDesktopToggle && <div className='hidden lg:block shrink-0 ml-auto mr-1'>{renderDesktopToggle()}</div>}
 				</div>
 
-				{/* Mobile Toggle Button */}
-				<button className='lg:hidden text-gray-500 hover:text-foreground hover:bg-black/5 p-1 rounded transition-colors'>
-					{isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+				{/* Mobile Toggle Button - Larger Touch Target */}
+				<button
+					className='lg:hidden text-muted-foreground hover:text-foreground active:bg-black/10 p-2 -mr-2 rounded-md transition-colors'
+					aria-label={isOpen ? 'Collapse' : 'Expand'}>
+					{isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
 				</button>
 			</div>
 
-			{/* Search Bar - Always visible on desktop, hidden when collapsed on mobile */}
+			{/* Search Bar */}
 			<div className={clsx('mt-3 relative', !isOpen && 'hidden lg:block')}>
-				<Search className='absolute left-2.5 top-2 text-gray-400' size={13} />
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/70' size={14} />
 				<input
 					type='text'
 					placeholder='Filter list...'
 					value={search}
 					onChange={(e) => onSearchChange(e.target.value)}
 					onClick={(e) => e.stopPropagation()}
-					className='w-full bg-background border border-border rounded-md pl-8 pr-2 py-1.5 text-xs focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 outline-none transition-shadow shadow-sm'
+					className='w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-base lg:text-xs focus:ring-1 focus:ring-primary/50 focus:border-primary outline-none transition-shadow shadow-sm'
 				/>
 			</div>
 		</div>
@@ -2123,7 +2285,7 @@ export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemCli
 	// Flatten check for empty search results
 	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
 	if (totalItems === 0) {
-		return <div className='p-6 text-center text-xs text-gray-400 italic'>No matches found.</div>;
+		return <div className='p-6 text-center text-xs text-muted-foreground/70 italic'>No matches found.</div>;
 	}
 
 	// Check if we have standard grouped data (multiple groups with titles)
@@ -2176,10 +2338,10 @@ export const CollapsibleGroup = ({ group, onItemClick }) => {
 			{/* Group Header - Collapsible */}
 			<button
 				onClick={() => setIsOpen(!isOpen)}
-				className='w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:bg-black/5 transition-colors'>
+				className='w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground/80 hover:bg-black/5 transition-colors'>
 				{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
 				<span className='truncate'>{group.title}</span>
-				<span className='ml-auto text-[10px] font-normal text-gray-400'>{group.items.length}</span>
+				<span className='ml-auto text-[10px] font-normal text-muted-foreground/70'>{group.items.length}</span>
 			</button>
 
 			{/* Items */}
@@ -2216,9 +2378,6 @@ export const EntityListItem = ({ item, showStatus, onItemClick }) => {
 	const ResolvedIcon = resolveEntityIcon({ type: item.type, attributes: item.attributes });
 
 	// Determine if we show the icon.
-	// Logic: If it has a custom icon, YES.
-	// If it's a specific type that usually hides icons in lists (like Quest/Faction) because Status is more important, check here.
-	// We can add a property to ENTITY_TYPES config or keep a minimal logic here, but relying on the resolver is safer.
 	const shouldShowIcon = hasCustomIcon || !['quest', 'faction'].includes(item.type);
 
 	return (
@@ -2228,14 +2387,19 @@ export const EntityListItem = ({ item, showStatus, onItemClick }) => {
 			className={({ isActive }) =>
 				clsx(
 					'group flex items-center w-full text-left pl-6 pr-2 py-1 text-[13px] transition-colors',
-					isActive ? 'bg-accent/10 text-accent font-medium' : 'text-gray-700 hover:bg-black/5 hover:text-foreground'
+					// FIX: Replaced 'bg-accent/10' with 'bg-primary/10' and text color for visibility
+					isActive
+						? 'bg-primary/10 text-primary font-bold'
+						: 'text-foreground/80 hover:bg-black/5 hover:text-foreground'
 				)
 			}>
 			{shouldShowIcon && (
 				<span
 					className={clsx(
 						'shrink-0 flex items-center justify-center mr-2',
-						!hasCustomIcon && 'opacity-70 text-stone-500'
+						!hasCustomIcon && 'opacity-70 text-muted-foreground',
+						// Ensure icon inherits color when active
+						hasCustomIcon ? '' : 'group-[.active]:text-primary'
 					)}>
 					{hasCustomIcon ? (
 						<EntityIcon type={item.type} customIconUrl={iconUrl} size={16} className='rounded-full object-cover' />
@@ -2332,7 +2496,7 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 						if (hasChildren) setIsExpanded(!isExpanded);
 					}}
 					className={clsx(
-						'w-5 h-6 flex items-center justify-center shrink-0 text-gray-400 hover:text-foreground transition-colors cursor-pointer',
+						'w-5 h-6 flex items-center justify-center shrink-0 text-muted-foreground/70 hover:text-foreground transition-colors cursor-pointer',
 						!hasChildren && 'invisible pointer-events-none'
 					)}>
 					{isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
@@ -2344,14 +2508,16 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 					className={({ isActive }) =>
 						clsx(
 							'flex-1 flex items-center gap-1.5 pr-2 text-[13px] truncate transition-colors rounded-r-sm',
-							isActive ? 'text-accent font-semibold bg-accent/5' : 'text-gray-700'
+							// FIX: Replaced 'text-accent' with 'text-primary' and background
+							isActive ? 'text-primary font-bold bg-primary/10' : 'text-foreground/80'
 						)
 					}>
 					<span
 						className={clsx(
 							'shrink-0 flex items-center justify-center',
 							!hasCustomIcon && 'opacity-100',
-							!hasCustomIcon && (item.type === 'location' ? 'text-stone-400' : 'text-stone-600')
+							// Ensure icon inherits color when active
+							!hasCustomIcon && (item.type === 'location' ? 'text-muted-foreground' : 'text-muted-foreground')
 						)}>
 						{hasCustomIcon ? (
 							<EntityIcon type={item.type} customIconUrl={iconUrl} size={14} />
@@ -3150,7 +3316,7 @@ export default function StandardLayout({ viewModel }) {
 			<div className='lg:hidden'>
 				<Drawer.Root shouldScaleBackground>
 					<Drawer.Trigger asChild>
-						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-stone-300 rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
+						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
 							<Info size={18} />
 							<span>Info</span>
 						</button>
@@ -3165,7 +3331,7 @@ export default function StandardLayout({ viewModel }) {
 								<div className='flex justify-between items-center'>
 									{/* CHANGED: Used Drawer.Title instead of h2 for accessibility */}
 									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
-									<Drawer.Close className='p-2 bg-gray-100 rounded-full text-gray-500'>
+									<Drawer.Close className='p-2 bg-muted rounded-full text-muted-foreground'>
 										<X size={16} />
 									</Drawer.Close>
 								</div>
@@ -3240,28 +3406,24 @@ export default function WikiLandingPage() {
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
 	const { entities, isLoading } = useEntityFetching(normalizedType);
-
-	// STATE: View Mode ('grid' or 'table')
 	const [viewMode, setViewMode] = useState('grid');
 	const [search, setSearch] = useState('');
 
 	const config = getEntityConfig(normalizedType);
 	const mode = getStrategyMode(normalizedType);
-
 	const groups = useEntityGrouping(entities, normalizedType, search);
-
-	const swimlanes = useMemo(() => {
-		return getSwimlanes(groups, normalizedType);
-	}, [groups, normalizedType]);
+	const swimlanes = useMemo(() => getSwimlanes(groups, normalizedType), [groups, normalizedType]);
 
 	if (isLoading) return <LoadingSpinner text={`Loading ${config.labelPlural}...`} />;
 
 	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
 
 	return (
-		<div className='p-6 md:p-12 max-w-[1920px] mx-auto min-h-full'>
+		// OPTIMIZATION: Removed fixed p-12, used responsive padding
+		<div className='p-4 md:p-8 lg:p-12 max-w-[1920px] mx-auto min-h-full pb-safe'>
 			{/* Header */}
-			<div className='flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-border pb-6'>
+			<div className='flex flex-col gap-6 mb-6 border-b border-border pb-6'>
+				{/* Top Row: Title */}
 				<div className='flex items-center gap-4'>
 					<div
 						className={clsx(
@@ -3272,60 +3434,60 @@ export default function WikiLandingPage() {
 						<config.icon size={32} strokeWidth={1.5} />
 					</div>
 					<div>
-						<h1 className='text-3xl font-serif font-bold text-foreground capitalize leading-none mb-2'>
+						<h1 className='text-2xl md:text-3xl font-serif font-bold text-foreground capitalize leading-none mb-1'>
 							{config.labelPlural}
 						</h1>
-						<p className='text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
+						<p className='text-xs md:text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
 					</div>
 				</div>
 
-				{/* Controls Area */}
-				<div className='flex sm:flex-row gap-3 w-full md:w-auto'>
-					{/* View Toggle */}
-					<div className='flex bg-muted p-1 rounded-lg border border-border/50 shrink-0 self-start sm:self-auto'>
-						<button
-							onClick={() => setViewMode('grid')}
-							className={clsx(
-								'p-1.5 rounded-md transition-all',
-								viewMode === 'grid'
-									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
-									: 'text-muted-foreground hover:text-foreground'
-							)}
-							title='Grid View'>
-							<LayoutGrid size={16} />
-						</button>
-						<button
-							onClick={() => setViewMode('table')}
-							className={clsx(
-								'p-1.5 rounded-md transition-all',
-								viewMode === 'table'
-									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
-									: 'text-muted-foreground hover:text-foreground'
-							)}
-							title='Table View'>
-							<List size={16} />
-						</button>
-					</div>
-
-					{/* Search Bar */}
-					<div className='relative w-full md:w-72'>
+				{/* Controls Area - Stacks on mobile, Row on desktop */}
+				<div className='flex flex-col sm:flex-row gap-3 w-full'>
+					{/* Search Bar - Full width on mobile */}
+					<div className='relative flex-1 order-2 sm:order-1'>
 						<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
 						<input
 							type='text'
 							placeholder={`Search ${config.labelPlural}...`}
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							className='w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
+							// text-base on mobile prevents zoom
+							className='w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
 						/>
+					</div>
+
+					{/* View Toggle - Beside search on desktop, Top on mobile */}
+					<div className='flex bg-muted p-1 rounded-lg border border-border/50 shrink-0 self-start order-1 sm:order-2'>
+						<button
+							onClick={() => setViewMode('grid')}
+							className={clsx(
+								'p-2 sm:p-1.5 rounded-md transition-all flex-1 sm:flex-none flex justify-center',
+								viewMode === 'grid'
+									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
+									: 'text-muted-foreground hover:text-foreground'
+							)}
+							title='Grid View'>
+							<LayoutGrid size={18} />
+						</button>
+						<button
+							onClick={() => setViewMode('table')}
+							className={clsx(
+								'p-2 sm:p-1.5 rounded-md transition-all flex-1 sm:flex-none flex justify-center',
+								viewMode === 'table'
+									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
+									: 'text-muted-foreground hover:text-foreground'
+							)}
+							title='Table View'>
+							<List size={18} />
+						</button>
 					</div>
 				</div>
 			</div>
 
-			{/* CONTENT SWITCHER */}
-			{viewMode === 'grid' ? (
-				// --- GRID VIEW (Reverted to Standard List of Swimlanes) ---
-				<div className='pb-20'>
-					{swimlanes.map((lane) => (
+			{/* CONTENT */}
+			<div className='pb-20'>
+				{viewMode === 'grid' ? (
+					swimlanes.map((lane) => (
 						<Swimlane
 							key={lane.id}
 							title={lane.title}
@@ -3335,29 +3497,28 @@ export default function WikiLandingPage() {
 							config={config}
 							context={mode}
 						/>
-					))}
-				</div>
-			) : (
-				// --- TABLE LIST VIEW ---
-				<div className='max-w-5xl mx-auto pb-20'>
-					{swimlanes.map((lane) => (
-						<EntityTableGroup
-							key={lane.id}
-							title={lane.title}
-							parentTitle={lane.parentTitle}
-							link={lane.link}
-							items={lane.items}
-						/>
-					))}
-				</div>
-			)}
+					))
+				) : (
+					<div className='max-w-5xl mx-auto'>
+						{swimlanes.map((lane) => (
+							<EntityTableGroup
+								key={lane.id}
+								title={lane.title}
+								parentTitle={lane.parentTitle}
+								link={lane.link}
+								items={lane.items}
+							/>
+						))}
+					</div>
+				)}
 
-			{totalCount === 0 && (
-				<div className='text-center py-32 opacity-40 flex flex-col items-center gap-4 border-2 border-dashed border-border rounded-xl mt-8'>
-					<Folder size={48} strokeWidth={1} />
-					<p className='text-lg font-serif text-muted-foreground'>No entries found.</p>
-				</div>
-			)}
+				{totalCount === 0 && (
+					<div className='text-center py-20 opacity-40 flex flex-col items-center gap-4 border-2 border-dashed border-border rounded-xl mt-4'>
+						<Folder size={48} strokeWidth={1} />
+						<p className='text-lg font-serif text-muted-foreground'>No entries found.</p>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }

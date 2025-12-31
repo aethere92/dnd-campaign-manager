@@ -99,7 +99,7 @@ export default function EncounterActionManager({ encounterId }) {
 					const theme = isFriendly
 						? {
 								border: 'border-emerald-200 hover:border-emerald-300',
-								bg: 'bg-emerald-50/20',
+								bg: 'bg-emerald-500/10/20',
 								accentText: 'text-emerald-700',
 								badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
 						  }
@@ -107,7 +107,7 @@ export default function EncounterActionManager({ encounterId }) {
 								border: 'border-red-200 hover:border-red-300',
 								bg: 'bg-background',
 								accentText: 'text-red-700',
-								badge: 'bg-red-50 text-red-700 border-red-100',
+								badge: 'bg-red-500/10 text-red-700 border-red-100',
 						  };
 
 					return (
@@ -171,7 +171,7 @@ export default function EncounterActionManager({ encounterId }) {
 											{formData.actor_entity_id ? (
 												<div className='flex gap-2 items-center'>
 													<input
-														className={`${ADMIN_INPUT_CLASS} bg-emerald-50 font-medium`}
+														className={`${ADMIN_INPUT_CLASS} bg-emerald-500/10 font-medium`}
 														readOnly
 														value={formData.actor_name || 'Linked Entity'}
 													/>
@@ -201,7 +201,7 @@ export default function EncounterActionManager({ encounterId }) {
 											{formData.target_entity_id ? (
 												<div className='flex gap-2 items-center'>
 													<input
-														className={`${ADMIN_INPUT_CLASS} bg-red-50 font-medium`}
+														className={`${ADMIN_INPUT_CLASS} bg-red-500/10 font-medium`}
 														readOnly
 														value={formData.target_name || 'Linked Entity'}
 													/>
@@ -314,12 +314,12 @@ export default function EncounterActionManager({ encounterId }) {
 
 										<div className='flex items-center gap-2 mt-2'>
 											{action.result && (
-												<div className='flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200'>
+												<div className='flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-muted px-2 py-0.5 rounded border border-border'>
 													<Target size={12} /> {action.result}
 												</div>
 											)}
 											{action.effect && (
-												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-800 bg-red-50 px-2 py-0.5 rounded border border-red-100'>
+												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-800 bg-red-500/10 px-2 py-0.5 rounded border border-red-100'>
 													<Zap size={12} /> {action.effect}
 												</div>
 											)}
@@ -329,12 +329,12 @@ export default function EncounterActionManager({ encounterId }) {
 									<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
 										<button
 											onClick={() => handleEdit(action)}
-											className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+											className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
 											<Edit2 size={16} />
 										</button>
 										<button
 											onClick={() => handleDelete(action.id)}
-											className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+											className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'>
 											<Trash2 size={16} />
 										</button>
 									</div>

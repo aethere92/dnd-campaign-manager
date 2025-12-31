@@ -10,9 +10,10 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 			{/* Header: Compact Visual Hierarchy */}
 			<div className='flex items-center gap-2 border-b border-border/60 pb-1.5 mb-3 group/header'>
 				{parentTitle && (
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest'>
+					// FIX: Increased visibility (was /40)
+					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
 						{parentTitle}
-						<CornerDownRight size={10} className='translate-y-px opacity-50' />
+						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
 					</div>
 				)}
 
@@ -21,7 +22,7 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 					{link && (
 						<Link
 							to={link}
-							className='text-muted-foreground/20 hover:text-accent transition-colors'
+							className='text-muted-foreground/50 hover:text-accent transition-colors'
 							title={`View ${title}`}>
 							<ArrowRight size={12} />
 						</Link>

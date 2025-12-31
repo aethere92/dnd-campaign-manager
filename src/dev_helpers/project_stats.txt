@@ -1,121 +1,116 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2025-12-31 09:24:04
+Generated: 2025-12-31 16:44:30
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 181
-Total lines: 18,282
-Non-empty lines: 16,012
-Comment lines: 1,421
-Total size: 579,437 bytes (565.86 KB)
-Average lines per file: 101.0
+Total files: 177
+Total lines: 16,483
+Non-empty lines: 14,596
+Comment lines: 1,382
+Total size: 511,523 bytes (499.53 KB)
+Average lines per file: 93.1
 
 
 ### STATISTICS BY FILE TYPE
 
 .css:
   Files: 1
-  Lines: 386
-  Size: 9,492 bytes (9.27 KB)
+  Lines: 449
+  Size: 10,978 bytes (10.72 KB)
 
 .js:
-  Files: 65
-  Lines: 6,518
-  Size: 190,970 bytes (186.49 KB)
+  Files: 63
+  Lines: 6,225
+  Size: 172,464 bytes (168.42 KB)
 
 .json:
   Files: 1
-  Lines: 134
-  Size: 3,216 bytes (3.14 KB)
+  Lines: 142
+  Size: 3,412 bytes (3.33 KB)
 
 .jsx:
-  Files: 110
-  Lines: 9,017
-  Size: 298,005 bytes (291.02 KB)
+  Files: 111
+  Lines: 9,540
+  Size: 319,210 bytes (311.73 KB)
 
-.txt:
-  Files: 4
-  Lines: 2,227
-  Size: 77,754 bytes (75.93 KB)
+.sh:
+  Files: 1
+  Lines: 127
+  Size: 5,459 bytes (5.33 KB)
 
 
 ### LARGEST FILES (by lines)
 
-dev_helpers\component_hierarchy.txt: 1,553 lines
 features\admin\api\adminService.js: 560 lines
+app\styles\global.css: 449 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
-app\styles\global.css: 386 lines
 features\dashboard\api\dashboardService.js: 377 lines
-dev_helpers\unused_code_report.txt: 358 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 domain\entity\api\entityService.js: 317 lines
-dev_helpers\token_count_report.txt: 308 lines
 features\admin\components\AdminForm.jsx: 305 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
-dev_helpers\refactor.js: 256 lines
+features\wiki\components\EntityMiniMap.jsx: 248 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
+features\atlas\components\AtlasSidebar.jsx: 218 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
-features\wiki\components\EntitySidebar.jsx: 209 lines
+features\wiki\components\EncounterTimeline.jsx: 208 lines
 domain\entity\utils\attributeParser.js: 204 lines
+features\wiki\components\EntityHeader.jsx: 204 lines
+features\wiki\components\EntitySidebar.jsx: 201 lines
 features\smart-text\components\EntityEmbed.jsx: 200 lines
-features\wiki\components\EntityHeader.jsx: 183 lines
 domain\entity\utils\entityUtils.js: 181 lines
-features\wiki\components\EncounterTimeline.jsx: 180 lines
+features\wiki\utils\attributeMapper.js: 172 lines
+features\admin\components\TacticalMapManager.jsx: 170 lines
 
 
 ### STATISTICS BY CATEGORY
 
 app:
   Files: 4
-  Lines: 509
-  Size: 13,698 bytes (13.38 KB)
-
-dev_helpers:
-  Files: 6
-  Lines: 2,535
-  Size: 96,738 bytes (94.47 KB)
+  Lines: 572
+  Size: 15,184 bytes (14.83 KB)
 
 domain_entity:
   Files: 13
-  Lines: 1,530
-  Size: 41,035 bytes (40.07 KB)
+  Lines: 1,487
+  Size: 40,743 bytes (39.79 KB)
 
 features_admin:
   Files: 21
-  Lines: 3,823
-  Size: 125,901 bytes (122.95 KB)
+  Lines: 3,831
+  Size: 126,278 bytes (123.32 KB)
 
 features_atlas:
-  Files: 13
-  Lines: 833
-  Size: 25,822 bytes (25.22 KB)
+  Files: 14
+  Lines: 1,224
+  Size: 38,489 bytes (37.59 KB)
 
 features_campaign:
   Files: 6
-  Lines: 231
-  Size: 6,989 bytes (6.83 KB)
+  Lines: 229
+  Size: 7,122 bytes (6.96 KB)
 
 features_dashboard:
   Files: 9
-  Lines: 1,017
-  Size: 34,149 bytes (33.35 KB)
+  Lines: 1,020
+  Size: 34,428 bytes (33.62 KB)
 
 features_graph:
   Files: 7
-  Lines: 420
-  Size: 11,256 bytes (10.99 KB)
+  Lines: 404
+  Size: 10,629 bytes (10.38 KB)
 
 features_navigation:
   Files: 7
-  Lines: 309
-  Size: 9,622 bytes (9.40 KB)
+  Lines: 321
+  Size: 10,088 bytes (9.85 KB)
 
 features_search:
   Files: 10
-  Lines: 546
-  Size: 17,289 bytes (16.88 KB)
+  Lines: 551
+  Size: 17,535 bytes (17.12 KB)
 
 features_smart-text:
   Files: 5
@@ -124,31 +119,31 @@ features_smart-text:
 
 features_smart-tooltip:
   Files: 5
-  Lines: 385
-  Size: 11,486 bytes (11.22 KB)
+  Lines: 388
+  Size: 11,645 bytes (11.37 KB)
 
 features_table-of-contents:
   Files: 5
   Lines: 198
-  Size: 5,991 bytes (5.85 KB)
+  Size: 6,018 bytes (5.88 KB)
 
 features_timeline:
   Files: 6
-  Lines: 449
-  Size: 13,080 bytes (12.77 KB)
+  Lines: 453
+  Size: 13,519 bytes (13.20 KB)
 
 features_wiki:
   Files: 41
-  Lines: 3,489
-  Size: 111,374 bytes (108.76 KB)
+  Lines: 3,655
+  Size: 118,730 bytes (115.95 KB)
 
 root:
-  Files: 1
-  Lines: 42
-  Size: 1,190 bytes (1.16 KB)
+  Files: 2
+  Lines: 169
+  Size: 6,649 bytes (6.49 KB)
 
 shared:
   Files: 22
-  Lines: 1,529
-  Size: 41,349 bytes (40.38 KB)
+  Lines: 1,544
+  Size: 41,998 bytes (41.01 KB)
 

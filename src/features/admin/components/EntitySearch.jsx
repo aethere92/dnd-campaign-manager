@@ -102,7 +102,7 @@ export default function EntitySearch({ onSelect }) {
 
 			{/* Dropdown Results */}
 			{isOpen && (results.length > 0 || isLoading) && (
-				<div className='absolute z-50 w-full mt-1 bg-white border border-border rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-100'>
+				<div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in zoom-in-95 duration-100'>
 					{isLoading ? (
 						<div className='p-3 text-center text-xs text-muted-foreground flex items-center justify-center gap-2'>
 							<Loader2 size={14} className='animate-spin' /> Searching...
@@ -113,7 +113,7 @@ export default function EntitySearch({ onSelect }) {
 								key={item.id}
 								type='button'
 								onClick={() => handleSelect(item)}
-								className='w-full text-left px-3 py-2 hover:bg-amber-50 border-b border-border/50 last:border-0 transition-colors group'>
+								className='w-full text-left px-3 py-2 hover:bg-amber-500/10 border-b border-border/50 last:border-0 transition-colors group'>
 								<div className='font-bold text-sm text-foreground group-hover:text-amber-800 truncate'>{item.name}</div>
 								<div className='flex items-center gap-2'>
 									<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded group-hover:bg-amber-100/50'>
@@ -131,7 +131,7 @@ export default function EntitySearch({ onSelect }) {
 			)}
 
 			{isOpen && !isLoading && results.length === 0 && query.length >= 2 && (
-				<div className='absolute z-50 w-full mt-1 bg-white border border-border rounded-lg shadow-xl p-3 text-center text-xs text-muted-foreground'>
+				<div className='absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-xl p-3 text-center text-xs text-muted-foreground'>
 					No results for "{query}"
 				</div>
 			)}

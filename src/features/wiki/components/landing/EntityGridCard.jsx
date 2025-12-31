@@ -53,7 +53,7 @@ export const EntityGridCard = ({ entity, config, context }) => {
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
 				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
-				'hover:border-accent/50 hover:shadow-sm hover:bg-muted/10',
+				'hover:shadow-sm hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
 			{/* Left: Image/Icon Square */}
@@ -68,8 +68,9 @@ export const EntityGridCard = ({ entity, config, context }) => {
 						<div className='absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors' />
 					</>
 				) : (
-					<div className='w-full h-full flex items-center justify-center bg-stone-100'>
-						<config.icon size={28} className='text-stone-400/70 mix-blend-multiply' strokeWidth={1.5} />
+					<div className='w-full h-full flex items-center justify-center bg-muted'>
+						{/* FIX: Removed 'mix-blend-multiply' to fix invisible icons in Dark Mode */}
+						<config.icon size={28} className='text-muted-foreground/70' strokeWidth={1.5} />
 					</div>
 				)}
 			</div>
@@ -77,7 +78,7 @@ export const EntityGridCard = ({ entity, config, context }) => {
 			{/* Right: Content */}
 			<div className='flex-1 px-3 py-2 flex flex-col min-w-0 justify-center'>
 				<div className='flex items-center justify-between gap-2'>
-					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-accent transition-colors truncate'>
+					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
 						{entity.name}
 					</h3>
 				</div>

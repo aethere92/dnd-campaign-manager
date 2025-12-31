@@ -4,6 +4,7 @@ PARTIAL BUNDLE: DOMAIN ENTITY
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: DOMAIN ENTITY
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: DOMAIN ENTITY
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -372,7 +367,7 @@ export const getGraphData = async (campaignId) => {
 export const getEntityIndex = async (campaignId) => {
 	const { data, error } = await supabase
 		.from('entity_complete_view')
-		.select('id, name, type, attributes, relationships')
+		.select('id, name, type, attributes, relationships, description')
 		.eq('campaign_id', campaignId);
 
 	if (error) return [];
@@ -1112,159 +1107,116 @@ export const resolveEntityIcon = (entity) => {
 --- END OF domain\entity\config\entityIcons.js ---
 
 --- FILE: domain\entity\config\entityStyles.js ---
-/**
- * Entity Tailwind Style Builders
- * Generate Tailwind class strings for each entity type
- */
-
 import { ENTITY_TYPES } from './entityTypes';
 
 /**
- * Tailwind class maps for each entity type
+ * Tailwind class maps
+ * CHANGED: Replaced 'slate' with 'muted-foreground' or 'foreground' to respect the active theme.
  */
 const ENTITY_TAILWIND_CLASSES = {
 	[ENTITY_TYPES.SESSION]: {
-		text: 'text-slate-700',
-		bg: 'bg-slate-50',
-		border: 'border-slate-500',
-		hover: 'hover:bg-slate-100',
+		text: 'text-[var(--entity-session,theme(colors.slate.500))] font-medium',
+		bg: 'bg-muted/50',
+		border: 'border-border',
+		hover: 'hover:bg-muted',
 	},
 	[ENTITY_TYPES.CHARACTER]: {
-		text: 'text-red-700',
-		bg: 'bg-red-50',
-		border: 'border-red-300',
-		hover: 'hover:bg-red-50',
+		text: 'text-[var(--entity-character,theme(colors.red.500))]',
+		bg: 'bg-red-500/10',
+		border: 'border-red-500/20',
+		hover: 'hover:bg-red-500/10',
 	},
 	[ENTITY_TYPES.NPC]: {
-		text: 'text-amber-700',
-		bg: 'bg-amber-50',
-		border: 'border-amber-300',
-		hover: 'hover:bg-amber-50',
+		text: 'text-[var(--entity-npc,theme(colors.amber.500))]',
+		bg: 'bg-amber-500/10',
+		border: 'border-amber-500/20',
+		hover: 'hover:bg-amber-500/10',
 	},
 	[ENTITY_TYPES.LOCATION]: {
-		text: 'text-emerald-700',
-		bg: 'bg-emerald-50',
-		border: 'border-emerald-300',
-		hover: 'hover:bg-emerald-50',
+		text: 'text-[var(--entity-location,theme(colors.emerald.500))]', // Will use moss green on D&D theme
+		bg: 'bg-emerald-500/10',
+		border: 'border-emerald-500/20',
+		hover: 'hover:bg-emerald-500/10',
 	},
 	[ENTITY_TYPES.QUEST]: {
-		text: 'text-blue-700',
-		bg: 'bg-blue-50',
-		border: 'border-blue-300',
-		hover: 'hover:bg-blue-50',
+		text: 'text-[var(--entity-quest,theme(colors.blue.500))]',
+		bg: 'bg-blue-500/10',
+		border: 'border-blue-500/20',
+		hover: 'hover:bg-blue-500/10',
 	},
 	[ENTITY_TYPES.FACTION]: {
-		text: 'text-purple-700',
-		bg: 'bg-purple-50',
-		border: 'border-purple-300',
-		hover: 'hover:bg-purple-50',
+		text: 'text-[var(--entity-faction,theme(colors.purple.500))]',
+		bg: 'bg-purple-500/10',
+		border: 'border-purple-500/20',
+		hover: 'hover:bg-purple-500/10',
 	},
 	[ENTITY_TYPES.ENCOUNTER]: {
-		text: 'text-orange-700',
-		bg: 'bg-orange-50',
-		border: 'border-orange-300',
-		hover: 'hover:bg-orange-50',
+		text: 'text-[var(--entity-encounter,theme(colors.orange.500))]',
+		bg: 'bg-orange-500/10',
+		border: 'border-orange-500/20',
+		hover: 'hover:bg-orange-500/10',
 	},
 	[ENTITY_TYPES.DEFAULT]: {
-		text: 'text-gray-700',
+		text: 'text-muted-foreground',
 		bg: 'bg-muted',
-		border: 'border-gray-400',
-		hover: 'hover:bg-gray-100',
+		border: 'border-border',
+		hover: 'hover:bg-muted/80',
 	},
 };
 
-/**
- * Get Tailwind classes for entity type
- * @param {string} type - Entity type
- * @returns {Object} Tailwind class object
- */
 export const getEntityStyles = (type) => {
 	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
 	return ENTITY_TAILWIND_CLASSES[normalized] || ENTITY_TAILWIND_CLASSES[ENTITY_TYPES.DEFAULT];
 };
 
-/**
- * Build a complete className string for an entity
- * @param {string} type - Entity type
- * @param {string|string[]} variants - Style variants to include (e.g., 'text', 'bg', 'border')
- * @param {string} additional - Additional classes to append
- * @returns {string} Complete className string
- */
 export const buildEntityClassName = (type, variants = [], additional = '') => {
 	const styles = getEntityStyles(type);
-
-	// Normalize variants to array
 	const variantList = Array.isArray(variants) ? variants : [variants];
-
-	// Build class string
 	const classes = variantList
 		.map((variant) => styles[variant])
 		.filter(Boolean)
 		.join(' ');
-
 	return additional ? `${classes} ${additional}` : classes;
 };
 
-/**
- * Pre-built utility class sets for common patterns
- */
+// Priority Badges - Using semantic opacity for better dark/light compatibility
+export const getPriorityStyles = (priority) => {
+	const p = priority?.toLowerCase() || '';
+	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
+		return 'border-orange-500/30 text-orange-700 dark:text-orange-400 bg-orange-500/10';
+	}
+	if (p.includes('medium') || p.includes('normal')) {
+		return 'border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-500/10';
+	}
+	if (p.includes('low')) {
+		return 'border-border text-muted-foreground bg-muted/50';
+	}
+	return 'border-border text-muted-foreground bg-muted/30';
+};
+
 export const ENTITY_CLASS_PRESETS = {
-	/**
-	 * Icon badge (small colored circle with icon)
-	 */
 	iconBadge: (type) => {
 		const styles = getEntityStyles(type);
 		return `${styles.bg} ${styles.border} ${styles.text} rounded-lg p-2 border`;
 	},
-
-	/**
-	 * Type badge (uppercase label)
-	 */
 	typeBadge: (type) => {
 		const styles = getEntityStyles(type);
 		return `${styles.bg} ${styles.text} ${styles.border} text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border`;
 	},
-
-	/**
-	 * Card container
-	 */
 	card: (type) => {
 		const styles = getEntityStyles(type);
-		return `${styles.bg} ${styles.border} border rounded-lg p-4 ${styles.hover} transition-colors`;
+		// Force bg-card to ensure cards are readable on all themes
+		return `bg-card border-border border rounded-lg p-4 ${styles.hover} transition-colors`;
 	},
-
-	/**
-	 * Link styling
-	 */
 	link: (type) => {
 		const styles = getEntityStyles(type);
-		return `${styles.text} ${styles.hover} transition-colors font-semibold`;
+		return `${styles.text} transition-colors font-semibold hover:underline`;
 	},
 };
 
-/**
- * Get preset class string
- * @param {string} preset - Preset name
- * @param {string} type - Entity type
- * @returns {string} Complete className string
- */
 export const getEntityPreset = (preset, type) => {
 	const presetFn = ENTITY_CLASS_PRESETS[preset];
 	return presetFn ? presetFn(type) : '';
-};
-
-export const getPriorityStyles = (priority) => {
-	const p = priority?.toLowerCase() || '';
-	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
-		return 'border-orange-200 text-orange-800 bg-orange-50';
-	}
-	if (p.includes('medium') || p.includes('normal')) {
-		return 'border-blue-200 text-blue-800 bg-blue-50';
-	}
-	if (p.includes('low')) {
-		return 'border-slate-200 text-slate-700 bg-slate-50';
-	}
-	return 'border-stone-200 text-stone-700 bg-stone-50';
 };
 
 --- END OF domain\entity\config\entityStyles.js ---
@@ -1808,7 +1760,7 @@ export const getStatusIcon = (status, type) => {
 		return { Icon: Shield, className: 'text-emerald-500 fill-emerald-500/10' };
 	}
 	// Neutral / Unknown
-	return { Icon: Circle, className: 'text-gray-400' };
+	return { Icon: Circle, className: 'text-muted-foreground/70' };
 };
 
 export const getStatusInfo = (entity) => {

@@ -321,7 +321,7 @@ if __name__ == "__main__":
         'package-lock.json', 'merge_files.py', 'context_bundle.txt',
         'db_schema.txt', 'functions_and_views.txt', 'campaign_01.js',
         '.DS_Store', 'dist', 'build', 'table_entries_examples.txt',
-        'dependency_graph.txt', 'project_stats.txt', 'parts'
+        'dependency_graph.txt', 'project_stats.txt', 'parts', 'dev_helpers'
     ]
     
     merge_files_in_directory(TARGET_FOLDER, OUTPUT_FILE, PARTS_DIR, ignore_list=FILES_TO_IGNORE)

@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2025-12-31 09:24:04
+Generated: 2025-12-31 16:44:30
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -34,16 +34,6 @@ app\AppRoutes.jsx:
 
 app\components\RouteLoading.jsx:
   → @/shared/components/ui/LoadingSpinner
-
-dev_helpers\check_imports.js:
-  → fs
-  → path
-  → url
-
-dev_helpers\refactor.js:
-  → fs
-  → path
-  → url
 
 domain\entity\api\entityService.js:
   → @/domain/entity/utils/attributeParser
@@ -231,8 +221,12 @@ features\atlas\MapPage.jsx:
   → ./useMapData
   → @/shared/components/ui/LoadingSpinner
 
+features\atlas\components\AtlasSidebar.jsx:
+  → clsx
+  → react
+
 features\atlas\components\MapCanvas.jsx:
-  → ./MapLayerControl
+  → ./AtlasSidebar
   → ./MapTools
   → ./layers/MapAreas
   → ./layers/MapMarkers
@@ -243,25 +237,31 @@ features\atlas\components\MapCanvas.jsx:
   → react
   → react-leaflet
 
-features\atlas\components\MapLayerControl.jsx:
-  → clsx
-  → leaflet
-  → lucide-react
-  → react
-
 features\atlas\components\MapTools.jsx:
   → clsx
   → lucide-react
   → react
   → react-leaflet
 
+features\atlas\components\__MapLayerControl.jsx:
+  → clsx
+  → leaflet
+  → lucide-react
+  → react
+
 features\atlas\components\layers\MapAreas.jsx:
   → react-leaflet
 
 features\atlas\components\layers\MapMarkers.jsx:
+  → @/domain/entity/config/entityConfig
+  → @/domain/entity/utils/attributeParser
   → @/features/atlas/utils/markerUtils
+  → @/features/smart-text/useEntityIndex
+  → @/shared/utils/imageUtils
+  → clsx
   → lucide-react
   → react-leaflet
+  → react-router-dom
 
 features\atlas\components\layers\MapOverlays.jsx:
   → react-leaflet
@@ -603,6 +603,7 @@ features\wiki\components\EncounterTimeline.jsx:
   → @/domain/entity/components/EntityIcon
   → @/domain/entity/components/EntityLink
   → @/features/smart-text/SmartMarkdown
+  → @/shared/hooks/useTheme
   → clsx
   → react
 
@@ -632,13 +633,18 @@ features\wiki\components\EntityHistory.jsx:
   → lucide-react
 
 features\wiki\components\EntityMiniMap.jsx:
+  → @/domain/entity/config/entityConfig
+  → @/domain/entity/utils/attributeParser
   → @/features/atlas/utils/markerUtils
+  → @/features/smart-text/useEntityIndex
   → @/shared/components/ui/LoadingSpinner
+  → @/shared/utils/imageUtils
   → clsx
   → leaflet
   → lucide-react
   → react
   → react-leaflet
+  → react-router-dom
 
 features\wiki\components\EntitySidebar.jsx:
   → @/domain/entity/components/EntityIcon
@@ -695,6 +701,7 @@ features\wiki\components\navigation\WikiSidebar.jsx:
   → ./WikiSidebarHeader
   → ./WikiSidebarList
   → clsx
+  → lucide-react
   → react
 
 features\wiki\components\navigation\WikiSidebarHeader.jsx:
@@ -948,11 +955,13 @@ Most imported files (relative imports):
 Files with most outgoing dependencies:
   features\admin\components\AdminForm.jsx: 17 imports
   app\AppRoutes.jsx: 16 imports
+  features\wiki\components\EntityMiniMap.jsx: 12 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
   features\dashboard\DashboardPage.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
   features\admin\pages\SplitPaneManager.jsx: 9 imports
+  features\atlas\components\layers\MapMarkers.jsx: 9 imports
   features\wiki\layouts\SessionLayout.jsx: 9 imports
   features\navigation\MainLayout.jsx: 8 imports
   features\search\useGlobalSearch.js: 8 imports
@@ -963,6 +972,4 @@ Files with most outgoing dependencies:
   features\smart-text\components\EntityEmbed.jsx: 7 imports
   features\smart-tooltip\components\TooltipCard.jsx: 7 imports
   features\table-of-contents\TableOfContents.jsx: 7 imports
-  features\wiki\components\EntityMiniMap.jsx: 7 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 7 imports
-  features\wiki\components\navigation\sidebar\EntityListItem.jsx: 7 imports

@@ -30,14 +30,14 @@ export const SidebarFooter = ({ onSwitch }) => {
 		<div className='mt-auto p-4 border-t border-border space-y-2 bg-inherit'>
 			<button
 				onClick={cycleTheme}
-				className='flex items-center w-full px-2 py-2 text-xs font-medium text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				className='flex items-center w-full px-2 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
 				{getThemeIcon()}
 				Theme: {getThemeLabel()}
 			</button>
 
 			<button
 				onClick={onSwitch}
-				className='flex items-center w-full px-2 py-2 text-xs text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				className='flex items-center w-full px-2 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
 				<Settings size={14} className='mr-2' />
 				Switch Campaign
 			</button>

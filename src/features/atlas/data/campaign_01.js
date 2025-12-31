@@ -187,7 +187,7 @@ export const CAMPAIGN_01 = {
 					{
 						lat: -21.21875,
 						lng: 226.75,
-						label: "BEorunna's Well",
+						label: "Beorunna's Well",
 						type: 'place',
 						icon: null,
 					},
@@ -574,7 +574,6 @@ export const CAMPAIGN_01 = {
 							imageWidth: 32069,
 							imageHeight: 19161,
 						},
-						backgroundColor: `linear-gradient(rgba(26, 20, 18, 0.97), rgba(26, 20, 18, 0.97)),url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='%23241c1a' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E")`,
 					},
 					annotations: {
 						npcs: {
@@ -4675,7 +4674,6 @@ export const CAMPAIGN_01 = {
 										imageWidth: 1800,
 										imageHeight: 1200,
 									},
-									backgroundColor: 'rgb(13 15 3)',
 								},
 								annotations: {
 									points_of_interest: {
@@ -4726,7 +4724,6 @@ export const CAMPAIGN_01 = {
 										imageWidth: 7800,
 										imageHeight: 4800,
 									},
-									backgroundColor: 'rgb(13 15 3)',
 								},
 								annotations: {
 									navigation: {
@@ -4774,7 +4771,6 @@ export const CAMPAIGN_01 = {
 										imageWidth: 4800,
 										imageHeight: 1800,
 									},
-									backgroundColor: 'linear-gradient(0deg, #292315, #0c0805)',
 								},
 								annotations: {
 									navigation: {
@@ -4814,7 +4810,6 @@ export const CAMPAIGN_01 = {
 										imageWidth: 4095,
 										imageHeight: 6144,
 									},
-									backgroundColor: 'linear-gradient(0deg, #292315, #0c0805)',
 								},
 								annotations: {
 									navigation: {
@@ -4862,7 +4857,6 @@ export const CAMPAIGN_01 = {
 							imageWidth: 6144,
 							imageHeight: 4128,
 						},
-						backgroundColor: `linear-gradient(rgba(26, 20, 18, 0.97), rgba(26, 20, 18, 0.97)),url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30L0 30z' fill='%23241c1a' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E")`,
 					},
 					annotations: {
 						navigation: {
@@ -4895,7 +4889,6 @@ export const CAMPAIGN_01 = {
 							imageWidth: 4096,
 							imageHeight: 3072,
 						},
-						backgroundColor: 'radial-gradient(rgb(22 62 72), rgb(20 62 75))',
 					},
 					annotations: {
 						combat_encounters: {

@@ -23,7 +23,7 @@ export const RecentEncountersWidget = ({ encounters }) => {
 						<div className='flex items-start gap-3'>
 							<Skull size={16} className='text-red-500 shrink-0 mt-0.5' strokeWidth={2.5} />
 							<div className='flex-1 min-w-0'>
-								<p className='text-sm font-semibold text-foreground group-hover:text-accent transition-colors mb-0.5'>
+								<p className='text-sm font-semibold text-foreground group-hover:text-primary transition-colors mb-0.5'>
 									{encounter.name}
 								</p>
 								{encounter.session && (

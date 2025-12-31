@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES CAMPAIGN
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES CAMPAIGN
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES CAMPAIGN
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -406,27 +401,27 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 	const initial = (campaign.name?.[0] || 'C').toUpperCase();
 
 	return (
-		<div className='bg-background/80 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all p-6 flex flex-col h-full border-t-4 border-t-amber-600'>
+		<div className='bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all p-6 flex flex-col h-full border-t-4 border-t-primary'>
 			{/* ID Badge */}
 			<div className='mb-4 flex justify-between items-start'>
-				<div className='w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 font-serif font-bold text-xl border border-amber-200'>
+				<div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-serif font-bold text-xl border border-primary/20'>
 					{initial}
 				</div>
-				<span className='text-[10px] font-mono text-gray-400 bg-muted px-2 py-1 rounded'>
+				<span className='text-[10px] font-mono text-muted-foreground/70 bg-muted px-2 py-1 rounded'>
 					ID: {campaign.id.slice(0, 8)}...
 				</span>
 			</div>
 
 			<div className='flex-1 mb-6'>
 				<h3 className='text-xl font-bold text-foreground font-serif mb-2'>{campaign.name}</h3>
-				<p className='text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed italic'>
+				<p className='text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed italic'>
 					{campaign.description || 'A journey into the unknown.'}
 				</p>
 
 				{/* Characters Section */}
 				{campaign.characterNames?.length > 0 && (
 					<div className='pt-4 border-t border-border/50'>
-						<div className='flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wider mb-2'>
+						<div className='flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider mb-2'>
 							<Users size={12} />
 							Party Members
 						</div>
@@ -436,7 +431,7 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 								.map((name, i) => (
 									<span
 										key={i}
-										className='text-[11px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full border border-amber-100'>
+										className='text-[11px] px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20'>
 										{name}
 									</span>
 								))}
@@ -467,42 +462,40 @@ export default function CampaignSelect() {
 
 	if (isLoading) {
 		return (
-			<div className='min-h-screen bg-muted flex flex-col items-center justify-center'>
+			<div className='h-full w-full bg-muted flex flex-col items-center justify-center'>
 				<LoadingSpinner size='lg' text='Consulting the Archives...' />
 			</div>
 		);
 	}
 
 	return (
-		<div
-			className='min-h-screen p-6 md:p-12 font-sans flex items-center justify-center'
-			style={{
-				backgroundImage: 'var(--bg-texture)',
-				backgroundRepeat: 'repeat',
-			}}>
-			<div className='max-w-5xl w-full mx-auto'>
-				{/* Header Section */}
-				<div className='text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
-					<img src={logoPath} alt='Logo' className='h-32 md:h-40 mx-auto mb-8 drop-shadow-2xl' />
-					<h1 className='text-4xl md:text-5xl font-serif font-bold text-foreground mb-4'>Select Campaign</h1>
-					<p className='text-gray-600 text-lg max-w-xl mx-auto'>
-						Choose a world to enter. Your adventures, characters, and chronicles await.
-					</p>
-				</div>
+		// FIX: Removed inline style that forced texture. Added bg-background.
+		<div className='h-full w-full overflow-y-auto custom-scrollbar font-sans bg-background'>
+			<div className='min-h-full w-full flex items-center justify-center p-6 md:p-12'>
+				<div className='max-w-5xl w-full mx-auto'>
+					{/* Header Section */}
+					<div className='text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
+						<img src={logoPath} alt='Logo' className='h-32 md:h-40 mx-auto mb-8 drop-shadow-2xl' />
+						<h1 className='text-4xl md:text-5xl font-serif font-bold text-foreground mb-4'>Select Campaign</h1>
+						<p className='text-muted-foreground text-lg max-w-xl mx-auto'>
+							Choose a world to enter. Your adventures, characters, and chronicles await.
+						</p>
+					</div>
 
-				{/* Grid Section - Centered */}
-				<div className='flex flex-wrap justify-center gap-8'>
-					{campaigns.map((campaign) => (
-						<div key={campaign.id} className='w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.33%-1.5rem)] max-w-sm'>
-							<CampaignCard campaign={campaign} onSelect={selectCampaign} />
-						</div>
-					))}
+					{/* Grid Section - Centered */}
+					<div className='flex flex-wrap justify-center gap-8 pb-8'>
+						{campaigns.map((campaign) => (
+							<div key={campaign.id} className='w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.33%-1.5rem)] max-w-sm'>
+								<CampaignCard campaign={campaign} onSelect={selectCampaign} />
+							</div>
+						))}
 
-					{campaigns.length === 0 && (
-						<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-background/50 backdrop-blur-sm'>
-							<p className='text-gray-400 font-serif text-xl'>No campaigns found in the library.</p>
-						</div>
-					)}
+						{campaigns.length === 0 && (
+							<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-background/50 backdrop-blur-sm'>
+								<p className='text-muted-foreground/70 font-serif text-xl'>No campaigns found in the library.</p>
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>

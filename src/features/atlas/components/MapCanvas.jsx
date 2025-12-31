@@ -7,17 +7,18 @@ import { MapMarkers } from './layers/MapMarkers';
 import { MapRecaps } from './layers/MapRecaps';
 import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
-import { MapLayerControl } from './MapLayerControl';
-import { MapTools } from './MapTools'; // Import the new component
+import { MapTools } from './MapTools';
+import { AtlasSidebar } from './AtlasSidebar';
 import { useMapCanvasViewModel } from './useMapCanvasViewModel';
 
-const MapController = ({ bounds, minZoom, config }) => {
+// Controller to handle FlyTo from sidebar
+const MapController = ({ bounds, minZoom, config, flyToTarget }) => {
 	const map = useMap();
 	const prevConfigRef = useRef();
 
+	// Handle initial bounds
 	useEffect(() => {
 		if (!bounds) return;
-
 		const isNewMap = prevConfigRef.current !== config.path;
 		prevConfigRef.current = config.path;
 
@@ -30,6 +31,16 @@ const MapController = ({ bounds, minZoom, config }) => {
 		});
 	}, [map, bounds, minZoom, config.path]);
 
+	// Handle Sidebar FlyTo
+	useEffect(() => {
+		if (flyToTarget) {
+			map.flyTo(flyToTarget, config.sizes.maxZoom - 1, {
+				animate: true,
+				duration: 1.5,
+			});
+		}
+	}, [map, flyToTarget]);
+
 	return null;
 };
 
@@ -38,54 +49,55 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	const { config, bounds, areas } = data;
 	const vm = useMapCanvasViewModel(data);
-	const wrapperRef = useRef(null); // Ref for fullscreen
+	const wrapperRef = useRef(null);
+	const [flyToTarget, setFlyToTarget] = useState(null);
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
-	// const bgValue = config.backgroundColor || '#1a1412';
-	// const isImage = bgValue.includes('url') || bgValue.includes('gradient');
 
 	return (
-		<div
-			ref={wrapperRef}
-			style={{
-				height: '100%',
-				width: '100%',
-				// backgroundColor: isImage ? '#1a1412' : bgValue,
-				// backgroundImage: isImage ? bgValue : 'none',
-				// backgroundSize: 'cover',
-				// backgroundPosition: 'center',
-				// backgroundRepeat: 'no-repeat',
-				backgroundColor: 'var(--background)',
-				backgroundImage:
-					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
-				backgroundSize: '40px 40px, 20px 20px',
-				backgroundPosition: '0 0, 20px 20px',
-			}}>
-			<MapContainer
-				center={[0, 0]}
-				zoom={minZoom}
-				crs={L.CRS.Simple}
-				minZoom={minZoom}
-				maxZoom={config.sizes.maxZoom}
-				scrollWheelZoom={true}
-				attributionControl={false}
-				zoomControl={false}
-				style={{ height: '100%', width: '100%', background: 'transparent' }}>
-				<MapController bounds={bounds} minZoom={minZoom} config={config} />
+		<div className='flex h-full w-full relative overflow-hidden'>
+			{/* MAP AREA - First in DOM (Left side in flex row) */}
+			<div
+				ref={wrapperRef}
+				className='flex-1 relative h-full bg-background'
+				style={{
+					backgroundColor: 'var(--background)',
+					backgroundImage:
+						'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+					backgroundSize: '40px 40px, 20px 20px',
+					backgroundPosition: '0 0, 20px 20px',
+				}}>
+				<MapContainer
+					center={[0, 0]}
+					zoom={minZoom}
+					crs={L.CRS.Simple}
+					minZoom={minZoom}
+					maxZoom={config.sizes.maxZoom}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					zoomControl={false}
+					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					<MapController bounds={bounds} minZoom={minZoom} config={config} flyToTarget={flyToTarget} />
 
-				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
+					<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
 
-				<MapOverlays overlays={vm.visibleOverlays} />
-				{vm.showAreas && <MapAreas areas={areas} />}
-				<MapRecaps sessions={vm.visibleSessions} />
-				<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
+					<MapOverlays overlays={vm.visibleOverlays} />
+					{vm.showAreas && <MapAreas areas={areas} />}
+					<MapRecaps sessions={vm.visibleSessions} />
+					<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
 
-				<MapLayerControl groups={vm.controlGroups} visibility={vm.visibility} toggleLayer={vm.toggleLayer} />
+					<MapTools bounds={bounds} containerRef={wrapperRef} />
+				</MapContainer>
+			</div>
 
-				{/* New Tools Component */}
-				<MapTools bounds={bounds} containerRef={wrapperRef} />
-			</MapContainer>
+			{/* ATLAS SIDEBAR - Second in DOM (Right side) */}
+			<AtlasSidebar
+				groups={vm.sidebarGroups}
+				visibility={vm.visibility}
+				onToggleLayer={vm.toggleLayer}
+				onFlyTo={setFlyToTarget}
+			/>
 		</div>
 	);
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export const THEMES = {
-	LIGHT: 'light',
+	// LIGHT: 'light',
 	DARK: 'dark', // RE-ENABLED
 	DND: 'dnd',
 };

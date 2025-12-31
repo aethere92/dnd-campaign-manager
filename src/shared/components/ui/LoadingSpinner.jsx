@@ -11,7 +11,7 @@ export default function LoadingSpinner({ size = 'md', text = 'Loading...', class
 	return (
 		<div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
 			<Loader2 className={clsx(sizes[size], 'animate-spin text-amber-600')} />
-			{text && <p className='text-sm text-gray-500 font-medium'>{text}</p>}
+			{text && <p className='text-sm text-muted-foreground font-medium'>{text}</p>}
 		</div>
 	);
 }

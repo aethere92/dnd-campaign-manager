@@ -28,7 +28,7 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 						if (hasChildren) setIsExpanded(!isExpanded);
 					}}
 					className={clsx(
-						'w-5 h-6 flex items-center justify-center shrink-0 text-gray-400 hover:text-foreground transition-colors cursor-pointer',
+						'w-5 h-6 flex items-center justify-center shrink-0 text-muted-foreground/70 hover:text-foreground transition-colors cursor-pointer',
 						!hasChildren && 'invisible pointer-events-none'
 					)}>
 					{isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
@@ -40,14 +40,16 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 					className={({ isActive }) =>
 						clsx(
 							'flex-1 flex items-center gap-1.5 pr-2 text-[13px] truncate transition-colors rounded-r-sm',
-							isActive ? 'text-accent font-semibold bg-accent/5' : 'text-gray-700'
+							// FIX: Replaced 'text-accent' with 'text-primary' and background
+							isActive ? 'text-primary font-bold bg-primary/10' : 'text-foreground/80'
 						)
 					}>
 					<span
 						className={clsx(
 							'shrink-0 flex items-center justify-center',
 							!hasCustomIcon && 'opacity-100',
-							!hasCustomIcon && (item.type === 'location' ? 'text-stone-400' : 'text-stone-600')
+							// Ensure icon inherits color when active
+							!hasCustomIcon && (item.type === 'location' ? 'text-muted-foreground' : 'text-muted-foreground')
 						)}>
 						{hasCustomIcon ? (
 							<EntityIcon type={item.type} customIconUrl={iconUrl} size={14} />

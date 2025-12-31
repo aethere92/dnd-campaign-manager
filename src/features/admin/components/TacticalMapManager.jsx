@@ -85,7 +85,7 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 		<div className={ADMIN_SECTION_CLASS}>
 			<div className={ADMIN_HEADER_CLASS}>
 				<span className='flex items-center gap-2'>
-					<Target size={18} className='text-accent' /> Marker Editor
+					<Target size={18} className='text-primary' /> Marker Editor
 				</span>
 				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>Click map to add</span>
 			</div>

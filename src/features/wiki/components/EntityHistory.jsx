@@ -29,7 +29,7 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 						<div className='flex items-center gap-2 mb-1 flex-wrap'>
 							<h4 className='font-bold text-foreground text-sm mt-0.5'>{evt.title}</h4>
 							{showSession && evt.session_number != null && (
-								<span className='inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-auto max-w-[45%] truncate bg-stone-100 text-stone-500 border-stone-200/60'>
+								<span className='inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-auto max-w-[45%] truncate bg-muted text-muted-foreground border-border/60'>
 									<Calendar size={9} />
 									Session {evt.session_number}
 								</span>

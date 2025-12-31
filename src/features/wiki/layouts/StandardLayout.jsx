@@ -34,7 +34,7 @@ export default function StandardLayout({ viewModel }) {
 			<div className='lg:hidden'>
 				<Drawer.Root shouldScaleBackground>
 					<Drawer.Trigger asChild>
-						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-stone-300 rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
+						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
 							<Info size={18} />
 							<span>Info</span>
 						</button>
@@ -49,7 +49,7 @@ export default function StandardLayout({ viewModel }) {
 								<div className='flex justify-between items-center'>
 									{/* CHANGED: Used Drawer.Title instead of h2 for accessibility */}
 									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
-									<Drawer.Close className='p-2 bg-gray-100 rounded-full text-gray-500'>
+									<Drawer.Close className='p-2 bg-muted rounded-full text-muted-foreground'>
 										<X size={16} />
 									</Drawer.Close>
 								</div>

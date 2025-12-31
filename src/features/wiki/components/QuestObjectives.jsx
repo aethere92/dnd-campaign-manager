@@ -29,7 +29,7 @@ const QuestObjectiveItem = ({ obj }) => {
 		<div
 			className={clsx(
 				'transition-colors border-b border-border/40 last:border-0',
-				isCompleted ? 'bg-emerald-50/10' : isFailed ? 'bg-red-50/10' : 'hover:bg-muted/30'
+				isCompleted ? 'bg-emerald-500/10/10' : isFailed ? 'bg-red-500/10/10' : 'hover:bg-muted/30'
 			)}>
 			{/* --- MAIN ROW --- */}
 			<div
@@ -61,7 +61,7 @@ const QuestObjectiveItem = ({ obj }) => {
 						{/* Session Indicator Badge (Inline) */}
 						{hasSession && (
 							<div
-								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-stone-100 text-stone-500 border border-stone-200/60'
+								className='flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground border border-border/60'
 								title={`Completed in Session ${obj.completed_session_number - 1}`}>
 								<Calendar size={10} />
 								<span className='hidden sm:inline'>Session</span> {obj.completed_session_number - 1}
@@ -72,7 +72,7 @@ const QuestObjectiveItem = ({ obj }) => {
 					<div
 						className={clsx(
 							'text-[13px] leading-snug font-medium transition-colors',
-							isCompleted ? 'text-stone-600' : isFailed ? 'text-red-800/80' : 'text-foreground'
+							isCompleted ? 'text-muted-foreground' : isFailed ? 'text-red-800/80' : 'text-foreground'
 						)}>
 						<SmartMarkdown components={{ p: 'span' }}>{obj.description}</SmartMarkdown>
 					</div>
@@ -82,7 +82,7 @@ const QuestObjectiveItem = ({ obj }) => {
 				{hasContent && (
 					<button
 						className={clsx(
-							'shrink-0 text-gray-400 group-hover:text-foreground transition-colors mt-0.5',
+							'shrink-0 text-muted-foreground/70 group-hover:text-foreground transition-colors mt-0.5',
 							isOpen && 'text-foreground'
 						)}>
 						{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -97,8 +97,8 @@ const QuestObjectiveItem = ({ obj }) => {
 						{/* Update Text */}
 						{hasUpdate && (
 							<div className='flex gap-2 items-start'>
-								<CornerDownRight size={12} className='shrink-0 mt-1 text-accent opacity-60' />
-								<span className='text-xs text-stone-600 italic leading-relaxed'>
+								<CornerDownRight size={12} className='shrink-0 mt-1 text-primary opacity-60' />
+								<span className='text-xs text-muted-foreground italic leading-relaxed'>
 									<SmartMarkdown>{obj.objective_update}</SmartMarkdown>
 								</span>
 							</div>
@@ -114,12 +114,12 @@ export const QuestObjectives = ({ objectives }) => {
 	if (!objectives || objectives.length === 0) return null;
 
 	return (
-		<div className='mb-8 not-prose border border-stone-200 rounded-lg overflow-hidden bg-stone-50/20'>
-			<div className='px-3 py-2 border-b border-stone-200 bg-stone-100/50 flex items-center gap-2'>
+		<div className='mb-8 not-prose border border-border rounded-lg overflow-hidden bg-muted/30/20'>
+			<div className='px-3 py-2 border-b border-border bg-muted/50 flex items-center gap-2'>
 				<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 m-0'>
-					<Target size={12} className='text-accent' /> Quest Objectives
+					<Target size={12} className='text-primary' /> Quest Objectives
 				</h3>
-				<span className='ml-auto text-[9px] font-bold bg-stone-200/60 px-1.5 py-0.5 rounded text-stone-500'>
+				<span className='ml-auto text-[9px] font-bold bg-muted/80 px-1.5 py-0.5 rounded text-muted-foreground'>
 					{objectives.filter((o) => o.status === 'completed').length} / {objectives.length}
 				</span>
 			</div>

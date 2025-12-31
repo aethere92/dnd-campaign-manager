@@ -20,7 +20,7 @@ export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemCli
 	// Flatten check for empty search results
 	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
 	if (totalItems === 0) {
-		return <div className='p-6 text-center text-xs text-gray-400 italic'>No matches found.</div>;
+		return <div className='p-6 text-center text-xs text-muted-foreground/70 italic'>No matches found.</div>;
 	}
 
 	// Check if we have standard grouped data (multiple groups with titles)

@@ -1,68 +1,94 @@
 import { useState } from 'react';
 import { clsx } from 'clsx';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { WikiSidebarHeader } from './WikiSidebarHeader';
 import { WikiSidebarList } from './WikiSidebarList';
 
 export const WikiSidebar = ({ navigation, className }) => {
 	const [mobileOpen, setMobileOpen] = useState(false);
+	const [desktopCollapsed, setDesktopCollapsed] = useState(false);
 
 	return (
-		<div
-			className={clsx(
-				'flex flex-col bg-muted border-b border-border',
-				'sticky top-0 w-full z-30', // Mobile Sticky
-				'lg:static lg:border-b-0 lg:w-72 lg:order-2 lg:border-l lg:border-border lg:h-full', // Desktop Static
-				className
-			)}>
-			<WikiSidebarHeader
-				config={navigation.config}
-				search={navigation.search}
-				onSearchChange={navigation.setSearch}
-				onToggle={() => setMobileOpen(!mobileOpen)}
-				isOpen={mobileOpen}
-			/>
-
-			{/* 
-                ANIMATION WRAPPER:
-                Uses CSS Grid 0fr -> 1fr transition for smooth height animation 
-                regardless of content size.
-            */}
-			<div
-				className={clsx(
-					'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
-					// Desktop: Always open (1fr)
-					// Mobile: Toggles between 0fr (closed) and 1fr (open)
-					'lg:grid-rows-[1fr] lg:static lg:h-full',
-					mobileOpen ? 'grid-rows-[1fr] border-b border-border shadow-xl' : 'grid-rows-[0fr]'
-				)}>
-				{/* Inner container must have overflow-hidden to hide content during collapse */}
-				<div className='overflow-hidden'>
-					<div
-						className={clsx(
-							'lg:h-full lg:overflow-y-auto',
-							// Add max-height constraint on mobile only so it doesn't take up entire screen
-							mobileOpen && 'max-h-[70dvh] overflow-y-auto'
-						)}>
-						<WikiSidebarList
-							groups={navigation.groups}
-							isLoading={navigation.isLoading}
-							hasItems={navigation.hasItems}
-							config={navigation.config}
-							onItemClick={() => setMobileOpen(false)}
-						/>
+		<>
+			{/* COLLAPSED STATE (Slim Bar) */}
+			{desktopCollapsed && (
+				<div className='hidden lg:flex flex-col h-full border-l border-border bg-muted/50 w-10 shrink-0 z-30 transition-all duration-300 lg:order-2 items-center'>
+					<div className='h-14 w-full flex items-center justify-center border-b border-border/50'>
+						<button
+							onClick={() => setDesktopCollapsed(false)}
+							className='p-1.5 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors'
+							title='Expand Sidebar'>
+							{/* Icon flipped for right-side sidebar */}
+							<PanelLeftClose size={18} />
+						</button>
 					</div>
 				</div>
-			</div>
+			)}
 
-			{/* Mobile Backdrop - Only shows when expanded to focus user on the menu */}
+			{/* FULL SIDEBAR */}
 			<div
 				className={clsx(
-					'fixed inset-0 top-[110px] bg-black/40 z-[-1] lg:hidden backdrop-blur-[1px] transition-opacity duration-300',
-					mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-				)}
-				onClick={() => setMobileOpen(false)}
-				style={{ touchAction: 'none' }}
-			/>
-		</div>
+					'flex flex-col bg-muted border-b border-border',
+					'sticky top-0 w-full z-30', // Mobile
+					'lg:static lg:border-b-0 lg:h-full lg:transition-all lg:duration-300', // Desktop
+					// Dynamic Width Logic:
+					// If collapsed, width becomes 0 and overflow hidden to disappear
+					desktopCollapsed
+						? 'lg:w-0 lg:border-l-0 lg:overflow-hidden opacity-0 lg:opacity-100'
+						: 'lg:w-72 lg:border-l lg:border-border',
+					className
+				)}>
+				<WikiSidebarHeader
+					config={navigation.config}
+					search={navigation.search}
+					onSearchChange={navigation.setSearch}
+					onToggle={() => setMobileOpen(!mobileOpen)}
+					isOpen={mobileOpen}
+					// FIX: Pass toggle as a render prop to avoid layout overlap
+					renderDesktopToggle={() => (
+						<button
+							onClick={() => setDesktopCollapsed(true)}
+							className='text-muted-foreground hover:text-primary transition-colors p-0.5 rounded'
+							title='Collapse Sidebar'>
+							<PanelLeftOpen size={18} />
+						</button>
+					)}
+				/>
+
+				{/* Content Wrapper */}
+				<div
+					className={clsx(
+						'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+						'lg:grid-rows-[1fr] lg:static lg:h-full',
+						mobileOpen ? 'grid-rows-[1fr] border-b border-border shadow-xl' : 'grid-rows-[0fr]'
+					)}>
+					<div className='overflow-hidden'>
+						<div
+							className={clsx(
+								'lg:h-full lg:overflow-y-auto',
+								mobileOpen && 'max-h-[70dvh] overflow-y-auto custom-scrollbar'
+							)}>
+							<WikiSidebarList
+								groups={navigation.groups}
+								isLoading={navigation.isLoading}
+								hasItems={navigation.hasItems}
+								config={navigation.config}
+								onItemClick={() => setMobileOpen(false)}
+							/>
+						</div>
+					</div>
+				</div>
+
+				{/* Mobile Backdrop */}
+				<div
+					className={clsx(
+						'fixed inset-0 top-[110px] bg-black/40 z-[-1] lg:hidden backdrop-blur-[1px] transition-opacity duration-300',
+						mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+					)}
+					onClick={() => setMobileOpen(false)}
+					style={{ touchAction: 'none' }}
+				/>
+			</div>
+		</>
 	);
 };

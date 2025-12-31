@@ -47,7 +47,7 @@ export default function Breadcrumbs({ className }) {
 							) : (
 								<Link
 									to={crumb.path}
-									className='flex items-center gap-1.5 hover:text-accent transition-colors truncate max-w-[150px]'>
+									className='flex items-center gap-1.5 hover:text-primary transition-colors truncate max-w-[150px]'>
 									{isFirst ? <Home size={12} /> : Icon && <Icon size={12} />}
 									<span className={isFirst ? 'sr-only' : ''}>{crumb.label}</span>
 								</Link>

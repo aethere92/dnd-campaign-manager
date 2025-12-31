@@ -17,9 +17,6 @@ export const EntityListItem = ({ item, showStatus, onItemClick }) => {
 	const ResolvedIcon = resolveEntityIcon({ type: item.type, attributes: item.attributes });
 
 	// Determine if we show the icon.
-	// Logic: If it has a custom icon, YES.
-	// If it's a specific type that usually hides icons in lists (like Quest/Faction) because Status is more important, check here.
-	// We can add a property to ENTITY_TYPES config or keep a minimal logic here, but relying on the resolver is safer.
 	const shouldShowIcon = hasCustomIcon || !['quest', 'faction'].includes(item.type);
 
 	return (
@@ -29,14 +26,19 @@ export const EntityListItem = ({ item, showStatus, onItemClick }) => {
 			className={({ isActive }) =>
 				clsx(
 					'group flex items-center w-full text-left pl-6 pr-2 py-1 text-[13px] transition-colors',
-					isActive ? 'bg-accent/10 text-accent font-medium' : 'text-gray-700 hover:bg-black/5 hover:text-foreground'
+					// FIX: Replaced 'bg-accent/10' with 'bg-primary/10' and text color for visibility
+					isActive
+						? 'bg-primary/10 text-primary font-bold'
+						: 'text-foreground/80 hover:bg-black/5 hover:text-foreground'
 				)
 			}>
 			{shouldShowIcon && (
 				<span
 					className={clsx(
 						'shrink-0 flex items-center justify-center mr-2',
-						!hasCustomIcon && 'opacity-70 text-stone-500'
+						!hasCustomIcon && 'opacity-70 text-muted-foreground',
+						// Ensure icon inherits color when active
+						hasCustomIcon ? '' : 'group-[.active]:text-primary'
 					)}>
 					{hasCustomIcon ? (
 						<EntityIcon type={item.type} customIconUrl={iconUrl} size={16} className='rounded-full object-cover' />

@@ -9,8 +9,8 @@ export const QuickInsights = ({ stats, sessions }) => {
 			value: stats?.mostActiveSession?.title || 'N/A',
 			subtitle: `${stats?.mostActiveSession?.eventCount || 0} events`,
 			color: 'text-blue-600',
-			bg: 'bg-blue-50',
-			border: 'border-blue-200',
+			bg: 'bg-blue-500/10',
+			border: 'border-blue-500/30',
 		},
 		{
 			icon: Map,
@@ -18,8 +18,8 @@ export const QuickInsights = ({ stats, sessions }) => {
 			value: stats?.topLocation?.name || 'N/A',
 			subtitle: `${stats?.topLocation?.visits || 0} visits`,
 			color: 'text-emerald-600',
-			bg: 'bg-emerald-50',
-			border: 'border-emerald-200',
+			bg: 'bg-emerald-500/10',
+			border: 'border-emerald-500/30',
 		},
 		{
 			icon: Users,
@@ -27,8 +27,8 @@ export const QuickInsights = ({ stats, sessions }) => {
 			value: stats?.topNPC?.name || 'N/A',
 			subtitle: `${stats?.topNPC?.mentions || 0} mentions`,
 			color: 'text-amber-600',
-			bg: 'bg-amber-50',
-			border: 'border-amber-200',
+			bg: 'bg-amber-500/10',
+			border: 'border-amber-500/30',
 		},
 		{
 			icon: Trophy,
@@ -36,8 +36,8 @@ export const QuickInsights = ({ stats, sessions }) => {
 			value: stats?.completedQuests || 0,
 			subtitle: `${stats?.activeQuests || 0} still active`,
 			color: 'text-purple-600',
-			bg: 'bg-purple-50',
-			border: 'border-purple-200',
+			bg: 'bg-purple-500/10',
+			border: 'border-purple-500/30',
 		},
 	];
 

@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES TIMELINE
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -270,7 +265,7 @@ import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 export default function TimelineView() {
 	const { sessions, isLoading } = useTimelineViewModel();
 
-	if (isLoading) return <div className='p-8 text-center text-gray-400'>Loading timeline...</div>;
+	if (isLoading) return <div className='p-8 text-center text-muted-foreground/70'>Loading timeline...</div>;
 
 	// Construct ToC items manually for the timeline sessions
 	const tocItems = sessions.map((s) => ({
@@ -282,15 +277,15 @@ export default function TimelineView() {
 	return (
 		<div className='h-full overflow-hidden flex flex-col'>
 			<div className='flex-1 overflow-y-auto bg-background custom-scrollbar'>
-				{/* ARCHITECTURE FIX: Grid Layout for Timeline + ToC */}
-				<div className='max-w-7xl mx-auto p-6 md:p-12'>
+				{/* OPTIMIZATION: Reduced padding on mobile (p-4 vs p-12) */}
+				<div className='max-w-7xl mx-auto p-4 md:p-12'>
 					<h1 className='text-3xl font-serif font-bold text-foreground mb-10'>Campaign History</h1>
 
 					<div className='grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-12 relative'>
 						{/* Column 1: Timeline Content */}
-						<div className='relative border-l-2 border-slate-100 ml-4 space-y-16 pb-20'>
+						{/* OPTIMIZATION: Reduced margin-left (ml-3) for more width */}
+						<div className='relative border-l-2 border-border ml-3 md:ml-4 space-y-16 pb-20'>
 							{sessions.map((session) => (
-								/* Added scroll-mt to account for sticky headers if any */
 								<div key={session.id} id={`session-marker-${session.number}`} className='scroll-mt-24'>
 									<TimelineSession session={session} />
 								</div>
@@ -298,7 +293,6 @@ export default function TimelineView() {
 						</div>
 
 						{/* Column 2: ToC */}
-						{/* Sync visibility with the grid breakpoint (xl) */}
 						<TableOfContents items={tocItems} visibilityClass='hidden xl:block' mobileToggleClass='xl:hidden' />
 					</div>
 				</div>
@@ -496,32 +490,33 @@ export const TimelineEvent = ({ event }) => {
 	}, [event.tags]);
 
 	return (
-		<div className='relative flex gap-4 group'>
+		<div className='relative flex gap-3 md:gap-4 group'>
 			{/* Icon Bubble */}
 			<div
 				className={clsx(
-					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110',
+					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110 bg-background',
 					container
 				)}>
 				<Icon size={14} strokeWidth={2.5} />
 			</div>
 
 			{/* Content */}
-			<div className='flex-1 -mt-1 pb-2'>
-				<h4 className='text-sm font-bold text-gray-800 mb-1 flex items-center gap-2'>
-					{event.title}
-					<span className='text-[9px] font-normal uppercase tracking-wider text-gray-800 border border-border px-1.5 rounded-sm bg-muted ml-auto'>
+			<div className='flex-1 -mt-1 pb-2 min-w-0'>
+				{/* FIX: Title color muted to text-foreground/80 */}
+				<h4 className='text-sm font-bold text-foreground/80 mb-1 flex flex-wrap items-center gap-2'>
+					<span className='mr-auto'>{event.title}</span>
+					<span className='text-[9px] font-normal uppercase tracking-wider text-foreground border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
 						{event.typeLabel}
 					</span>
 				</h4>
 
 				{event.description && (
-					<div className='text-sm text-gray-600 leading-relaxed text-pretty text-justify'>
+					<div className='text-sm text-muted-foreground leading-relaxed text-pretty text-left'>
 						<SmartMarkdown>{event.description}</SmartMarkdown>
 					</div>
 				)}
 
-				{/* Grouped Tags with Separators */}
+				{/* Grouped Tags */}
 				{groupedTags.length > 0 && (
 					<div className='flex flex-wrap items-center gap-2 mt-2'>
 						{groupedTags.map((group, groupIndex) => (
@@ -537,7 +532,8 @@ export const TimelineEvent = ({ event }) => {
 											<span
 												key={`${tag.name}-${idx}`}
 												className={clsx(
-													'inline-flex items-center gap-1 text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border cursor-default',
+													// FIX: Changed font-bold to font-semibold for better legibility
+													'inline-flex items-center gap-1 text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border cursor-default whitespace-nowrap',
 													styles.bg,
 													styles.text,
 													styles.border
@@ -548,7 +544,7 @@ export const TimelineEvent = ({ event }) => {
 									})}
 								</div>
 
-								{/* Separator (except after last group) */}
+								{/* Separator */}
 								{groupIndex < groupedTags.length - 1 && (
 									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
 								)}
@@ -569,19 +565,20 @@ import { TimelineEvent } from './TimelineEvent';
 
 export const TimelineSession = ({ session }) => {
 	return (
-		<div className='relative pl-8 md:pl-12'>
+		// OPTIMIZATION: Reduced padding (pl-4) on mobile to maximize text width
+		<div className='relative pl-4 md:pl-12'>
 			{/* Session Marker (Circle on the main line) */}
-			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-gray-300 shadow-sm z-10'>
+			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
 				<div className='w-2 h-2 rounded-full bg-gray-400' />
 			</div>
 
 			{/* Session Header */}
 			<div className='mb-8'>
 				<div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2'>
-					<span className='text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded self-start border border-border'>
+					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded self-start border border-border'>
 						Session {session.number - 1}
 					</span>
-					<time className='text-xs text-gray-400 flex items-center gap-1 font-medium'>
+					<time className='text-xs text-muted-foreground/70 flex items-center gap-1 font-medium'>
 						<Calendar size={12} /> {session.dateLabel}
 					</time>
 				</div>
@@ -591,7 +588,9 @@ export const TimelineSession = ({ session }) => {
 			{/* Events List */}
 			<div className='space-y-6 relative'>
 				{/* Connector Line for events */}
-				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-gray-100 -z-10' />
+				{/* Adjusted left position slightly to align with tighter padding if needed, 
+                    but 15px centers it nicely within the w-8 icon (16px center) roughly */}
+				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-muted -z-10' />
 
 				{session.events.map((event) => (
 					<TimelineEvent key={event.id} event={event} />
@@ -723,7 +722,7 @@ export const getEventStyle = (eventType) => {
 		// Map standard styles to timeline specific class structure
 		container: `${styles.border} ${styles.bg} ${styles.text}`,
 		// Heuristic for line color (usually 200 or 300 shade) based on bg class
-		line: styles.bg.replace('-50', '-200'),
+		// line: styles.bg.replace('-50', '-200'),
 	};
 };
 

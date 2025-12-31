@@ -83,7 +83,7 @@ export const getStatusIcon = (status, type) => {
 		return { Icon: Shield, className: 'text-emerald-500 fill-emerald-500/10' };
 	}
 	// Neutral / Unknown
-	return { Icon: Circle, className: 'text-gray-400' };
+	return { Icon: Circle, className: 'text-muted-foreground/70' };
 };
 
 export const getStatusInfo = (entity) => {

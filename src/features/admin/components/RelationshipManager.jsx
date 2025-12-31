@@ -35,14 +35,14 @@ import Button from '@/shared/components/ui/Button';
 // 1. Group Headers (By Entity Type)
 const ENTITY_GROUPS = {
 	character: { label: 'Characters', icon: Users, color: 'text-rose-600', bg: 'bg-rose-50' },
-	npc: { label: 'NPCs', icon: User, color: 'text-amber-600', bg: 'bg-amber-50' },
-	location: { label: 'Locations', icon: MapPin, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-	faction: { label: 'Factions', icon: Shield, color: 'text-purple-600', bg: 'bg-purple-50' },
-	quest: { label: 'Quests', icon: Flag, color: 'text-blue-600', bg: 'bg-blue-50' },
-	session: { label: 'Sessions', icon: BookOpen, color: 'text-slate-600', bg: 'bg-slate-50' },
+	npc: { label: 'NPCs', icon: User, color: 'text-amber-600', bg: 'bg-amber-500/10' },
+	location: { label: 'Locations', icon: MapPin, color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+	faction: { label: 'Factions', icon: Shield, color: 'text-purple-600', bg: 'bg-purple-500/10' },
+	quest: { label: 'Quests', icon: Flag, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+	session: { label: 'Sessions', icon: BookOpen, color: 'text-slate-600', bg: 'bg-muted/30' },
 	item: { label: 'Items', icon: Gem, color: 'text-indigo-600', bg: 'bg-indigo-50' },
 	event: { label: 'Events', icon: Calendar, color: 'text-orange-600', bg: 'bg-orange-50' },
-	default: { label: 'Other Entities', icon: LinkIcon, color: 'text-gray-600', bg: 'bg-gray-50' },
+	default: { label: 'Other Entities', icon: LinkIcon, color: 'text-muted-foreground', bg: 'bg-muted/30' },
 };
 
 const GROUP_ORDER = ['character', 'npc', 'faction', 'location', 'quest', 'item', 'session', 'event'];
@@ -57,7 +57,7 @@ const REL_STYLES = {
 	Parent_Location: { color: 'text-amber-700', bg: 'bg-amber-100/50', border: 'border-amber-400' },
 	Quest_Giver: { color: 'text-blue-700', bg: 'bg-blue-100/50', border: 'border-blue-400' },
 	Participant: { color: 'text-blue-700', bg: 'bg-blue-100/50', border: 'border-blue-400' },
-	Generic: { color: 'text-slate-600', bg: 'bg-slate-100', border: 'border-slate-300' },
+	Generic: { color: 'text-slate-600', bg: 'bg-muted', border: 'border-slate-300' },
 };
 
 export default function RelationshipManager({ entityId }) {
@@ -204,7 +204,7 @@ export default function RelationshipManager({ entityId }) {
 						<Layers size={12} /> Bulk Connect
 					</h3>
 					{pendingTargets.length > 0 && (
-						<span className='text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100'>
+						<span className='text-xs text-amber-600 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-100'>
 							{pendingTargets.length} Ready
 						</span>
 					)}
@@ -220,7 +220,7 @@ export default function RelationshipManager({ entityId }) {
 							{pendingTargets.map((t) => (
 								<div
 									key={t.id}
-									className='flex items-center gap-2 bg-amber-50 text-amber-900 px-2 py-1 rounded border border-amber-200 text-xs font-medium'>
+									className='flex items-center gap-2 bg-amber-500/10 text-amber-900 px-2 py-1 rounded border border-amber-200 text-xs font-medium'>
 									<span className='uppercase text-[9px] text-amber-700/60 font-bold'>{t.type}</span>
 									<span>{t.name}</span>
 									<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800'>
@@ -372,7 +372,7 @@ export default function RelationshipManager({ entityId }) {
 													<div className='flex items-center gap-3 min-w-0 pl-3'>
 														<div className='flex items-center gap-2'>
 															<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
-															{rel.is_hidden && <EyeOff size={14} className='text-gray-400' title='Hidden' />}
+															{rel.is_hidden && <EyeOff size={14} className='text-muted-foreground/70' title='Hidden' />}
 															{rel.is_bidirectional && (
 																<ArrowRightLeft size={12} className='text-muted-foreground/50' title='Bidirectional' />
 															)}
@@ -395,12 +395,12 @@ export default function RelationshipManager({ entityId }) {
 																	is_hidden: rel.is_hidden,
 																});
 															}}
-															className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'>
+															className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
 															<Edit2 size={18} />
 														</button>
 														<button
 															onClick={() => handleDelete(rel.id)}
-															className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'>
+															className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'>
 															<Trash2 size={18} />
 														</button>
 													</div>

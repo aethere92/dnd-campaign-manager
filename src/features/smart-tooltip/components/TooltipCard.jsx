@@ -25,7 +25,7 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 			<div
 				ref={tooltipRef}
 				style={style}
-				className='bg-background p-3 rounded-lg shadow-xl border border-border text-xs text-gray-400'>
+				className='bg-background p-3 rounded-lg shadow-xl border border-border text-xs text-muted-foreground/70'>
 				Loading info...
 			</div>
 		);
@@ -102,17 +102,20 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 						<Icon size={16} />
 					</div>
 				</div>
-				{tags && <p className='text-[11px] font-medium text-gray-500 mt-1.5 pb-2 border-b border-border/50'>{tags}</p>}
+				{tags && (
+					<p className='text-[11px] font-medium text-muted-foreground mt-1.5 pb-2 border-b border-border/50'>{tags}</p>
+				)}
 			</div>
 
 			<div className='p-4 pt-3'>
-				<p className='text-xs text-gray-600 overflow-auto h-full max-h-32 leading-relaxed'>
+				{/* FIX: Added 'custom-scrollbar' to allow styled scrolling if description is long */}
+				<p className='text-xs text-muted-foreground overflow-auto h-full max-h-32 leading-relaxed custom-scrollbar'>
 					{data.description || 'No overview available.'}
 				</p>
 			</div>
 
 			<div className='bg-muted/50 p-2 border-t border-border flex justify-end'>
-				<span className='text-[10px] font-semibold text-gray-400 flex items-center gap-1 group-hover:text-amber-600 transition-colors'>
+				<span className='text-[10px] font-semibold text-muted-foreground/70 flex items-center gap-1 group-hover:text-amber-600 transition-colors'>
 					View Details <ArrowRight size={10} />
 				</span>
 			</div>

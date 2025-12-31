@@ -1,30 +1,27 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, ImageOverlay, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Map as MapIcon, Maximize, Minimize } from 'lucide-react';
+import { Map as MapIcon, Maximize, Minimize, BookOpen, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
-/**
- * REFACTORED: MapController now handles viewport recalibration
- * when switching in/out of fullscreen modes.
- */
 const MapController = ({ bounds, activeFullscreen }) => {
 	const map = useMap();
-
 	useEffect(() => {
 		if (bounds && map) {
-			// Small timeout ensures the DOM has finished its layout transition (h-96 <-> h-screen)
 			const timer = setTimeout(() => {
 				map.invalidateSize({ animate: true });
 				map.fitBounds(bounds, { padding: [20, 20] });
 			}, 100);
-
 			return () => clearTimeout(timer);
 		}
-	}, [map, bounds, activeFullscreen]); // Re-run when fullscreen toggles
-
+	}, [map, bounds, activeFullscreen]);
 	return null;
 };
 
@@ -34,18 +31,17 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 	const [isFullscreen, setIsFullscreen] = useState(false);
 	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
 	const containerRef = useRef(null);
+	const navigate = useNavigate();
+	const { map: entityMap } = useEntityIndex();
 
-	// Unified flag for UI
 	const activeFullscreen = isFullscreen || isPseudoFullscreen;
 
-	// Native Fullscreen Sync
 	useEffect(() => {
 		const handler = () => setIsFullscreen(!!document.fullscreenElement);
 		document.addEventListener('fullscreenchange', handler);
 		return () => document.removeEventListener('fullscreenchange', handler);
 	}, []);
 
-	// iOS Fallback Escape Handler
 	useEffect(() => {
 		const handleEsc = (e) => {
 			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
@@ -70,10 +66,8 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 	const toggleFullscreen = (e) => {
 		e.stopPropagation();
 		if (!containerRef.current) return;
-
 		const supportsNative =
 			document.fullscreenEnabled || document.webkitFullscreenEnabled || containerRef.current.requestFullscreen;
-
 		if (supportsNative) {
 			if (!document.fullscreenElement) {
 				containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
@@ -121,36 +115,119 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 						width: '100%',
 						backgroundColor: 'var(--background)',
 						backgroundImage:
-							'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+							'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
 						backgroundSize: '40px 40px, 20px 20px',
 						backgroundPosition: '0 0, 20px 20px',
 					}}>
-					{/* PASS activeFullscreen to the controller */}
 					<MapController bounds={dimensions} activeFullscreen={activeFullscreen} />
 					<ImageOverlay url={imageUrl} bounds={dimensions} />
 
-					{markers.map((m, idx) => (
-						<Marker key={idx} position={[m.lat, m.lng]} icon={resolveMarkerIcon(m)}>
-							{m.label && (
-								<Popup>
-									<div className='marker-popup-card'>
-										<div className='marker-popup-header'>
-											<span className='marker-popup-category'>{m.category || 'POI'}</span>
-											<div className='marker-popup-title'>{m.label}</div>
+					{markers.map((marker, idx) => {
+						const entityMatch = Array.from(entityMap.values()).find(
+							(e) => e.name.toLowerCase() === marker.label.toLowerCase()
+						);
+						const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
+
+						const displayData = {
+							title: marker.label,
+							category:
+								marker.category && marker.category !== 'default'
+									? marker.category
+									: entityMatch
+									? entityMatch.type
+									: 'Point of Interest',
+							description: marker.description
+								? marker.description
+								: entityMatch
+								? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
+								: null,
+							image: entityMatch ? resolveImageUrl(entityAttrs, 'background') : null,
+						};
+
+						const entityConfig = entityMatch ? getEntityConfig(entityMatch.type) : null;
+
+						const handleWikiNav = (e) => {
+							e.stopPropagation();
+							if (entityMatch) {
+								navigate(`/wiki/${entityMatch.type}/${entityMatch.id}`);
+							}
+						};
+
+						return (
+							<Marker
+								key={`${marker.label}-${idx}`}
+								position={[marker.lat, marker.lng]}
+								icon={resolveMarkerIcon(marker)}>
+								{marker.label && (
+									<Popup className='custom-popup-clean' closeButton={false}>
+										<div className='flex flex-col w-full font-sans bg-background rounded-lg overflow-hidden border border-border shadow-sm'>
+											{displayData.image && (
+												<div className='h-24 w-full relative bg-muted'>
+													<img
+														src={displayData.image}
+														alt={displayData.title}
+														className='w-full h-full object-cover m-0!'
+													/>
+													{/* FIX: Improved Gradient */}
+													<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/80 via-30% to-transparent pointer-events-none' />
+												</div>
+											)}
+
+											<div className={clsx('px-4 pb-3', displayData.image ? 'pt-2 -mt-8 relative z-10' : 'pt-4')}>
+												<div className='flex items-start justify-between gap-2'>
+													<div>
+														<span
+															className={clsx(
+																'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
+																entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
+															)}>
+															{displayData.category}
+														</span>
+														<h3 className='font-serif font-bold text-lg leading-tight text-foreground drop-shadow-sm m-0!'>
+															{displayData.title}
+														</h3>
+													</div>
+													{entityConfig && (
+														<div
+															className={clsx(
+																'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
+																entityConfig.tailwind.border,
+																entityConfig.tailwind.text
+															)}>
+															<entityConfig.icon size={14} />
+														</div>
+													)}
+												</div>
+
+												<div className='h-px w-full bg-border/50 my-3' />
+
+												<div className='text-xs text-muted-foreground leading-relaxed max-h-32 overflow-y-auto custom-scrollbar'>
+													{displayData.description || <span className='italic opacity-70'>No details available.</span>}
+												</div>
+											</div>
+
+											{entityMatch && (
+												<div className='bg-muted/50 p-2 border-t border-border'>
+													<button
+														onClick={handleWikiNav}
+														className='w-full flex items-center justify-between px-3 py-1.5 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-colors text-xs font-semibold group'>
+														<span className='flex items-center gap-2'>
+															<BookOpen size={12} /> View Encyclopedia
+														</span>
+														<ArrowRight size={12} className='opacity-0 group-hover:opacity-100 transition-opacity' />
+													</button>
+												</div>
+											)}
 										</div>
-										{m.description && <div className='marker-popup-body'>{m.description}</div>}
-									</div>
-								</Popup>
-							)}
-						</Marker>
-					))}
+									</Popup>
+								)}
+							</Marker>
+						);
+					})}
 				</MapContainer>
 
 				<div
 					className={clsx(
-						// Use Tailwind classes with responsive modifiers for cleaner handling
-						// Mobile: top-20 (5rem/80px) to clear Chrome URL bar
-						// Desktop (lg): top-6 (1.5rem) standard positioning
 						'absolute z-[10060] transition-all duration-300',
 						activeFullscreen ? 'top-[50%] right-4 lg:top-6 lg:right-6 pr-safe pt-safe' : 'top-4 right-4'
 					)}>
@@ -158,7 +235,7 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 						onClick={toggleFullscreen}
 						className={clsx(
 							'p-3 rounded-full border border-border shadow-2xl transition-all active:scale-90',
-							'bg-background/95 backdrop-blur-md text-accent hover:bg-accent hover:text-white'
+							'bg-background/95 backdrop-blur-md text-foreground hover:bg-primary hover:text-white'
 						)}
 						title={activeFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
 						{activeFullscreen ? <Minimize size={20} strokeWidth={2.5} /> : <Maximize size={20} strokeWidth={2.5} />}

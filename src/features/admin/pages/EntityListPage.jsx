@@ -132,7 +132,7 @@ export default function EntityListPage() {
 									<button
 										onClick={() => handleDuplicate(item.id)}
 										disabled={isCloning === item.id}
-										className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
+										className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
 										title='Duplicate'>
 										{isCloning === item.id ? (
 											<Loader2 size={16} className='animate-spin text-amber-600' />
@@ -152,7 +152,7 @@ export default function EntityListPage() {
 									<button
 										onClick={() => handleDelete(item.id)}
 										disabled={isDeleting === item.id}
-										className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
 										title='Delete'>
 										{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
 									</button>

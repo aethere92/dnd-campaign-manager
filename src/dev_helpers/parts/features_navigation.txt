@@ -4,6 +4,7 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -264,28 +259,34 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
 
 --- FILE: features\navigation\MainLayout.jsx ---
 import { Outlet } from 'react-router-dom';
-import { Menu, Search } from 'lucide-react'; // Added Search Icon
+import { Menu, Search } from 'lucide-react';
 import { useMainLayout } from '@/features/navigation/useNavigation';
 import { Sidebar } from './components/Sidebar';
 import DevAdminButton from '@/shared/components/ui/DevAdminButton';
 import Breadcrumbs from '@/shared/components/ui/Breadcrumbs';
 import GlobalSearch from '@/features/search/GlobalSearch';
-import { SearchProvider, useSearch } from '@/features/search/SearchContext'; // Import Provider
+import { SearchProvider, useSearch } from '@/features/search/SearchContext';
 
-// Separate component to access Context inside Provider
 const MobileHeaderActions = ({ vm }) => {
 	const { openSearch } = useSearch();
 
 	return (
-		<div className='lg:hidden flex items-center justify-between p-4 border-b border-border bg-background shrink-0'>
-			<button onClick={() => vm.setSidebarOpen(true)} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
-				<Menu size={20} />
+		// CHANGED: Added pt-safe for notch support and min-h for touch targets
+		<div className='lg:hidden flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] border-b border-border bg-background/95 backdrop-blur-md shrink-0 sticky top-0 z-40 transition-all'>
+			<button
+				onClick={() => vm.setSidebarOpen(true)}
+				className='p-2 -ml-2 text-muted-foreground hover:bg-muted rounded-full active:scale-95 transition-transform'
+				aria-label='Open Menu'>
+				<Menu size={24} strokeWidth={1.5} />
 			</button>
-			<h1 className='text-sm font-serif font-bold'>{vm.campaign?.name || 'Campaign'}</h1>
 
-			{/* NEW: Mobile Search Trigger */}
-			<button onClick={openSearch} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
-				<Search size={20} />
+			<h1 className='text-base font-serif font-bold truncate max-w-[60%]'>{vm.campaign?.name || 'Campaign'}</h1>
+
+			<button
+				onClick={openSearch}
+				className='p-2 -mr-2 text-muted-foreground hover:bg-muted rounded-full active:scale-95 transition-transform'
+				aria-label='Search'>
+				<Search size={24} strokeWidth={1.5} />
 			</button>
 		</div>
 	);
@@ -296,25 +297,27 @@ export default function MainLayout() {
 
 	return (
 		<SearchProvider>
-			<div className='flex h-screen bg-background text-foreground overflow-hidden'>
+			<div className='flex h-full w-full bg-background text-foreground overflow-hidden'>
 				<Sidebar vm={vm} />
-				<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col'>
-					{/* Updated Mobile Header */}
+				<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col w-full'>
+					{/* Mobile Header */}
 					<MobileHeaderActions vm={vm} />
 
+					{/* Desktop Breadcrumbs */}
 					<div className='absolute top-4 left-6 z-40 hidden lg:block pointer-events-none'>
 						<div className='pointer-events-auto'>
 							<Breadcrumbs />
 						</div>
 					</div>
 
-					<div className='flex-1 overflow-hidden relative'>
+					{/* Content Area */}
+					<div className='flex-1 overflow-hidden relative w-full'>
 						<Outlet />
 					</div>
+
 					<DevAdminButton />
 				</main>
 
-				{/* Search Modal lives here now */}
 				<GlobalSearch />
 			</div>
 		</SearchProvider>
@@ -404,7 +407,7 @@ export function useMainLayout() {
 
 --- FILE: features\navigation\components\Sidebar.jsx ---
 import { clsx } from 'clsx';
-import { Drawer } from '@/shared/components/ui/Drawer'; // Import generic
+import { Drawer } from '@/shared/components/ui/Drawer';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarNav } from './SidebarNav';
 import { SidebarFooter } from './SidebarFooter';
@@ -413,6 +416,7 @@ export const Sidebar = ({ vm }) => {
 	const { sidebarOpen, setSidebarOpen, campaign, navStructure, currentPath, navigateTo, onSwitchCampaign } = vm;
 
 	const SidebarContent = () => (
+		// FIXED: Uses semantic colors
 		<div className='flex flex-col h-full bg-muted border-r border-border'>
 			<SidebarHeader campaign={campaign} />
 			<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
@@ -422,7 +426,7 @@ export const Sidebar = ({ vm }) => {
 
 	return (
 		<>
-			{/* Mobile: Generic Drawer */}
+			{/* Mobile */}
 			<Drawer
 				isOpen={sidebarOpen}
 				onClose={() => setSidebarOpen(false)}
@@ -430,13 +434,14 @@ export const Sidebar = ({ vm }) => {
 				position='left'
 				className='w-72'>
 				<div className='flex flex-col h-full bg-muted'>
-					<SidebarHeader campaign={campaign} />
+					{/* FIX: Pass onSearch to close sidebar when search is triggered on mobile */}
+					<SidebarHeader campaign={campaign} onSearch={() => setSidebarOpen(false)} />
 					<SidebarNav structure={navStructure} currentPath={currentPath} onNavigate={navigateTo} />
 					<SidebarFooter onSwitch={onSwitchCampaign} />
 				</div>
 			</Drawer>
 
-			{/* Desktop: Static Sidebar */}
+			{/* Desktop */}
 			<aside className='hidden lg:flex w-64 flex-col h-full border-r border-border bg-muted shrink-0'>
 				<SidebarContent />
 			</aside>
@@ -479,14 +484,14 @@ export const SidebarFooter = ({ onSwitch }) => {
 		<div className='mt-auto p-4 border-t border-border space-y-2 bg-inherit'>
 			<button
 				onClick={cycleTheme}
-				className='flex items-center w-full px-2 py-2 text-xs font-medium text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				className='flex items-center w-full px-2 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
 				{getThemeIcon()}
 				Theme: {getThemeLabel()}
 			</button>
 
 			<button
 				onClick={onSwitch}
-				className='flex items-center w-full px-2 py-2 text-xs text-gray-500 hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
+				className='flex items-center w-full px-2 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-black/5 rounded-md transition-colors'>
 				<Settings size={14} className='mr-2' />
 				Switch Campaign
 			</button>
@@ -499,11 +504,11 @@ export const SidebarFooter = ({ onSwitch }) => {
 --- FILE: features\navigation\components\SidebarHeader.jsx ---
 import { SearchTrigger } from '@/features/search/components/SearchTrigger';
 
-export const SidebarHeader = ({ campaign }) => {
+export const SidebarHeader = ({ campaign, onSearch }) => {
 	return (
 		<div className='p-4'>
 			{/* Campaign Card */}
-			<div className='hidden lg:flex items-center gap-3 px-2 py-2 mb-4 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors'>
+			<div className='hidden lg:flex items-center gap-3 px-2 py-2 mb-4 hover:bg-muted rounded-lg cursor-pointer transition-colors'>
 				<div className='w-8 h-8 rounded bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center text-white font-serif font-bold shadow-sm'>
 					{campaign?.initial || 'C'}
 				</div>
@@ -514,7 +519,7 @@ export const SidebarHeader = ({ campaign }) => {
 
 			{/* Global Search Trigger - Desktop */}
 			<div className='lg:mb-6'>
-				<SearchTrigger />
+				<SearchTrigger onClick={onSearch} />
 			</div>
 		</div>
 	);
@@ -530,7 +535,9 @@ export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 		<div className='flex-1 overflow-y-auto px-4 space-y-6'>
 			{structure.map((group) => (
 				<div key={group.title}>
-					<h3 className='px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2'>{group.title}</h3>
+					<h3 className='px-3 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2'>
+						{group.title}
+					</h3>
 					<div className='space-y-0.5'>
 						{group.items.map((item) => {
 							const isWiki = item.path.startsWith('/wiki/');
@@ -543,10 +550,10 @@ export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 									className={clsx(
 										'flex items-center w-full px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
 										active
-											? 'bg-background shadow-sm text-black ring-1 ring-gray-200'
-											: 'text-gray-500 hover:bg-gray-100 hover:text-foreground'
+											? 'bg-background shadow-sm ring-1 ring-border'
+											: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 									)}>
-									<Icon size={16} className={clsx('mr-2', active ? 'text-amber-600' : 'text-gray-400')} />
+									<Icon size={16} className={clsx('mr-2', active ? 'text-amber-600' : 'text-muted-foreground/70')} />
 									{item.label}
 								</button>
 							);

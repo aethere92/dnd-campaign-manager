@@ -56,7 +56,7 @@ export default function EventTagger({ eventId }) {
 	};
 
 	if (isTemp) {
-		return <div className='text-xs text-amber-600 bg-amber-50 p-2 rounded'>Save this event to enable tagging.</div>;
+		return <div className='text-xs text-amber-600 bg-amber-500/10 p-2 rounded'>Save this event to enable tagging.</div>;
 	}
 
 	return (
@@ -68,10 +68,10 @@ export default function EventTagger({ eventId }) {
 				{tags.map((rel) => (
 					<div
 						key={rel.id}
-						className='flex items-center gap-1 bg-white border border-border px-2 py-1 rounded-md text-xs shadow-sm'>
+						className='flex items-center gap-1 bg-card border border-border px-2 py-1 rounded-md text-xs shadow-sm'>
 						<span className='font-medium text-foreground'>{rel.target?.name}</span>
 						<span className='text-[9px] text-muted-foreground uppercase'>{rel.target?.type}</span>
-						<button onClick={() => handleRemove(rel.id)} className='ml-1 text-gray-400 hover:text-red-500'>
+						<button onClick={() => handleRemove(rel.id)} className='ml-1 text-muted-foreground/70 hover:text-red-500'>
 							<X size={12} />
 						</button>
 					</div>

@@ -43,7 +43,7 @@ export const SessionRecapCard = ({ session, featured = false }) => {
 							className={clsx(
 								'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded',
 								featured
-									? 'bg-accent/10 text-accent border border-accent/30'
+									? 'bg-accent/10 text-primary border border-accent/30'
 									: 'bg-muted text-muted-foreground border border-border'
 							)}>
 							Session {session.session_number - 1}
@@ -57,7 +57,7 @@ export const SessionRecapCard = ({ session, featured = false }) => {
 					</div>
 					<h3
 						className={clsx(
-							'font-serif font-bold group-hover:text-accent transition-colors',
+							'font-serif font-bold group-hover:text-primary transition-colors',
 							featured ? 'text-2xl mb-2' : 'text-lg mb-1'
 						)}>
 						{session.name}
@@ -70,7 +70,7 @@ export const SessionRecapCard = ({ session, featured = false }) => {
 				</div>
 				<ArrowRight
 					size={featured ? 20 : 16}
-					className='shrink-0 text-gray-400 group-hover:text-accent group-hover:translate-x-1 transition-all'
+					className='shrink-0 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-1 transition-all'
 				/>
 			</div>
 

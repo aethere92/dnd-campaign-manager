@@ -4,6 +4,7 @@ PARTIAL BUNDLE: SHARED
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: SHARED
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: SHARED
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -315,9 +310,9 @@ class ErrorBoundary extends Component {
 							<AlertTriangle className='w-8 h-8 text-red-600' />
 						</div>
 						<h1 className='text-2xl font-serif font-bold text-foreground mb-3'>Something went wrong</h1>
-						<p className='text-gray-600 mb-6'>Don't worry, your data is safe. Try refreshing the page to continue.</p>
+						<p className='text-muted-foreground mb-6'>Don't worry, your data is safe. Try refreshing the page to continue.</p>
 						{process.env.NODE_ENV === 'development' && this.state.error && (
-							<details className='mb-6 text-left bg-red-50 border border-red-200 rounded-lg p-4'>
+							<details className='mb-6 text-left bg-red-500/10 border border-red-200 rounded-lg p-4'>
 								<summary className='cursor-pointer font-semibold text-red-900 mb-2'>Error Details</summary>
 								<pre className='text-xs text-red-800 overflow-auto'>{this.state.error.toString()}</pre>
 							</details>
@@ -388,8 +383,8 @@ export default function CollapsibleSection({
 			<button
 				onClick={() => setIsOpen(!isOpen)}
 				className={clsx(
-					'w-full flex items-center gap-2 font-semibold uppercase tracking-wider text-gray-500',
-					'hover:text-gray-700 transition-colors select-none',
+					'w-full flex items-center gap-2 font-semibold uppercase tracking-wider text-muted-foreground',
+					'hover:text-foreground/80 transition-colors select-none',
 					sizeClasses[size],
 					headerPadding
 				)}>
@@ -518,8 +513,8 @@ function TabButton({ active, label, onClick, icon: Icon }) {
 			className={clsx(
 				'px-4 py-2 text-sm font-medium transition-all border-b-2 cursor-pointer',
 				active
-					? 'border-amber-600 text-amber-600 bg-amber-50/30'
-					: 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+					? 'border-amber-600 text-amber-600 bg-amber-500/10/30'
+					: 'border-transparent text-muted-foreground hover:text-foreground/80 hover:bg-muted/30'
 			)}>
 			<span className='flex items-center gap-2'>
 				{Icon && <Icon size={14} />}
@@ -824,7 +819,7 @@ export default function Breadcrumbs({ className }) {
 							) : (
 								<Link
 									to={crumb.path}
-									className='flex items-center gap-1.5 hover:text-accent transition-colors truncate max-w-[150px]'>
+									className='flex items-center gap-1.5 hover:text-primary transition-colors truncate max-w-[150px]'>
 									{isFirst ? <Home size={12} /> : Icon && <Icon size={12} />}
 									<span className={isFirst ? 'sr-only' : ''}>{crumb.label}</span>
 								</Link>
@@ -857,8 +852,8 @@ export default function Button({
 
 	const variants = {
 		primary: 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500',
-		secondary: 'bg-gray-100 text-foreground hover:bg-gray-200 focus:ring-gray-500',
-		ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+		secondary: 'bg-muted text-foreground hover:bg-gray-200 focus:ring-gray-500',
+		ghost: 'bg-transparent text-foreground/80 hover:bg-muted focus:ring-gray-500',
 		danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
 	};
 
@@ -943,7 +938,7 @@ import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 
 /**
- * Reusable Mobile Drawer
+ * Reusable Mobile Drawer with 60fps hardware-accelerated transitions
  */
 export const Drawer = ({ isOpen, onClose, title, children, position = 'right', className }) => {
 	const [isVisible, setIsVisible] = useState(false);
@@ -951,54 +946,69 @@ export const Drawer = ({ isOpen, onClose, title, children, position = 'right', c
 	useEffect(() => {
 		if (isOpen) {
 			setIsVisible(true);
-			document.body.classList.add('drawer-open'); // Added this
+			document.body.classList.add('drawer-open');
 		} else {
-			setTimeout(() => {
+			// Wait for animation to finish before unmounting DOM
+			const timer = setTimeout(() => {
 				setIsVisible(false);
-				document.body.classList.remove('drawer-open'); // Added this
-			}, 300);
+				document.body.classList.remove('drawer-open');
+			}, 350); // Slightly longer than CSS duration to ensure completion
+			return () => clearTimeout(timer);
 		}
-
-		// Cleanup
 		return () => document.body.classList.remove('drawer-open');
 	}, [isOpen]);
 
 	if (!isVisible && !isOpen) return null;
 
+	// Slide directions
 	const positionClasses = {
-		right: 'right-0 top-0 bottom-0 border-l slide-in-from-right',
-		left: 'left-0 top-0 bottom-0 border-r slide-in-from-left',
+		right: 'right-0 top-0 bottom-0 border-l',
+		left: 'left-0 top-0 bottom-0 border-r',
+	};
+
+	// Transform values
+	const transforms = {
+		right: isOpen ? 'translate-x-0' : 'translate-x-full',
+		left: isOpen ? 'translate-x-0' : '-translate-x-full',
 	};
 
 	return createPortal(
 		<div className='fixed inset-0 z-[10050] isolate'>
-			{/* Backdrop */}
+			{/* Backdrop - Fades in/out */}
 			<div
 				className={clsx(
-					'absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300',
+					'absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300 ease-in-out',
 					isOpen ? 'opacity-100' : 'opacity-0'
 				)}
 				onClick={onClose}
+				aria-hidden='true'
 			/>
 
-			{/* Panel */}
+			{/* Panel - Slides with Physics Easing */}
 			<div
 				className={clsx(
-					'absolute w-80 bg-background shadow-2xl border-border flex flex-col transition-transform duration-300',
+					'absolute w-80 bg-background shadow-2xl border-border flex flex-col pb-safe',
+					// Hardware acceleration hints
+					'will-change-transform transition-transform duration-300',
+					// iOS-like spring easing (cubic-bezier)
+					'ease-[cubic-bezier(0.32,0.72,0,1)]',
 					positionClasses[position],
-					isOpen ? 'translate-x-0' : position === 'right' ? 'translate-x-full' : '-translate-x-full',
+					transforms[position],
 					className
 				)}>
 				{/* Header */}
-				<div className='p-4 border-b border-border flex items-center justify-between bg-muted shrink-0'>
+				<div className='p-4 pt-[calc(1rem+env(safe-area-inset-top))] border-b border-border flex items-center justify-between bg-muted shrink-0'>
 					<span className='text-sm font-serif font-bold text-foreground'>{title}</span>
-					<button onClick={onClose} className='p-2 hover:bg-background/50 rounded-full transition-colors'>
-						<X size={18} />
+					<button
+						onClick={onClose}
+						className='p-2 -mr-2 hover:bg-background/50 rounded-full transition-colors active:scale-95 text-muted-foreground'
+						aria-label='Close Sidebar'>
+						<X size={20} />
 					</button>
 				</div>
 
-				{/* Content - No background, let children control */}
-				<div className='flex-1 overflow-y-auto custom-scrollbar'>{children}</div>
+				{/* Content */}
+				<div className='flex-1 overflow-y-auto custom-scrollbar p-0'>{children}</div>
 			</div>
 		</div>,
 		document.body
@@ -1014,12 +1024,12 @@ export default function EmptyState({ icon: Icon, title, description, action, cla
 	return (
 		<div className={clsx('flex flex-col items-center justify-center p-8 text-center', className)}>
 			{Icon && (
-				<div className='mb-4 rounded-full bg-gray-100 p-4'>
-					<Icon className='w-8 h-8 text-gray-400' strokeWidth={1.5} />
+				<div className='mb-4 rounded-full bg-muted p-4'>
+					<Icon className='w-8 h-8 text-muted-foreground/70' strokeWidth={1.5} />
 				</div>
 			)}
 			{title && <h3 className='text-lg font-serif font-semibold text-foreground mb-2'>{title}</h3>}
-			{description && <p className='text-sm text-gray-500 max-w-sm mb-6'>{description}</p>}
+			{description && <p className='text-sm text-muted-foreground max-w-sm mb-6'>{description}</p>}
 			{action && <div>{action}</div>}
 		</div>
 	);
@@ -1041,7 +1051,7 @@ export default function LoadingSpinner({ size = 'md', text = 'Loading...', class
 	return (
 		<div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
 			<Loader2 className={clsx(sizes[size], 'animate-spin text-amber-600')} />
-			{text && <p className='text-sm text-gray-500 font-medium'>{text}</p>}
+			{text && <p className='text-sm text-muted-foreground font-medium'>{text}</p>}
 		</div>
 	);
 }
@@ -1054,7 +1064,7 @@ import { Diamond } from 'lucide-react';
 export const SectionDivider = () => (
 	<div className='flex items-center gap-4 my-6 opacity-80 select-none'>
 		<div className='h-px bg-border flex-1' />
-		<div className='flex-shrink-0 text-accent/50'>
+		<div className='flex-shrink-0 text-primary/40'>
 			<Diamond size={10} fill='currentColor' />
 		</div>
 		<div className='h-px bg-border flex-1' />
@@ -1171,7 +1181,7 @@ export function useBreadcrumbs() {
 import { useState, useEffect } from 'react';
 
 export const THEMES = {
-	LIGHT: 'light',
+	// LIGHT: 'light',
 	DARK: 'dark', // RE-ENABLED
 	DND: 'dnd',
 };

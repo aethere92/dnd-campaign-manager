@@ -15,8 +15,8 @@ export default function Button({
 
 	const variants = {
 		primary: 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500',
-		secondary: 'bg-gray-100 text-foreground hover:bg-gray-200 focus:ring-gray-500',
-		ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+		secondary: 'bg-muted text-foreground hover:bg-gray-200 focus:ring-gray-500',
+		ghost: 'bg-transparent text-foreground/80 hover:bg-muted focus:ring-gray-500',
 		danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
 	};
 

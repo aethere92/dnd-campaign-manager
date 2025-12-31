@@ -4,6 +4,7 @@ PARTIAL BUNDLE: APP
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
+  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx
@@ -12,13 +13,6 @@ PARTIAL BUNDLE: APP
       RouteLoading.jsx
     styles/
       global.css
-  dev_helpers/
-    check_imports.js
-    component_hierarchy.txt
-    duplicate_code_report.txt
-    refactor.js
-    token_count_report.txt
-    unused_code_report.txt
   domain/
     entity/
       api/
@@ -70,10 +64,11 @@ PARTIAL BUNDLE: APP
       MapPage.jsx
       useMapData.js
       components/
+        AtlasSidebar.jsx
         MapCanvas.jsx
-        MapLayerControl.jsx
         MapTools.jsx
         useMapCanvasViewModel.js
+        __MapLayerControl.jsx
         layers/
           MapAreas.jsx
           MapMarkers.jsx
@@ -395,8 +390,6 @@ export const RouteLoading = ({ text }) => (
 --- END OF app\components\RouteLoading.jsx ---
 
 --- FILE: app\styles\global.css ---
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
-/* --- FILE: app/styles/global.css --- */
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
@@ -408,377 +401,442 @@ export const RouteLoading = ({ text }) => (
 	/* Semantic Color Mapping */
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
-	--color-border: var(--border);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
-	--color-card: var(--card);
-	--color-paper: var(--paper);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
 }
 
+@layer base {
+	* {
+		@apply border-border;
+	}
+	html,
+	body,
+	#root {
+		height: 100%;
+		height: 100dvh;
+		overflow: hidden;
+		overscroll-behavior: none;
+		-webkit-tap-highlight-color: transparent;
+	}
+	body {
+		@apply bg-background text-foreground antialiased font-sans;
+	}
+	/* Heading Defaults */
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-serif font-bold text-foreground;
+	}
+}
+
+/* --- THEME DEFINITIONS --- */
+
+/* LIGHT MODE */
 :root {
 	--background: #ffffff;
-	--foreground: #0f172a;
-	--muted: #f1f5f9;
-	--muted-foreground: #64748b;
-	--border: #e2e8f0;
-	--accent: #d97706;
+	--foreground: #09090b;
 	--card: #ffffff;
-	--paper: #f8fafc;
+	--card-foreground: #09090b;
+	--popover: #ffffff;
+	--popover-foreground: #09090b;
+	--primary: #d97706;
+	--primary-foreground: #ffffff;
+	--secondary: #f4f4f5;
+	--secondary-foreground: #18181b;
+	--muted: #f4f4f5;
+	--muted-foreground: #71717a;
+	--accent: #f4f4f5;
+	--accent-foreground: #18181b;
+	--destructive: #ef4444;
+	--destructive-foreground: #fafafa;
+	--border: #e4e4e7;
+	--input: #e4e4e7;
+	--ring: #d97706;
+	--radius: 0.5rem;
 }
 
+/* DARK MODE (Zinc) */
 [data-theme='dark'] {
-	/* Use deep slates/zincs instead of pure black for a "Pro" look */
-	--background: #020617;
-	--foreground: #f8fafc;
-	--muted: #1e293b;
-	--muted-foreground: #94a3b8;
-	--border: #334155;
-	--accent: #f59e0b;
-	--card: #0f172a;
-	--paper: #1e293b;
+	--background: rgb(17 17 17);
+	--foreground: #eee;
+	--card: #18181b;
+	--card-foreground: #fafafa;
+	--popover: #18181b;
+	--popover-foreground: #fafafa;
+	--primary: #f59e0b;
+	--primary-foreground: #09090b;
+	--secondary: #27272a;
+	--secondary-foreground: #fafafa;
+	--muted: #1c1c1f;
+	--muted-foreground: #a1a1aa;
+	--accent: #27272a;
+	--accent-foreground: #fafafa;
+	--destructive: #ef4444;
+	--destructive-foreground: #fafafa;
+	--border: #27272a;
+	--input: #27272a;
+	--ring: #f59e0b;
 }
 
+/* D&D MODE (Parchment) */
 [data-theme='dnd'] {
 	--background: #fdfbf7;
-	--foreground: #1b1b1b;
+	--foreground: #2c1a11;
+	--card: #fdfbf7;
+	--card-foreground: #1b1b1b;
+	--popover: #fdfbf7;
+	--popover-foreground: #1b1b1b;
+	--primary: #d97706; /* Amber-600 */
+	--primary-foreground: #ffffff;
+	--secondary: #f2efe9;
+	--secondary-foreground: #1b1b1b;
 	--muted: #f2efe9;
 	--muted-foreground: #5f5a52;
-	--border: #c9c2b8;
-	--accent: #8b1e1e;
-	--accent-foreground: #ffffff;
-	--card: #fdfbf7;
-	--paper: #f2efe9;
+	--accent: #f2efe9;
+	--accent-foreground: #1b1b1b;
+	--destructive: #991b1b;
+	--destructive-foreground: #ffffff;
+	--border: #cecece;
+	--input: #c9c2b8;
+	--ring: #8b1e1e;
+
+	--entity-session: #5f5a52;
+	--entity-character: #c10007; /* Deep blood red */
+	--entity-npc: #bb4d00; /* Burnt Sienna */
+	--entity-location: #007a55; /* Deep Forest/Moss green */
+	--entity-quest: #1447e6; /* Deep Navy ink */
+	--entity-faction: #8200db; /* Royal Plum ink */
+	--entity-encounter: #ca3500; /* Iron Oxide */
+
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
-/* 
-   FIX: Catch-all for hardcoded Slate/Stone styles 
-   This forces elements using "muted" colors to respect the theme.
-*/
-.bg-muted {
-	background-color: var(--muted) !important;
-}
-.text-muted-foreground {
-	color: var(--muted-foreground) !important;
-}
-.border-border {
-	border-color: var(--border) !important;
+[data-theme='dnd'] .prose,
+[data-theme='dnd'] body {
+	text-shadow: 0 0 0.15px rgba(44, 26, 17, 0.1);
 }
 
-/* Apply variable-based colors to the prose (Markdown) */
+/* D&D Mode Texture */
+[data-theme='dnd'] .bg-background {
+	background-color: var(--background);
+	background-image: var(--bg-texture, none);
+	background-repeat: repeat;
+}
+
+[data-theme='dnd'] .bg-muted {
+	background-color: var(--muted);
+	border-right-color: #c9c2b8;
+}
+
+/* --- TYPOGRAPHY (Prose) --- */
 .prose {
 	--tw-prose-body: var(--foreground);
 	--tw-prose-headings: var(--foreground);
-	--tw-prose-links: var(--accent);
+	--tw-prose-lead: var(--muted-foreground);
+	--tw-prose-links: var(--primary);
 	--tw-prose-bold: var(--foreground);
 	--tw-prose-counters: var(--muted-foreground);
-	--tw-prose-bullets: var(--accent);
+	--tw-prose-bullets: var(--primary);
 	--tw-prose-hr: var(--border);
-	--tw-prose-quotes: var(--muted-foreground);
-	--tw-prose-quote-borders: var(--accent);
+	--tw-prose-quotes: var(--foreground);
+	--tw-prose-quote-borders: var(--primary);
 	--tw-prose-captions: var(--muted-foreground);
 	--tw-prose-code: var(--foreground);
 	--tw-prose-pre-code: var(--foreground);
 	--tw-prose-pre-bg: var(--muted);
 	--tw-prose-th-borders: var(--border);
 	--tw-prose-td-borders: var(--border);
-}
 
-/* --- HEADER GRADIENT CLASS --- */
-/* Gradient that blends into the page background based on theme */
-.header-gradient {
-	background: linear-gradient(to top, #ffffff 0%, transparent 100%);
-}
-
-[data-theme='dnd'] .header-gradient {
-	background: linear-gradient(to top, #fdfbf7 0%, transparent 100%);
-}
-
-[data-theme='dark'] .header-gradient {
-	background: linear-gradient(to top, #020617 0%, transparent 100%);
-}
-
-/* --- HEADER BACKGROUND --- */
-/* Default dark background for header images */
-.header-bg-fallback {
-	background: linear-gradient(to bottom right, #1e293b, #0f172a);
-}
-
-[data-theme='dnd'] .header-bg-fallback {
-	background: linear-gradient(to bottom right, #8b7355, #5c4a3a);
-}
-
-[data-theme='dark'] .header-bg-fallback {
-	background: linear-gradient(to bottom right, #1e293b, #0f172a);
-}
-
-/* --- D&D TEXTURE OVERRIDE --- */
-/* Applies the texture to any element using bg-background when in D&D mode */
-[data-theme='dnd'] .bg-background {
-	background-color: var(--background); /* Fallback color */
-	background-image: var(--bg-texture); /* Injected via JS */
-	background-repeat: repeat;
-}
-
-[data-theme='dnd'] .prose {
 	font-family: var(--font-sans);
-	color: var(--foreground);
-	line-height: 1.6;
+	max-width: none;
 }
 
+/* Prose Dark Mode Overrides */
+[data-theme='dark'] .prose {
+	--tw-prose-body: var(--foreground);
+	--tw-prose-headings: var(--foreground);
+	--tw-prose-lead: var(--muted-foreground);
+	--tw-prose-links: var(--primary);
+	--tw-prose-bold: var(--foreground);
+	--tw-prose-counters: var(--muted-foreground);
+	--tw-prose-bullets: var(--primary);
+	--tw-prose-hr: var(--border);
+	--tw-prose-quotes: var(--muted-foreground);
+	--tw-prose-quote-borders: var(--primary);
+	--tw-prose-captions: var(--muted-foreground);
+	--tw-prose-code: var(--accent-foreground);
+	--tw-prose-pre-code: var(--accent-foreground);
+	--tw-prose-pre-bg: var(--card);
+	--tw-prose-th-borders: var(--border);
+	--tw-prose-td-borders: var(--border);
+}
+
+/* D&D Mode Prose Styling */
 [data-theme='dnd'] .prose h1,
 [data-theme='dnd'] .prose h2,
 [data-theme='dnd'] .prose h3 {
 	font-family: var(--font-serif);
-	font-weight: 700;
-	color: var(--accent);
-	letter-spacing: 0.01em;
+	color: var(--foreground);
+	border-bottom-color: var(--border);
 }
 
-[data-theme='dnd'] .prose h1 {
-	border-bottom: 2px solid var(--accent);
-}
-
-[data-theme='dnd'] .prose h2 {
-	border-bottom: 1px solid var(--border);
-}
-
-[data-theme='dnd'] .prose h3 {
-	color: #4a0f0f;
-}
-[data-theme='dnd'] .prose p {
-	font-family: var(--font-sans);
-}
-[data-theme='dnd'] .dnd-sidebar-box {
-	background: var(--muted);
-	border: 1.5px solid var(--border);
-	border-left: 6px solid var(--accent);
-	font-family: var(--font-sans);
-}
-
-[data-theme='dnd'] .dnd-sidebar-box h4 {
-	font-family: var(--font-serif);
-	font-size: 0.95rem;
-	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--accent);
-}
-[data-theme='dnd'] .dnd-stat-row {
-	display: flex;
-	justify-content: space-between;
-	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-	font-size: 0.9rem;
-}
-
-[data-theme='dnd'] .dnd-stat-row:last-child {
-	border-bottom: none;
-}
-[data-theme='dnd'] .prose table {
-	border-collapse: collapse;
-	width: 100%;
-	font-family: var(--font-sans);
-	font-size: 0.9rem;
-}
-
-[data-theme='dnd'] .prose th {
-	background: var(--accent);
-	color: white;
-	text-align: left;
-	font-weight: 600;
-}
-
-[data-theme='dnd'] .prose td {
-	border-bottom: 1px solid var(--border);
-}
-
-[data-theme='dnd'] .prose tbody tr:nth-child(even) {
-	background: rgba(0, 0, 0, 0.03);
-}
-[data-theme='dnd'] .prose blockquote {
-	border-left: 4px solid var(--accent);
-	color: #4b1c1c;
-	font-style: italic;
-	background: none;
-}
-[data-theme='dnd'] .prose ul {
-	list-style: disc;
-}
-
-[data-theme='dnd'] .prose ol li::marker {
-	color: var(--accent);
-	font-weight: 600;
-}
-[data-theme='dnd'] .prose code {
-	font-family: var(--font-sans);
-	font-size: 0.85em;
-	background: rgba(0, 0, 0, 0.05);
-	border-radius: 3px;
-}
-[data-theme='dnd'] .prose hr {
-	border: none;
-	border-top: 2px solid var(--border);
-}
-[data-theme='dnd'] .prose a:not(:has(svg)) {
-	color: var(--accent);
-}
-
-[data-theme='dnd'] .prose a:hover {
-	color: #5f1111;
-}
-
-/* Fix for ToC highlight overlap with sticky headers */
-.scroll-mt-20 {
-	scroll-margin-top: 5rem;
-}
-
-/* Ensure our smart headers in markdown also have margin */
-h1[id],
-h2[id],
-h3[id] {
-	scroll-margin-top: 8rem;
-}
-
-/* Custom scrollbar for ToC to keep it elegant */
+/* --- SCROLLBAR --- */
 .custom-scrollbar::-webkit-scrollbar {
-	width: 4px;
+	width: 6px;
+	height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
 	background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-	background: #e2e8f0;
-	border-radius: 10px;
+	background: var(--border);
+	border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: var(--muted-foreground);
 }
 
-/* 1. Popup Container (The Card) */
-.leaflet-popup-content-wrapper {
-	background: var(--background) !important;
+/* --- SAFE AREA INSETS --- */
+.pt-safe {
+	padding-top: env(safe-area-inset-top, 20px);
+}
+.pb-safe {
+	padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.pl-safe {
+	padding-left: env(safe-area-inset-left, 0px);
+}
+.pr-safe {
+	padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* --- COMPREHENSIVE COMPATIBILITY OVERRIDES --- */
+
+/* Background Colors */
+.bg-white {
+	background-color: var(--card) !important;
+}
+.bg-gray-50,
+.bg-slate-50,
+.bg-stone-50,
+.bg-zinc-50 {
+	background-color: var(--muted) !important;
+}
+.bg-gray-100,
+.bg-slate-100,
+.bg-stone-100,
+.bg-zinc-100 {
+	background-color: var(--muted) !important;
+}
+.bg-gray-200,
+.bg-slate-200,
+.bg-stone-200,
+.bg-zinc-200 {
+	background-color: var(--border) !important;
+}
+
+/* Text Colors - Foreground */
+.text-gray-900,
+.text-slate-900,
+.text-stone-900,
+.text-zinc-900 {
 	color: var(--foreground) !important;
-	border: 1px solid var(--border);
-	border-radius: 0.5rem !important; /* rounded-lg */
-	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important; /* shadow-xl */
-	font-family: var(--font-sans);
-	padding: 0 !important; /* Remove default padding to let us control it */
-	overflow: hidden;
+}
+.text-gray-800,
+.text-slate-800,
+.text-stone-800,
+.text-zinc-800 {
+	color: var(--foreground) !important;
+}
+.text-gray-700,
+.text-slate-700,
+.text-stone-700,
+.text-zinc-700 {
+	color: var(--card-foreground) !important;
 }
 
-/* 2. Popup Content (The Text) */
-.leaflet-popup-content {
-	margin: 0 !important;
-	line-height: 1.6;
-}
-
-/* 3. The Little Triangle Tip */
-.leaflet-popup-tip {
-	background: var(--background) !important;
-	box-shadow: none !important;
-	border: 1px solid var(--border); /* Optional: might look weird depending on rotation */
-}
-
-/* 4. Close Button */
-.leaflet-container a.leaflet-popup-close-button {
+/* Text Colors - Muted */
+.text-gray-600,
+.text-slate-600,
+.text-stone-600,
+.text-zinc-600 {
 	color: var(--muted-foreground) !important;
-	font-size: 1.2rem !important;
-	padding: 4px !important;
-	top: 4px !important;
-	right: 4px !important;
-	background: transparent !important;
+}
+.text-gray-500,
+.text-slate-500,
+.text-stone-500,
+.text-zinc-500 {
+	color: var(--muted-foreground) !important;
+}
+.text-gray-400,
+.text-slate-400,
+.text-stone-400,
+.text-zinc-400 {
+	color: var(--muted-foreground) !important;
 }
 
-.leaflet-container a.leaflet-popup-close-button:hover {
-	color: var(--accent) !important;
+/* Border Colors */
+.border-gray-200,
+.border-slate-200,
+.border-stone-200,
+.border-zinc-200 {
+	border-color: var(--border) !important;
+}
+.border-gray-300,
+.border-slate-300,
+.border-stone-300,
+.border-zinc-300 {
+	border-color: var(--border) !important;
 }
 
-/* 5. Tooltips (Area Names) */
-.leaflet-tooltip {
-	background-color: transparent !important;
-	border: none !important;
-	box-shadow: none !important;
-	color: rgba(255, 255, 255, 0.9); /* Default to light text for map overlay */
-	font-family: var(--font-serif);
-	font-weight: 700;
-	font-size: 1.1rem;
-	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+/* Divide Colors */
+.divide-gray-200,
+.divide-slate-200,
+.divide-stone-200,
+.divide-zinc-200 {
+	border-color: var(--border) !important;
 }
 
-/* --- PERFORMANCE UTILITY --- */
-/* Native browser optimization to skip rendering off-screen content */
-.virtual-list-item {
-	content-visibility: auto;
-	contain-intrinsic-size: 80px; /* Approximate height of an admin list item */
+/* Ring Colors */
+.ring-gray-200,
+.ring-slate-200,
+.ring-stone-200,
+.ring-zinc-200 {
+	--tw-ring-color: var(--border) !important;
 }
 
-/* 1. Reset Leaflet Popups for custom styling */
+/* Opacity Variants */
+.bg-black\/5 {
+	background-color: color-mix(in srgb, var(--foreground) 5%, transparent) !important;
+}
+.bg-black\/10 {
+	background-color: color-mix(in srgb, var(--foreground) 10%, transparent) !important;
+}
+.bg-white\/5 {
+	background-color: color-mix(in srgb, var(--background) 5%, transparent) !important;
+}
+.bg-white\/10 {
+	background-color: color-mix(in srgb, var(--background) 10%, transparent) !important;
+}
+
+/* Hover States */
+.hover\:bg-black\/5:hover {
+	background-color: color-mix(in srgb, var(--foreground) 5%, transparent) !important;
+}
+.hover\:bg-black\/10:hover {
+	background-color: color-mix(in srgb, var(--foreground) 10%, transparent) !important;
+}
+
+/* Special fallback for header background */
+.header-bg-fallback {
+	background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 10%, var(--muted)), var(--background));
+}
+
+/* Leaflet Map Fixes for Dark Mode AND D&D Mode */
+.leaflet-container {
+	/* background-color: var(--background) !important; */
+	font-family: var(--font-sans) !important;
+}
+
+/* Ensure popups use theme colors */
 .leaflet-popup-content-wrapper {
-	background: var(--background) !important;
-	color: var(--foreground) !important;
-	border-radius: 12px !important;
+	background-color: var(--card) !important;
+	color: var(--card-foreground) !important;
+	border-radius: 0.5rem !important; /* rounded-lg */
+	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; /* shadow-lg */
+}
+
+.leaflet-popup-tip {
+	background-color: var(--card) !important;
+}
+
+/* Custom Clean Popup - Removes padding so our internal card fits perfectly */
+.custom-popup-clean .leaflet-popup-content {
+	margin: 0 !important;
+	width: 260px !important;
+	line-height: 1.5 !important;
+}
+
+.custom-popup-clean .leaflet-popup-content-wrapper {
 	padding: 0 !important;
 	overflow: hidden;
-	border: 1px solid var(--border);
-	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2) !important;
 }
 
-.leaflet-popup-content {
-	margin: 0 !important;
-	min-width: 200px !important;
-}
-
-.leaflet-popup-tip {
-	background: var(--background) !important;
-	border: 1px solid var(--border);
-}
-
-/* 2. Custom Marker Popup Interior */
+/* Marker Popup Cards */
 .marker-popup-card {
-	display: flex;
-	flex-direction: column;
+	@apply bg-card border-0; /* Remove border since wrapper has shadow */
 }
 
 .marker-popup-header {
-	padding: 12px 16px 8px 16px;
-	background: var(--muted);
-	border-bottom: 1px solid var(--border);
+	@apply bg-muted px-3 py-2 border-b border-border;
 }
 
 .marker-popup-category {
-	font-size: 9px;
-	font-weight: 800;
-	text-transform: uppercase;
-	letter-spacing: 0.15em;
-	color: var(--accent);
-	display: block;
-	margin-bottom: 2px;
+	@apply text-xs font-bold uppercase tracking-wider text-muted-foreground;
 }
 
 .marker-popup-title {
-	font-family: var(--font-serif);
-	font-weight: 700;
-	font-size: 16px;
-	line-height: 1.2;
-	color: var(--foreground);
+	@apply font-serif font-bold text-foreground text-sm;
 }
 
 .marker-popup-body {
-	padding: 12px 16px;
-	font-size: 12px;
-	line-height: 1.5;
-	color: var(--muted-foreground);
-	font-style: italic;
+	@apply p-3 text-sm text-muted-foreground;
 }
 
-body:has([data-vaul-drawer][data-state='open']) .leaflet-container,
-body:has(.drawer-open) .leaflet-container {
-	pointer-events: none !important;
+/* FIX: Status Badge Semantic Colors */
+.badge-alive {
+	@apply border-emerald-600/50 bg-emerald-500/20 text-emerald-700;
+}
+.badge-dead {
+	@apply border-red-600/50 bg-red-500/20 text-red-700;
 }
 
-.pseudo-fullscreen-active {
-	z-index: 10000 !important; /* Higher than Mobile Header (usually 40-50) */
-	position: fixed !important;
-	inset: 0 !important;
-	background: var(--background);
+/* Dark Mode Overrides */
+[data-theme='dark'] .badge-alive {
+	@apply text-emerald-400;
+}
+[data-theme='dark'] .badge-dead {
+	@apply text-red-400;
+}
+
+/* Custom Clean Popup - Zero padding for custom cards */
+.custom-popup-clean .leaflet-popup-content-wrapper {
+	padding: 0 !important;
+	overflow: hidden !important;
+	background: transparent !important; /* Let the card handle bg */
+	border: none !important;
+	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+.custom-popup-clean .leaflet-popup-content {
+	margin: 0 !important;
+	width: 300px !important; /* Fixed width for consistency */
+	line-height: 1.5 !important;
+}
+
+/* Ensure the tip matches the theme card color */
+.custom-popup-clean .leaflet-popup-tip {
+	background-color: var(--card) !important;
 }
 
 --- END OF app\styles\global.css ---

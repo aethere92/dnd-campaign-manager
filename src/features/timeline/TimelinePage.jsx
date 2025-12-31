@@ -5,7 +5,7 @@ import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 export default function TimelineView() {
 	const { sessions, isLoading } = useTimelineViewModel();
 
-	if (isLoading) return <div className='p-8 text-center text-gray-400'>Loading timeline...</div>;
+	if (isLoading) return <div className='p-8 text-center text-muted-foreground/70'>Loading timeline...</div>;
 
 	// Construct ToC items manually for the timeline sessions
 	const tocItems = sessions.map((s) => ({
@@ -24,7 +24,7 @@ export default function TimelineView() {
 					<div className='grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-12 relative'>
 						{/* Column 1: Timeline Content */}
 						{/* OPTIMIZATION: Reduced margin-left (ml-3) for more width */}
-						<div className='relative border-l-2 border-slate-100 ml-3 md:ml-4 space-y-16 pb-20'>
+						<div className='relative border-l-2 border-border ml-3 md:ml-4 space-y-16 pb-20'>
 							{sessions.map((session) => (
 								<div key={session.id} id={`session-marker-${session.number}`} className='scroll-mt-24'>
 									<TimelineSession session={session} />

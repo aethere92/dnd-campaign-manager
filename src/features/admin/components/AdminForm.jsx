@@ -157,7 +157,7 @@ export default function AdminForm({ type, id }) {
 			{/* Top Bar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
 				<div className='flex items-center gap-2'>
-					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500/100' : 'bg-emerald-500/100'}`} />
 					<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
 						{id ? 'Edit Mode' : 'Create Mode'}
 					</span>
@@ -167,7 +167,7 @@ export default function AdminForm({ type, id }) {
 						<Link
 							to={`/wiki/${type}/${id}`}
 							target='_blank'
-							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors'>
+							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-500/10 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors'>
 							<ExternalLink size={14} /> View Live
 						</Link>
 					)}
@@ -283,7 +283,7 @@ export default function AdminForm({ type, id }) {
 							<button
 								type='button'
 								onClick={() => remove(index)}
-								className='p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors'>
+								className='p-2 text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors'>
 								<Trash2 size={16} />
 							</button>
 						</div>

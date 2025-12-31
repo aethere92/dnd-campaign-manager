@@ -15,7 +15,7 @@ const Group = ({ label, icon: Icon, children, defaultOpen = true }) => {
 					e.stopPropagation();
 					setIsOpen(!isOpen);
 				}}
-				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
+				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
 				<span className='mr-1 opacity-70'>{isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}</span>
 				<span className='flex items-center gap-1.5'>
 					{Icon && <Icon size={12} />}
@@ -39,7 +39,7 @@ const ToggleItem = ({ label, checked, onChange }) => (
 		<div
 			className={clsx(
 				'w-3.5 h-3.5 rounded-[3px] border flex items-center justify-center transition-all shadow-sm shrink-0',
-				checked ? 'bg-amber-600 border-amber-700 text-white' : 'bg-white border-gray-300 group-hover:border-amber-400'
+				checked ? 'bg-amber-600 border-amber-700 text-white' : 'bg-card border-border group-hover:border-amber-400'
 			)}>
 			{checked && <Check size={10} strokeWidth={3.5} />}
 		</div>
@@ -47,7 +47,7 @@ const ToggleItem = ({ label, checked, onChange }) => (
 		<span
 			className={clsx(
 				'text-[11px] font-medium leading-tight pt-0.5 font-sans',
-				checked ? 'text-foreground' : 'text-gray-500'
+				checked ? 'text-foreground' : 'text-muted-foreground'
 			)}>
 			{label}
 		</span>

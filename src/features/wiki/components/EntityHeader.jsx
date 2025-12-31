@@ -59,14 +59,29 @@ export const EntityHeader = ({ data }) => {
 	// Only show edit controls in Dev mode
 	const isDev = import.meta.env.DEV;
 
+	// FIX: Improved "Spotlight" gradient for headers without images
+	// Creates a subtle light source from the top-center that fades into the page background
+	const noImageStyle = !imageUrl
+		? {
+				background: `
+            radial-gradient(
+                80% 100% at 50% -20%, 
+                var(--muted) 0%, 
+                var(--background) 100%
+            )
+        `,
+		  }
+		: {};
+
 	return (
 		<>
 			<div
 				className={clsx(
 					// HEIGHT ADJUSTMENT: Increased base height and md height
-					'h-48 md:h-64 relative group overflow-hidden header-bg-fallback select-none',
-					imageUrl && 'cursor-pointer'
+					'h-48 md:h-64 relative group overflow-hidden select-none',
+					imageUrl ? 'cursor-pointer' : 'border-b border-border/40' // Add subtle border if no image
 				)}
+				style={noImageStyle}
 				onClick={() => imageUrl && setIsLightboxOpen(true)}>
 				{/* 1. BACKGROUND LAYER (Banner) */}
 				{imageUrl && (
@@ -88,11 +103,12 @@ export const EntityHeader = ({ data }) => {
 								<Maximize2 size={16} />
 							</div>
 						</div>
+
+						{/* FIX: Smoother, Longer Gradient Overlay */}
+						{/* Uses a longer fade (via-30% to via-60%) to avoid the "harsh line" effect */}
+						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-20% via-[var(--background)]/20 via-60% to-transparent pointer-events-none' />
 					</>
 				)}
-
-				{/* GRADIENT MASK */}
-				<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/60 via-15% to-transparent pointer-events-none' />
 
 				{/* 2. DEVELOPER ACTION BAR */}
 				{isDev && entityId && (
@@ -113,31 +129,36 @@ export const EntityHeader = ({ data }) => {
 				{/* 3. CONTENT LAYER */}
 				<div className='absolute bottom-0 left-0 w-full p-4 md:p-6 pointer-events-none'>
 					<div className='max-w-6xl mx-auto flex items-end gap-5'>
-						{/* AVATAR - Slightly larger to match new height */}
-						<div className='hidden md:flex md:items-end pointer-events-auto'>
+						{/* AVATAR - FIX: Size alignment and container logic */}
+						<div className='hidden md:flex md:items-end pointer-events-auto mb-1'>
 							<EntityIcon
 								type={typeLabel.toLowerCase()}
 								customIconUrl={avatarUrl}
-								size={36}
+								// FIX: Passed larger size to component to fill container
+								size={64}
 								showBackground
-								className='w-20 h-20 shadow-xl border-2 border-background/50'
+								// FIX: Adjusted width/height classes to be proportional (w-20/h-20 is 80px)
+								className='w-[84px] h-[84px] shadow-xl border-2 border-background/50 object-cover bg-background'
 							/>
 						</div>
 
 						{/* Title & Status Metadata */}
-						<div className='flex-1 pb-1'>
+						<div className='flex-1 pb-1 min-w-0'>
 							<div className='flex items-center flex-wrap gap-2 mb-2'>
 								{/* Type Badge */}
-								<EntityBadge type={typeLabel.toLowerCase()} size='sm' variant='solid' />
+								<EntityBadge
+									type={typeLabel.toLowerCase()}
+									size='sm'
+									variant='solid'
+									className='bg-background/80 backdrop-blur-sm border-border/50 text-foreground shadow-sm'
+								/>
 
 								{/* Status Badge */}
 								{status.hasStatus && (
 									<span
 										className={clsx(
-											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
-											status.isDead
-												? 'border-red-600 text-red-700 bg-red-50'
-												: 'border-emerald-600 text-emerald-700 bg-emerald-50'
+											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-sm',
+											status.isDead ? 'badge-dead' : 'badge-alive'
 										)}>
 										{status.label}
 									</span>
@@ -147,7 +168,7 @@ export const EntityHeader = ({ data }) => {
 								{priority && (
 									<span
 										className={clsx(
-											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm',
+											'px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm backdrop-blur-sm',
 											getPriorityStyles(priority)
 										)}>
 										{priority} Priority
@@ -159,13 +180,13 @@ export const EntityHeader = ({ data }) => {
 									extraTags.map((tag, i) => (
 										<span
 											key={i}
-											className='px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm bg-white/80 border-slate-300 text-slate-700'>
+											className='px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm bg-card/80 backdrop-blur-sm border-slate-300 text-slate-700 dark:text-slate-300 dark:border-slate-700'>
 											{tag}
 										</span>
 									))}
 							</div>
 
-							<h1 className='text-3xl md:text-5xl font-serif font-bold text-foreground leading-none drop-shadow-sm tracking-tight'>
+							<h1 className='text-3xl md:text-5xl font-serif font-bold text-foreground leading-none drop-shadow-sm tracking-tight break-words'>
 								{title}
 							</h1>
 						</div>

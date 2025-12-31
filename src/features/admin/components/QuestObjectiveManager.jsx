@@ -200,7 +200,7 @@ export default function QuestObjectiveManager({ questId }) {
 							<div
 								className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
 									obj.status === 'completed'
-										? 'bg-emerald-50/50 border-emerald-200'
+										? 'bg-emerald-500/10/50 border-emerald-200'
 										: 'bg-background border-border hover:border-blue-300'
 								}`}>
 								<span className='font-mono text-xs font-bold opacity-40 w-5 mt-1'>#{obj.order_index}</span>
@@ -243,13 +243,13 @@ export default function QuestObjectiveManager({ questId }) {
 								<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
 									<button
 										onClick={() => handleEdit(obj)}
-										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors'
+										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'
 										title='Edit Event'>
 										<Edit2 size={18} />
 									</button>
 									<button
 										onClick={() => handleDelete(obj.id)}
-										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors'
+										className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
 										title='Delete Event'>
 										<Trash2 size={18} />
 									</button>

@@ -14,9 +14,11 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 			{/* Group Header */}
 			<div className='flex items-center gap-2 border-b border-border/60 pb-2 mb-3'>
 				{parentTitle && (
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest'>
+					// FIX: Increased opacity from /40 to /80 for visibility
+					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
 						{parentTitle}
-						<CornerDownRight size={10} className='translate-y-px opacity-50' />
+						{/* FIX: Removed opacity-50 to make arrow visible */}
+						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
 					</div>
 				)}
 				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
@@ -24,7 +26,7 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 					{link && (
 						<Link
 							to={link}
-							className='text-muted-foreground/20 hover:text-accent transition-colors'
+							className='text-muted-foreground/50 hover:text-primary transition-colors'
 							title={`View ${title}`}>
 							<ArrowRight size={12} />
 						</Link>
@@ -59,16 +61,16 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 									<td className='px-4 py-2.5'>
 										<Link
 											to={`/wiki/${entity.type}/${entity.id}`}
-											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-accent transition-colors'>
+											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-primary transition-colors'>
 											{/* Small colored indicator bar */}
 											{isSpecialStatus && (
 												<div
 													className={clsx(
 														'w-1 h-4 rounded-full shrink-0',
 														status.isDead || status.isFailed
-															? 'bg-red-500'
+															? 'bg-red-500/100'
 															: status.rank === 1
-															? 'bg-emerald-500'
+															? 'bg-emerald-500/100'
 															: status.rank === 3
 															? 'bg-red-600'
 															: 'bg-gray-300'
@@ -84,7 +86,7 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 												className={clsx(
 													'inline-flex items-center text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border',
 													status.isDead || status.isFailed
-														? 'bg-red-50 text-red-700 border-red-100'
+														? 'bg-red-500/10 text-red-700 border-red-100'
 														: 'bg-muted text-muted-foreground border-border'
 												)}>
 												{status.display}

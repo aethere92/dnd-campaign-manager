@@ -25,16 +25,16 @@ export const LatestSessionCard = ({ session }) => {
 		: [];
 
 	return (
-		<div className='bg-background border-2 border-accent/20 rounded-2xl shadow-2xl overflow-hidden hover:border-accent/40 transition-all group'>
+		<div className='bg-background border-2 border-primary/20 rounded-2xl shadow-2xl overflow-hidden hover:border-primary/40 transition-all group'>
 			{/* Header Banner */}
-			<div className='bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-6 py-4 border-b border-border/50'>
+			<div className='bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/50'>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
-						<div className='p-2 bg-accent/10 rounded-lg border border-accent/20'>
-							<Sparkles size={20} className='text-accent' />
+						<div className='p-2 bg-primary/10 rounded-lg border border-primary/20'>
+							<Sparkles size={20} className='text-primary' />
 						</div>
 						<div>
-							<span className='text-xs font-bold uppercase tracking-widest text-accent block mb-0.5'>
+							<span className='text-xs font-bold uppercase tracking-widest text-primary block mb-0.5'>
 								Latest Session
 							</span>
 							<div className='flex items-center gap-2'>
@@ -52,7 +52,7 @@ export const LatestSessionCard = ({ session }) => {
 					</div>
 					<Link
 						to={`/wiki/session/${session.id}`}
-						className='flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent font-semibold text-sm rounded-lg border border-accent/20 transition-all group-hover:translate-x-1'>
+						className='flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-sm rounded-lg border border-primary/20 transition-all group-hover:translate-x-1'>
 						Full Details
 						<ArrowRight size={16} />
 					</Link>
@@ -74,14 +74,14 @@ export const LatestSessionCard = ({ session }) => {
 					{/* Left: Key Events */}
 					<div>
 						<h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2'>
-							<Swords size={14} className='text-accent' />
+							<Swords size={14} className='text-primary' />
 							Key Moments
 						</h3>
 						{keyEvents && keyEvents.length > 0 ? (
 							<div className='space-y-3'>
 								{keyEvents.map((event) => (
 									<div key={event.id} className='flex items-start gap-3 group/item'>
-										<div className='shrink-0 w-2 h-2 rounded-full bg-accent/40 mt-2 group-hover/item:bg-accent transition-colors' />
+										<div className='shrink-0 w-2 h-2 rounded-full bg-primary/40 mt-2 group-hover/item:bg-primary transition-colors' />
 										<div className='flex-1 min-w-0'>
 											<p className='text-sm font-semibold text-foreground leading-snug mb-0.5'>{event.title}</p>
 											{event.description && (
@@ -101,7 +101,7 @@ export const LatestSessionCard = ({ session }) => {
 					{/* Right: Entity Mentions */}
 					<div>
 						<h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2'>
-							<Users size={14} className='text-accent' />
+							<Users size={14} className='text-primary' />
 							Entities Encountered
 						</h3>
 						<div className='space-y-4'>

@@ -93,7 +93,7 @@ export default function AdminLayout() {
 					{campaignId && (
 						<Link
 							to='/'
-							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors'
+							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/10 rounded-md transition-colors'
 							title={`Return to Campaign ID: ${campaignId}`}>
 							<Play size={14} /> Enter Campaign
 						</Link>
@@ -101,7 +101,7 @@ export default function AdminLayout() {
 
 					<button
 						onClick={handleSwitch}
-						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-md transition-colors text-left'>
+						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors text-left'>
 						<LogOut size={14} /> Campaign Select
 					</button>
 				</div>

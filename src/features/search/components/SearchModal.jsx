@@ -20,7 +20,7 @@ export const SearchModal = ({ vm, inputRef }) => {
 					<button onClick={vm.closeSearch} className='lg:hidden p-1 -ml-1 text-muted-foreground'>
 						<X size={20} />
 					</button>
-					<Search size={18} className='text-gray-400 shrink-0 hidden lg:block' />
+					<Search size={18} className='text-muted-foreground/70 shrink-0 hidden lg:block' />
 
 					<input
 						ref={inputRef}
@@ -31,7 +31,7 @@ export const SearchModal = ({ vm, inputRef }) => {
 							vm.setSelectedIndex(0);
 						}}
 						placeholder='Search sessions, entities, lore...'
-						className='flex-1 bg-transparent text-base lg:text-sm text-foreground placeholder:text-gray-400 outline-none h-10 lg:h-auto'
+						className='flex-1 bg-transparent text-base lg:text-sm text-foreground placeholder:text-muted-foreground/70 outline-none h-10 lg:h-auto'
 					/>
 
 					{vm.isLoading && <Loader2 size={16} className='animate-spin text-amber-600' />}
@@ -42,11 +42,11 @@ export const SearchModal = ({ vm, inputRef }) => {
 								vm.setQuery('');
 								inputRef.current?.focus();
 							}}
-							className='p-1 text-gray-400 hover:text-foreground hover:bg-muted rounded transition-colors'>
+							className='p-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted rounded transition-colors'>
 							<X size={16} />
 						</button>
 					)}
-					<kbd className='hidden lg:inline-block px-2 py-1 text-[10px] font-semibold text-gray-400 bg-muted border border-border rounded'>
+					<kbd className='hidden lg:inline-block px-2 py-1 text-[10px] font-semibold text-muted-foreground/70 bg-muted border border-border rounded'>
 						ESC
 					</kbd>
 				</div>

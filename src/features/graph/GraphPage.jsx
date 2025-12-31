@@ -16,11 +16,12 @@ export default function RelationshipGraph() {
 
 	return (
 		// IMPLEMENTATION: Constellation Background via CSS radial-gradient
+		// FIX: Replaced #e5e5e5 with var(--border) to fix contrast in dark mode
 		<div
 			className='h-full w-full relative bg-background overflow-hidden'
 			style={{
 				backgroundImage:
-					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
 				backgroundSize: '40px 40px, 20px 20px',
 				backgroundPosition: '0 0, 20px 20px',
 			}}>

@@ -43,7 +43,7 @@ export default function SmartImageInput({ value, onChange, placeholder, ...props
 						<button
 							type='button'
 							onClick={() => setIsPickerOpen(true)}
-							className='p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-all'
+							className='p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10 rounded-md transition-all'
 							title='Browse Library'>
 							<Search size={14} strokeWidth={3} />
 						</button>
@@ -51,7 +51,7 @@ export default function SmartImageInput({ value, onChange, placeholder, ...props
 				</div>
 
 				{/* Visual Preview */}
-				<div className='shrink-0 w-10 h-10 rounded-lg border border-border bg-white flex items-center justify-center overflow-hidden shadow-sm'>
+				<div className='shrink-0 w-10 h-10 rounded-lg border border-border bg-card flex items-center justify-center overflow-hidden shadow-sm'>
 					{previewUrl ? (
 						<img
 							src={previewUrl}

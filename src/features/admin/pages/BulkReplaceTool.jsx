@@ -103,17 +103,17 @@ export default function BulkReplaceTool() {
 								<tbody className='divide-y divide-border'>
 									{preview.map((item, idx) => (
 										<tr key={idx} className='hover:bg-muted/30'>
-											<td className='p-3 align-top font-bold text-slate-500 w-1/3'>
+											<td className='p-3 align-top font-bold text-muted-foreground w-1/3'>
 												<div className='uppercase text-[9px] opacity-50 mb-1'>
 													{item.table}.{item.field}
 												</div>
 												{item.context}
 											</td>
 											<td className='p-3 space-y-1'>
-												<div className='text-red-600 line-through opacity-60 bg-red-50 p-1 rounded'>
+												<div className='text-red-600 line-through opacity-60 bg-red-500/10 p-1 rounded'>
 													{item.original}
 												</div>
-												<div className='flex items-center gap-2 text-emerald-700 font-medium bg-emerald-50 p-1 rounded'>
+												<div className='flex items-center gap-2 text-emerald-700 font-medium bg-emerald-500/10 p-1 rounded'>
 													<ArrowRight size={10} /> {item.proposal}
 												</div>
 											</td>

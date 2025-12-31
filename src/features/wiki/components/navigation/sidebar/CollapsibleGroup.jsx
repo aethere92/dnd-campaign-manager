@@ -13,10 +13,10 @@ export const CollapsibleGroup = ({ group, onItemClick }) => {
 			{/* Group Header - Collapsible */}
 			<button
 				onClick={() => setIsOpen(!isOpen)}
-				className='w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:bg-black/5 transition-colors'>
+				className='w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground/80 hover:bg-black/5 transition-colors'>
 				{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
 				<span className='truncate'>{group.title}</span>
-				<span className='ml-auto text-[10px] font-normal text-gray-400'>{group.items.length}</span>
+				<span className='ml-auto text-[10px] font-normal text-muted-foreground/70'>{group.items.length}</span>
 			</button>
 
 			{/* Items */}

@@ -42,9 +42,10 @@ export const MapTools = ({ bounds, containerRef }) => {
 			onClick={onClick}
 			title={title}
 			className={clsx(
-				'flex items-center justify-center w-8 h-8 transition-colors first:rounded-t-md last:rounded-b-md border-b border-[#c9c2b8] last:border-b-0',
-				'bg-[#fdfbf7] hover:bg-amber-50 text-amber-900',
-				active && 'bg-amber-100 text-amber-800'
+				'flex items-center justify-center w-8 h-8 transition-colors first:rounded-t-md last:rounded-b-md border-b last:border-b-0',
+				// FIX: Semantic Theme Colors
+				'bg-card border-border text-muted-foreground hover:bg-muted hover:text-primary',
+				active && 'bg-primary/10 text-primary'
 			)}>
 			<Icon size={16} strokeWidth={2.5} />
 		</button>
@@ -52,7 +53,7 @@ export const MapTools = ({ bounds, containerRef }) => {
 
 	return (
 		<div className='leaflet-top leaflet-left'>
-			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-[#c9c2b8]'>
+			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-border/50'>
 				<Btn onClick={handleCenter} icon={Crosshair} title='Center Map' />
 				<Btn
 					onClick={toggleFullscreen}

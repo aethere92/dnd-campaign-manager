@@ -117,6 +117,6 @@ export const getEventStyle = (eventType) => {
 		// Map standard styles to timeline specific class structure
 		container: `${styles.border} ${styles.bg} ${styles.text}`,
 		// Heuristic for line color (usually 200 or 300 shade) based on bg class
-		line: styles.bg.replace('-50', '-200'),
+		// line: styles.bg.replace('-50', '-200'),
 	};
 };
