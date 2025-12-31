@@ -14,7 +14,11 @@ PARTIAL BUNDLE: FEATURES WIKI
       global.css
   dev_helpers/
     check_imports.js
+    component_hierarchy.txt
+    duplicate_code_report.txt
     refactor.js
+    token_count_report.txt
+    unused_code_report.txt
   domain/
     entity/
       api/
@@ -50,6 +54,7 @@ PARTIAL BUNDLE: FEATURES WIKI
         RelationshipManager.jsx
         SessionEventManager.jsx
         SmartImageInput.jsx
+        TacticalMapManager.jsx
       config/
         adminStrategies.js
         imageLibrary.js
@@ -57,6 +62,7 @@ PARTIAL BUNDLE: FEATURES WIKI
       layouts/
         AdminLayout.jsx
       pages/
+        BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
@@ -179,6 +185,7 @@ PARTIAL BUNDLE: FEATURES WIKI
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx
@@ -716,6 +723,7 @@ import { EntityHistory } from './EntityHistory';
 import { QuestObjectives } from './QuestObjectives';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 import { EncounterTimeline } from './EncounterTimeline';
+import { EntityMiniMap } from '@/features/wiki/components/EntityMiniMap';
 
 // Re-exporting History for use in tabs if needed by parent
 export { EntityHistory } from './EntityHistory';
@@ -750,7 +758,16 @@ const LevelUpBanner = ({ level }) => {
 	);
 };
 
-export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp }) => {
+export const EntityBody = ({
+	summary,
+	sections,
+	history,
+	objectives,
+	combatRounds,
+	levelUp,
+	mapImageUrl,
+	mapMarkers,
+}) => {
 	return (
 		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
@@ -758,12 +775,17 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}
-
 			{/* Quest Objectives */}
 			{objectives && objectives.length > 0 && (
 				<>
 					<SectionDivider />
 					<QuestObjectives objectives={objectives} />
+				</>
+			)}
+			{mapImageUrl && mapImageUrl.length > 0 && (
+				<>
+					<SectionDivider />
+					<EntityMiniMap imageUrl={mapImageUrl} markers={mapMarkers} />
 				</>
 			)}
 
@@ -774,7 +796,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<EncounterTimeline rounds={combatRounds} />
 				</>
 			)}
-
 			{/* Narrative Sections */}
 			{sections.map((prop) => {
 				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
@@ -807,7 +828,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					</div>
 				);
 			})}
-
 			{history && history.length > 0 && (
 				<div className='mt-2'>
 					<SectionDivider />
@@ -817,7 +837,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<EntityHistory events={history} />
 				</div>
 			)}
-
 			{/* Level Up Banner */}
 			{levelUp && <LevelUpBanner level={levelUp} />}
 		</div>
@@ -1063,6 +1082,169 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 };
 
 --- END OF features\wiki\components\EntityHistory.jsx ---
+
+--- FILE: features\wiki\components\EntityMiniMap.jsx ---
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, ImageOverlay, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import { Map as MapIcon, Maximize, Minimize } from 'lucide-react';
+import { clsx } from 'clsx';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+/**
+ * REFACTORED: MapController now handles viewport recalibration
+ * when switching in/out of fullscreen modes.
+ */
+const MapController = ({ bounds, activeFullscreen }) => {
+	const map = useMap();
+
+	useEffect(() => {
+		if (bounds && map) {
+			// Small timeout ensures the DOM has finished its layout transition (h-96 <-> h-screen)
+			const timer = setTimeout(() => {
+				map.invalidateSize({ animate: true });
+				map.fitBounds(bounds, { padding: [20, 20] });
+			}, 100);
+
+			return () => clearTimeout(timer);
+		}
+	}, [map, bounds, activeFullscreen]); // Re-run when fullscreen toggles
+
+	return null;
+};
+
+export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
+	const [dimensions, setDimensions] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+	const containerRef = useRef(null);
+
+	// Unified flag for UI
+	const activeFullscreen = isFullscreen || isPseudoFullscreen;
+
+	// Native Fullscreen Sync
+	useEffect(() => {
+		const handler = () => setIsFullscreen(!!document.fullscreenElement);
+		document.addEventListener('fullscreenchange', handler);
+		return () => document.removeEventListener('fullscreenchange', handler);
+	}, []);
+
+	// iOS Fallback Escape Handler
+	useEffect(() => {
+		const handleEsc = (e) => {
+			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
+		};
+		window.addEventListener('keydown', handleEsc);
+		return () => window.removeEventListener('keydown', handleEsc);
+	}, [isPseudoFullscreen]);
+
+	useEffect(() => {
+		const img = new Image();
+		img.src = imageUrl;
+		img.onload = () => {
+			const w = img.width;
+			const h = img.height;
+			const southWest = [-h, 0];
+			const northEast = [0, w];
+			setDimensions(L.latLngBounds(southWest, northEast));
+			setLoading(false);
+		};
+	}, [imageUrl]);
+
+	const toggleFullscreen = (e) => {
+		e.stopPropagation();
+		if (!containerRef.current) return;
+
+		const supportsNative =
+			document.fullscreenEnabled || document.webkitFullscreenEnabled || containerRef.current.requestFullscreen;
+
+		if (supportsNative) {
+			if (!document.fullscreenElement) {
+				containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
+			} else {
+				document.exitFullscreen();
+			}
+		} else {
+			setIsPseudoFullscreen(!isPseudoFullscreen);
+		}
+	};
+
+	if (loading)
+		return (
+			<div className='h-64 w-full bg-muted rounded-xl flex items-center justify-center border border-border mb-8'>
+				<LoadingSpinner text='Generating tactical view...' size='sm' />
+			</div>
+		);
+
+	return (
+		<div
+			className={clsx('mb-10 space-y-3 group', isPseudoFullscreen && 'fixed inset-0 z-[9999] m-0! bg-background')}
+			ref={containerRef}>
+			{!activeFullscreen && (
+				<div className='flex items-center justify-between px-1'>
+					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
+						<MapIcon size={16} className='text-accent' /> Map
+					</h3>
+				</div>
+			)}
+
+			<div
+				className={clsx(
+					'w-full overflow-hidden relative z-0 transition-all duration-300',
+					activeFullscreen ? 'h-screen rounded-none border-0' : 'h-96 rounded-xl border border-border shadow-sm'
+				)}>
+				<MapContainer
+					crs={L.CRS.Simple}
+					bounds={dimensions}
+					zoom={0}
+					minZoom={-3}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					style={{
+						height: '100%',
+						width: '100%',
+						backgroundColor: 'var(--background)',
+						backgroundImage:
+							'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+						backgroundSize: '40px 40px, 20px 20px',
+						backgroundPosition: '0 0, 20px 20px',
+					}}>
+					{/* PASS activeFullscreen to the controller */}
+					<MapController bounds={dimensions} activeFullscreen={activeFullscreen} />
+					<ImageOverlay url={imageUrl} bounds={dimensions} />
+
+					{markers.map((m, idx) => (
+						<Marker key={idx} position={[m.lat, m.lng]} icon={resolveMarkerIcon(m)}>
+							{m.label && (
+								<Popup>
+									<div className='marker-popup-card'>
+										<div className='marker-popup-header'>
+											<span className='marker-popup-category'>{m.category || 'POI'}</span>
+											<div className='marker-popup-title'>{m.label}</div>
+										</div>
+										{m.description && <div className='marker-popup-body'>{m.description}</div>}
+									</div>
+								</Popup>
+							)}
+						</Marker>
+					))}
+				</MapContainer>
+
+				<div className='absolute top-3 right-3 z-[1000]'>
+					<button
+						onClick={toggleFullscreen}
+						className='p-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg text-muted-foreground hover:text-accent transition-all active:scale-95'>
+						{activeFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\EntityMiniMap.jsx ---
 
 --- FILE: features\wiki\components\EntitySidebar.jsx ---
 import { useMemo } from 'react';
@@ -2383,6 +2565,7 @@ import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 /**
  * Helper: Extract and group mentioned entities from events and direct relationships
@@ -2465,6 +2648,26 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mainSummary = entity.description;
 		}
 
+		// --- NEW: TACTICAL MAP RESOLUTION ---
+		// We look for common map keys and use resolveImageUrl to handle path cleaning/BaseURL
+		const mapImageUrl = resolveImageUrl(attributes, 'any');
+		// Note: resolveImageUrl(attributes, 'any') checks background_image, image, icon etc.
+		// To be specific to your "crazy idea", let's do a manual check for map-specific keys first:
+		const specificMapPath = getAttributeValue(attributes, ['map_image', 'tactical_map', 'map']);
+		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
+
+		// 2. NEW: Resolve Tactical Map Markers
+		const rawMarkers = getAttributeValue(attributes, 'map_markers');
+		let parsedMarkers = [];
+		if (rawMarkers) {
+			try {
+				// Parse the JSON string stored in the attribute
+				parsedMarkers = typeof rawMarkers === 'string' ? JSON.parse(rawMarkers) : rawMarkers;
+			} catch (e) {
+				console.warn('Failed to parse map_markers JSON', e);
+			}
+		}
+
 		// Process events
 		const events = transformEvents(entity.events);
 
@@ -2482,7 +2685,9 @@ export const useEntityContent = (entity, attributes, sections) => {
 			sections: sections || [],
 			history: events,
 			mentions,
-			levelUp, // Added to return object
+			levelUp,
+			mapImageUrl: finalMapUrl,
+			mapMarkers: parsedMarkers,
 		};
 	}, [entity, attributes, sections]);
 };
@@ -2916,6 +3121,8 @@ export default function StandardLayout({ viewModel }) {
 							history={viewModel.content.history}
 							objectives={viewModel.content.objectives}
 							combatRounds={viewModel.content.combatRounds}
+							mapImageUrl={viewModel.content.mapImageUrl}
+							mapMarkers={viewModel.content.mapMarkers}
 						/>
 					</div>
 				</div>

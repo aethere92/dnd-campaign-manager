@@ -371,3 +371,15 @@ h3[id] {
 	color: var(--muted-foreground);
 	font-style: italic;
 }
+
+body:has([data-vaul-drawer][data-state='open']) .leaflet-container,
+body:has(.drawer-open) .leaflet-container {
+	pointer-events: none !important;
+}
+
+.pseudo-fullscreen-active {
+	z-index: 10000 !important; /* Higher than Mobile Header (usually 40-50) */
+	position: fixed !important;
+	inset: 0 !important;
+	background: var(--background);
+}

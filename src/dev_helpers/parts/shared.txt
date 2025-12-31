@@ -14,7 +14,11 @@ PARTIAL BUNDLE: SHARED
       global.css
   dev_helpers/
     check_imports.js
+    component_hierarchy.txt
+    duplicate_code_report.txt
     refactor.js
+    token_count_report.txt
+    unused_code_report.txt
   domain/
     entity/
       api/
@@ -50,6 +54,7 @@ PARTIAL BUNDLE: SHARED
         RelationshipManager.jsx
         SessionEventManager.jsx
         SmartImageInput.jsx
+        TacticalMapManager.jsx
       config/
         adminStrategies.js
         imageLibrary.js
@@ -57,6 +62,7 @@ PARTIAL BUNDLE: SHARED
       layouts/
         AdminLayout.jsx
       pages/
+        BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
@@ -179,6 +185,7 @@ PARTIAL BUNDLE: SHARED
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx
@@ -881,7 +888,8 @@ export function Card({ children, className, padding = true, hover = false, ...pr
 	return (
 		<div
 			className={clsx(
-				'bg-[var(--card-bg)] border border-border rounded-lg shadow-sm',
+				// Use semantic variable --card instead of hardcoded white
+				'bg-card text-foreground border border-border rounded-lg shadow-sm',
 				padding && 'p-4',
 				hover && 'transition-shadow hover:shadow-md',
 				className
@@ -1154,7 +1162,7 @@ import { useState, useEffect } from 'react';
 
 export const THEMES = {
 	LIGHT: 'light',
-	// DARK: 'dark',
+	DARK: 'dark', // RE-ENABLED
 	DND: 'dnd',
 };
 
@@ -1166,10 +1174,8 @@ export function useTheme() {
 
 	useEffect(() => {
 		const root = window.document.documentElement;
-		// Remove old themes
 		Object.values(THEMES).forEach((t) => root.removeAttribute('data-theme'));
 
-		// Apply new theme
 		if (theme !== THEMES.LIGHT) {
 			root.setAttribute('data-theme', theme);
 		}

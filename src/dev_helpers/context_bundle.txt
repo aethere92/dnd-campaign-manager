@@ -20,7 +20,11 @@ INSTRUCTIONS FOR AI:
       global.css
   dev_helpers/
     check_imports.js
+    component_hierarchy.txt
+    duplicate_code_report.txt
     refactor.js
+    token_count_report.txt
+    unused_code_report.txt
   domain/
     entity/
       api/
@@ -56,6 +60,7 @@ INSTRUCTIONS FOR AI:
         RelationshipManager.jsx
         SessionEventManager.jsx
         SmartImageInput.jsx
+        TacticalMapManager.jsx
       config/
         adminStrategies.js
         imageLibrary.js
@@ -63,6 +68,7 @@ INSTRUCTIONS FOR AI:
       layouts/
         AdminLayout.jsx
       pages/
+        BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
@@ -185,6 +191,7 @@ INSTRUCTIONS FOR AI:
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx
@@ -379,6 +386,7 @@ const WikiLandingPage = lazy(() => import('@/features/wiki/pages/WikiLandingPage
 // Admin Features
 const AdminLayout = lazy(() => import('@/features/admin/layouts/AdminLayout'));
 const SplitPaneManager = lazy(() => import('@/features/admin/pages/SplitPaneManager'));
+const BulkReplaceTool = lazy(() => import('@/features/admin/pages/BulkReplaceTool'));
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
@@ -392,6 +400,7 @@ export const AppRoutes = () => {
 					<Route path='/dm' element={<AdminLayout />}>
 						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
 						<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
+						<Route path='tools/replace' element={<BulkReplaceTool />} />
 					</Route>
 				)}
 
@@ -438,6 +447,7 @@ export const RouteLoading = ({ text }) => (
 
 --- FILE: app\styles\global.css ---
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Spectral:wght@400;500;600;700&display=swap');
+/* --- FILE: app/styles/global.css --- */
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
@@ -445,33 +455,43 @@ export const RouteLoading = ({ text }) => (
 	--font-sans: 'Inter', sans-serif;
 	--font-serif: 'Inter', serif;
 	--font-display: 'Crimson Text', serif;
-	--color-border: var(--border);
+
+	/* Semantic Color Mapping */
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
+	--color-border: var(--border);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
+	--color-card: var(--card);
+	--color-paper: var(--paper);
 }
 
 :root {
 	--background: #ffffff;
 	--foreground: #0f172a;
-	--muted: #f8fafc;
+	--muted: #f1f5f9;
+	--muted-foreground: #64748b;
 	--border: #e2e8f0;
 	--accent: #d97706;
+	--card: #ffffff;
+	--paper: #f8fafc;
 }
 
 [data-theme='dark'] {
+	/* Use deep slates/zincs instead of pure black for a "Pro" look */
 	--background: #020617;
-	--foreground: #f1f5f9;
-	--muted: #0f172a;
-	--border: #1e293b;
+	--foreground: #f8fafc;
+	--muted: #1e293b;
+	--muted-foreground: #94a3b8;
+	--border: #334155;
 	--accent: #f59e0b;
+	--card: #0f172a;
+	--paper: #1e293b;
 }
 
 [data-theme='dnd'] {
-	/* D&D BOOK PALETTE */
 	--background: #fdfbf7;
 	--foreground: #1b1b1b;
 	--muted: #f2efe9;
@@ -479,8 +499,41 @@ export const RouteLoading = ({ text }) => (
 	--border: #c9c2b8;
 	--accent: #8b1e1e;
 	--accent-foreground: #ffffff;
-	--font-sans: 'Inter', sans-serif;
-	--font-serif: 'Inter', serif;
+	--card: #fdfbf7;
+	--paper: #f2efe9;
+}
+
+/* 
+   FIX: Catch-all for hardcoded Slate/Stone styles 
+   This forces elements using "muted" colors to respect the theme.
+*/
+.bg-muted {
+	background-color: var(--muted) !important;
+}
+.text-muted-foreground {
+	color: var(--muted-foreground) !important;
+}
+.border-border {
+	border-color: var(--border) !important;
+}
+
+/* Apply variable-based colors to the prose (Markdown) */
+.prose {
+	--tw-prose-body: var(--foreground);
+	--tw-prose-headings: var(--foreground);
+	--tw-prose-links: var(--accent);
+	--tw-prose-bold: var(--foreground);
+	--tw-prose-counters: var(--muted-foreground);
+	--tw-prose-bullets: var(--accent);
+	--tw-prose-hr: var(--border);
+	--tw-prose-quotes: var(--muted-foreground);
+	--tw-prose-quote-borders: var(--accent);
+	--tw-prose-captions: var(--muted-foreground);
+	--tw-prose-code: var(--foreground);
+	--tw-prose-pre-code: var(--foreground);
+	--tw-prose-pre-bg: var(--muted);
+	--tw-prose-th-borders: var(--border);
+	--tw-prose-td-borders: var(--border);
 }
 
 /* --- HEADER GRADIENT CLASS --- */
@@ -708,6 +761,77 @@ h3[id] {
 	contain-intrinsic-size: 80px; /* Approximate height of an admin list item */
 }
 
+/* 1. Reset Leaflet Popups for custom styling */
+.leaflet-popup-content-wrapper {
+	background: var(--background) !important;
+	color: var(--foreground) !important;
+	border-radius: 12px !important;
+	padding: 0 !important;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2) !important;
+}
+
+.leaflet-popup-content {
+	margin: 0 !important;
+	min-width: 200px !important;
+}
+
+.leaflet-popup-tip {
+	background: var(--background) !important;
+	border: 1px solid var(--border);
+}
+
+/* 2. Custom Marker Popup Interior */
+.marker-popup-card {
+	display: flex;
+	flex-direction: column;
+}
+
+.marker-popup-header {
+	padding: 12px 16px 8px 16px;
+	background: var(--muted);
+	border-bottom: 1px solid var(--border);
+}
+
+.marker-popup-category {
+	font-size: 9px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+	color: var(--accent);
+	display: block;
+	margin-bottom: 2px;
+}
+
+.marker-popup-title {
+	font-family: var(--font-serif);
+	font-weight: 700;
+	font-size: 16px;
+	line-height: 1.2;
+	color: var(--foreground);
+}
+
+.marker-popup-body {
+	padding: 12px 16px;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--muted-foreground);
+	font-style: italic;
+}
+
+body:has([data-vaul-drawer][data-state='open']) .leaflet-container,
+body:has(.drawer-open) .leaflet-container {
+	pointer-events: none !important;
+}
+
+.pseudo-fullscreen-active {
+	z-index: 10000 !important; /* Higher than Mobile Header (usually 40-50) */
+	position: fixed !important;
+	inset: 0 !important;
+	background: var(--background);
+}
+
 --- END OF app\styles\global.css ---
 
 --- FILE: dev_helpers\check_imports.js ---
@@ -764,6 +888,1573 @@ scanDir(ROOT_DIR);
 console.log('✅ Scan complete.');
 
 --- END OF dev_helpers\check_imports.js ---
+
+--- FILE: dev_helpers\component_hierarchy.txt ---
+================================================================
+COMPONENT HIERARCHY MAP
+Generated: 2025-12-31 08:20:45
+================================================================
+
+### ALL COMPONENTS
+
+AbilityGrid
+  Defined in: features\wiki\components\EntitySidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+ActiveQuestsWidget
+  Defined in: features\dashboard\components\ActiveQuestsWidget.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+AdminForm
+  Defined in: features\admin\components\AdminForm.jsx
+  Used in (2 files):
+    • features\admin\pages\EntityEditorPage.jsx
+    • features\admin\pages\SplitPaneManager.jsx
+
+AdminLayout
+  Defined in: features\admin\layouts\AdminLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+App
+  Defined in: app\App.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+AppContent
+  Defined in: app\App.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+AppRoutes
+  Defined in: app\AppRoutes.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Breadcrumbs
+  Defined in: shared\components\ui\Breadcrumbs.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Btn
+  Defined in: features\atlas\components\MapTools.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+BulkReplaceTool
+  Defined in: features\admin\pages\BulkReplaceTool.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Button
+  Defined in: shared\components\ui\Button.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CampaignCard
+  Defined in: features\campaign\components\CampaignCard.jsx
+  Used in (1 files):
+    • features\campaign\components\CampaignSelect.jsx
+
+CampaignHero
+  Defined in: features\dashboard\components\CampaignHero.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CampaignProvider
+  Defined in: features\campaign\CampaignContext.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CampaignSelect
+  Defined in: features\campaign\components\CampaignSelect.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Card
+  Defined in: shared\components\ui\Card.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CardContent
+  Defined in: shared\components\ui\Card.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CardHeader
+  Defined in: shared\components\ui\Card.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CardTitle
+  Defined in: shared\components\ui\Card.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CollapsibleGroup
+  Defined in: features\wiki\components\navigation\sidebar\CollapsibleGroup.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CollapsibleList
+  Defined in: shared\components\layout\CollapsibleSection.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CollapsibleSection
+  Defined in: shared\components\layout\CollapsibleSection.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CombatLogEntry
+  Defined in: features\wiki\components\EncounterTimeline.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+CytoscapeCanvas
+  Defined in: features\graph\components\CytoscapeCanvas.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+DashboardView
+  Defined in: features\dashboard\DashboardPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+DevAdminButton
+  Defined in: shared\components\ui\DevAdminButton.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Drawer
+  Defined in: shared\components\ui\Drawer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EmptyState
+  Defined in: shared\components\ui\EmptyState.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EncounterActionManager
+  Defined in: features\admin\components\EncounterManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EncounterTimeline
+  Defined in: features\wiki\components\EncounterTimeline.jsx
+  Used in (1 files):
+    • features\wiki\components\EntityBody.jsx
+
+EntityBadge
+  Defined in: domain\entity\components\EntityBadge.jsx
+  Used in (3 files):
+    • features\admin\pages\EntityListPage.jsx
+    • features\wiki\components\EntityHeader.jsx
+    • features\wiki\components\landing\EntityTableGroup.jsx
+
+EntityBody
+  Defined in: features\wiki\components\EntityBody.jsx
+  Used in (2 files):
+    • features\wiki\layouts\SessionLayout.jsx
+    • features\wiki\layouts\StandardLayout.jsx
+
+EntityEditorPage
+  Defined in: features\admin\pages\EntityEditorPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntityEmbed
+  Defined in: features\smart-text\components\EntityEmbed.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntityGridCard
+  Defined in: features\wiki\components\landing\EntityGridCard.jsx
+  Used in (1 files):
+    • features\wiki\components\landing\Swimlane.jsx
+
+EntityHeader
+  Defined in: features\wiki\components\EntityHeader.jsx
+  Used in (1 files):
+    • features\wiki\components\WikiEntryView.jsx
+
+EntityHistory
+  Defined in: features\wiki\components\EntityHistory.jsx
+  Used in (1 files):
+    • features\wiki\layouts\SessionLayout.jsx
+
+EntityIcon
+  Defined in: domain\entity\components\EntityIcon.jsx
+  Used in (8 files):
+    • domain\entity\components\EntityLink.jsx
+    • features\smart-text\components\EntityEmbed.jsx
+    • features\wiki\components\EncounterTimeline.jsx
+    • features\wiki\components\EntityHeader.jsx
+    • features\wiki\components\EntitySidebar.jsx
+    ... and 3 more
+
+EntityLink
+  Defined in: domain\entity\components\EntityLink.jsx
+  Used in (4 files):
+    • features\smart-text\components\SmartEntityLink.jsx
+    • features\wiki\components\EncounterTimeline.jsx
+    • features\wiki\components\EntitySidebar.jsx
+    • features\wiki\components\SessionMentions.jsx
+
+EntityListItem
+  Defined in: features\wiki\components\navigation\sidebar\EntityListItem.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntityListPage
+  Defined in: features\admin\pages\EntityListPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntityMiniMap
+  Defined in: features\wiki\components\EntityMiniMap.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntitySearch
+  Defined in: features\admin\components\EntitySearch.jsx
+  Used in (3 files):
+    • features\admin\components\EventTagger.jsx
+    • features\admin\components\MarkdownEditor.jsx
+    • features\admin\components\RelationshipManager.jsx
+
+EntitySidebar
+  Defined in: features\wiki\components\EntitySidebar.jsx
+  Used in (1 files):
+    • features\wiki\layouts\StandardLayout.jsx
+
+EntityStatusBadge
+  Defined in: domain\entity\components\EntityStatusIcon.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntityStatusIcon
+  Defined in: domain\entity\components\EntityStatusIcon.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EntityTableGroup
+  Defined in: features\wiki\components\landing\EntityTableGroup.jsx
+  Used in (1 files):
+    • features\wiki\pages\WikiLandingPage.jsx
+
+ErrorBoundary
+  Defined in: shared\components\ErrorBoundary.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+EventTagger
+  Defined in: features\admin\components\EventTagger.jsx
+  Used in (1 files):
+    • features\admin\components\SessionEventManager.jsx
+
+GlobalSearch
+  Defined in: features\search\GlobalSearch.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+GraphLegend
+  Defined in: features\graph\components\GraphLegend.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Group
+  Defined in: features\atlas\components\MapLayerControl.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+GroupHeader
+  Defined in: features\search\components\SearchResults.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+HeadingRenderer
+  Defined in: shared\components\markdown\MarkdownRenderer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+ImageLibraryModal
+  Defined in: features\admin\components\ImageLibraryModal.jsx
+  Used in (1 files):
+    • features\admin\components\SmartImageInput.jsx
+
+ImageLightbox
+  Defined in: features\wiki\components\EntityHeader.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+InlineMarkdown
+  Defined in: shared\components\markdown\MarkdownRenderer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+LatestSessionCard
+  Defined in: features\dashboard\components\LatestSessionCard.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+LevelUpBanner
+  Defined in: features\wiki\components\EntityBody.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+LoadingSpinner
+  Defined in: shared\components\ui\LoadingSpinner.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MainLayout
+  Defined in: features\navigation\MainLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapAreas
+  Defined in: features\atlas\components\layers\MapAreas.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapCanvas
+  Defined in: features\atlas\components\MapCanvas.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapClickHandler
+  Defined in: features\admin\components\TacticalMapManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapController
+  Defined in: features\wiki\components\EntityMiniMap.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapLayerControl
+  Defined in: features\atlas\components\MapLayerControl.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapMarkers
+  Defined in: features\atlas\components\layers\MapMarkers.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapOverlays
+  Defined in: features\atlas\components\layers\MapOverlays.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapRecaps
+  Defined in: features\atlas\components\layers\MapRecaps.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapTools
+  Defined in: features\atlas\components\MapTools.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MapView
+  Defined in: features\atlas\MapPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MarkdownEditor
+  Defined in: features\admin\components\MarkdownEditor.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MarkdownRenderer
+  Defined in: shared\components\markdown\MarkdownRenderer.jsx
+  Used in (1 files):
+    • shared\components\markdown\MarkdownWithToC.jsx
+
+MarkdownWithToC
+  Defined in: shared\components\markdown\MarkdownWithToC.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MentionGroup
+  Defined in: features\wiki\components\SessionMentions.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+MobileHeaderActions
+  Defined in: features\navigation\MainLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+NavItem
+  Defined in: features\admin\layouts\AdminLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+PriorityIcon
+  Defined in: features\wiki\components\navigation\sidebar\PriorityIcon.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+QuestObjectiveItem
+  Defined in: features\wiki\components\QuestObjectives.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+QuestObjectiveManager
+  Defined in: features\admin\components\QuestObjectiveManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+QuestObjectives
+  Defined in: features\wiki\components\QuestObjectives.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+QuickInsights
+  Defined in: features\dashboard\components\QuickInsights.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+RecentEncountersWidget
+  Defined in: features\dashboard\components\RecentEncountersWidget.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+RecentSessionsList
+  Defined in: features\dashboard\components\RecentSessionsList.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+RelationshipGraph
+  Defined in: features\graph\GraphPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+RelationshipManager
+  Defined in: features\admin\components\RelationshipManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+RouteLoading
+  Defined in: app\components\RouteLoading.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SearchFooter
+  Defined in: features\search\components\SearchFooter.jsx
+  Used in (1 files):
+    • features\search\components\SearchModal.jsx
+
+SearchModal
+  Defined in: features\search\components\SearchModal.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SearchProvider
+  Defined in: features\search\SearchContext.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SearchResultItem
+  Defined in: features\search\components\SearchResultItem.jsx
+  Used in (1 files):
+    • features\search\components\SearchResults.jsx
+
+SearchResults
+  Defined in: features\search\components\SearchResults.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SearchTrigger
+  Defined in: features\search\components\SearchTrigger.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SectionDivider
+  Defined in: shared\components\ui\SectionDivider.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SessionEventManager
+  Defined in: features\admin\components\SessionEventManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SessionLayout
+  Defined in: features\wiki\layouts\SessionLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SessionMentions
+  Defined in: features\wiki\components\SessionMentions.jsx
+  Used in (1 files):
+    • features\wiki\layouts\SessionLayout.jsx
+
+SessionRecapCard
+  Defined in: features\dashboard\components\SessionRecapCard.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Sidebar
+  Defined in: features\navigation\components\Sidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SidebarContent
+  Defined in: features\navigation\components\Sidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SidebarEmptyState
+  Defined in: features\wiki\components\navigation\SidebarEmptyState.jsx
+  Used in (1 files):
+    • features\wiki\components\navigation\WikiSidebarList.jsx
+
+SidebarFooter
+  Defined in: features\navigation\components\SidebarFooter.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SidebarHeader
+  Defined in: features\navigation\components\SidebarHeader.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SidebarNav
+  Defined in: features\navigation\components\SidebarNav.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SidebarTreeItem
+  Defined in: features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SmartEntityLink
+  Defined in: features\smart-text\components\SmartEntityLink.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SmartImageInput
+  Defined in: features\admin\components\SmartImageInput.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SmartMarkdown
+  Defined in: features\smart-text\SmartMarkdown.jsx
+  Used in (5 files):
+    • features\timeline\components\TimelineEvent.jsx
+    • features\wiki\components\EncounterTimeline.jsx
+    • features\wiki\components\EntityBody.jsx
+    • features\wiki\components\EntityHistory.jsx
+    • features\wiki\components\QuestObjectives.jsx
+
+SplitPaneManager
+  Defined in: features\admin\pages\SplitPaneManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+SplitView
+  Defined in: shared\components\layout\SplitView.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+StandardLayout
+  Defined in: features\wiki\layouts\StandardLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+StandardTrait
+  Defined in: features\wiki\components\EntitySidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+StatBadge
+  Defined in: features\dashboard\components\CampaignHero.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+StatusIcon
+  Defined in: features\wiki\components\navigation\sidebar\StatusIcon.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+Swimlane
+  Defined in: features\wiki\components\landing\Swimlane.jsx
+  Used in (1 files):
+    • features\wiki\pages\WikiLandingPage.jsx
+
+TabButton
+  Defined in: shared\components\layout\TabContainer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TabContainer
+  Defined in: shared\components\layout\TabContainer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TabPanel
+  Defined in: shared\components\layout\TabContainer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TableOfContents
+  Defined in: features\table-of-contents\TableOfContents.jsx
+  Used in (3 files):
+    • features\timeline\TimelinePage.jsx
+    • features\wiki\layouts\SessionLayout.jsx
+    • shared\components\markdown\MarkdownWithToC.jsx
+
+TacticalMapManager
+  Defined in: features\admin\components\TacticalMapManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TagList
+  Defined in: features\wiki\components\EntitySidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+ThreeColumnLayout
+  Defined in: shared\components\layout\SplitView.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TimelineEvent
+  Defined in: features\timeline\components\TimelineEvent.jsx
+  Used in (1 files):
+    • features\timeline\components\TimelineSession.jsx
+
+TimelineSession
+  Defined in: features\timeline\components\TimelineSession.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TimelineView
+  Defined in: features\timeline\TimelinePage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TocItem
+  Defined in: features\table-of-contents\components\TocItem.jsx
+  Used in (1 files):
+    • features\table-of-contents\components\TocMobileDrawer.jsx
+
+TocMobileDrawer
+  Defined in: features\table-of-contents\components\TocMobileDrawer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+ToggleItem
+  Defined in: features\atlas\components\MapLayerControl.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TooltipCard
+  Defined in: features\smart-tooltip\components\TooltipCard.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TooltipContainer
+  Defined in: features\smart-tooltip\TooltipContainer.jsx
+  Used in (1 files):
+    • features\smart-tooltip\TooltipContext.jsx
+
+TooltipProvider
+  Defined in: features\smart-tooltip\TooltipContext.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+TypeDivider
+  Defined in: features\wiki\components\EntitySidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+WikiEntityView
+  Defined in: features\wiki\components\WikiEntryView.jsx
+  Used in (1 files):
+    • features\wiki\pages\WikiDetailPage.jsx
+
+WikiEntryPage
+  Defined in: features\wiki\pages\WikiDetailPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+WikiLandingPage
+  Defined in: features\wiki\pages\WikiLandingPage.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+WikiLayout
+  Defined in: features\wiki\WikiLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+WikiSidebar
+  Defined in: features\wiki\components\navigation\WikiSidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+WikiSidebarHeader
+  Defined in: features\wiki\components\navigation\WikiSidebarHeader.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+WikiSidebarList
+  Defined in: features\wiki\components\navigation\WikiSidebarList.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+addHeaderIds
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+applyTheme
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+buildEntityClassName
+  Defined in: domain\entity\config\entityStyles.js
+  ⚠️  Not used anywhere (or only used internally)
+
+buildTree
+  Defined in: features\wiki\hooks\useEntityGrouping.js
+  ⚠️  Not used anywhere (or only used internally)
+
+calculateBounds
+  Defined in: features\atlas\utils\mapNavigation.js
+  ⚠️  Not used anywhere (or only used internally)
+
+calculatePosition
+  Defined in: features\smart-tooltip\useSmartPosition.js
+  ⚠️  Not used anywhere (or only used internally)
+
+capitalize
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+clearRecent
+  Defined in: features\search\useGlobalSearch.js
+  ⚠️  Not used anywhere (or only used internally)
+
+countMarkdownWords
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+createLucideMarker
+  Defined in: features\atlas\utils\markerUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+createTextMarker
+  Defined in: features\atlas\utils\markerUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+cycleTheme
+  Defined in: shared\hooks\useTheme.js
+  ⚠️  Not used anywhere (or only used internally)
+
+darkenColor
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+escapeRegex
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+estimateReadingTime
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractExcerpt
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractHeaderTags
+  Defined in: features\wiki\utils\attributeMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractHeaders
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractMentions
+  Defined in: features\wiki\hooks\useEntityContent.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractSessionMeta
+  Defined in: features\wiki\utils\wikiEntryMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractText
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+extractValue
+  Defined in: shared\utils\imageUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+findEntityMatches
+  Defined in: features\smart-text\useSmartText.js
+  ⚠️  Not used anywhere (or only used internally)
+
+flattenGeoTree
+  Defined in: features\wiki\config\viewStrategies.js
+  ⚠️  Not used anywhere (or only used internally)
+
+formatRelationshipType
+  Defined in: features\wiki\utils\relationshipMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+generateId
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+generatePalette
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+generateToC
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getActionIcon
+  Defined in: features\wiki\components\EncounterTimeline.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getActionLabel
+  Defined in: features\smart-text\components\EntityEmbed.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getAffinityRank
+  Defined in: domain\entity\utils\statusUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getAttributeDestination
+  Defined in: features\wiki\utils\attributeMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getAttributeDisplayType
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getAttributeValue
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getBorderColor
+  Defined in: features\smart-text\components\EntityEmbed.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getCSSVariable
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getColorBrightness
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getContrastColor
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getCurrentTheme
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityColor
+  Defined in: domain\entity\config\entityColors.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityConfig
+  Defined in: domain\entity\config\entityConfig.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityDescription
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityIcon
+  Defined in: domain\entity\config\entityIcons.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityInitial
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityLabel
+  Defined in: domain\entity\config\entityTypes.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityName
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityPalette
+  Defined in: domain\entity\config\entityColors.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityPreset
+  Defined in: domain\entity\config\entityStyles.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEntityStyles
+  Defined in: domain\entity\config\entityStyles.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getEventStyle
+  Defined in: features\timeline\utils\eventStyles.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getImageBrightness
+  Defined in: features\smart-text\components\EntityEmbed.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getMapConfig
+  Defined in: features\atlas\utils\mapNavigation.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getOptimalTheme
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getParentId
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getPriorityStyles
+  Defined in: domain\entity\config\entityStyles.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getRoleStyle
+  Defined in: features\wiki\components\EntitySidebar.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getStatusIcon
+  Defined in: domain\entity\utils\statusUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getStatusInfo
+  Defined in: domain\entity\utils\statusUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getStoredTheme
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getStrategy
+  Defined in: features\admin\config\adminStrategies.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getStrategyMode
+  Defined in: features\wiki\config\viewStrategies.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getSwimlanes
+  Defined in: features\wiki\config\viewStrategies.js
+  ⚠️  Not used anywhere (or only used internally)
+
+getThemeIcon
+  Defined in: features\navigation\components\SidebarFooter.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getThemeLabel
+  Defined in: features\navigation\components\SidebarFooter.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+getThemeVariables
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+handleAddNew
+  Defined in: features\admin\components\SessionEventManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleCenter
+  Defined in: features\atlas\components\MapTools.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleClick
+  Defined in: features\smart-tooltip\components\TooltipCard.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleEdit
+  Defined in: features\admin\components\SessionEventManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleEsc
+  Defined in: features\wiki\components\EntityMiniMap.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleInputChange
+  Defined in: features\admin\components\MarkdownEditor.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleInsertEntity
+  Defined in: features\admin\components\MarkdownEditor.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleKeyDown
+  Defined in: features\search\useGlobalSearch.js
+  ⚠️  Not used anywhere (or only used internally)
+
+handleMapClick
+  Defined in: features\admin\components\TacticalMapManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleMarkersChange
+  Defined in: features\admin\components\AdminForm.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleMouseEnter
+  Defined in: domain\entity\components\EntityLink.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleObserver
+  Defined in: features\table-of-contents\hooks\useTocObserver.js
+  ⚠️  Not used anywhere (or only used internally)
+
+handleResize
+  Defined in: features\smart-tooltip\useSmartPosition.js
+  ⚠️  Not used anywhere (or only used internally)
+
+handleSelect
+  Defined in: features\search\useGlobalSearch.js
+  ⚠️  Not used anywhere (or only used internally)
+
+handleSelectTarget
+  Defined in: features\admin\components\RelationshipManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleSwitch
+  Defined in: features\admin\layouts\AdminLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleTabChange
+  Defined in: shared\components\layout\TabContainer.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleTouchEnd
+  Defined in: domain\entity\components\EntityLink.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleTouchMove
+  Defined in: domain\entity\components\EntityLink.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+handleTouchStart
+  Defined in: domain\entity\components\EntityLink.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+hasMarkdown
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+hexToRgb
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+hexWithOpacity
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isEntityCompleted
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isEntityDead
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isEntityFailed
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isEntityType
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isIgnoredAttribute
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isListAttribute
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+isNarrativeAttribute
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+lightenColor
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+markdownToText
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+navigateTo
+  Defined in: features\navigation\useNavigation.js
+  ⚠️  Not used anywhere (or only used internally)
+
+navigateToMap
+  Defined in: features\atlas\useMapData.js
+  ⚠️  Not used anywhere (or only used internally)
+
+normalizeEntityType
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+onFullScreenChange
+  Defined in: features\atlas\components\MapTools.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+onSwitchCampaign
+  Defined in: features\navigation\useNavigation.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseAbilityScores
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseAttributeValue
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseAttributes
+  Defined in: shared\utils\imageUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseColor
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseEvents
+  Defined in: features\wiki\utils\eventMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseFrontmatter
+  Defined in: shared\utils\markdownUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseRelationships
+  Defined in: features\wiki\utils\relationshipMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+parseTagList
+  Defined in: domain\entity\utils\attributeParser.js
+  ⚠️  Not used anywhere (or only used internally)
+
+prefersDarkMode
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+processSpecialWidget
+  Defined in: features\wiki\utils\attributeMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+prune
+  Defined in: features\wiki\hooks\useEntityGrouping.js
+  ⚠️  Not used anywhere (or only used internally)
+
+removeMarker
+  Defined in: features\admin\components\TacticalMapManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+renderList
+  Defined in: features\table-of-contents\TableOfContents.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+renderMentions
+  Defined in: features\wiki\layouts\SessionLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+renderNarrative
+  Defined in: features\wiki\layouts\SessionLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+renderTimeline
+  Defined in: features\wiki\layouts\SessionLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+replaceMatches
+  Defined in: features\smart-text\useSmartText.js
+  ⚠️  Not used anywhere (or only used internally)
+
+resolveDescription
+  Defined in: features\wiki\components\landing\EntityGridCard.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+resolveEntityIcon
+  Defined in: domain\entity\config\entityIcons.js
+  ⚠️  Not used anywhere (or only used internally)
+
+resolveImageUrl
+  Defined in: shared\utils\imageUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+resolveMarkerIcon
+  Defined in: features\atlas\utils\markerUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+resolvePreviewUrl
+  Defined in: features\admin\components\SmartImageInput.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+rgbToHex
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+sanitizeText
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+selectCampaign
+  Defined in: features\campaign\useCampaignSelection.js
+  ⚠️  Not used anywhere (or only used internally)
+
+setActiveTab
+  Defined in: features\wiki\layouts\SessionLayout.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+setCSSVariable
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+setTheme
+  Defined in: shared\utils\theme\cssUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+shouldShowStatus
+  Defined in: domain\entity\utils\entityUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+slugify
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+sortRecursive
+  Defined in: features\wiki\hooks\useEntityGrouping.js
+  ⚠️  Not used anywhere (or only used internally)
+
+stripMarkdown
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+toHex
+  Defined in: shared\utils\theme\colorUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+toTitleCase
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+toggleFullscreen
+  Defined in: features\wiki\components\EntityMiniMap.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+toggleLayer
+  Defined in: features\atlas\components\useMapCanvasViewModel.js
+  ⚠️  Not used anywhere (or only used internally)
+
+transformAttributes
+  Defined in: features\wiki\utils\attributeMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+transformEvents
+  Defined in: features\wiki\utils\eventMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+transformGraphData
+  Defined in: features\graph\utils\graphMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+transformRelationships
+  Defined in: features\wiki\utils\relationshipMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+transformSearchResults
+  Defined in: features\search\utils\searchMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+transformWikiEntry
+  Defined in: features\wiki\utils\wikiEntryMapper.js
+  ⚠️  Not used anywhere (or only used internally)
+
+truncate
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+updateMarker
+  Defined in: features\admin\components\TacticalMapManager.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+useCampaign
+  Defined in: features\campaign\CampaignContext.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+useEntityContent
+  Defined in: features\wiki\hooks\useEntityContent.js
+  ⚠️  Not used anywhere (or only used internally)
+
+useEntityHeader
+  Defined in: features\wiki\hooks\useEntityHeader.js
+  ⚠️  Not used anywhere (or only used internally)
+
+useEntitySidebar
+  Defined in: features\wiki\hooks\useEntitySidebar.js
+  ⚠️  Not used anywhere (or only used internally)
+
+useSearch
+  Defined in: features\search\SearchContext.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+useTooltip
+  Defined in: features\smart-tooltip\TooltipContext.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+validateEnv
+  Defined in: main.jsx
+  ⚠️  Not used anywhere (or only used internally)
+
+wordCount
+  Defined in: shared\utils\textUtils.js
+  ⚠️  Not used anywhere (or only used internally)
+
+
+### LEAF COMPONENTS (not used elsewhere)
+
+  • AbilityGrid (features\wiki\components\EntitySidebar.jsx)
+  • ActiveQuestsWidget (features\dashboard\components\ActiveQuestsWidget.jsx)
+  • AdminLayout (features\admin\layouts\AdminLayout.jsx)
+  • App (app\App.jsx)
+  • AppContent (app\App.jsx)
+  • AppRoutes (app\AppRoutes.jsx)
+  • Breadcrumbs (shared\components\ui\Breadcrumbs.jsx)
+  • Btn (features\atlas\components\MapTools.jsx)
+  • BulkReplaceTool (features\admin\pages\BulkReplaceTool.jsx)
+  • Button (shared\components\ui\Button.jsx)
+  • CampaignHero (features\dashboard\components\CampaignHero.jsx)
+  • CampaignProvider (features\campaign\CampaignContext.jsx)
+  • CampaignSelect (features\campaign\components\CampaignSelect.jsx)
+  • Card (shared\components\ui\Card.jsx)
+  • CardContent (shared\components\ui\Card.jsx)
+  • CardHeader (shared\components\ui\Card.jsx)
+  • CardTitle (shared\components\ui\Card.jsx)
+  • CollapsibleGroup (features\wiki\components\navigation\sidebar\CollapsibleGroup.jsx)
+  • CollapsibleList (shared\components\layout\CollapsibleSection.jsx)
+  • CollapsibleSection (shared\components\layout\CollapsibleSection.jsx)
+  • CombatLogEntry (features\wiki\components\EncounterTimeline.jsx)
+  • CytoscapeCanvas (features\graph\components\CytoscapeCanvas.jsx)
+  • DashboardView (features\dashboard\DashboardPage.jsx)
+  • DevAdminButton (shared\components\ui\DevAdminButton.jsx)
+  • Drawer (shared\components\ui\Drawer.jsx)
+  • EmptyState (shared\components\ui\EmptyState.jsx)
+  • EncounterActionManager (features\admin\components\EncounterManager.jsx)
+  • EntityEditorPage (features\admin\pages\EntityEditorPage.jsx)
+  • EntityEmbed (features\smart-text\components\EntityEmbed.jsx)
+  • EntityListItem (features\wiki\components\navigation\sidebar\EntityListItem.jsx)
+  • EntityListPage (features\admin\pages\EntityListPage.jsx)
+  • EntityMiniMap (features\wiki\components\EntityMiniMap.jsx)
+  • EntityStatusBadge (domain\entity\components\EntityStatusIcon.jsx)
+  • EntityStatusIcon (domain\entity\components\EntityStatusIcon.jsx)
+  • ErrorBoundary (shared\components\ErrorBoundary.jsx)
+  • GlobalSearch (features\search\GlobalSearch.jsx)
+  • GraphLegend (features\graph\components\GraphLegend.jsx)
+  • Group (features\atlas\components\MapLayerControl.jsx)
+  • GroupHeader (features\search\components\SearchResults.jsx)
+  • HeadingRenderer (shared\components\markdown\MarkdownRenderer.jsx)
+  • ImageLightbox (features\wiki\components\EntityHeader.jsx)
+  • InlineMarkdown (shared\components\markdown\MarkdownRenderer.jsx)
+  • LatestSessionCard (features\dashboard\components\LatestSessionCard.jsx)
+  • LevelUpBanner (features\wiki\components\EntityBody.jsx)
+  • LoadingSpinner (shared\components\ui\LoadingSpinner.jsx)
+  • MainLayout (features\navigation\MainLayout.jsx)
+  • MapAreas (features\atlas\components\layers\MapAreas.jsx)
+  • MapCanvas (features\atlas\components\MapCanvas.jsx)
+  • MapClickHandler (features\admin\components\TacticalMapManager.jsx)
+  • MapController (features\wiki\components\EntityMiniMap.jsx)
+  • MapLayerControl (features\atlas\components\MapLayerControl.jsx)
+  • MapMarkers (features\atlas\components\layers\MapMarkers.jsx)
+  • MapOverlays (features\atlas\components\layers\MapOverlays.jsx)
+  • MapRecaps (features\atlas\components\layers\MapRecaps.jsx)
+  • MapTools (features\atlas\components\MapTools.jsx)
+  • MapView (features\atlas\MapPage.jsx)
+  • MarkdownEditor (features\admin\components\MarkdownEditor.jsx)
+  • MarkdownWithToC (shared\components\markdown\MarkdownWithToC.jsx)
+  • MentionGroup (features\wiki\components\SessionMentions.jsx)
+  • MobileHeaderActions (features\navigation\MainLayout.jsx)
+  • NavItem (features\admin\layouts\AdminLayout.jsx)
+  • PriorityIcon (features\wiki\components\navigation\sidebar\PriorityIcon.jsx)
+  • QuestObjectiveItem (features\wiki\components\QuestObjectives.jsx)
+  • QuestObjectiveManager (features\admin\components\QuestObjectiveManager.jsx)
+  • QuestObjectives (features\wiki\components\QuestObjectives.jsx)
+  • QuickInsights (features\dashboard\components\QuickInsights.jsx)
+  • RecentEncountersWidget (features\dashboard\components\RecentEncountersWidget.jsx)
+  • RecentSessionsList (features\dashboard\components\RecentSessionsList.jsx)
+  • RelationshipGraph (features\graph\GraphPage.jsx)
+  • RelationshipManager (features\admin\components\RelationshipManager.jsx)
+  • RouteLoading (app\components\RouteLoading.jsx)
+  • SearchModal (features\search\components\SearchModal.jsx)
+  • SearchProvider (features\search\SearchContext.jsx)
+  • SearchResults (features\search\components\SearchResults.jsx)
+  • SearchTrigger (features\search\components\SearchTrigger.jsx)
+  • SectionDivider (shared\components\ui\SectionDivider.jsx)
+  • SessionEventManager (features\admin\components\SessionEventManager.jsx)
+  • SessionLayout (features\wiki\layouts\SessionLayout.jsx)
+  • SessionRecapCard (features\dashboard\components\SessionRecapCard.jsx)
+  • Sidebar (features\navigation\components\Sidebar.jsx)
+  • SidebarContent (features\navigation\components\Sidebar.jsx)
+  • SidebarFooter (features\navigation\components\SidebarFooter.jsx)
+  • SidebarHeader (features\navigation\components\SidebarHeader.jsx)
+  • SidebarNav (features\navigation\components\SidebarNav.jsx)
+  • SidebarTreeItem (features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx)
+  • SmartEntityLink (features\smart-text\components\SmartEntityLink.jsx)
+  • SmartImageInput (features\admin\components\SmartImageInput.jsx)
+  • SplitPaneManager (features\admin\pages\SplitPaneManager.jsx)
+  • SplitView (shared\components\layout\SplitView.jsx)
+  • StandardLayout (features\wiki\layouts\StandardLayout.jsx)
+  • StandardTrait (features\wiki\components\EntitySidebar.jsx)
+  • StatBadge (features\dashboard\components\CampaignHero.jsx)
+  • StatusIcon (features\wiki\components\navigation\sidebar\StatusIcon.jsx)
+  • TabButton (shared\components\layout\TabContainer.jsx)
+  • TabContainer (shared\components\layout\TabContainer.jsx)
+  • TabPanel (shared\components\layout\TabContainer.jsx)
+  • TacticalMapManager (features\admin\components\TacticalMapManager.jsx)
+  • TagList (features\wiki\components\EntitySidebar.jsx)
+  • ThreeColumnLayout (shared\components\layout\SplitView.jsx)
+  • TimelineSession (features\timeline\components\TimelineSession.jsx)
+  • TimelineView (features\timeline\TimelinePage.jsx)
+  • TocMobileDrawer (features\table-of-contents\components\TocMobileDrawer.jsx)
+  • ToggleItem (features\atlas\components\MapLayerControl.jsx)
+  • TooltipCard (features\smart-tooltip\components\TooltipCard.jsx)
+  • TooltipProvider (features\smart-tooltip\TooltipContext.jsx)
+  • TypeDivider (features\wiki\components\EntitySidebar.jsx)
+  • WikiEntryPage (features\wiki\pages\WikiDetailPage.jsx)
+  • WikiLandingPage (features\wiki\pages\WikiLandingPage.jsx)
+  • WikiLayout (features\wiki\WikiLayout.jsx)
+  • WikiSidebar (features\wiki\components\navigation\WikiSidebar.jsx)
+  • WikiSidebarHeader (features\wiki\components\navigation\WikiSidebarHeader.jsx)
+  • WikiSidebarList (features\wiki\components\navigation\WikiSidebarList.jsx)
+  • addHeaderIds (shared\utils\markdownUtils.js)
+  • applyTheme (shared\utils\theme\cssUtils.js)
+  • buildEntityClassName (domain\entity\config\entityStyles.js)
+  • buildTree (features\wiki\hooks\useEntityGrouping.js)
+  • calculateBounds (features\atlas\utils\mapNavigation.js)
+  • calculatePosition (features\smart-tooltip\useSmartPosition.js)
+  • capitalize (shared\utils\textUtils.js)
+  • clearRecent (features\search\useGlobalSearch.js)
+  • countMarkdownWords (shared\utils\markdownUtils.js)
+  • createLucideMarker (features\atlas\utils\markerUtils.js)
+  • createTextMarker (features\atlas\utils\markerUtils.js)
+  • cycleTheme (shared\hooks\useTheme.js)
+  • darkenColor (shared\utils\theme\colorUtils.js)
+  • escapeRegex (shared\utils\textUtils.js)
+  • estimateReadingTime (shared\utils\textUtils.js)
+  • extractExcerpt (shared\utils\markdownUtils.js)
+  • extractHeaderTags (features\wiki\utils\attributeMapper.js)
+  • extractHeaders (shared\utils\markdownUtils.js)
+  • extractMentions (features\wiki\hooks\useEntityContent.js)
+  • extractSessionMeta (features\wiki\utils\wikiEntryMapper.js)
+  • extractText (shared\utils\textUtils.js)
+  • extractValue (shared\utils\imageUtils.js)
+  • findEntityMatches (features\smart-text\useSmartText.js)
+  • flattenGeoTree (features\wiki\config\viewStrategies.js)
+  • formatRelationshipType (features\wiki\utils\relationshipMapper.js)
+  • generateId (shared\utils\textUtils.js)
+  • generatePalette (shared\utils\theme\colorUtils.js)
+  • generateToC (shared\utils\markdownUtils.js)
+  • getActionIcon (features\wiki\components\EncounterTimeline.jsx)
+  • getActionLabel (features\smart-text\components\EntityEmbed.jsx)
+  • getAffinityRank (domain\entity\utils\statusUtils.js)
+  • getAttributeDestination (features\wiki\utils\attributeMapper.js)
+  • getAttributeDisplayType (domain\entity\utils\attributeParser.js)
+  • getAttributeValue (domain\entity\utils\attributeParser.js)
+  • getBorderColor (features\smart-text\components\EntityEmbed.jsx)
+  • getCSSVariable (shared\utils\theme\cssUtils.js)
+  • getColorBrightness (shared\utils\theme\colorUtils.js)
+  • getContrastColor (shared\utils\theme\colorUtils.js)
+  • getCurrentTheme (shared\utils\theme\cssUtils.js)
+  • getEntityColor (domain\entity\config\entityColors.js)
+  • getEntityConfig (domain\entity\config\entityConfig.js)
+  • getEntityDescription (domain\entity\utils\entityUtils.js)
+  • getEntityIcon (domain\entity\config\entityIcons.js)
+  • getEntityInitial (domain\entity\utils\entityUtils.js)
+  • getEntityLabel (domain\entity\config\entityTypes.js)
+  • getEntityName (domain\entity\utils\entityUtils.js)
+  • getEntityPalette (domain\entity\config\entityColors.js)
+  • getEntityPreset (domain\entity\config\entityStyles.js)
+  • getEntityStyles (domain\entity\config\entityStyles.js)
+  • getEventStyle (features\timeline\utils\eventStyles.js)
+  • getImageBrightness (features\smart-text\components\EntityEmbed.jsx)
+  • getMapConfig (features\atlas\utils\mapNavigation.js)
+  • getOptimalTheme (shared\utils\theme\cssUtils.js)
+  • getParentId (domain\entity\utils\entityUtils.js)
+  • getPriorityStyles (domain\entity\config\entityStyles.js)
+  • getRoleStyle (features\wiki\components\EntitySidebar.jsx)
+  • getStatusIcon (domain\entity\utils\statusUtils.js)
+  • getStatusInfo (domain\entity\utils\statusUtils.js)
+  • getStoredTheme (shared\utils\theme\cssUtils.js)
+  • getStrategy (features\admin\config\adminStrategies.js)
+  • getStrategyMode (features\wiki\config\viewStrategies.js)
+  • getSwimlanes (features\wiki\config\viewStrategies.js)
+  • getThemeIcon (features\navigation\components\SidebarFooter.jsx)
+  • getThemeLabel (features\navigation\components\SidebarFooter.jsx)
+  • getThemeVariables (shared\utils\theme\cssUtils.js)
+  • handleAddNew (features\admin\components\SessionEventManager.jsx)
+  • handleCenter (features\atlas\components\MapTools.jsx)
+  • handleClick (features\smart-tooltip\components\TooltipCard.jsx)
+  • handleEdit (features\admin\components\SessionEventManager.jsx)
+  • handleEsc (features\wiki\components\EntityMiniMap.jsx)
+  • handleInputChange (features\admin\components\MarkdownEditor.jsx)
+  • handleInsertEntity (features\admin\components\MarkdownEditor.jsx)
+  • handleKeyDown (features\search\useGlobalSearch.js)
+  • handleMapClick (features\admin\components\TacticalMapManager.jsx)
+  • handleMarkersChange (features\admin\components\AdminForm.jsx)
+  • handleMouseEnter (domain\entity\components\EntityLink.jsx)
+  • handleObserver (features\table-of-contents\hooks\useTocObserver.js)
+  • handleResize (features\smart-tooltip\useSmartPosition.js)
+  • handleSelect (features\search\useGlobalSearch.js)
+  • handleSelectTarget (features\admin\components\RelationshipManager.jsx)
+  • handleSwitch (features\admin\layouts\AdminLayout.jsx)
+  • handleTabChange (shared\components\layout\TabContainer.jsx)
+  • handleTouchEnd (domain\entity\components\EntityLink.jsx)
+  • handleTouchMove (domain\entity\components\EntityLink.jsx)
+  • handleTouchStart (domain\entity\components\EntityLink.jsx)
+  • hasMarkdown (shared\utils\textUtils.js)
+  • hexToRgb (shared\utils\theme\colorUtils.js)
+  • hexWithOpacity (shared\utils\theme\colorUtils.js)
+  • isEntityCompleted (domain\entity\utils\entityUtils.js)
+  • isEntityDead (domain\entity\utils\entityUtils.js)
+  • isEntityFailed (domain\entity\utils\entityUtils.js)
+  • isEntityType (domain\entity\utils\entityUtils.js)
+  • isIgnoredAttribute (domain\entity\utils\attributeParser.js)
+  • isListAttribute (domain\entity\utils\attributeParser.js)
+  • isNarrativeAttribute (domain\entity\utils\attributeParser.js)
+  • lightenColor (shared\utils\theme\colorUtils.js)
+  • markdownToText (shared\utils\markdownUtils.js)
+  • navigateTo (features\navigation\useNavigation.js)
+  • navigateToMap (features\atlas\useMapData.js)
+  • normalizeEntityType (domain\entity\utils\entityUtils.js)
+  • onFullScreenChange (features\atlas\components\MapTools.jsx)
+  • onSwitchCampaign (features\navigation\useNavigation.js)
+  • parseAbilityScores (domain\entity\utils\attributeParser.js)
+  • parseAttributeValue (domain\entity\utils\attributeParser.js)
+  • parseAttributes (shared\utils\imageUtils.js)
+  • parseColor (shared\utils\theme\colorUtils.js)
+  • parseEvents (features\wiki\utils\eventMapper.js)
+  • parseFrontmatter (shared\utils\markdownUtils.js)
+  • parseRelationships (features\wiki\utils\relationshipMapper.js)
+  • parseTagList (domain\entity\utils\attributeParser.js)
+  • prefersDarkMode (shared\utils\theme\cssUtils.js)
+  • processSpecialWidget (features\wiki\utils\attributeMapper.js)
+  • prune (features\wiki\hooks\useEntityGrouping.js)
+  • removeMarker (features\admin\components\TacticalMapManager.jsx)
+  • renderList (features\table-of-contents\TableOfContents.jsx)
+  • renderMentions (features\wiki\layouts\SessionLayout.jsx)
+  • renderNarrative (features\wiki\layouts\SessionLayout.jsx)
+  • renderTimeline (features\wiki\layouts\SessionLayout.jsx)
+  • replaceMatches (features\smart-text\useSmartText.js)
+  • resolveDescription (features\wiki\components\landing\EntityGridCard.jsx)
+  • resolveEntityIcon (domain\entity\config\entityIcons.js)
+  • resolveImageUrl (shared\utils\imageUtils.js)
+  • resolveMarkerIcon (features\atlas\utils\markerUtils.js)
+  • resolvePreviewUrl (features\admin\components\SmartImageInput.jsx)
+  • rgbToHex (shared\utils\theme\colorUtils.js)
+  • sanitizeText (shared\utils\textUtils.js)
+  • selectCampaign (features\campaign\useCampaignSelection.js)
+  • setActiveTab (features\wiki\layouts\SessionLayout.jsx)
+  • setCSSVariable (shared\utils\theme\cssUtils.js)
+  • setTheme (shared\utils\theme\cssUtils.js)
+  • shouldShowStatus (domain\entity\utils\entityUtils.js)
+  • slugify (shared\utils\textUtils.js)
+  • sortRecursive (features\wiki\hooks\useEntityGrouping.js)
+  • stripMarkdown (shared\utils\textUtils.js)
+  • toHex (shared\utils\theme\colorUtils.js)
+  • toTitleCase (shared\utils\textUtils.js)
+  • toggleFullscreen (features\wiki\components\EntityMiniMap.jsx)
+  • toggleLayer (features\atlas\components\useMapCanvasViewModel.js)
+  • transformAttributes (features\wiki\utils\attributeMapper.js)
+  • transformEvents (features\wiki\utils\eventMapper.js)
+  • transformGraphData (features\graph\utils\graphMapper.js)
+  • transformRelationships (features\wiki\utils\relationshipMapper.js)
+  • transformSearchResults (features\search\utils\searchMapper.js)
+  • transformWikiEntry (features\wiki\utils\wikiEntryMapper.js)
+  • truncate (shared\utils\textUtils.js)
+  • updateMarker (features\admin\components\TacticalMapManager.jsx)
+  • useCampaign (features\campaign\CampaignContext.jsx)
+  • useEntityContent (features\wiki\hooks\useEntityContent.js)
+  • useEntityHeader (features\wiki\hooks\useEntityHeader.js)
+  • useEntitySidebar (features\wiki\hooks\useEntitySidebar.js)
+  • useSearch (features\search\SearchContext.jsx)
+  • useTooltip (features\smart-tooltip\TooltipContext.jsx)
+  • validateEnv (main.jsx)
+  • wordCount (shared\utils\textUtils.js)
+
+
+### ROOT/CONTAINER COMPONENTS (use many child components)
+
+
+setActiveTab (features\wiki\layouts\SessionLayout.jsx)
+  Uses 4 child components:
+    • EntityBody
+    • EntityHistory
+    • SessionMentions
+    • TableOfContents
+
+renderNarrative (features\wiki\layouts\SessionLayout.jsx)
+  Uses 4 child components:
+    • EntityBody
+    • EntityHistory
+    • SessionMentions
+    • TableOfContents
+
+renderMentions (features\wiki\layouts\SessionLayout.jsx)
+  Uses 4 child components:
+    • EntityBody
+    • EntityHistory
+    • SessionMentions
+    • TableOfContents
+
+renderTimeline (features\wiki\layouts\SessionLayout.jsx)
+  Uses 4 child components:
+    • EntityBody
+    • EntityHistory
+    • SessionMentions
+    • TableOfContents
+
+SessionLayout (features\wiki\layouts\SessionLayout.jsx)
+  Uses 4 child components:
+    • EntityBody
+    • EntityHistory
+    • SessionMentions
+    • TableOfContents
+
+getActionIcon (features\wiki\components\EncounterTimeline.jsx)
+  Uses 3 child components:
+    • EntityIcon
+    • EntityLink
+    • SmartMarkdown
+
+CombatLogEntry (features\wiki\components\EncounterTimeline.jsx)
+  Uses 3 child components:
+    • EntityIcon
+    • EntityLink
+    • SmartMarkdown
+
+EncounterTimeline (features\wiki\components\EncounterTimeline.jsx)
+  Uses 3 child components:
+    • EntityIcon
+    • EntityLink
+    • SmartMarkdown
+
+--- END OF dev_helpers\component_hierarchy.txt ---
+
+--- FILE: dev_helpers\duplicate_code_report.txt ---
+================================================================
+DUPLICATE CODE DETECTOR
+Generated: 2025-12-31 08:20:45
+================================================================
+
+Finding code blocks with >80% similarity (5+ lines)...
+
+
+--- END OF dev_helpers\duplicate_code_report.txt ---
 
 --- FILE: dev_helpers\refactor.js ---
 import fs from 'fs';
@@ -1023,6 +2714,678 @@ async function refactor() {
 refactor();
 
 --- END OF dev_helpers\refactor.js ---
+
+--- FILE: dev_helpers\token_count_report.txt ---
+================================================================
+TOKEN COUNT ESTIMATOR
+Generated: 2025-12-31 08:20:45
+================================================================
+
+Token estimates (using ~4 chars per token approximation)
+
+### COMPLETE BUNDLE
+Total characters: 500,948
+Estimated tokens: 125,237
+Fits in Claude's context?  YES ✓
+
+
+### PART FILES
+
+app:
+  Characters: 13,698
+  Estimated tokens: 3,424
+  Files: 4
+
+dev_helpers:
+  Characters: 18,959
+  Estimated tokens: 4,739
+  Files: 2
+
+domain_entity:
+  Characters: 41,035
+  Estimated tokens: 10,258
+  Files: 13
+
+features_admin:
+  Characters: 125,899
+  Estimated tokens: 31,474
+  Files: 21
+
+features_atlas:
+  Characters: 25,822
+  Estimated tokens: 6,455
+  Files: 13
+
+features_campaign:
+  Characters: 6,989
+  Estimated tokens: 1,747
+  Files: 6
+
+features_dashboard:
+  Characters: 34,145
+  Estimated tokens: 8,536
+  Files: 9
+
+features_graph:
+  Characters: 11,256
+  Estimated tokens: 2,814
+  Files: 7
+
+features_navigation:
+  Characters: 9,622
+  Estimated tokens: 2,405
+  Files: 7
+
+features_search:
+  Characters: 17,279
+  Estimated tokens: 4,319
+  Files: 10
+
+features_smart-text:
+  Characters: 12,468
+  Estimated tokens: 3,117
+  Files: 5
+
+features_smart-tooltip:
+  Characters: 11,484
+  Estimated tokens: 2,871
+  Files: 5
+
+features_table-of-contents:
+  Characters: 5,991
+  Estimated tokens: 1,497
+  Files: 5
+
+features_timeline:
+  Characters: 13,080
+  Estimated tokens: 3,270
+  Files: 6
+
+features_wiki:
+  Characters: 110,916
+  Estimated tokens: 27,729
+  Files: 41
+
+root:
+  Characters: 1,190
+  Estimated tokens: 297
+  Files: 1
+
+shared:
+  Characters: 41,115
+  Estimated tokens: 10,278
+  Files: 22
+
+
+### LARGEST FILES (by estimated tokens)
+
+dev_helpers\refactor.js:
+  ~4,366 tokens (17,464 chars)
+
+features\admin\api\adminService.js:
+  ~3,983 tokens (15,932 chars)
+
+features\admin\components\RelationshipManager.jsx:
+  ~3,755 tokens (15,020 chars)
+
+features\admin\components\EncounterManager.jsx:
+  ~3,217 tokens (12,869 chars)
+
+features\dashboard\api\dashboardService.js:
+  ~2,828 tokens (11,314 chars)
+
+features\admin\components\AdminForm.jsx:
+  ~2,551 tokens (10,204 chars)
+
+app\styles\global.css:
+  ~2,373 tokens (9,492 chars)
+
+domain\entity\api\entityService.js:
+  ~2,329 tokens (9,317 chars)
+
+features\admin\components\QuestObjectiveManager.jsx:
+  ~2,245 tokens (8,980 chars)
+
+features\admin\pages\SplitPaneManager.jsx:
+  ~1,891 tokens (7,564 chars)
+
+features\wiki\components\EntitySidebar.jsx:
+  ~1,848 tokens (7,392 chars)
+
+features\admin\components\SessionEventManager.jsx:
+  ~1,771 tokens (7,086 chars)
+
+features\wiki\components\EntityHeader.jsx:
+  ~1,621 tokens (6,486 chars)
+
+features\admin\pages\EntityListPage.jsx:
+  ~1,618 tokens (6,474 chars)
+
+features\dashboard\components\LatestSessionCard.jsx:
+  ~1,421 tokens (5,685 chars)
+
+features\admin\components\TacticalMapManager.jsx:
+  ~1,387 tokens (5,549 chars)
+
+features\smart-text\components\EntityEmbed.jsx:
+  ~1,365 tokens (5,462 chars)
+
+features\wiki\components\EncounterTimeline.jsx:
+  ~1,352 tokens (5,408 chars)
+
+features\wiki\components\EntityMiniMap.jsx:
+  ~1,333 tokens (5,335 chars)
+
+features\admin\config\adminStrategies.js:
+  ~1,284 tokens (5,136 chars)
+
+
+### RECOMMENDATIONS
+
+✓ Complete bundle fits comfortably in Claude's context
+
+
+### COMBINABLE PARTS (that fit together under 100k tokens)
+
+  root + app: ~2 tokens
+  root + dev_helpers: ~2 tokens
+  root + domain_entity: ~2 tokens
+  root + features_admin: ~2 tokens
+  root + features_atlas: ~2 tokens
+  root + features_campaign: ~2 tokens
+  root + features_dashboard: ~2 tokens
+  root + features_graph: ~2 tokens
+  root + features_navigation: ~2 tokens
+  root + features_search: ~2 tokens
+  root + features_smart-text: ~2 tokens
+  root + features_smart-tooltip: ~2 tokens
+  root + features_table-of-contents: ~2 tokens
+  root + features_timeline: ~2 tokens
+  root + features_wiki: ~2 tokens
+  root + shared: ~2 tokens
+  app + dev_helpers: ~2 tokens
+  app + domain_entity: ~2 tokens
+  app + features_admin: ~2 tokens
+  app + features_atlas: ~2 tokens
+  app + features_campaign: ~2 tokens
+  app + features_dashboard: ~2 tokens
+  app + features_graph: ~2 tokens
+  app + features_navigation: ~2 tokens
+  app + features_search: ~2 tokens
+  app + features_smart-text: ~2 tokens
+  app + features_smart-tooltip: ~2 tokens
+  app + features_table-of-contents: ~2 tokens
+  app + features_timeline: ~2 tokens
+  app + features_wiki: ~2 tokens
+  app + shared: ~2 tokens
+  dev_helpers + domain_entity: ~2 tokens
+  dev_helpers + features_admin: ~2 tokens
+  dev_helpers + features_atlas: ~2 tokens
+  dev_helpers + features_campaign: ~2 tokens
+  dev_helpers + features_dashboard: ~2 tokens
+  dev_helpers + features_graph: ~2 tokens
+  dev_helpers + features_navigation: ~2 tokens
+  dev_helpers + features_search: ~2 tokens
+  dev_helpers + features_smart-text: ~2 tokens
+  dev_helpers + features_smart-tooltip: ~2 tokens
+  dev_helpers + features_table-of-contents: ~2 tokens
+  dev_helpers + features_timeline: ~2 tokens
+  dev_helpers + features_wiki: ~2 tokens
+  dev_helpers + shared: ~2 tokens
+  domain_entity + features_admin: ~2 tokens
+  domain_entity + features_atlas: ~2 tokens
+  domain_entity + features_campaign: ~2 tokens
+  domain_entity + features_dashboard: ~2 tokens
+  domain_entity + features_graph: ~2 tokens
+  domain_entity + features_navigation: ~2 tokens
+  domain_entity + features_search: ~2 tokens
+  domain_entity + features_smart-text: ~2 tokens
+  domain_entity + features_smart-tooltip: ~2 tokens
+  domain_entity + features_table-of-contents: ~2 tokens
+  domain_entity + features_timeline: ~2 tokens
+  domain_entity + features_wiki: ~2 tokens
+  domain_entity + shared: ~2 tokens
+  features_admin + features_atlas: ~2 tokens
+  features_admin + features_campaign: ~2 tokens
+  features_admin + features_dashboard: ~2 tokens
+  features_admin + features_graph: ~2 tokens
+  features_admin + features_navigation: ~2 tokens
+  features_admin + features_search: ~2 tokens
+  features_admin + features_smart-text: ~2 tokens
+  features_admin + features_smart-tooltip: ~2 tokens
+  features_admin + features_table-of-contents: ~2 tokens
+  features_admin + features_timeline: ~2 tokens
+  features_admin + features_wiki: ~2 tokens
+  features_admin + shared: ~2 tokens
+  features_atlas + features_campaign: ~2 tokens
+  features_atlas + features_dashboard: ~2 tokens
+  features_atlas + features_graph: ~2 tokens
+  features_atlas + features_navigation: ~2 tokens
+  features_atlas + features_search: ~2 tokens
+  features_atlas + features_smart-text: ~2 tokens
+  features_atlas + features_smart-tooltip: ~2 tokens
+  features_atlas + features_table-of-contents: ~2 tokens
+  features_atlas + features_timeline: ~2 tokens
+  features_atlas + features_wiki: ~2 tokens
+  features_atlas + shared: ~2 tokens
+  features_campaign + features_dashboard: ~2 tokens
+  features_campaign + features_graph: ~2 tokens
+  features_campaign + features_navigation: ~2 tokens
+  features_campaign + features_search: ~2 tokens
+  features_campaign + features_smart-text: ~2 tokens
+  features_campaign + features_smart-tooltip: ~2 tokens
+  features_campaign + features_table-of-contents: ~2 tokens
+  features_campaign + features_timeline: ~2 tokens
+  features_campaign + features_wiki: ~2 tokens
+  features_campaign + shared: ~2 tokens
+  features_dashboard + features_graph: ~2 tokens
+  features_dashboard + features_navigation: ~2 tokens
+  features_dashboard + features_search: ~2 tokens
+  features_dashboard + features_smart-text: ~2 tokens
+  features_dashboard + features_smart-tooltip: ~2 tokens
+  features_dashboard + features_table-of-contents: ~2 tokens
+  features_dashboard + features_timeline: ~2 tokens
+  features_dashboard + features_wiki: ~2 tokens
+  features_dashboard + shared: ~2 tokens
+  features_graph + features_navigation: ~2 tokens
+  features_graph + features_search: ~2 tokens
+  features_graph + features_smart-text: ~2 tokens
+  features_graph + features_smart-tooltip: ~2 tokens
+  features_graph + features_table-of-contents: ~2 tokens
+  features_graph + features_timeline: ~2 tokens
+  features_graph + features_wiki: ~2 tokens
+  features_graph + shared: ~2 tokens
+  features_navigation + features_search: ~2 tokens
+  features_navigation + features_smart-text: ~2 tokens
+  features_navigation + features_smart-tooltip: ~2 tokens
+  features_navigation + features_table-of-contents: ~2 tokens
+  features_navigation + features_timeline: ~2 tokens
+  features_navigation + features_wiki: ~2 tokens
+  features_navigation + shared: ~2 tokens
+  features_search + features_smart-text: ~2 tokens
+  features_search + features_smart-tooltip: ~2 tokens
+  features_search + features_table-of-contents: ~2 tokens
+  features_search + features_timeline: ~2 tokens
+  features_search + features_wiki: ~2 tokens
+  features_search + shared: ~2 tokens
+  features_smart-text + features_smart-tooltip: ~2 tokens
+  features_smart-text + features_table-of-contents: ~2 tokens
+  features_smart-text + features_timeline: ~2 tokens
+  features_smart-text + features_wiki: ~2 tokens
+  features_smart-text + shared: ~2 tokens
+  features_smart-tooltip + features_table-of-contents: ~2 tokens
+  features_smart-tooltip + features_timeline: ~2 tokens
+  features_smart-tooltip + features_wiki: ~2 tokens
+  features_smart-tooltip + shared: ~2 tokens
+  features_table-of-contents + features_timeline: ~2 tokens
+  features_table-of-contents + features_wiki: ~2 tokens
+  features_table-of-contents + shared: ~2 tokens
+  features_timeline + features_wiki: ~2 tokens
+  features_timeline + shared: ~2 tokens
+  features_wiki + shared: ~2 tokens
+
+--- END OF dev_helpers\token_count_report.txt ---
+
+--- FILE: dev_helpers\unused_code_report.txt ---
+================================================================
+UNUSED CODE DETECTOR
+Generated: 2025-12-31 08:20:45
+================================================================
+
+### POTENTIALLY UNUSED EXPORTS
+(Exports that don't appear to be imported anywhere)
+
+
+domain\entity\api\entityService.js:
+  • getSessions
+
+domain\entity\components\EntityStatusIcon.jsx:
+  • EntityStatusBadge
+  • EntityStatusIcon
+
+domain\entity\config\entityColors.js:
+  • ENTITY_COLORS
+  • ENTITY_COLOR_PALETTES
+
+domain\entity\config\entityIcons.js:
+  • ENTITY_ICONS
+
+domain\entity\config\entityStyles.js:
+  • ENTITY_CLASS_PRESETS
+
+domain\entity\config\entityTypes.js:
+  • ENTITY_LABELS
+  • ENTITY_LABELS_PLURAL
+
+domain\entity\utils\attributeParser.js:
+  • getAttributeDisplayType
+
+domain\entity\utils\entityUtils.js:
+  • normalizeEntityType
+  • isEntityType
+  • isQuest
+  • isNPC
+  • isLocation
+  • shouldShowStatus
+  • getEntityName
+  • getEntityDescription
+  • getEntityInitial
+  • isEntityDead
+  • isEntityCompleted
+  • isEntityFailed
+
+features\admin\config\adminStrategies.js:
+  • ADMIN_STRATEGIES
+
+features\admin\config\imageLibrary.js:
+  • IMAGE_LIBRARY
+
+features\admin\layouts\AdminLayout.jsx:
+  • AdminLayout
+
+features\admin\pages\BulkReplaceTool.jsx:
+  • BulkReplaceTool
+
+features\admin\pages\EntityEditorPage.jsx:
+  • EntityEditorPage
+
+features\admin\pages\EntityListPage.jsx:
+  • EntityListPage
+
+features\admin\pages\SplitPaneManager.jsx:
+  • SplitPaneManager
+
+features\atlas\MapPage.jsx:
+  • MapView
+
+features\atlas\config\mapConfig.js:
+  • MAP_CONFIG
+
+features\atlas\utils\mapNavigation.js:
+  • calculateBounds
+
+features\atlas\utils\markerUtils.js:
+  • invisibleIcon
+  • createLucideMarker
+  • createTextMarker
+
+features\campaign\components\CampaignSelect.jsx:
+  • CampaignSelect
+
+features\dashboard\DashboardPage.jsx:
+  • DashboardView
+
+features\dashboard\components\SessionRecapCard.jsx:
+  • SessionRecapCard
+
+features\graph\GraphPage.jsx:
+  • RelationshipGraph
+
+features\navigation\MainLayout.jsx:
+  • MainLayout
+
+features\timeline\TimelinePage.jsx:
+  • TimelineView
+
+features\wiki\WikiLayout.jsx:
+  • WikiLayout
+
+features\wiki\config\viewStrategies.js:
+  • VIEW_STRATEGIES
+
+features\wiki\pages\WikiDetailPage.jsx:
+  • WikiEntryPage
+
+features\wiki\pages\WikiLandingPage.jsx:
+  • WikiLandingPage
+
+features\wiki\utils\eventMapper.js:
+  • parseEvents
+
+features\wiki\utils\relationshipMapper.js:
+  • parseRelationships
+
+shared\components\layout\CollapsibleSection.jsx:
+  • CollapsibleList
+  • CollapsibleSection
+
+shared\components\layout\SplitView.jsx:
+  • SplitView
+
+shared\components\layout\TabContainer.jsx:
+  • TabPanel
+
+shared\components\markdown\MarkdownRenderer.jsx:
+  • InlineMarkdown
+
+shared\components\markdown\MarkdownWithToC.jsx:
+  • MarkdownWithToC
+
+shared\components\ui\Card.jsx:
+  • Card
+  • CardHeader
+  • CardTitle
+  • CardContent
+
+shared\utils\markdownUtils.js:
+  • generateToC
+  • markdownToText
+  • extractExcerpt
+  • countMarkdownWords
+  • parseFrontmatter
+  • addHeaderIds
+
+shared\utils\textUtils.js:
+  • truncate
+  • sanitizeText
+  • slugify
+  • wordCount
+  • estimateReadingTime
+  • escapeRegex
+  • stripMarkdown
+  • hasMarkdown
+
+shared\utils\theme\colorUtils.js:
+  • hexToRgb
+  • rgbToHex
+  • hexWithOpacity
+  • lightenColor
+  • darkenColor
+  • getContrastColor
+  • getColorBrightness
+  • generatePalette
+  • parseColor
+
+shared\utils\theme\cssUtils.js:
+  • getCSSVariable
+  • setCSSVariable
+  • getThemeVariables
+  • applyTheme
+  • getCurrentTheme
+  • setTheme
+  • getStoredTheme
+  • prefersDarkMode
+  • getOptimalTheme
+
+
+### ORPHANED FILES
+(Files that aren't imported by anything)
+
+  • app\AppRoutes.jsx
+  • app\components\RouteLoading.jsx
+  • dev_helpers\check_imports.js
+  • dev_helpers\refactor.js
+  • domain\entity\api\entityService.js
+  • domain\entity\components\EntityBadge.jsx
+  • domain\entity\components\EntityIcon.jsx
+  • domain\entity\components\EntityLink.jsx
+  • domain\entity\components\EntityStatusIcon.jsx
+  • domain\entity\config\entityColors.js
+  • domain\entity\config\entityConfig.js
+  • domain\entity\config\entityIcons.js
+  • domain\entity\config\entityStyles.js
+  • domain\entity\config\entityTypes.js
+  • domain\entity\utils\attributeParser.js
+  • domain\entity\utils\entityUtils.js
+  • domain\entity\utils\statusUtils.js
+  • features\admin\api\adminService.js
+  • features\admin\components\AdminForm.jsx
+  • features\admin\components\AdminFormStyles.js
+  • features\admin\components\EncounterManager.jsx
+  • features\admin\components\EntitySearch.jsx
+  • features\admin\components\EventTagger.jsx
+  • features\admin\components\ImageLibraryModal.jsx
+  • features\admin\components\MarkdownEditor.jsx
+  • features\admin\components\QuestObjectiveManager.jsx
+  • features\admin\components\RelationshipManager.jsx
+  • features\admin\components\SessionEventManager.jsx
+  • features\admin\components\SmartImageInput.jsx
+  • features\admin\components\TacticalMapManager.jsx
+  • features\admin\config\adminStrategies.js
+  • features\admin\config\imageLibrary.js
+  • features\admin\layouts\AdminLayout.jsx
+  • features\admin\pages\BulkReplaceTool.jsx
+  • features\admin\pages\EntityEditorPage.jsx
+  • features\admin\pages\EntityListPage.jsx
+  • features\admin\pages\SplitPaneManager.jsx
+  • features\atlas\MapPage.jsx
+  • features\atlas\components\MapCanvas.jsx
+  • features\atlas\components\MapLayerControl.jsx
+  • features\atlas\components\MapTools.jsx
+  • features\atlas\components\layers\MapAreas.jsx
+  • features\atlas\components\layers\MapMarkers.jsx
+  • features\atlas\components\layers\MapOverlays.jsx
+  • features\atlas\components\layers\MapRecaps.jsx
+  • features\atlas\components\useMapCanvasViewModel.js
+  • features\atlas\config\mapConfig.js
+  • features\atlas\useMapData.js
+  • features\atlas\utils\mapNavigation.js
+  • features\atlas\utils\markerUtils.js
+  • features\campaign\CampaignContext.jsx
+  • features\campaign\api\campaignService.js
+  • features\campaign\components\CampaignCard.jsx
+  • features\campaign\components\CampaignSelect.jsx
+  • features\campaign\useCampaignPersistence.js
+  • features\campaign\useCampaignSelection.js
+  • features\dashboard\DashboardPage.jsx
+  • features\dashboard\api\dashboardService.js
+  • features\dashboard\components\ActiveQuestsWidget.jsx
+  • features\dashboard\components\CampaignHero.jsx
+  • features\dashboard\components\LatestSessionCard.jsx
+  • features\dashboard\components\QuickInsights.jsx
+  • features\dashboard\components\RecentEncountersWidget.jsx
+  • features\dashboard\components\RecentSessionsList.jsx
+  • features\dashboard\components\SessionRecapCard.jsx
+  • features\graph\GraphPage.jsx
+  • features\graph\api\graphService.js
+  • features\graph\components\CytoscapeCanvas.jsx
+  • features\graph\components\GraphLegend.jsx
+  • features\graph\config\graphStyles.js
+  • features\graph\useGraphView.js
+  • features\graph\utils\graphMapper.js
+  • features\navigation\MainLayout.jsx
+  • features\navigation\components\Sidebar.jsx
+  • features\navigation\components\SidebarFooter.jsx
+  • features\navigation\components\SidebarHeader.jsx
+  • features\navigation\components\SidebarNav.jsx
+  • features\navigation\config\navConfig.js
+  • features\navigation\useNavigation.js
+  • features\search\GlobalSearch.jsx
+  • features\search\SearchContext.jsx
+  • features\search\api\searchService.js
+  • features\search\components\SearchFooter.jsx
+  • features\search\components\SearchModal.jsx
+  • features\search\components\SearchResultItem.jsx
+  • features\search\components\SearchResults.jsx
+  • features\search\components\SearchTrigger.jsx
+  • features\search\useGlobalSearch.js
+  • features\search\utils\searchMapper.js
+  • features\smart-text\SmartMarkdown.jsx
+  • features\smart-text\components\EntityEmbed.jsx
+  • features\smart-text\components\SmartEntityLink.jsx
+  • features\smart-text\useEntityIndex.js
+  • features\smart-text\useSmartText.js
+  • features\smart-tooltip\TooltipContainer.jsx
+  • features\smart-tooltip\TooltipContext.jsx
+  • features\smart-tooltip\components\TooltipCard.jsx
+  • features\smart-tooltip\useSmartPosition.js
+  • features\smart-tooltip\useTooltipState.js
+  • features\table-of-contents\TableOfContents.jsx
+  • features\table-of-contents\components\TocItem.jsx
+  • features\table-of-contents\components\TocMobileDrawer.jsx
+  • features\table-of-contents\hooks\useTocObserver.js
+  • features\table-of-contents\hooks\useTocScroll.js
+  • features\timeline\TimelinePage.jsx
+  • features\timeline\api\timelineService.js
+  • features\timeline\components\TimelineEvent.jsx
+  • features\timeline\components\TimelineSession.jsx
+  • features\timeline\useTimelineView.js
+  • features\timeline\utils\eventStyles.js
+  • features\wiki\WikiLayout.jsx
+  • features\wiki\api\wikiService.js
+  • features\wiki\components\EncounterTimeline.jsx
+  • features\wiki\components\EntityBody.jsx
+  • features\wiki\components\EntityHeader.jsx
+  • features\wiki\components\EntityHistory.jsx
+  • features\wiki\components\EntityMiniMap.jsx
+  • features\wiki\components\EntitySidebar.jsx
+  • features\wiki\components\QuestObjectives.jsx
+  • features\wiki\components\SessionMentions.jsx
+  • features\wiki\components\WikiEntryView.jsx
+  • features\wiki\components\landing\EntityGridCard.jsx
+  • features\wiki\components\landing\EntityTableGroup.jsx
+  • features\wiki\components\landing\Swimlane.jsx
+  • features\wiki\components\navigation\SidebarEmptyState.jsx
+  • features\wiki\components\navigation\WikiSidebar.jsx
+  • features\wiki\components\navigation\WikiSidebarHeader.jsx
+  • features\wiki\components\navigation\WikiSidebarList.jsx
+  • features\wiki\components\navigation\sidebar\CollapsibleGroup.jsx
+  • features\wiki\components\navigation\sidebar\EntityListItem.jsx
+  • features\wiki\components\navigation\sidebar\PriorityIcon.jsx
+  • features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx
+  • features\wiki\components\navigation\sidebar\StatusIcon.jsx
+  • features\wiki\config\groupingConfig.js
+  • features\wiki\config\viewStrategies.js
+  • features\wiki\hooks\useEntityContent.js
+  • features\wiki\hooks\useEntityFetching.js
+  • features\wiki\hooks\useEntityGrouping.js
+  • features\wiki\hooks\useEntityHeader.js
+  • features\wiki\hooks\useEntitySidebar.js
+  • features\wiki\layouts\SessionLayout.jsx
+  • features\wiki\layouts\StandardLayout.jsx
+  • features\wiki\pages\WikiDetailPage.jsx
+  • features\wiki\pages\WikiLandingPage.jsx
+  • features\wiki\useEntityView.js
+  • features\wiki\useWikiNavigation.js
+  • features\wiki\utils\attributeMapper.js
+  • features\wiki\utils\eventMapper.js
+  • features\wiki\utils\relationshipMapper.js
+  • features\wiki\utils\wikiEntryMapper.js
+  • features\wiki\utils\wikiUtils.js
+  • shared\api\supabaseClient.js
+  • shared\components\ErrorBoundary.jsx
+  • shared\components\layout\CollapsibleSection.jsx
+  • shared\components\layout\SplitView.jsx
+  • shared\components\layout\TabContainer.jsx
+  • shared\components\markdown\MarkdownRenderer.jsx
+  • shared\components\markdown\MarkdownWithToC.jsx
+  • shared\components\ui\Breadcrumbs.jsx
+  • shared\components\ui\Button.jsx
+  • shared\components\ui\Card.jsx
+  • shared\components\ui\DevAdminButton.jsx
+  • shared\components\ui\Drawer.jsx
+  • shared\components\ui\EmptyState.jsx
+  • shared\components\ui\LoadingSpinner.jsx
+  • shared\components\ui\SectionDivider.jsx
+  • shared\hooks\useBreadcrumbs.js
+  • shared\hooks\useTheme.js
+  • shared\utils\imageUtils.js
+  • shared\utils\markdownUtils.js
+  • shared\utils\textUtils.js
+  • shared\utils\theme\colorUtils.js
+  • shared\utils\theme\cssUtils.js
+
+--- END OF dev_helpers\unused_code_report.txt ---
 
 --- FILE: domain\entity\api\entityService.js ---
 import { supabase } from '@/shared/api/supabaseClient';
@@ -2233,6 +4596,8 @@ export const isIgnoredAttribute = (key) => {
 		'background_image',
 		'background',
 		'is_active',
+		'map_image',
+		'map_markers',
 	];
 
 	return ignoredKeys.includes(key.toLowerCase());
@@ -2594,34 +4959,6 @@ export const getStatusInfo = (entity) => {
 --- FILE: features\admin\api\adminService.js ---
 import { supabase } from '@/shared/api/supabaseClient';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
-
-// Helper to prepare attribute rows
-const prepareAttributeRows = (entityId, data) => {
-	// If we have a prepared list (from the new form logic), use it
-	if (data.attributesList && Array.isArray(data.attributesList)) {
-		return data.attributesList
-			.filter((attr) => attr.name && String(attr.value).trim() !== '')
-			.map((attr) => ({
-				entity_id: entityId,
-				name: attr.name,
-				value: attr.value,
-				is_private: false,
-			}));
-	}
-
-	// Fallback for legacy object format (just in case)
-	if (data.attributes) {
-		return Object.entries(data.attributes)
-			.filter(([_, value]) => value && String(value).trim() !== '')
-			.map(([key, value]) => ({
-				entity_id: entityId,
-				name: key,
-				value: value,
-				is_private: false,
-			}));
-	}
-	return [];
-};
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
@@ -3053,6 +5390,133 @@ export const upsertEncounterAction = async (actionData) => {
 	return data;
 };
 
+/**
+ * Scans the entire campaign for a term and returns a list of proposed changes.
+ * Includes: Entities, Sessions, Attributes, Events, and Objectives.
+ */
+export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
+	if (!findTerm.trim()) return [];
+	const term = findTerm.trim();
+	const regex = new RegExp(term, 'gi');
+	const matches = [];
+
+	// 1. Scan Entities (Characters, NPCs, etc)
+	const { data: ent } = await supabase
+		.from('entities')
+		.select('id, name, type, description')
+		.eq('campaign_id', campaignId);
+	ent?.forEach((row) => {
+		['name', 'description'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'entities',
+					id: row.id,
+					field,
+					context: `${row.type}: ${row.name}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 2. Scan Sessions
+	const { data: sess } = await supabase.from('sessions').select('id, title, narrative').eq('campaign_id', campaignId);
+	sess?.forEach((row) => {
+		[
+			['title', 'title'],
+			['narrative', 'narrative'],
+		].forEach(([field, label]) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'sessions',
+					id: row.id,
+					field,
+					context: `Session: ${row.title}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 3. Scan Attributes (linked via entity)
+	const { data: attr } = await supabase
+		.from('attributes')
+		.select('id, name, value, entity:entities!inner(name, type, campaign_id)')
+		.eq('entities.campaign_id', campaignId);
+	attr?.forEach((row) => {
+		if (row.value?.toLowerCase().includes(term.toLowerCase())) {
+			matches.push({
+				table: 'attributes',
+				id: row.id,
+				field: 'value',
+				context: `${row.entity.type} Attribute: ${row.name}`,
+				original: row.value,
+				proposal: row.value.replace(regex, replaceTerm),
+			});
+		}
+	});
+
+	// 4. Scan Session Events (linked via session)
+	const { data: evts } = await supabase
+		.from('session_events')
+		.select('id, title, description, session:sessions!inner(title, campaign_id)')
+		.eq('sessions.campaign_id', campaignId);
+	evts?.forEach((row) => {
+		['title', 'description'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'session_events',
+					id: row.id,
+					field,
+					context: `Event in ${row.session.title}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 5. Scan Quest Objectives (linked via quest/entity)
+	const { data: objs } = await supabase
+		.from('quest_objectives')
+		.select('id, objective_name, description, objective_update, quest:entities!inner(name, campaign_id)')
+		.eq('entities.campaign_id', campaignId);
+	objs?.forEach((row) => {
+		['objective_name', 'description', 'objective_update'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'quest_objectives',
+					id: row.id,
+					field,
+					context: `Objective in ${row.quest.name}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	return matches;
+};
+
+/**
+ * Takes a list of confirmed changes and executes updates.
+ */
+export const executeBulkReplace = async (changeList) => {
+	const results = { count: 0 };
+	// Process in sequence to avoid Supabase rate limits on heavy campaigns
+	for (const change of changeList) {
+		const { error } = await supabase
+			.from(change.table)
+			.update({ [change.field]: change.proposal })
+			.eq('id', change.id);
+		if (!error) results.count++;
+	}
+	return results;
+};
+
 --- END OF features\admin\api\adminService.js ---
 
 --- FILE: features\admin\components\AdminForm.jsx ---
@@ -3076,6 +5540,7 @@ import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
 import EncounterActionManager from './EncounterManager';
+import TacticalMapManager from './TacticalMapManager';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
@@ -3191,6 +5656,23 @@ export default function AdminForm({ type, id }) {
 
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
+	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
+	const customAttrs = watch('customAttributes') || [];
+	const standardMarkers = watch('attributes.map_markers');
+	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
+	const activeMarkersValue = standardMarkers || customMarkers || '[]';
+
+	const handleMarkersChange = (jsonValue) => {
+		// Check if map_markers exists in custom list, update it there
+		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
+		if (customIdx >= 0) {
+			setValue(`customAttributes.${customIdx}.value`, jsonValue);
+		} else {
+			// Otherwise set in standard attributes
+			setValue('attributes.map_markers', jsonValue);
+		}
+	};
+
 	return (
 		// ... (Return JSX remains exactly same) ...
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
@@ -3248,6 +5730,10 @@ export default function AdminForm({ type, id }) {
 					)}
 				</div>
 			</div>
+
+			{mapImageUrl && (
+				<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
+			)}
 
 			{/* Attributes */}
 			<div className={ADMIN_SECTION_CLASS}>
@@ -5177,6 +7663,179 @@ export default function SmartImageInput({ value, onChange, placeholder, ...props
 
 --- END OF features\admin\components\SmartImageInput.jsx ---
 
+--- FILE: features\admin\components\TacticalMapManager.jsx ---
+/* --- FILE: features/admin/components/TacticalMapManager.jsx --- */
+import React, { useState, useEffect } from 'react';
+import { MapContainer, ImageOverlay, Marker, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import { Map as MapIcon, Trash2, Plus, Target, Save } from 'lucide-react';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+import Button from '@/shared/components/ui/Button';
+
+// Click handler component
+const MapClickHandler = ({ onMapClick }) => {
+	useMapEvents({
+		click: (e) => onMapClick(e.latlng),
+	});
+	return null;
+};
+
+const MapController = ({ bounds }) => {
+	const map = useMap();
+	useEffect(() => {
+		if (bounds) map.fitBounds(bounds);
+	}, [map, bounds]);
+	return null;
+};
+
+export default function TacticalMapManager({ imageUrl, value, onChange }) {
+	const [markers, setMarkers] = useState([]);
+	const [dimensions, setDimensions] = useState(null);
+	const [selectedIdx, setSelectedIdx] = useState(null);
+
+	// 1. Load existing markers from JSON string
+	useEffect(() => {
+		if (value) {
+			try {
+				const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+				setMarkers(Array.isArray(parsed) ? parsed : []);
+			} catch (e) {
+				setMarkers([]);
+			}
+		}
+	}, [value]);
+
+	// 2. Handle Image Dimensions
+	useEffect(() => {
+		if (!imageUrl) return;
+		const img = new Image();
+		img.src = imageUrl;
+		img.onload = () => {
+			const h = img.height;
+			const w = img.width;
+			setDimensions(L.latLngBounds([-h, 0], [0, w]));
+		};
+	}, [imageUrl]);
+
+	const handleMapClick = (latlng) => {
+		const newMarker = {
+			lat: Math.round(latlng.lat),
+			lng: Math.round(latlng.lng),
+			label: 'New Marker',
+			category: 'default',
+		};
+		const updated = [...markers, newMarker];
+		setMarkers(updated);
+		setSelectedIdx(updated.length - 1);
+		onChange(JSON.stringify(updated));
+	};
+
+	const updateMarker = (idx, fields) => {
+		const updated = [...markers];
+		updated[idx] = { ...updated[idx], ...fields };
+		setMarkers(updated);
+		onChange(JSON.stringify(updated));
+	};
+
+	const removeMarker = (idx) => {
+		const updated = markers.filter((_, i) => i !== idx);
+		setMarkers(updated);
+		setSelectedIdx(null);
+		onChange(JSON.stringify(updated));
+	};
+
+	if (!imageUrl || !dimensions) return null;
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={ADMIN_HEADER_CLASS}>
+				<span className='flex items-center gap-2'>
+					<Target size={18} className='text-accent' /> Marker Editor
+				</span>
+				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>Click map to add</span>
+			</div>
+
+			<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+				{/* Visual Map Area */}
+				<div className='lg:col-span-2 h-[400px] rounded-lg border border-border overflow-hidden bg-muted relative z-0'>
+					<MapContainer
+						crs={L.CRS.Simple}
+						bounds={dimensions}
+						zoom={0}
+						attributionControl={false}
+						style={{ height: '100%', width: '100%', background: 'var(--background)' }}>
+						<MapController bounds={dimensions} />
+						<MapClickHandler onMapClick={handleMapClick} />
+						<ImageOverlay url={imageUrl} bounds={dimensions} />
+
+						{markers.map((m, i) => (
+							<Marker
+								key={i}
+								position={[m.lat, m.lng]}
+								icon={resolveMarkerIcon(m)}
+								eventHandlers={{ click: () => setSelectedIdx(i) }}
+							/>
+						))}
+					</MapContainer>
+				</div>
+
+				{/* Sidebar Editor */}
+				<div className='space-y-4'>
+					<div className='max-h-[400px] overflow-y-auto pr-2 space-y-3 custom-scrollbar'>
+						{markers.length === 0 && (
+							<div className='text-center py-10 text-xs text-muted-foreground italic border-2 border-dashed border-border rounded-lg'>
+								No markers yet. Click the map to start.
+							</div>
+						)}
+						{markers.map((m, i) => (
+							<div
+								key={i}
+								className={`p-3 rounded-lg border transition-all ${
+									selectedIdx === i ? 'border-accent bg-accent/5 ring-1 ring-accent' : 'border-border bg-background'
+								}`}
+								onClick={() => setSelectedIdx(i)}>
+								<div className='flex justify-between items-start mb-2'>
+									<span className='text-[10px] font-bold text-muted-foreground uppercase'>Marker #{i + 1}</span>
+									<button onClick={() => removeMarker(i)} className='text-muted-foreground hover:text-red-600'>
+										<Trash2 size={14} />
+									</button>
+								</div>
+								<div className='space-y-2'>
+									<input
+										className={ADMIN_INPUT_CLASS}
+										value={m.label}
+										onChange={(e) => updateMarker(i, { label: e.target.value })}
+										placeholder='Label...'
+									/>
+									<select
+										className={ADMIN_INPUT_CLASS}
+										value={m.category}
+										onChange={(e) => updateMarker(i, { category: e.target.value })}>
+										<option value='default'>Default Pin</option>
+										<option value='combat'>Combat / Danger</option>
+										<option value='city'>City / Settlement</option>
+										<option value='npc'>NPC / Person</option>
+										<option value='magic'>Magic / Mystery</option>
+										<option value='quest'>Objective</option>
+										<option value='location'>Location</option>
+									</select>
+									<div className='flex gap-2 text-[9px] font-mono text-muted-foreground'>
+										<span>LAT: {m.lat}</span>
+										<span>LNG: {m.lng}</span>
+									</div>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\TacticalMapManager.jsx ---
+
 --- FILE: features\admin\config\adminStrategies.js ---
 export const ADMIN_STRATEGIES = {
 	// 0. CAMPAIGN (Meta Entity)
@@ -5218,6 +7877,7 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'type', label: 'Type', type: 'text' },
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 
@@ -5327,6 +7987,7 @@ export const ADMIN_STRATEGIES = {
 				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
 			},
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 
@@ -5334,7 +7995,11 @@ export const ADMIN_STRATEGIES = {
 		label: 'Entity',
 		primaryTable: 'entities',
 		colMapping: { name: 'name', description: 'description' },
-		defaultAttributes: [],
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'map_image', label: 'Tactical Map Image', type: 'image' }, // Added this
+			{ key: 'background_image', label: 'Header Background', type: 'image' },
+		],
 	},
 };
 
@@ -5425,75 +8090,25 @@ export const IMAGE_LIBRARY = [
     ]
   },
   {
+    "category": "Assets > Map_backgrounds",
+    "path": "images/assets/map_backgrounds/",
+    "files": [
+      "brindol_map.jpg",
+      "demonic_ambush_map.png",
+      "drellin_ferry_map.jpg",
+      "elsir_vale_map.jpg",
+      "strategic_bridge_map.png",
+      "vraath_courtyard_map.png",
+      "witchwood_map.jpg"
+    ]
+  },
+  {
     "category": "Assets > Npc_backgrounds > Campaign_002",
     "path": "images/assets/npc_backgrounds/campaign_002/",
     "files": [
       "avarthel_bg.jpg",
       "soranna_bg.jpg",
       "yoghurt_bg.jpg"
-    ]
-  },
-  {
-    "category": "Custom-icons",
-    "path": "images/custom-icons/",
-    "files": [
-      "arrowDirectionDown.png",
-      "arrowDirectionLeft.png",
-      "arrowDirectionRight.png",
-      "arrowDirectionUp.png",
-      "city.png",
-      "cityBarbarian.png",
-      "cityCapital.png",
-      "cityDruid.png",
-      "cityDwarves.png",
-      "cityElves.png",
-      "cityHalflings.png",
-      "cityLizard.png",
-      "cityPort.png",
-      "fort.png",
-      "fortTower.png",
-      "iconPortal.png",
-      "mageTower.png",
-      "poiAlchemist.png",
-      "poiBed.png",
-      "poiBramble.png",
-      "poiCave.png",
-      "poiCombat.png",
-      "poiDanger.png",
-      "poiFarm.png",
-      "poiGenericNPC.png",
-      "poiInn.png",
-      "poiLandmarkCitadel.png",
-      "poiLandmarkCity.png",
-      "poiLandmarkFarm.png",
-      "poiMine.png",
-      "poiRuin.png",
-      "poiShip.png",
-      "poiWaterfall.png",
-      "shadow.png",
-      "templeCathedral.png",
-      "templeEldath.png",
-      "templeMonolith.png",
-      "templePyramid.png",
-      "templeShrine.png",
-      "templeZiggurat.png",
-      "town.png",
-      "townBarbarian.png",
-      "townDock.png",
-      "townDruid.png",
-      "townDwarves.png",
-      "townElves.png",
-      "townHalflings.png",
-      "townLizard.png",
-      "townMill.png",
-      "tradeAlchemy.png",
-      "tradeCamp.png",
-      "tradeCampLarge.png",
-      "tradeForge.png",
-      "tradeHunter.png",
-      "tradeShop.png",
-      "tradeStable.png",
-      "tradeWatchtower.png"
     ]
   },
   {
@@ -5558,7 +8173,20 @@ export const IMAGE_LIBRARY = [
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
+import {
+	Database,
+	Users,
+	MapPin,
+	BookOpen,
+	Scroll,
+	ArrowLeft,
+	Shield,
+	Gem,
+	LogOut,
+	Play,
+	Sword,
+	Replace,
+} from 'lucide-react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 
 const NavItem = ({ to, icon: Icon, label }) => {
@@ -5613,6 +8241,7 @@ export default function AdminLayout() {
 						System
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
+					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities
@@ -5661,6 +8290,140 @@ export default function AdminLayout() {
 }
 
 --- END OF features\admin\layouts\AdminLayout.jsx ---
+
+--- FILE: features\admin\pages\BulkReplaceTool.jsx ---
+import React, { useState } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { getBulkReplacePreview, executeBulkReplace } from '@/features/admin/api/adminService';
+import {
+	ADMIN_SECTION_CLASS,
+	ADMIN_HEADER_CLASS,
+	ADMIN_INPUT_CLASS,
+	ADMIN_LABEL_CLASS,
+} from '@/features/admin/components/AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+import { Replace, Eye, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+
+export default function BulkReplaceTool() {
+	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient();
+	const [find, setFind] = useState('');
+	const [replace, setReplace] = useState('');
+	const [preview, setPreview] = useState(null); // null, [], or items
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	const handlePreview = async () => {
+		setIsProcessing(true);
+		const matches = await getBulkReplacePreview(campaignId, find, replace);
+		setPreview(matches);
+		setIsProcessing(false);
+	};
+
+	const handleConfirm = async () => {
+		if (!confirm(`Apply all ${preview.length} changes?`)) return;
+		setIsProcessing(true);
+		await executeBulkReplace(preview);
+		queryClient.invalidateQueries();
+		alert('Archive successfully patched.');
+		setPreview(null);
+		setFind('');
+		setReplace('');
+		setIsProcessing(false);
+	};
+
+	return (
+		<div className='max-w-4xl mx-auto p-6 space-y-6'>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>
+					<span className='flex items-center gap-2'>
+						<Replace size={18} className='text-amber-600' /> Archive Patch Tool
+					</span>
+				</h2>
+
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Search Term</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={find}
+							onChange={(e) => setFind(e.target.value)}
+							placeholder='Misspelled word...'
+						/>
+					</div>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Replacement</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={replace}
+							onChange={(e) => setReplace(e.target.value)}
+							placeholder='Proper word...'
+						/>
+					</div>
+				</div>
+
+				<div className='pt-2'>
+					<Button
+						variant='primary'
+						fullWidth
+						icon={isProcessing ? Loader2 : Eye}
+						disabled={isProcessing || !find.trim()}
+						onClick={handlePreview}>
+						{isProcessing ? 'Scanning...' : 'Scan for Matches'}
+					</Button>
+				</div>
+			</div>
+
+			{preview && (
+				<div className={`${ADMIN_SECTION_CLASS} animate-in slide-in-from-bottom-4`}>
+					<div className={ADMIN_HEADER_CLASS}>
+						<span>Review Proposed Changes ({preview.length})</span>
+						<Button size='sm' variant='danger' icon={Replace} onClick={handleConfirm} disabled={preview.length === 0}>
+							Apply All Updates
+						</Button>
+					</div>
+
+					{preview.length === 0 ? (
+						<div className='text-center py-10 text-muted-foreground italic'>No matches found in the archives.</div>
+					) : (
+						<div className='border border-border rounded-lg overflow-hidden bg-background'>
+							<table className='w-full text-[11px] text-left border-collapse'>
+								<thead className='bg-muted text-muted-foreground font-bold uppercase tracking-wider'>
+									<tr>
+										<th className='p-3 border-b border-border'>Context / Source</th>
+										<th className='p-3 border-b border-border'>Change Preview</th>
+									</tr>
+								</thead>
+								<tbody className='divide-y divide-border'>
+									{preview.map((item, idx) => (
+										<tr key={idx} className='hover:bg-muted/30'>
+											<td className='p-3 align-top font-bold text-slate-500 w-1/3'>
+												<div className='uppercase text-[9px] opacity-50 mb-1'>
+													{item.table}.{item.field}
+												</div>
+												{item.context}
+											</td>
+											<td className='p-3 space-y-1'>
+												<div className='text-red-600 line-through opacity-60 bg-red-50 p-1 rounded'>
+													{item.original}
+												</div>
+												<div className='flex items-center gap-2 text-emerald-700 font-medium bg-emerald-50 p-1 rounded'>
+													<ArrowRight size={10} /> {item.proposal}
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\BulkReplaceTool.jsx ---
 
 --- FILE: features\admin\pages\EntityEditorPage.jsx ---
 import React from 'react';
@@ -6228,8 +8991,8 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
-	const bgValue = config.backgroundColor || '#1a1412';
-	const isImage = bgValue.includes('url') || bgValue.includes('gradient');
+	// const bgValue = config.backgroundColor || '#1a1412';
+	// const isImage = bgValue.includes('url') || bgValue.includes('gradient');
 
 	return (
 		<div
@@ -6237,11 +9000,16 @@ export const MapCanvas = ({ data, onNavigate }) => {
 			style={{
 				height: '100%',
 				width: '100%',
-				backgroundColor: isImage ? '#1a1412' : bgValue,
-				backgroundImage: isImage ? bgValue : 'none',
-				backgroundSize: 'cover',
-				backgroundPosition: 'center',
-				backgroundRepeat: 'no-repeat',
+				// backgroundColor: isImage ? '#1a1412' : bgValue,
+				// backgroundImage: isImage ? bgValue : 'none',
+				// backgroundSize: 'cover',
+				// backgroundPosition: 'center',
+				// backgroundRepeat: 'no-repeat',
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
 			}}>
 			<MapContainer
 				center={[0, 0]}
@@ -6617,21 +9385,8 @@ export const MapAreas = ({ areas }) => {
 
 --- FILE: features\atlas\components\layers\MapMarkers.jsx ---
 import { Marker, Popup } from 'react-leaflet';
-import { ArrowRight, MapPin, Skull, Castle, User, Tent, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
-
-/**
- * Resolves Lucide Icons for the Popup header based on Category
- */
-const getCategoryIcon = (category) => {
-	const cat = category?.toLowerCase() || '';
-	if (cat.includes('combat') || cat.includes('danger') || cat.includes('encounter')) return Skull;
-	if (cat.includes('citie') || cat.includes('town')) return Castle;
-	if (cat.includes('npc') || cat.includes('people')) return User;
-	if (cat.includes('camp')) return Tent;
-	if (cat.includes('magic') || cat.includes('shrine')) return Sparkles;
-	return MapPin;
-};
 
 export const MapMarkers = ({ markers, onNavigate }) => {
 	if (!markers || markers.length === 0) return null;
@@ -6639,43 +9394,35 @@ export const MapMarkers = ({ markers, onNavigate }) => {
 	return (
 		<>
 			{markers.map((marker, idx) => {
-				const CategoryIcon = getCategoryIcon(marker.category);
+				// markerUtils now does the heavy lifting
 				const leafletIcon = resolveMarkerIcon(marker);
 
 				return (
 					<Marker key={`${marker.label}-${idx}`} position={marker.position} icon={leafletIcon}>
 						<Popup closeButton={true}>
 							<div className='flex flex-col w-[260px] font-sans bg-background'>
-								{/* Header */}
-								<div className='px-4 pt-4 pb-2 pr-7 flex items-start justify-between gap-3'>
-									<div>
-										<span className='text-[10px] font-bold uppercase tracking-wider text-amber-600/90 block mb-1'>
-											{marker.category}
-										</span>
-										<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
-									</div>
-									<div className='shrink-0 p-1.5 rounded-lg shadow-sm border border-amber-200 bg-amber-50 text-amber-700'>
-										<CategoryIcon size={16} strokeWidth={2} />
-									</div>
+								<div className='px-4 pt-4 pb-2 pr-7'>
+									<span className='text-[10px] font-bold uppercase tracking-wider text-accent block mb-1'>
+										{marker.category}
+									</span>
+									<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
 								</div>
 
 								<div className='h-px w-full bg-border/50 my-1' />
 
-								{/* Description */}
 								<div className='px-4 py-2'>
 									{marker.description ? (
-										<p className='text-xs text-gray-600 leading-relaxed line-clamp-6'>{marker.description}</p>
+										<p className='text-xs text-muted-foreground leading-relaxed line-clamp-6'>{marker.description}</p>
 									) : (
-										<p className='text-xs text-gray-400 italic'>No details available.</p>
+										<p className='text-xs text-muted-foreground italic'>No details available.</p>
 									)}
 								</div>
 
-								{/* Navigation Link (Map-to-Map) */}
 								{marker.mapLink && (
 									<div className='mt-2 bg-muted/50 p-2 border-t border-border flex justify-end rounded-b-lg'>
 										<button
 											onClick={() => onNavigate(marker.mapLink)}
-											className='text-[10px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer'>
+											className='text-[10px] font-bold text-accent hover:underline flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer'>
 											Enter Location <ArrowRight size={10} />
 										</button>
 									</div>
@@ -6828,7 +9575,30 @@ export const calculateBounds = (imageWidth, imageHeight) => {
 --- END OF features\atlas\utils\mapNavigation.js ---
 
 --- FILE: features\atlas\utils\markerUtils.js ---
+import React from 'react';
 import L from 'leaflet';
+import { renderToString } from 'react-dom/server';
+import { Skull, MapPin, Castle, User, Tent, Sparkles, Home, Sword, Anchor, Mountain, Scroll } from 'lucide-react';
+
+// 1. Map your category strings to Lucide Components
+const ICON_MAP = {
+	combat: Skull,
+	danger: Skull,
+	encounter: Sword,
+	city: Castle,
+	town: Home,
+	village: Home,
+	npc: User,
+	people: User,
+	camp: Tent,
+	magic: Sparkles,
+	shrine: Sparkles,
+	port: Anchor,
+	landmark: MapPin,
+	dungeon: Mountain,
+	quest: Scroll,
+	default: MapPin,
+};
 
 // Singleton for invisible/interactive-only markers
 export const invisibleIcon = L.divIcon({
@@ -6838,6 +9608,55 @@ export const invisibleIcon = L.divIcon({
 	iconAnchor: [10, 10],
 	popupAnchor: [0, -10],
 });
+
+/**
+ * Creates a "Pin" style marker using a Lucide React Icon
+ */
+export const createLucideMarker = (category, color = '#d97706') => {
+	const normalized = category?.toLowerCase() || 'default';
+	let IconComponent = ICON_MAP.default;
+	for (const [key, comp] of Object.entries(ICON_MAP)) {
+		if (normalized.includes(key)) {
+			IconComponent = comp;
+			break;
+		}
+	}
+
+	const iconHtml = renderToString(
+		React.createElement(IconComponent, {
+			size: 14,
+			strokeWidth: 3,
+			color: 'white',
+		})
+	);
+
+	/**
+	 * STABLE SVG PIN
+	 * The point is exactly at 16, 36.
+	 * The circle center is at 16, 16.
+	 */
+	return L.divIcon({
+		className: 'custom-marker-container',
+		html: `
+            <div class="relative group" style="width: 32px; height: 36px;">
+                <svg width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.2));">
+                    <!-- Pin Body -->
+                    <path d="M16 36C16 36 32 26.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.5 16 36 16 36Z" fill="white"/>
+                    <path d="M16 33C16 33 29 24.5 29 16C29 8.8203 23.1797 3 16 3C8.8203 3 3 8.8203 3 16C3 24.5 16 33 16 33Z" fill="${color}"/>
+                    <!-- Inner Hole -->
+                    <circle cx="16" cy="16" r="10" fill="white" fill-opacity="0.2"/>
+                </svg>
+                <!-- Icon Overlay -->
+                <div class="absolute top-[8px] left-[8px] w-[16px] h-[16px] flex items-center justify-center pointer-events-none transition-transform group-hover:-translate-y-0.5">
+                    ${iconHtml}
+                </div>
+            </div>
+        `,
+		iconSize: [32, 36],
+		iconAnchor: [16, 36], // EXACT BOTTOM CENTER
+		popupAnchor: [0, -36],
+	});
+};
 
 // Text Label Marker Generator
 export const createTextMarker = (label, fontSize) => {
@@ -6856,39 +9675,32 @@ export const createTextMarker = (label, fontSize) => {
 	});
 };
 
-// Custom Image Icon Generator
-export const createCustomIcon = (iconName) => {
-	return L.divIcon({
-		className: 'custom-marker-icon',
-		html: `
-            <div class="group relative flex flex-col items-center">
-                <div class="w-8 h-8 transition-transform group-hover:-translate-y-1 duration-200">
-                    <img src="${import.meta.env.BASE_URL}images/custom-icons/${iconName}.png" 
-                         class="w-full h-full object-contain drop-shadow-md filter" />
-                </div>
-            </div>`,
-		iconSize: [32, 32],
-		iconAnchor: [16, 32],
-		popupAnchor: [0, -28],
-	});
-};
-
-// Logic Hub: Resolves the appropriate Leaflet icon
+/**
+ * Logic Hub: Resolves the appropriate Leaflet icon
+ */
 export const resolveMarkerIcon = (marker) => {
-	const { icon, type, label, fontSize } = marker;
+	const { icon, type, label, fontSize, category } = marker;
 
-	// 1. Text Marker (Check both 'type' and 'icon' properties per your original code)
+	// 1. Existing Text Marker logic
 	if (type === 'text' || icon === 'text') {
 		return createTextMarker(label, fontSize);
 	}
 
-	// 2. Invisible / Null Icon (Interactive only)
-	if (!icon) {
+	// 2. Invisible / Null Icon
+	if (!icon && !category) {
 		return invisibleIcon;
 	}
 
-	// 3. Custom Image Icon (Fallback to your specific images folder)
-	return createCustomIcon(icon);
+	// 3. Lucide Marker logic
+	let markerColor = '#d97706';
+	const cat = category?.toLowerCase() || '';
+	if (cat.includes('combat') || cat.includes('danger')) markerColor = '#dc2626'; // Red
+	if (cat.includes('magic') || cat.includes('shrine')) markerColor = '#7c3aed'; // Purple
+	if (['city', 'location', 'town', 'points of interest'].includes(cat)) markerColor = '#059669'; // Emerald
+	if (cat.includes('city') || cat.includes('town')) markerColor = '#1e40af'; // Blue
+	if (['npcs', 'people'].includes(cat)) markerColor = '#d97706'; // Orange
+
+	return createLucideMarker(category, markerColor);
 };
 
 // For session paths/dots
@@ -11535,6 +14347,7 @@ import { EntityHistory } from './EntityHistory';
 import { QuestObjectives } from './QuestObjectives';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 import { EncounterTimeline } from './EncounterTimeline';
+import { EntityMiniMap } from '@/features/wiki/components/EntityMiniMap';
 
 // Re-exporting History for use in tabs if needed by parent
 export { EntityHistory } from './EntityHistory';
@@ -11569,7 +14382,16 @@ const LevelUpBanner = ({ level }) => {
 	);
 };
 
-export const EntityBody = ({ summary, sections, history, objectives, combatRounds, levelUp }) => {
+export const EntityBody = ({
+	summary,
+	sections,
+	history,
+	objectives,
+	combatRounds,
+	levelUp,
+	mapImageUrl,
+	mapMarkers,
+}) => {
 	return (
 		<div className='prose prose-slate max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-slate-700 prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
@@ -11577,12 +14399,17 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}
-
 			{/* Quest Objectives */}
 			{objectives && objectives.length > 0 && (
 				<>
 					<SectionDivider />
 					<QuestObjectives objectives={objectives} />
+				</>
+			)}
+			{mapImageUrl && mapImageUrl.length > 0 && (
+				<>
+					<SectionDivider />
+					<EntityMiniMap imageUrl={mapImageUrl} markers={mapMarkers} />
 				</>
 			)}
 
@@ -11593,7 +14420,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<EncounterTimeline rounds={combatRounds} />
 				</>
 			)}
-
 			{/* Narrative Sections */}
 			{sections.map((prop) => {
 				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
@@ -11626,7 +14452,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					</div>
 				);
 			})}
-
 			{history && history.length > 0 && (
 				<div className='mt-2'>
 					<SectionDivider />
@@ -11636,7 +14461,6 @@ export const EntityBody = ({ summary, sections, history, objectives, combatRound
 					<EntityHistory events={history} />
 				</div>
 			)}
-
 			{/* Level Up Banner */}
 			{levelUp && <LevelUpBanner level={levelUp} />}
 		</div>
@@ -11882,6 +14706,169 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 };
 
 --- END OF features\wiki\components\EntityHistory.jsx ---
+
+--- FILE: features\wiki\components\EntityMiniMap.jsx ---
+import React, { useEffect, useState, useRef } from 'react';
+import { MapContainer, ImageOverlay, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import { Map as MapIcon, Maximize, Minimize } from 'lucide-react';
+import { clsx } from 'clsx';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+/**
+ * REFACTORED: MapController now handles viewport recalibration
+ * when switching in/out of fullscreen modes.
+ */
+const MapController = ({ bounds, activeFullscreen }) => {
+	const map = useMap();
+
+	useEffect(() => {
+		if (bounds && map) {
+			// Small timeout ensures the DOM has finished its layout transition (h-96 <-> h-screen)
+			const timer = setTimeout(() => {
+				map.invalidateSize({ animate: true });
+				map.fitBounds(bounds, { padding: [20, 20] });
+			}, 100);
+
+			return () => clearTimeout(timer);
+		}
+	}, [map, bounds, activeFullscreen]); // Re-run when fullscreen toggles
+
+	return null;
+};
+
+export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
+	const [dimensions, setDimensions] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+	const containerRef = useRef(null);
+
+	// Unified flag for UI
+	const activeFullscreen = isFullscreen || isPseudoFullscreen;
+
+	// Native Fullscreen Sync
+	useEffect(() => {
+		const handler = () => setIsFullscreen(!!document.fullscreenElement);
+		document.addEventListener('fullscreenchange', handler);
+		return () => document.removeEventListener('fullscreenchange', handler);
+	}, []);
+
+	// iOS Fallback Escape Handler
+	useEffect(() => {
+		const handleEsc = (e) => {
+			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
+		};
+		window.addEventListener('keydown', handleEsc);
+		return () => window.removeEventListener('keydown', handleEsc);
+	}, [isPseudoFullscreen]);
+
+	useEffect(() => {
+		const img = new Image();
+		img.src = imageUrl;
+		img.onload = () => {
+			const w = img.width;
+			const h = img.height;
+			const southWest = [-h, 0];
+			const northEast = [0, w];
+			setDimensions(L.latLngBounds(southWest, northEast));
+			setLoading(false);
+		};
+	}, [imageUrl]);
+
+	const toggleFullscreen = (e) => {
+		e.stopPropagation();
+		if (!containerRef.current) return;
+
+		const supportsNative =
+			document.fullscreenEnabled || document.webkitFullscreenEnabled || containerRef.current.requestFullscreen;
+
+		if (supportsNative) {
+			if (!document.fullscreenElement) {
+				containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
+			} else {
+				document.exitFullscreen();
+			}
+		} else {
+			setIsPseudoFullscreen(!isPseudoFullscreen);
+		}
+	};
+
+	if (loading)
+		return (
+			<div className='h-64 w-full bg-muted rounded-xl flex items-center justify-center border border-border mb-8'>
+				<LoadingSpinner text='Generating tactical view...' size='sm' />
+			</div>
+		);
+
+	return (
+		<div
+			className={clsx('mb-10 space-y-3 group', isPseudoFullscreen && 'fixed inset-0 z-[9999] m-0! bg-background')}
+			ref={containerRef}>
+			{!activeFullscreen && (
+				<div className='flex items-center justify-between px-1'>
+					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
+						<MapIcon size={16} className='text-accent' /> Map
+					</h3>
+				</div>
+			)}
+
+			<div
+				className={clsx(
+					'w-full overflow-hidden relative z-0 transition-all duration-300',
+					activeFullscreen ? 'h-screen rounded-none border-0' : 'h-96 rounded-xl border border-border shadow-sm'
+				)}>
+				<MapContainer
+					crs={L.CRS.Simple}
+					bounds={dimensions}
+					zoom={0}
+					minZoom={-3}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					style={{
+						height: '100%',
+						width: '100%',
+						backgroundColor: 'var(--background)',
+						backgroundImage:
+							'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+						backgroundSize: '40px 40px, 20px 20px',
+						backgroundPosition: '0 0, 20px 20px',
+					}}>
+					{/* PASS activeFullscreen to the controller */}
+					<MapController bounds={dimensions} activeFullscreen={activeFullscreen} />
+					<ImageOverlay url={imageUrl} bounds={dimensions} />
+
+					{markers.map((m, idx) => (
+						<Marker key={idx} position={[m.lat, m.lng]} icon={resolveMarkerIcon(m)}>
+							{m.label && (
+								<Popup>
+									<div className='marker-popup-card'>
+										<div className='marker-popup-header'>
+											<span className='marker-popup-category'>{m.category || 'POI'}</span>
+											<div className='marker-popup-title'>{m.label}</div>
+										</div>
+										{m.description && <div className='marker-popup-body'>{m.description}</div>}
+									</div>
+								</Popup>
+							)}
+						</Marker>
+					))}
+				</MapContainer>
+
+				<div className='absolute top-3 right-3 z-[1000]'>
+					<button
+						onClick={toggleFullscreen}
+						className='p-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg text-muted-foreground hover:text-accent transition-all active:scale-95'>
+						{activeFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\EntityMiniMap.jsx ---
 
 --- FILE: features\wiki\components\EntitySidebar.jsx ---
 import { useMemo } from 'react';
@@ -13202,6 +16189,7 @@ import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 /**
  * Helper: Extract and group mentioned entities from events and direct relationships
@@ -13284,6 +16272,26 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mainSummary = entity.description;
 		}
 
+		// --- NEW: TACTICAL MAP RESOLUTION ---
+		// We look for common map keys and use resolveImageUrl to handle path cleaning/BaseURL
+		const mapImageUrl = resolveImageUrl(attributes, 'any');
+		// Note: resolveImageUrl(attributes, 'any') checks background_image, image, icon etc.
+		// To be specific to your "crazy idea", let's do a manual check for map-specific keys first:
+		const specificMapPath = getAttributeValue(attributes, ['map_image', 'tactical_map', 'map']);
+		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
+
+		// 2. NEW: Resolve Tactical Map Markers
+		const rawMarkers = getAttributeValue(attributes, 'map_markers');
+		let parsedMarkers = [];
+		if (rawMarkers) {
+			try {
+				// Parse the JSON string stored in the attribute
+				parsedMarkers = typeof rawMarkers === 'string' ? JSON.parse(rawMarkers) : rawMarkers;
+			} catch (e) {
+				console.warn('Failed to parse map_markers JSON', e);
+			}
+		}
+
 		// Process events
 		const events = transformEvents(entity.events);
 
@@ -13301,7 +16309,9 @@ export const useEntityContent = (entity, attributes, sections) => {
 			sections: sections || [],
 			history: events,
 			mentions,
-			levelUp, // Added to return object
+			levelUp,
+			mapImageUrl: finalMapUrl,
+			mapMarkers: parsedMarkers,
 		};
 	}, [entity, attributes, sections]);
 };
@@ -13735,6 +16745,8 @@ export default function StandardLayout({ viewModel }) {
 							history={viewModel.content.history}
 							objectives={viewModel.content.objectives}
 							combatRounds={viewModel.content.combatRounds}
+							mapImageUrl={viewModel.content.mapImageUrl}
+							mapMarkers={viewModel.content.mapMarkers}
 						/>
 					</div>
 				</div>
@@ -15094,7 +18106,8 @@ export function Card({ children, className, padding = true, hover = false, ...pr
 	return (
 		<div
 			className={clsx(
-				'bg-[var(--card-bg)] border border-border rounded-lg shadow-sm',
+				// Use semantic variable --card instead of hardcoded white
+				'bg-card text-foreground border border-border rounded-lg shadow-sm',
 				padding && 'p-4',
 				hover && 'transition-shadow hover:shadow-md',
 				className
@@ -15367,7 +18380,7 @@ import { useState, useEffect } from 'react';
 
 export const THEMES = {
 	LIGHT: 'light',
-	// DARK: 'dark',
+	DARK: 'dark', // RE-ENABLED
 	DND: 'dnd',
 };
 
@@ -15379,10 +18392,8 @@ export function useTheme() {
 
 	useEffect(() => {
 		const root = window.document.documentElement;
-		// Remove old themes
 		Object.values(THEMES).forEach((t) => root.removeAttribute('data-theme'));
 
-		// Apply new theme
 		if (theme !== THEMES.LIGHT) {
 			root.setAttribute('data-theme', theme);
 		}

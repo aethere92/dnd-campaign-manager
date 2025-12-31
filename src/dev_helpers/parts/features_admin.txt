@@ -14,7 +14,11 @@ PARTIAL BUNDLE: FEATURES ADMIN
       global.css
   dev_helpers/
     check_imports.js
+    component_hierarchy.txt
+    duplicate_code_report.txt
     refactor.js
+    token_count_report.txt
+    unused_code_report.txt
   domain/
     entity/
       api/
@@ -50,6 +54,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         RelationshipManager.jsx
         SessionEventManager.jsx
         SmartImageInput.jsx
+        TacticalMapManager.jsx
       config/
         adminStrategies.js
         imageLibrary.js
@@ -57,6 +62,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
       layouts/
         AdminLayout.jsx
       pages/
+        BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
@@ -179,6 +185,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx
@@ -258,34 +265,6 @@ PARTIAL BUNDLE: FEATURES ADMIN
 --- FILE: features\admin\api\adminService.js ---
 import { supabase } from '@/shared/api/supabaseClient';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
-
-// Helper to prepare attribute rows
-const prepareAttributeRows = (entityId, data) => {
-	// If we have a prepared list (from the new form logic), use it
-	if (data.attributesList && Array.isArray(data.attributesList)) {
-		return data.attributesList
-			.filter((attr) => attr.name && String(attr.value).trim() !== '')
-			.map((attr) => ({
-				entity_id: entityId,
-				name: attr.name,
-				value: attr.value,
-				is_private: false,
-			}));
-	}
-
-	// Fallback for legacy object format (just in case)
-	if (data.attributes) {
-		return Object.entries(data.attributes)
-			.filter(([_, value]) => value && String(value).trim() !== '')
-			.map(([key, value]) => ({
-				entity_id: entityId,
-				name: key,
-				value: value,
-				is_private: false,
-			}));
-	}
-	return [];
-};
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
@@ -717,6 +696,133 @@ export const upsertEncounterAction = async (actionData) => {
 	return data;
 };
 
+/**
+ * Scans the entire campaign for a term and returns a list of proposed changes.
+ * Includes: Entities, Sessions, Attributes, Events, and Objectives.
+ */
+export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
+	if (!findTerm.trim()) return [];
+	const term = findTerm.trim();
+	const regex = new RegExp(term, 'gi');
+	const matches = [];
+
+	// 1. Scan Entities (Characters, NPCs, etc)
+	const { data: ent } = await supabase
+		.from('entities')
+		.select('id, name, type, description')
+		.eq('campaign_id', campaignId);
+	ent?.forEach((row) => {
+		['name', 'description'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'entities',
+					id: row.id,
+					field,
+					context: `${row.type}: ${row.name}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 2. Scan Sessions
+	const { data: sess } = await supabase.from('sessions').select('id, title, narrative').eq('campaign_id', campaignId);
+	sess?.forEach((row) => {
+		[
+			['title', 'title'],
+			['narrative', 'narrative'],
+		].forEach(([field, label]) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'sessions',
+					id: row.id,
+					field,
+					context: `Session: ${row.title}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 3. Scan Attributes (linked via entity)
+	const { data: attr } = await supabase
+		.from('attributes')
+		.select('id, name, value, entity:entities!inner(name, type, campaign_id)')
+		.eq('entities.campaign_id', campaignId);
+	attr?.forEach((row) => {
+		if (row.value?.toLowerCase().includes(term.toLowerCase())) {
+			matches.push({
+				table: 'attributes',
+				id: row.id,
+				field: 'value',
+				context: `${row.entity.type} Attribute: ${row.name}`,
+				original: row.value,
+				proposal: row.value.replace(regex, replaceTerm),
+			});
+		}
+	});
+
+	// 4. Scan Session Events (linked via session)
+	const { data: evts } = await supabase
+		.from('session_events')
+		.select('id, title, description, session:sessions!inner(title, campaign_id)')
+		.eq('sessions.campaign_id', campaignId);
+	evts?.forEach((row) => {
+		['title', 'description'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'session_events',
+					id: row.id,
+					field,
+					context: `Event in ${row.session.title}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	// 5. Scan Quest Objectives (linked via quest/entity)
+	const { data: objs } = await supabase
+		.from('quest_objectives')
+		.select('id, objective_name, description, objective_update, quest:entities!inner(name, campaign_id)')
+		.eq('entities.campaign_id', campaignId);
+	objs?.forEach((row) => {
+		['objective_name', 'description', 'objective_update'].forEach((field) => {
+			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
+				matches.push({
+					table: 'quest_objectives',
+					id: row.id,
+					field,
+					context: `Objective in ${row.quest.name}`,
+					original: row[field],
+					proposal: row[field].replace(regex, replaceTerm),
+				});
+			}
+		});
+	});
+
+	return matches;
+};
+
+/**
+ * Takes a list of confirmed changes and executes updates.
+ */
+export const executeBulkReplace = async (changeList) => {
+	const results = { count: 0 };
+	// Process in sequence to avoid Supabase rate limits on heavy campaigns
+	for (const change of changeList) {
+		const { error } = await supabase
+			.from(change.table)
+			.update({ [change.field]: change.proposal })
+			.eq('id', change.id);
+		if (!error) results.count++;
+	}
+	return results;
+};
+
 --- END OF features\admin\api\adminService.js ---
 
 --- FILE: features\admin\components\AdminForm.jsx ---
@@ -740,6 +846,7 @@ import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
 import EncounterActionManager from './EncounterManager';
+import TacticalMapManager from './TacticalMapManager';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
@@ -855,6 +962,23 @@ export default function AdminForm({ type, id }) {
 
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
+	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
+	const customAttrs = watch('customAttributes') || [];
+	const standardMarkers = watch('attributes.map_markers');
+	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
+	const activeMarkersValue = standardMarkers || customMarkers || '[]';
+
+	const handleMarkersChange = (jsonValue) => {
+		// Check if map_markers exists in custom list, update it there
+		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
+		if (customIdx >= 0) {
+			setValue(`customAttributes.${customIdx}.value`, jsonValue);
+		} else {
+			// Otherwise set in standard attributes
+			setValue('attributes.map_markers', jsonValue);
+		}
+	};
+
 	return (
 		// ... (Return JSX remains exactly same) ...
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
@@ -912,6 +1036,10 @@ export default function AdminForm({ type, id }) {
 					)}
 				</div>
 			</div>
+
+			{mapImageUrl && (
+				<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
+			)}
 
 			{/* Attributes */}
 			<div className={ADMIN_SECTION_CLASS}>
@@ -2841,6 +2969,179 @@ export default function SmartImageInput({ value, onChange, placeholder, ...props
 
 --- END OF features\admin\components\SmartImageInput.jsx ---
 
+--- FILE: features\admin\components\TacticalMapManager.jsx ---
+/* --- FILE: features/admin/components/TacticalMapManager.jsx --- */
+import React, { useState, useEffect } from 'react';
+import { MapContainer, ImageOverlay, Marker, useMap, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import { Map as MapIcon, Trash2, Plus, Target, Save } from 'lucide-react';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+import Button from '@/shared/components/ui/Button';
+
+// Click handler component
+const MapClickHandler = ({ onMapClick }) => {
+	useMapEvents({
+		click: (e) => onMapClick(e.latlng),
+	});
+	return null;
+};
+
+const MapController = ({ bounds }) => {
+	const map = useMap();
+	useEffect(() => {
+		if (bounds) map.fitBounds(bounds);
+	}, [map, bounds]);
+	return null;
+};
+
+export default function TacticalMapManager({ imageUrl, value, onChange }) {
+	const [markers, setMarkers] = useState([]);
+	const [dimensions, setDimensions] = useState(null);
+	const [selectedIdx, setSelectedIdx] = useState(null);
+
+	// 1. Load existing markers from JSON string
+	useEffect(() => {
+		if (value) {
+			try {
+				const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+				setMarkers(Array.isArray(parsed) ? parsed : []);
+			} catch (e) {
+				setMarkers([]);
+			}
+		}
+	}, [value]);
+
+	// 2. Handle Image Dimensions
+	useEffect(() => {
+		if (!imageUrl) return;
+		const img = new Image();
+		img.src = imageUrl;
+		img.onload = () => {
+			const h = img.height;
+			const w = img.width;
+			setDimensions(L.latLngBounds([-h, 0], [0, w]));
+		};
+	}, [imageUrl]);
+
+	const handleMapClick = (latlng) => {
+		const newMarker = {
+			lat: Math.round(latlng.lat),
+			lng: Math.round(latlng.lng),
+			label: 'New Marker',
+			category: 'default',
+		};
+		const updated = [...markers, newMarker];
+		setMarkers(updated);
+		setSelectedIdx(updated.length - 1);
+		onChange(JSON.stringify(updated));
+	};
+
+	const updateMarker = (idx, fields) => {
+		const updated = [...markers];
+		updated[idx] = { ...updated[idx], ...fields };
+		setMarkers(updated);
+		onChange(JSON.stringify(updated));
+	};
+
+	const removeMarker = (idx) => {
+		const updated = markers.filter((_, i) => i !== idx);
+		setMarkers(updated);
+		setSelectedIdx(null);
+		onChange(JSON.stringify(updated));
+	};
+
+	if (!imageUrl || !dimensions) return null;
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={ADMIN_HEADER_CLASS}>
+				<span className='flex items-center gap-2'>
+					<Target size={18} className='text-accent' /> Marker Editor
+				</span>
+				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>Click map to add</span>
+			</div>
+
+			<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+				{/* Visual Map Area */}
+				<div className='lg:col-span-2 h-[400px] rounded-lg border border-border overflow-hidden bg-muted relative z-0'>
+					<MapContainer
+						crs={L.CRS.Simple}
+						bounds={dimensions}
+						zoom={0}
+						attributionControl={false}
+						style={{ height: '100%', width: '100%', background: 'var(--background)' }}>
+						<MapController bounds={dimensions} />
+						<MapClickHandler onMapClick={handleMapClick} />
+						<ImageOverlay url={imageUrl} bounds={dimensions} />
+
+						{markers.map((m, i) => (
+							<Marker
+								key={i}
+								position={[m.lat, m.lng]}
+								icon={resolveMarkerIcon(m)}
+								eventHandlers={{ click: () => setSelectedIdx(i) }}
+							/>
+						))}
+					</MapContainer>
+				</div>
+
+				{/* Sidebar Editor */}
+				<div className='space-y-4'>
+					<div className='max-h-[400px] overflow-y-auto pr-2 space-y-3 custom-scrollbar'>
+						{markers.length === 0 && (
+							<div className='text-center py-10 text-xs text-muted-foreground italic border-2 border-dashed border-border rounded-lg'>
+								No markers yet. Click the map to start.
+							</div>
+						)}
+						{markers.map((m, i) => (
+							<div
+								key={i}
+								className={`p-3 rounded-lg border transition-all ${
+									selectedIdx === i ? 'border-accent bg-accent/5 ring-1 ring-accent' : 'border-border bg-background'
+								}`}
+								onClick={() => setSelectedIdx(i)}>
+								<div className='flex justify-between items-start mb-2'>
+									<span className='text-[10px] font-bold text-muted-foreground uppercase'>Marker #{i + 1}</span>
+									<button onClick={() => removeMarker(i)} className='text-muted-foreground hover:text-red-600'>
+										<Trash2 size={14} />
+									</button>
+								</div>
+								<div className='space-y-2'>
+									<input
+										className={ADMIN_INPUT_CLASS}
+										value={m.label}
+										onChange={(e) => updateMarker(i, { label: e.target.value })}
+										placeholder='Label...'
+									/>
+									<select
+										className={ADMIN_INPUT_CLASS}
+										value={m.category}
+										onChange={(e) => updateMarker(i, { category: e.target.value })}>
+										<option value='default'>Default Pin</option>
+										<option value='combat'>Combat / Danger</option>
+										<option value='city'>City / Settlement</option>
+										<option value='npc'>NPC / Person</option>
+										<option value='magic'>Magic / Mystery</option>
+										<option value='quest'>Objective</option>
+										<option value='location'>Location</option>
+									</select>
+									<div className='flex gap-2 text-[9px] font-mono text-muted-foreground'>
+										<span>LAT: {m.lat}</span>
+										<span>LNG: {m.lng}</span>
+									</div>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\TacticalMapManager.jsx ---
+
 --- FILE: features\admin\config\adminStrategies.js ---
 export const ADMIN_STRATEGIES = {
 	// 0. CAMPAIGN (Meta Entity)
@@ -2882,6 +3183,7 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'type', label: 'Type', type: 'text' },
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 
@@ -2991,6 +3293,7 @@ export const ADMIN_STRATEGIES = {
 				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
 			},
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 
@@ -2998,7 +3301,11 @@ export const ADMIN_STRATEGIES = {
 		label: 'Entity',
 		primaryTable: 'entities',
 		colMapping: { name: 'name', description: 'description' },
-		defaultAttributes: [],
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'map_image', label: 'Tactical Map Image', type: 'image' }, // Added this
+			{ key: 'background_image', label: 'Header Background', type: 'image' },
+		],
 	},
 };
 
@@ -3089,75 +3396,25 @@ export const IMAGE_LIBRARY = [
     ]
   },
   {
+    "category": "Assets > Map_backgrounds",
+    "path": "images/assets/map_backgrounds/",
+    "files": [
+      "brindol_map.jpg",
+      "demonic_ambush_map.png",
+      "drellin_ferry_map.jpg",
+      "elsir_vale_map.jpg",
+      "strategic_bridge_map.png",
+      "vraath_courtyard_map.png",
+      "witchwood_map.jpg"
+    ]
+  },
+  {
     "category": "Assets > Npc_backgrounds > Campaign_002",
     "path": "images/assets/npc_backgrounds/campaign_002/",
     "files": [
       "avarthel_bg.jpg",
       "soranna_bg.jpg",
       "yoghurt_bg.jpg"
-    ]
-  },
-  {
-    "category": "Custom-icons",
-    "path": "images/custom-icons/",
-    "files": [
-      "arrowDirectionDown.png",
-      "arrowDirectionLeft.png",
-      "arrowDirectionRight.png",
-      "arrowDirectionUp.png",
-      "city.png",
-      "cityBarbarian.png",
-      "cityCapital.png",
-      "cityDruid.png",
-      "cityDwarves.png",
-      "cityElves.png",
-      "cityHalflings.png",
-      "cityLizard.png",
-      "cityPort.png",
-      "fort.png",
-      "fortTower.png",
-      "iconPortal.png",
-      "mageTower.png",
-      "poiAlchemist.png",
-      "poiBed.png",
-      "poiBramble.png",
-      "poiCave.png",
-      "poiCombat.png",
-      "poiDanger.png",
-      "poiFarm.png",
-      "poiGenericNPC.png",
-      "poiInn.png",
-      "poiLandmarkCitadel.png",
-      "poiLandmarkCity.png",
-      "poiLandmarkFarm.png",
-      "poiMine.png",
-      "poiRuin.png",
-      "poiShip.png",
-      "poiWaterfall.png",
-      "shadow.png",
-      "templeCathedral.png",
-      "templeEldath.png",
-      "templeMonolith.png",
-      "templePyramid.png",
-      "templeShrine.png",
-      "templeZiggurat.png",
-      "town.png",
-      "townBarbarian.png",
-      "townDock.png",
-      "townDruid.png",
-      "townDwarves.png",
-      "townElves.png",
-      "townHalflings.png",
-      "townLizard.png",
-      "townMill.png",
-      "tradeAlchemy.png",
-      "tradeCamp.png",
-      "tradeCampLarge.png",
-      "tradeForge.png",
-      "tradeHunter.png",
-      "tradeShop.png",
-      "tradeStable.png",
-      "tradeWatchtower.png"
     ]
   },
   {
@@ -3222,7 +3479,20 @@ export const IMAGE_LIBRARY = [
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { Database, Users, MapPin, BookOpen, Scroll, ArrowLeft, Shield, Gem, LogOut, Play, Sword } from 'lucide-react';
+import {
+	Database,
+	Users,
+	MapPin,
+	BookOpen,
+	Scroll,
+	ArrowLeft,
+	Shield,
+	Gem,
+	LogOut,
+	Play,
+	Sword,
+	Replace,
+} from 'lucide-react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 
 const NavItem = ({ to, icon: Icon, label }) => {
@@ -3277,6 +3547,7 @@ export default function AdminLayout() {
 						System
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
+					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities
@@ -3325,6 +3596,140 @@ export default function AdminLayout() {
 }
 
 --- END OF features\admin\layouts\AdminLayout.jsx ---
+
+--- FILE: features\admin\pages\BulkReplaceTool.jsx ---
+import React, { useState } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { getBulkReplacePreview, executeBulkReplace } from '@/features/admin/api/adminService';
+import {
+	ADMIN_SECTION_CLASS,
+	ADMIN_HEADER_CLASS,
+	ADMIN_INPUT_CLASS,
+	ADMIN_LABEL_CLASS,
+} from '@/features/admin/components/AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+import { Replace, Eye, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+
+export default function BulkReplaceTool() {
+	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient();
+	const [find, setFind] = useState('');
+	const [replace, setReplace] = useState('');
+	const [preview, setPreview] = useState(null); // null, [], or items
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	const handlePreview = async () => {
+		setIsProcessing(true);
+		const matches = await getBulkReplacePreview(campaignId, find, replace);
+		setPreview(matches);
+		setIsProcessing(false);
+	};
+
+	const handleConfirm = async () => {
+		if (!confirm(`Apply all ${preview.length} changes?`)) return;
+		setIsProcessing(true);
+		await executeBulkReplace(preview);
+		queryClient.invalidateQueries();
+		alert('Archive successfully patched.');
+		setPreview(null);
+		setFind('');
+		setReplace('');
+		setIsProcessing(false);
+	};
+
+	return (
+		<div className='max-w-4xl mx-auto p-6 space-y-6'>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>
+					<span className='flex items-center gap-2'>
+						<Replace size={18} className='text-amber-600' /> Archive Patch Tool
+					</span>
+				</h2>
+
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Search Term</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={find}
+							onChange={(e) => setFind(e.target.value)}
+							placeholder='Misspelled word...'
+						/>
+					</div>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Replacement</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={replace}
+							onChange={(e) => setReplace(e.target.value)}
+							placeholder='Proper word...'
+						/>
+					</div>
+				</div>
+
+				<div className='pt-2'>
+					<Button
+						variant='primary'
+						fullWidth
+						icon={isProcessing ? Loader2 : Eye}
+						disabled={isProcessing || !find.trim()}
+						onClick={handlePreview}>
+						{isProcessing ? 'Scanning...' : 'Scan for Matches'}
+					</Button>
+				</div>
+			</div>
+
+			{preview && (
+				<div className={`${ADMIN_SECTION_CLASS} animate-in slide-in-from-bottom-4`}>
+					<div className={ADMIN_HEADER_CLASS}>
+						<span>Review Proposed Changes ({preview.length})</span>
+						<Button size='sm' variant='danger' icon={Replace} onClick={handleConfirm} disabled={preview.length === 0}>
+							Apply All Updates
+						</Button>
+					</div>
+
+					{preview.length === 0 ? (
+						<div className='text-center py-10 text-muted-foreground italic'>No matches found in the archives.</div>
+					) : (
+						<div className='border border-border rounded-lg overflow-hidden bg-background'>
+							<table className='w-full text-[11px] text-left border-collapse'>
+								<thead className='bg-muted text-muted-foreground font-bold uppercase tracking-wider'>
+									<tr>
+										<th className='p-3 border-b border-border'>Context / Source</th>
+										<th className='p-3 border-b border-border'>Change Preview</th>
+									</tr>
+								</thead>
+								<tbody className='divide-y divide-border'>
+									{preview.map((item, idx) => (
+										<tr key={idx} className='hover:bg-muted/30'>
+											<td className='p-3 align-top font-bold text-slate-500 w-1/3'>
+												<div className='uppercase text-[9px] opacity-50 mb-1'>
+													{item.table}.{item.field}
+												</div>
+												{item.context}
+											</td>
+											<td className='p-3 space-y-1'>
+												<div className='text-red-600 line-through opacity-60 bg-red-50 p-1 rounded'>
+													{item.original}
+												</div>
+												<div className='flex items-center gap-2 text-emerald-700 font-medium bg-emerald-50 p-1 rounded'>
+													<ArrowRight size={10} /> {item.proposal}
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\BulkReplaceTool.jsx ---
 
 --- FILE: features\admin\pages\EntityEditorPage.jsx ---
 import React from 'react';

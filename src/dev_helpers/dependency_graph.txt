@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2025-12-30 13:12:38
+Generated: 2025-12-31 08:21:40
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -17,6 +17,7 @@ app\App.jsx:
 app\AppRoutes.jsx:
   → ./components/RouteLoading
   → @/features/admin/layouts/AdminLayout
+  → @/features/admin/pages/BulkReplaceTool
   → @/features/admin/pages/SplitPaneManager
   → @/features/atlas/MapPage
   → @/features/campaign/CampaignContext
@@ -99,6 +100,7 @@ features\admin\components\AdminForm.jsx:
   → ./AdminFormStyles
   → ./EncounterManager
   → ./SessionEventManager
+  → ./TacticalMapManager
   → @/features/admin/api/adminService
   → @/features/admin/components/MarkdownEditor
   → @/features/admin/components/QuestObjectiveManager
@@ -174,12 +176,28 @@ features\admin\components\SmartImageInput.jsx:
   → lucide-react
   → react
 
+features\admin\components\TacticalMapManager.jsx:
+  → ./AdminFormStyles
+  → @/features/atlas/utils/markerUtils
+  → @/shared/components/ui/Button
+  → leaflet
+  → lucide-react
+  → react
+  → react-leaflet
+
 features\admin\layouts\AdminLayout.jsx:
   → @/features/campaign/CampaignContext
   → clsx
-  → lucide-react
   → react
   → react-router-dom
+
+features\admin\pages\BulkReplaceTool.jsx:
+  → @/features/admin/api/adminService
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → @tanstack/react-query
+  → lucide-react
+  → react
 
 features\admin\pages\EntityEditorPage.jsx:
   → @/features/admin/components/AdminForm
@@ -269,6 +287,9 @@ features\atlas\utils\mapNavigation.js:
 
 features\atlas\utils\markerUtils.js:
   → leaflet
+  → lucide-react
+  → react
+  → react-dom/server
 
 features\campaign\CampaignContext.jsx:
   → ./useCampaignPersistence
@@ -590,6 +611,7 @@ features\wiki\components\EntityBody.jsx:
   → ./EntityHistory
   → ./QuestObjectives
   → @/features/smart-text/SmartMarkdown
+  → @/features/wiki/components/EntityMiniMap
   → @/shared/components/ui/SectionDivider
   → clsx
   → lucide-react
@@ -608,6 +630,15 @@ features\wiki\components\EntityHistory.jsx:
   → @/features/smart-text/SmartMarkdown
   → clsx
   → lucide-react
+
+features\wiki\components\EntityMiniMap.jsx:
+  → @/features/atlas/utils/markerUtils
+  → @/shared/components/ui/LoadingSpinner
+  → clsx
+  → leaflet
+  → lucide-react
+  → react
+  → react-leaflet
 
 features\wiki\components\EntitySidebar.jsx:
   → @/domain/entity/components/EntityIcon
@@ -714,6 +745,7 @@ features\wiki\hooks\useEntityContent.js:
   → @/domain/entity/utils/attributeParser
   → @/domain/entity/utils/entityUtils
   → @/features/wiki/utils/eventMapper
+  → @/shared/utils/imageUtils
   → react
 
 features\wiki\hooks\useEntityFetching.js:
@@ -891,7 +923,7 @@ shared\utils\markdownUtils.js:
 ### DEPENDENCY STATISTICS
 
 Most imported files (relative imports):
-  ./AdminFormStyles: 8 imports
+  ./AdminFormStyles: 9 imports
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
   ./StatusIcon: 2 imports
@@ -903,6 +935,7 @@ Most imported files (relative imports):
   ./entityStyles: 1 imports
   ./SessionEventManager: 1 imports
   ./EncounterManager: 1 imports
+  ./TacticalMapManager: 1 imports
   ../config/imageManifest.json: 1 imports
   ./EventTagger: 1 imports
   ./ImageLibraryModal: 1 imports
@@ -910,12 +943,11 @@ Most imported files (relative imports):
   ./components/MapCanvas: 1 imports
   ./utils/mapNavigation: 1 imports
   ./layers/MapMarkers: 1 imports
-  ./layers/MapRecaps: 1 imports
 
 
 Files with most outgoing dependencies:
-  features\admin\components\AdminForm.jsx: 16 imports
-  app\AppRoutes.jsx: 15 imports
+  features\admin\components\AdminForm.jsx: 17 imports
+  app\AppRoutes.jsx: 16 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
   features\dashboard\DashboardPage.jsx: 10 imports
@@ -924,13 +956,13 @@ Files with most outgoing dependencies:
   features\wiki\layouts\SessionLayout.jsx: 9 imports
   features\navigation\MainLayout.jsx: 8 imports
   features\search\useGlobalSearch.js: 8 imports
+  features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
   features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports
+  features\admin\components\TacticalMapManager.jsx: 7 imports
   features\smart-text\components\EntityEmbed.jsx: 7 imports
   features\smart-tooltip\components\TooltipCard.jsx: 7 imports
   features\table-of-contents\TableOfContents.jsx: 7 imports
-  features\wiki\components\EntityBody.jsx: 7 imports
+  features\wiki\components\EntityMiniMap.jsx: 7 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 7 imports
   features\wiki\components\navigation\sidebar\EntityListItem.jsx: 7 imports
-  app\App.jsx: 6 imports
-  domain\entity\components\EntityLink.jsx: 6 imports

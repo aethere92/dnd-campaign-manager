@@ -1,91 +1,96 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2025-12-30 13:12:38
+Generated: 2025-12-31 08:21:40
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 174
-Total lines: 15,271
-Non-empty lines: 13,475
-Comment lines: 1,368
-Total size: 476,562 bytes (465.39 KB)
-Average lines per file: 87.8
+Total files: 181
+Total lines: 18,254
+Non-empty lines: 15,985
+Comment lines: 1,418
+Total size: 578,748 bytes (565.18 KB)
+Average lines per file: 100.9
 
 
 ### STATISTICS BY FILE TYPE
 
 .css:
   Files: 1
-  Lines: 271
-  Size: 6,699 bytes (6.54 KB)
+  Lines: 386
+  Size: 9,492 bytes (9.27 KB)
 
 .js:
   Files: 65
-  Lines: 6,325
-  Size: 184,431 bytes (180.11 KB)
+  Lines: 6,518
+  Size: 190,970 bytes (186.49 KB)
 
 .json:
   Files: 1
-  Lines: 184
-  Size: 4,394 bytes (4.29 KB)
+  Lines: 134
+  Size: 3,216 bytes (3.14 KB)
 
 .jsx:
-  Files: 107
-  Lines: 8,491
-  Size: 281,038 bytes (274.45 KB)
+  Files: 110
+  Lines: 8,989
+  Size: 297,316 bytes (290.35 KB)
+
+.txt:
+  Files: 4
+  Lines: 2,227
+  Size: 77,754 bytes (75.93 KB)
 
 
 ### LARGEST FILES (by lines)
 
-features\admin\api\adminService.js: 461 lines
+dev_helpers\component_hierarchy.txt: 1,553 lines
+features\admin\api\adminService.js: 560 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
+app\styles\global.css: 386 lines
 features\dashboard\api\dashboardService.js: 377 lines
+dev_helpers\unused_code_report.txt: 358 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 domain\entity\api\entityService.js: 317 lines
-features\admin\components\AdminForm.jsx: 283 lines
-app\styles\global.css: 271 lines
+dev_helpers\token_count_report.txt: 308 lines
+features\admin\components\AdminForm.jsx: 305 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 dev_helpers\refactor.js: 256 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
 features\wiki\components\EntitySidebar.jsx: 209 lines
-domain\entity\utils\attributeParser.js: 202 lines
+domain\entity\utils\attributeParser.js: 204 lines
 features\smart-text\components\EntityEmbed.jsx: 200 lines
-features\admin\config\imageManifest.json: 184 lines
 features\wiki\components\EntityHeader.jsx: 183 lines
 domain\entity\utils\entityUtils.js: 181 lines
 features\wiki\components\EncounterTimeline.jsx: 180 lines
-features\wiki\utils\attributeMapper.js: 172 lines
-shared\utils\textUtils.js: 169 lines
 
 
 ### STATISTICS BY CATEGORY
 
 app:
   Files: 4
-  Lines: 392
-  Size: 10,752 bytes (10.50 KB)
+  Lines: 509
+  Size: 13,698 bytes (13.38 KB)
 
 dev_helpers:
-  Files: 2
-  Lines: 308
-  Size: 18,984 bytes (18.54 KB)
+  Files: 6
+  Lines: 2,535
+  Size: 96,738 bytes (94.47 KB)
 
 domain_entity:
   Files: 13
-  Lines: 1,528
-  Size: 41,003 bytes (40.04 KB)
+  Lines: 1,530
+  Size: 41,035 bytes (40.07 KB)
 
 features_admin:
-  Files: 19
-  Lines: 3,431
-  Size: 112,791 bytes (110.15 KB)
+  Files: 21
+  Lines: 3,823
+  Size: 125,901 bytes (122.95 KB)
 
 features_atlas:
   Files: 13
-  Lines: 784
-  Size: 24,278 bytes (23.71 KB)
+  Lines: 833
+  Size: 25,822 bytes (25.22 KB)
 
 features_campaign:
   Files: 6
@@ -133,9 +138,9 @@ features_timeline:
   Size: 13,080 bytes (12.77 KB)
 
 features_wiki:
-  Files: 40
-  Lines: 3,274
-  Size: 104,150 bytes (101.71 KB)
+  Files: 41
+  Lines: 3,471
+  Size: 110,916 bytes (108.32 KB)
 
 root:
   Files: 1
@@ -144,6 +149,6 @@ root:
 
 shared:
   Files: 22
-  Lines: 1,520
-  Size: 41,084 bytes (40.12 KB)
+  Lines: 1,519
+  Size: 41,118 bytes (40.15 KB)
 

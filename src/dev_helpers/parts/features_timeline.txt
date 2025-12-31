@@ -14,7 +14,11 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       global.css
   dev_helpers/
     check_imports.js
+    component_hierarchy.txt
+    duplicate_code_report.txt
     refactor.js
+    token_count_report.txt
+    unused_code_report.txt
   domain/
     entity/
       api/
@@ -50,6 +54,7 @@ PARTIAL BUNDLE: FEATURES TIMELINE
         RelationshipManager.jsx
         SessionEventManager.jsx
         SmartImageInput.jsx
+        TacticalMapManager.jsx
       config/
         adminStrategies.js
         imageLibrary.js
@@ -57,6 +62,7 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       layouts/
         AdminLayout.jsx
       pages/
+        BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
@@ -179,6 +185,7 @@ PARTIAL BUNDLE: FEATURES TIMELINE
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx

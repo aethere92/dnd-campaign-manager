@@ -14,7 +14,11 @@ PARTIAL BUNDLE: FEATURES ATLAS
       global.css
   dev_helpers/
     check_imports.js
+    component_hierarchy.txt
+    duplicate_code_report.txt
     refactor.js
+    token_count_report.txt
+    unused_code_report.txt
   domain/
     entity/
       api/
@@ -50,6 +54,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
         RelationshipManager.jsx
         SessionEventManager.jsx
         SmartImageInput.jsx
+        TacticalMapManager.jsx
       config/
         adminStrategies.js
         imageLibrary.js
@@ -57,6 +62,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
       layouts/
         AdminLayout.jsx
       pages/
+        BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
@@ -179,6 +185,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
         SessionMentions.jsx
@@ -404,8 +411,8 @@ export const MapCanvas = ({ data, onNavigate }) => {
 
 	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
 	const minZoom = 0;
-	const bgValue = config.backgroundColor || '#1a1412';
-	const isImage = bgValue.includes('url') || bgValue.includes('gradient');
+	// const bgValue = config.backgroundColor || '#1a1412';
+	// const isImage = bgValue.includes('url') || bgValue.includes('gradient');
 
 	return (
 		<div
@@ -413,11 +420,16 @@ export const MapCanvas = ({ data, onNavigate }) => {
 			style={{
 				height: '100%',
 				width: '100%',
-				backgroundColor: isImage ? '#1a1412' : bgValue,
-				backgroundImage: isImage ? bgValue : 'none',
-				backgroundSize: 'cover',
-				backgroundPosition: 'center',
-				backgroundRepeat: 'no-repeat',
+				// backgroundColor: isImage ? '#1a1412' : bgValue,
+				// backgroundImage: isImage ? bgValue : 'none',
+				// backgroundSize: 'cover',
+				// backgroundPosition: 'center',
+				// backgroundRepeat: 'no-repeat',
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, #e5e5e5 1px, transparent 1px), radial-gradient(circle at center, #e5e5e5 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
 			}}>
 			<MapContainer
 				center={[0, 0]}
@@ -793,21 +805,8 @@ export const MapAreas = ({ areas }) => {
 
 --- FILE: features\atlas\components\layers\MapMarkers.jsx ---
 import { Marker, Popup } from 'react-leaflet';
-import { ArrowRight, MapPin, Skull, Castle, User, Tent, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
-
-/**
- * Resolves Lucide Icons for the Popup header based on Category
- */
-const getCategoryIcon = (category) => {
-	const cat = category?.toLowerCase() || '';
-	if (cat.includes('combat') || cat.includes('danger') || cat.includes('encounter')) return Skull;
-	if (cat.includes('citie') || cat.includes('town')) return Castle;
-	if (cat.includes('npc') || cat.includes('people')) return User;
-	if (cat.includes('camp')) return Tent;
-	if (cat.includes('magic') || cat.includes('shrine')) return Sparkles;
-	return MapPin;
-};
 
 export const MapMarkers = ({ markers, onNavigate }) => {
 	if (!markers || markers.length === 0) return null;
@@ -815,43 +814,35 @@ export const MapMarkers = ({ markers, onNavigate }) => {
 	return (
 		<>
 			{markers.map((marker, idx) => {
-				const CategoryIcon = getCategoryIcon(marker.category);
+				// markerUtils now does the heavy lifting
 				const leafletIcon = resolveMarkerIcon(marker);
 
 				return (
 					<Marker key={`${marker.label}-${idx}`} position={marker.position} icon={leafletIcon}>
 						<Popup closeButton={true}>
 							<div className='flex flex-col w-[260px] font-sans bg-background'>
-								{/* Header */}
-								<div className='px-4 pt-4 pb-2 pr-7 flex items-start justify-between gap-3'>
-									<div>
-										<span className='text-[10px] font-bold uppercase tracking-wider text-amber-600/90 block mb-1'>
-											{marker.category}
-										</span>
-										<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
-									</div>
-									<div className='shrink-0 p-1.5 rounded-lg shadow-sm border border-amber-200 bg-amber-50 text-amber-700'>
-										<CategoryIcon size={16} strokeWidth={2} />
-									</div>
+								<div className='px-4 pt-4 pb-2 pr-7'>
+									<span className='text-[10px] font-bold uppercase tracking-wider text-accent block mb-1'>
+										{marker.category}
+									</span>
+									<h3 className='font-serif font-bold text-xl leading-none text-foreground'>{marker.label}</h3>
 								</div>
 
 								<div className='h-px w-full bg-border/50 my-1' />
 
-								{/* Description */}
 								<div className='px-4 py-2'>
 									{marker.description ? (
-										<p className='text-xs text-gray-600 leading-relaxed line-clamp-6'>{marker.description}</p>
+										<p className='text-xs text-muted-foreground leading-relaxed line-clamp-6'>{marker.description}</p>
 									) : (
-										<p className='text-xs text-gray-400 italic'>No details available.</p>
+										<p className='text-xs text-muted-foreground italic'>No details available.</p>
 									)}
 								</div>
 
-								{/* Navigation Link (Map-to-Map) */}
 								{marker.mapLink && (
 									<div className='mt-2 bg-muted/50 p-2 border-t border-border flex justify-end rounded-b-lg'>
 										<button
 											onClick={() => onNavigate(marker.mapLink)}
-											className='text-[10px] font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer'>
+											className='text-[10px] font-bold text-accent hover:underline flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer'>
 											Enter Location <ArrowRight size={10} />
 										</button>
 									</div>
@@ -1004,7 +995,30 @@ export const calculateBounds = (imageWidth, imageHeight) => {
 --- END OF features\atlas\utils\mapNavigation.js ---
 
 --- FILE: features\atlas\utils\markerUtils.js ---
+import React from 'react';
 import L from 'leaflet';
+import { renderToString } from 'react-dom/server';
+import { Skull, MapPin, Castle, User, Tent, Sparkles, Home, Sword, Anchor, Mountain, Scroll } from 'lucide-react';
+
+// 1. Map your category strings to Lucide Components
+const ICON_MAP = {
+	combat: Skull,
+	danger: Skull,
+	encounter: Sword,
+	city: Castle,
+	town: Home,
+	village: Home,
+	npc: User,
+	people: User,
+	camp: Tent,
+	magic: Sparkles,
+	shrine: Sparkles,
+	port: Anchor,
+	landmark: MapPin,
+	dungeon: Mountain,
+	quest: Scroll,
+	default: MapPin,
+};
 
 // Singleton for invisible/interactive-only markers
 export const invisibleIcon = L.divIcon({
@@ -1014,6 +1028,55 @@ export const invisibleIcon = L.divIcon({
 	iconAnchor: [10, 10],
 	popupAnchor: [0, -10],
 });
+
+/**
+ * Creates a "Pin" style marker using a Lucide React Icon
+ */
+export const createLucideMarker = (category, color = '#d97706') => {
+	const normalized = category?.toLowerCase() || 'default';
+	let IconComponent = ICON_MAP.default;
+	for (const [key, comp] of Object.entries(ICON_MAP)) {
+		if (normalized.includes(key)) {
+			IconComponent = comp;
+			break;
+		}
+	}
+
+	const iconHtml = renderToString(
+		React.createElement(IconComponent, {
+			size: 14,
+			strokeWidth: 3,
+			color: 'white',
+		})
+	);
+
+	/**
+	 * STABLE SVG PIN
+	 * The point is exactly at 16, 36.
+	 * The circle center is at 16, 16.
+	 */
+	return L.divIcon({
+		className: 'custom-marker-container',
+		html: `
+            <div class="relative group" style="width: 32px; height: 36px;">
+                <svg width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.2));">
+                    <!-- Pin Body -->
+                    <path d="M16 36C16 36 32 26.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.5 16 36 16 36Z" fill="white"/>
+                    <path d="M16 33C16 33 29 24.5 29 16C29 8.8203 23.1797 3 16 3C8.8203 3 3 8.8203 3 16C3 24.5 16 33 16 33Z" fill="${color}"/>
+                    <!-- Inner Hole -->
+                    <circle cx="16" cy="16" r="10" fill="white" fill-opacity="0.2"/>
+                </svg>
+                <!-- Icon Overlay -->
+                <div class="absolute top-[8px] left-[8px] w-[16px] h-[16px] flex items-center justify-center pointer-events-none transition-transform group-hover:-translate-y-0.5">
+                    ${iconHtml}
+                </div>
+            </div>
+        `,
+		iconSize: [32, 36],
+		iconAnchor: [16, 36], // EXACT BOTTOM CENTER
+		popupAnchor: [0, -36],
+	});
+};
 
 // Text Label Marker Generator
 export const createTextMarker = (label, fontSize) => {
@@ -1032,39 +1095,32 @@ export const createTextMarker = (label, fontSize) => {
 	});
 };
 
-// Custom Image Icon Generator
-export const createCustomIcon = (iconName) => {
-	return L.divIcon({
-		className: 'custom-marker-icon',
-		html: `
-            <div class="group relative flex flex-col items-center">
-                <div class="w-8 h-8 transition-transform group-hover:-translate-y-1 duration-200">
-                    <img src="${import.meta.env.BASE_URL}images/custom-icons/${iconName}.png" 
-                         class="w-full h-full object-contain drop-shadow-md filter" />
-                </div>
-            </div>`,
-		iconSize: [32, 32],
-		iconAnchor: [16, 32],
-		popupAnchor: [0, -28],
-	});
-};
-
-// Logic Hub: Resolves the appropriate Leaflet icon
+/**
+ * Logic Hub: Resolves the appropriate Leaflet icon
+ */
 export const resolveMarkerIcon = (marker) => {
-	const { icon, type, label, fontSize } = marker;
+	const { icon, type, label, fontSize, category } = marker;
 
-	// 1. Text Marker (Check both 'type' and 'icon' properties per your original code)
+	// 1. Existing Text Marker logic
 	if (type === 'text' || icon === 'text') {
 		return createTextMarker(label, fontSize);
 	}
 
-	// 2. Invisible / Null Icon (Interactive only)
-	if (!icon) {
+	// 2. Invisible / Null Icon
+	if (!icon && !category) {
 		return invisibleIcon;
 	}
 
-	// 3. Custom Image Icon (Fallback to your specific images folder)
-	return createCustomIcon(icon);
+	// 3. Lucide Marker logic
+	let markerColor = '#d97706';
+	const cat = category?.toLowerCase() || '';
+	if (cat.includes('combat') || cat.includes('danger')) markerColor = '#dc2626'; // Red
+	if (cat.includes('magic') || cat.includes('shrine')) markerColor = '#7c3aed'; // Purple
+	if (['city', 'location', 'town', 'points of interest'].includes(cat)) markerColor = '#059669'; // Emerald
+	if (cat.includes('city') || cat.includes('town')) markerColor = '#1e40af'; // Blue
+	if (['npcs', 'people'].includes(cat)) markerColor = '#d97706'; // Orange
+
+	return createLucideMarker(category, markerColor);
 };
 
 // For session paths/dots

@@ -1,0 +1,307 @@
+================================================================
+TOKEN COUNT ESTIMATOR
+Generated: 2025-12-31 08:20:45
+================================================================
+
+Token estimates (using ~4 chars per token approximation)
+
+### COMPLETE BUNDLE
+Total characters: 500,948
+Estimated tokens: 125,237
+Fits in Claude's context?  YES ✓
+
+
+### PART FILES
+
+app:
+  Characters: 13,698
+  Estimated tokens: 3,424
+  Files: 4
+
+dev_helpers:
+  Characters: 18,959
+  Estimated tokens: 4,739
+  Files: 2
+
+domain_entity:
+  Characters: 41,035
+  Estimated tokens: 10,258
+  Files: 13
+
+features_admin:
+  Characters: 125,899
+  Estimated tokens: 31,474
+  Files: 21
+
+features_atlas:
+  Characters: 25,822
+  Estimated tokens: 6,455
+  Files: 13
+
+features_campaign:
+  Characters: 6,989
+  Estimated tokens: 1,747
+  Files: 6
+
+features_dashboard:
+  Characters: 34,145
+  Estimated tokens: 8,536
+  Files: 9
+
+features_graph:
+  Characters: 11,256
+  Estimated tokens: 2,814
+  Files: 7
+
+features_navigation:
+  Characters: 9,622
+  Estimated tokens: 2,405
+  Files: 7
+
+features_search:
+  Characters: 17,279
+  Estimated tokens: 4,319
+  Files: 10
+
+features_smart-text:
+  Characters: 12,468
+  Estimated tokens: 3,117
+  Files: 5
+
+features_smart-tooltip:
+  Characters: 11,484
+  Estimated tokens: 2,871
+  Files: 5
+
+features_table-of-contents:
+  Characters: 5,991
+  Estimated tokens: 1,497
+  Files: 5
+
+features_timeline:
+  Characters: 13,080
+  Estimated tokens: 3,270
+  Files: 6
+
+features_wiki:
+  Characters: 110,916
+  Estimated tokens: 27,729
+  Files: 41
+
+root:
+  Characters: 1,190
+  Estimated tokens: 297
+  Files: 1
+
+shared:
+  Characters: 41,115
+  Estimated tokens: 10,278
+  Files: 22
+
+
+### LARGEST FILES (by estimated tokens)
+
+dev_helpers\refactor.js:
+  ~4,366 tokens (17,464 chars)
+
+features\admin\api\adminService.js:
+  ~3,983 tokens (15,932 chars)
+
+features\admin\components\RelationshipManager.jsx:
+  ~3,755 tokens (15,020 chars)
+
+features\admin\components\EncounterManager.jsx:
+  ~3,217 tokens (12,869 chars)
+
+features\dashboard\api\dashboardService.js:
+  ~2,828 tokens (11,314 chars)
+
+features\admin\components\AdminForm.jsx:
+  ~2,551 tokens (10,204 chars)
+
+app\styles\global.css:
+  ~2,373 tokens (9,492 chars)
+
+domain\entity\api\entityService.js:
+  ~2,329 tokens (9,317 chars)
+
+features\admin\components\QuestObjectiveManager.jsx:
+  ~2,245 tokens (8,980 chars)
+
+features\admin\pages\SplitPaneManager.jsx:
+  ~1,891 tokens (7,564 chars)
+
+features\wiki\components\EntitySidebar.jsx:
+  ~1,848 tokens (7,392 chars)
+
+features\admin\components\SessionEventManager.jsx:
+  ~1,771 tokens (7,086 chars)
+
+features\wiki\components\EntityHeader.jsx:
+  ~1,621 tokens (6,486 chars)
+
+features\admin\pages\EntityListPage.jsx:
+  ~1,618 tokens (6,474 chars)
+
+features\dashboard\components\LatestSessionCard.jsx:
+  ~1,421 tokens (5,685 chars)
+
+features\admin\components\TacticalMapManager.jsx:
+  ~1,387 tokens (5,549 chars)
+
+features\smart-text\components\EntityEmbed.jsx:
+  ~1,365 tokens (5,462 chars)
+
+features\wiki\components\EncounterTimeline.jsx:
+  ~1,352 tokens (5,408 chars)
+
+features\wiki\components\EntityMiniMap.jsx:
+  ~1,333 tokens (5,335 chars)
+
+features\admin\config\adminStrategies.js:
+  ~1,284 tokens (5,136 chars)
+
+
+### RECOMMENDATIONS
+
+✓ Complete bundle fits comfortably in Claude's context
+
+
+### COMBINABLE PARTS (that fit together under 100k tokens)
+
+  root + app: ~2 tokens
+  root + dev_helpers: ~2 tokens
+  root + domain_entity: ~2 tokens
+  root + features_admin: ~2 tokens
+  root + features_atlas: ~2 tokens
+  root + features_campaign: ~2 tokens
+  root + features_dashboard: ~2 tokens
+  root + features_graph: ~2 tokens
+  root + features_navigation: ~2 tokens
+  root + features_search: ~2 tokens
+  root + features_smart-text: ~2 tokens
+  root + features_smart-tooltip: ~2 tokens
+  root + features_table-of-contents: ~2 tokens
+  root + features_timeline: ~2 tokens
+  root + features_wiki: ~2 tokens
+  root + shared: ~2 tokens
+  app + dev_helpers: ~2 tokens
+  app + domain_entity: ~2 tokens
+  app + features_admin: ~2 tokens
+  app + features_atlas: ~2 tokens
+  app + features_campaign: ~2 tokens
+  app + features_dashboard: ~2 tokens
+  app + features_graph: ~2 tokens
+  app + features_navigation: ~2 tokens
+  app + features_search: ~2 tokens
+  app + features_smart-text: ~2 tokens
+  app + features_smart-tooltip: ~2 tokens
+  app + features_table-of-contents: ~2 tokens
+  app + features_timeline: ~2 tokens
+  app + features_wiki: ~2 tokens
+  app + shared: ~2 tokens
+  dev_helpers + domain_entity: ~2 tokens
+  dev_helpers + features_admin: ~2 tokens
+  dev_helpers + features_atlas: ~2 tokens
+  dev_helpers + features_campaign: ~2 tokens
+  dev_helpers + features_dashboard: ~2 tokens
+  dev_helpers + features_graph: ~2 tokens
+  dev_helpers + features_navigation: ~2 tokens
+  dev_helpers + features_search: ~2 tokens
+  dev_helpers + features_smart-text: ~2 tokens
+  dev_helpers + features_smart-tooltip: ~2 tokens
+  dev_helpers + features_table-of-contents: ~2 tokens
+  dev_helpers + features_timeline: ~2 tokens
+  dev_helpers + features_wiki: ~2 tokens
+  dev_helpers + shared: ~2 tokens
+  domain_entity + features_admin: ~2 tokens
+  domain_entity + features_atlas: ~2 tokens
+  domain_entity + features_campaign: ~2 tokens
+  domain_entity + features_dashboard: ~2 tokens
+  domain_entity + features_graph: ~2 tokens
+  domain_entity + features_navigation: ~2 tokens
+  domain_entity + features_search: ~2 tokens
+  domain_entity + features_smart-text: ~2 tokens
+  domain_entity + features_smart-tooltip: ~2 tokens
+  domain_entity + features_table-of-contents: ~2 tokens
+  domain_entity + features_timeline: ~2 tokens
+  domain_entity + features_wiki: ~2 tokens
+  domain_entity + shared: ~2 tokens
+  features_admin + features_atlas: ~2 tokens
+  features_admin + features_campaign: ~2 tokens
+  features_admin + features_dashboard: ~2 tokens
+  features_admin + features_graph: ~2 tokens
+  features_admin + features_navigation: ~2 tokens
+  features_admin + features_search: ~2 tokens
+  features_admin + features_smart-text: ~2 tokens
+  features_admin + features_smart-tooltip: ~2 tokens
+  features_admin + features_table-of-contents: ~2 tokens
+  features_admin + features_timeline: ~2 tokens
+  features_admin + features_wiki: ~2 tokens
+  features_admin + shared: ~2 tokens
+  features_atlas + features_campaign: ~2 tokens
+  features_atlas + features_dashboard: ~2 tokens
+  features_atlas + features_graph: ~2 tokens
+  features_atlas + features_navigation: ~2 tokens
+  features_atlas + features_search: ~2 tokens
+  features_atlas + features_smart-text: ~2 tokens
+  features_atlas + features_smart-tooltip: ~2 tokens
+  features_atlas + features_table-of-contents: ~2 tokens
+  features_atlas + features_timeline: ~2 tokens
+  features_atlas + features_wiki: ~2 tokens
+  features_atlas + shared: ~2 tokens
+  features_campaign + features_dashboard: ~2 tokens
+  features_campaign + features_graph: ~2 tokens
+  features_campaign + features_navigation: ~2 tokens
+  features_campaign + features_search: ~2 tokens
+  features_campaign + features_smart-text: ~2 tokens
+  features_campaign + features_smart-tooltip: ~2 tokens
+  features_campaign + features_table-of-contents: ~2 tokens
+  features_campaign + features_timeline: ~2 tokens
+  features_campaign + features_wiki: ~2 tokens
+  features_campaign + shared: ~2 tokens
+  features_dashboard + features_graph: ~2 tokens
+  features_dashboard + features_navigation: ~2 tokens
+  features_dashboard + features_search: ~2 tokens
+  features_dashboard + features_smart-text: ~2 tokens
+  features_dashboard + features_smart-tooltip: ~2 tokens
+  features_dashboard + features_table-of-contents: ~2 tokens
+  features_dashboard + features_timeline: ~2 tokens
+  features_dashboard + features_wiki: ~2 tokens
+  features_dashboard + shared: ~2 tokens
+  features_graph + features_navigation: ~2 tokens
+  features_graph + features_search: ~2 tokens
+  features_graph + features_smart-text: ~2 tokens
+  features_graph + features_smart-tooltip: ~2 tokens
+  features_graph + features_table-of-contents: ~2 tokens
+  features_graph + features_timeline: ~2 tokens
+  features_graph + features_wiki: ~2 tokens
+  features_graph + shared: ~2 tokens
+  features_navigation + features_search: ~2 tokens
+  features_navigation + features_smart-text: ~2 tokens
+  features_navigation + features_smart-tooltip: ~2 tokens
+  features_navigation + features_table-of-contents: ~2 tokens
+  features_navigation + features_timeline: ~2 tokens
+  features_navigation + features_wiki: ~2 tokens
+  features_navigation + shared: ~2 tokens
+  features_search + features_smart-text: ~2 tokens
+  features_search + features_smart-tooltip: ~2 tokens
+  features_search + features_table-of-contents: ~2 tokens
+  features_search + features_timeline: ~2 tokens
+  features_search + features_wiki: ~2 tokens
+  features_search + shared: ~2 tokens
+  features_smart-text + features_smart-tooltip: ~2 tokens
+  features_smart-text + features_table-of-contents: ~2 tokens
+  features_smart-text + features_timeline: ~2 tokens
+  features_smart-text + features_wiki: ~2 tokens
+  features_smart-text + shared: ~2 tokens
+  features_smart-tooltip + features_table-of-contents: ~2 tokens
+  features_smart-tooltip + features_timeline: ~2 tokens
+  features_smart-tooltip + features_wiki: ~2 tokens
+  features_smart-tooltip + shared: ~2 tokens
+  features_table-of-contents + features_timeline: ~2 tokens
+  features_table-of-contents + features_wiki: ~2 tokens
+  features_table-of-contents + shared: ~2 tokens
+  features_timeline + features_wiki: ~2 tokens
+  features_timeline + shared: ~2 tokens
+  features_wiki + shared: ~2 tokens

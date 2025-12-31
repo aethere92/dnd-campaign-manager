@@ -10,8 +10,18 @@ export const Drawer = ({ isOpen, onClose, title, children, position = 'right', c
 	const [isVisible, setIsVisible] = useState(false);
 
 	useEffect(() => {
-		if (isOpen) setIsVisible(true);
-		else setTimeout(() => setIsVisible(false), 300);
+		if (isOpen) {
+			setIsVisible(true);
+			document.body.classList.add('drawer-open'); // Added this
+		} else {
+			setTimeout(() => {
+				setIsVisible(false);
+				document.body.classList.remove('drawer-open'); // Added this
+			}, 300);
+		}
+
+		// Cleanup
+		return () => document.body.classList.remove('drawer-open');
 	}, [isOpen]);
 
 	if (!isVisible && !isOpen) return null;
