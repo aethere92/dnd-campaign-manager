@@ -32,7 +32,7 @@ export const Drawer = ({ isOpen, onClose, title, children, position = 'right', c
 	};
 
 	return createPortal(
-		<div className='fixed inset-0 z-[9999] isolate'>
+		<div className='fixed inset-0 z-[10050] isolate'>
 			{/* Backdrop */}
 			<div
 				className={clsx(

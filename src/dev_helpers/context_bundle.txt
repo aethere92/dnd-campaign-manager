@@ -14822,7 +14822,7 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 				<MapContainer
 					crs={L.CRS.Simple}
 					bounds={dimensions}
-					zoom={0}
+					zoom={-2}
 					minZoom={-3}
 					scrollWheelZoom={true}
 					attributionControl={false}
@@ -14856,11 +14856,24 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 					))}
 				</MapContainer>
 
-				<div className='absolute top-3 right-3 z-[1000]'>
+				<div
+					className='absolute z-[10001]'
+					style={{
+						// Position logic:
+						// When fullscreen, add margin for mobile status bars (notch)
+						// When inline, stick to standard corner
+						top: activeFullscreen ? 'max(1rem, env(safe-area-inset-top))' : '1rem',
+						right: activeFullscreen ? 'max(1rem, env(safe-area-inset-right))' : '1rem',
+					}}>
 					<button
 						onClick={toggleFullscreen}
-						className='p-2 bg-background/90 backdrop-blur-sm rounded-lg border border-border shadow-lg text-muted-foreground hover:text-accent transition-all active:scale-95'>
-						{activeFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+						className={clsx(
+							'p-3 rounded-full border border-border shadow-2xl transition-all active:scale-90',
+							// High contrast button for mobile
+							'bg-background/95 backdrop-blur-md text-accent hover:bg-accent hover:text-white'
+						)}
+						aria-label={activeFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
+						{activeFullscreen ? <Minimize size={20} strokeWidth={2.5} /> : <Maximize size={20} strokeWidth={2.5} />}
 					</button>
 				</div>
 			</div>
@@ -18167,8 +18180,18 @@ export const Drawer = ({ isOpen, onClose, title, children, position = 'right', c
 	const [isVisible, setIsVisible] = useState(false);
 
 	useEffect(() => {
-		if (isOpen) setIsVisible(true);
-		else setTimeout(() => setIsVisible(false), 300);
+		if (isOpen) {
+			setIsVisible(true);
+			document.body.classList.add('drawer-open'); // Added this
+		} else {
+			setTimeout(() => {
+				setIsVisible(false);
+				document.body.classList.remove('drawer-open'); // Added this
+			}, 300);
+		}
+
+		// Cleanup
+		return () => document.body.classList.remove('drawer-open');
 	}, [isOpen]);
 
 	if (!isVisible && !isOpen) return null;
