@@ -14858,21 +14858,26 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 
 				<div
 					className='absolute z-[10001]'
-					style={{
-						// Position logic:
-						// When fullscreen, add margin for mobile status bars (notch)
-						// When inline, stick to standard corner
-						top: activeFullscreen ? 'max(1rem, env(safe-area-inset-top))' : '1rem',
-						right: activeFullscreen ? 'max(1rem, env(safe-area-inset-right))' : '1rem',
-					}}>
+					style={
+						activeFullscreen
+							? {
+									// FULLSCREEN: Bottom-Right
+									bottom: 'max(2rem, env(safe-area-inset-bottom))',
+									right: 'max(2rem, env(safe-area-inset-right))',
+							  }
+							: {
+									// NORMAL: Top-Right
+									top: '1rem',
+									right: '1rem',
+							  }
+					}>
 					<button
 						onClick={toggleFullscreen}
 						className={clsx(
 							'p-3 rounded-full border border-border shadow-2xl transition-all active:scale-90',
-							// High contrast button for mobile
 							'bg-background/95 backdrop-blur-md text-accent hover:bg-accent hover:text-white'
 						)}
-						aria-label={activeFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
+						title={activeFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}>
 						{activeFullscreen ? <Minimize size={20} strokeWidth={2.5} /> : <Maximize size={20} strokeWidth={2.5} />}
 					</button>
 				</div>
@@ -18202,7 +18207,7 @@ export const Drawer = ({ isOpen, onClose, title, children, position = 'right', c
 	};
 
 	return createPortal(
-		<div className='fixed inset-0 z-[9999] isolate'>
+		<div className='fixed inset-0 z-[10050] isolate'>
 			{/* Backdrop */}
 			<div
 				className={clsx(

@@ -1,26 +1,32 @@
 import { Outlet } from 'react-router-dom';
-import { Menu, Search } from 'lucide-react'; // Added Search Icon
+import { Menu, Search } from 'lucide-react';
 import { useMainLayout } from '@/features/navigation/useNavigation';
 import { Sidebar } from './components/Sidebar';
 import DevAdminButton from '@/shared/components/ui/DevAdminButton';
 import Breadcrumbs from '@/shared/components/ui/Breadcrumbs';
 import GlobalSearch from '@/features/search/GlobalSearch';
-import { SearchProvider, useSearch } from '@/features/search/SearchContext'; // Import Provider
+import { SearchProvider, useSearch } from '@/features/search/SearchContext';
 
-// Separate component to access Context inside Provider
 const MobileHeaderActions = ({ vm }) => {
 	const { openSearch } = useSearch();
 
 	return (
-		<div className='lg:hidden flex items-center justify-between p-4 border-b border-border bg-background shrink-0'>
-			<button onClick={() => vm.setSidebarOpen(true)} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
-				<Menu size={20} />
+		// CHANGED: Added pt-safe for notch support and min-h for touch targets
+		<div className='lg:hidden flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] border-b border-border bg-background/95 backdrop-blur-md shrink-0 sticky top-0 z-40 transition-all'>
+			<button
+				onClick={() => vm.setSidebarOpen(true)}
+				className='p-2 -ml-2 text-muted-foreground hover:bg-muted rounded-full active:scale-95 transition-transform'
+				aria-label='Open Menu'>
+				<Menu size={24} strokeWidth={1.5} />
 			</button>
-			<h1 className='text-sm font-serif font-bold'>{vm.campaign?.name || 'Campaign'}</h1>
 
-			{/* NEW: Mobile Search Trigger */}
-			<button onClick={openSearch} className='p-2 text-muted-foreground hover:bg-muted rounded-md'>
-				<Search size={20} />
+			<h1 className='text-base font-serif font-bold truncate max-w-[60%]'>{vm.campaign?.name || 'Campaign'}</h1>
+
+			<button
+				onClick={openSearch}
+				className='p-2 -mr-2 text-muted-foreground hover:bg-muted rounded-full active:scale-95 transition-transform'
+				aria-label='Search'>
+				<Search size={24} strokeWidth={1.5} />
 			</button>
 		</div>
 	);
@@ -31,25 +37,27 @@ export default function MainLayout() {
 
 	return (
 		<SearchProvider>
-			<div className='flex h-screen bg-background text-foreground overflow-hidden'>
+			<div className='flex h-full w-full bg-background text-foreground overflow-hidden'>
 				<Sidebar vm={vm} />
-				<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col'>
-					{/* Updated Mobile Header */}
+				<main className='flex-1 h-full overflow-hidden bg-background relative flex flex-col w-full'>
+					{/* Mobile Header */}
 					<MobileHeaderActions vm={vm} />
 
+					{/* Desktop Breadcrumbs */}
 					<div className='absolute top-4 left-6 z-40 hidden lg:block pointer-events-none'>
 						<div className='pointer-events-auto'>
 							<Breadcrumbs />
 						</div>
 					</div>
 
-					<div className='flex-1 overflow-hidden relative'>
+					{/* Content Area */}
+					<div className='flex-1 overflow-hidden relative w-full'>
 						<Outlet />
 					</div>
+
 					<DevAdminButton />
 				</main>
 
-				{/* Search Modal lives here now */}
 				<GlobalSearch />
 			</div>
 		</SearchProvider>

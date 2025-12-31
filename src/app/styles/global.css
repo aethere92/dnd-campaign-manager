@@ -383,3 +383,33 @@ body:has(.drawer-open) .leaflet-container {
 	inset: 0 !important;
 	background: var(--background);
 }
+
+html,
+body,
+#root {
+	height: 100%;
+	/* Use dynamic viewport height if supported to handle mobile address bars */
+	height: 100dvh;
+	overflow: hidden; /* Prevent elastic scrolling on body */
+	overscroll-behavior: none; /* Disables pull-to-refresh on the app root */
+	-webkit-tap-highlight-color: transparent; /* Remove tap gray box on iOS */
+}
+
+/* Safe Area Utilities */
+.pt-safe {
+	padding-top: env(safe-area-inset-top, 20px);
+}
+.pb-safe {
+	padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.pl-safe {
+	padding-left: env(safe-area-inset-left, 0px);
+}
+.pr-safe {
+	padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* iOS Scroll Momentum */
+.custom-scrollbar {
+	-webkit-overflow-scrolling: touch;
+}

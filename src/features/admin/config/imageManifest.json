@@ -60,11 +60,19 @@
     "files": [
       "brindol_map.jpg",
       "demonic_ambush_map.png",
-      "drellin_ferry_map.jpg",
-      "elsir_vale_map.jpg",
+      "drellin_ferry_map.png",
+      "elsir_vale_map.png",
       "strategic_bridge_map.png",
       "vraath_courtyard_map.png",
       "witchwood_map.jpg"
+    ]
+  },
+  {
+    "category": "Assets > Map_backgrounds > Backups",
+    "path": "images/assets/map_backgrounds/backups/",
+    "files": [
+      "drellin_ferry_map.jpg",
+      "elsir_vale_map.jpg"
     ]
   },
   {
