@@ -1,75 +1,9 @@
+// features/wiki/hooks/useEntityContent.js
 import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
-
-/**
- * Helper: Extract and group mentioned entities from events and direct relationships
- */
-const extractMentions = (entity) => {
-	const mentionsMap = new Map();
-
-	// 1. Gather from direct relationships
-	if (entity.relationships) {
-		entity.relationships.forEach((rel) => {
-			if (!rel.entity_id) return;
-			mentionsMap.set(rel.entity_id, {
-				id: rel.entity_id,
-				name: rel.entity_name,
-				type: rel.entity_type,
-			});
-		});
-	}
-
-	// 2. Gather from Events (tags)
-	if (entity.events) {
-		entity.events.forEach((evt) => {
-			if (evt.relationships) {
-				evt.relationships.forEach((rel) => {
-					if (!rel.entity_id) return;
-					mentionsMap.set(rel.entity_id, {
-						id: rel.entity_id,
-						name: rel.entity_name,
-						type: rel.entity_type,
-					});
-				});
-			}
-		});
-	}
-
-	// 3. Group by Type
-	const groups = {
-		character: [],
-		npc: [],
-		location: [],
-		faction: [],
-		quest: [],
-		encounter: [],
-		other: [],
-	};
-
-	mentionsMap.forEach((item) => {
-		const type = item.type?.toLowerCase() || 'other';
-		if (groups[type]) {
-			groups[type].push(item);
-		} else {
-			groups.other.push(item);
-		}
-	});
-
-	// 4. Sort each group alphabetically
-	Object.keys(groups).forEach((key) => {
-		groups[key].sort((a, b) => a.name.localeCompare(b.name));
-	});
-
-	// 5. Remove empty groups
-	Object.keys(groups).forEach((key) => {
-		if (groups[key].length === 0) delete groups[key];
-	});
-
-	return groups;
-};
 
 export const useEntityContent = (entity, attributes, sections) => {
 	return useMemo(() => {
@@ -85,34 +19,48 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mainSummary = entity.description;
 		}
 
-		// --- NEW: TACTICAL MAP RESOLUTION ---
-		// We look for common map keys and use resolveImageUrl to handle path cleaning/BaseURL
+		// Resolve Map Image
 		const mapImageUrl = resolveImageUrl(attributes, 'any');
-		// Note: resolveImageUrl(attributes, 'any') checks background_image, image, icon etc.
-		// To be specific to your "crazy idea", let's do a manual check for map-specific keys first:
 		const specificMapPath = getAttributeValue(attributes, ['map_image', 'tactical_map', 'map']);
-		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
+		const finalMapUrl = specificMapPath
+			? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}`
+			: mapImageUrl; // Fallback to generic image if no specific map
 
-		// 2. NEW: Resolve Tactical Map Markers
+		// Safe JSON Parse for Markers
 		const rawMarkers = getAttributeValue(attributes, 'map_markers');
 		let parsedMarkers = [];
 		if (rawMarkers) {
-			try {
-				// Parse the JSON string stored in the attribute
-				parsedMarkers = typeof rawMarkers === 'string' ? JSON.parse(rawMarkers) : rawMarkers;
-			} catch (e) {
-				console.warn('Failed to parse map_markers JSON', e);
+			if (typeof rawMarkers === 'object') {
+				parsedMarkers = rawMarkers;
+			} else {
+				try {
+					parsedMarkers = JSON.parse(rawMarkers);
+				} catch (e) {
+					console.warn('Map markers parse error', e);
+				}
 			}
 		}
 
-		// Process events
+		// Transform Events
 		const events = transformEvents(entity.events);
 
-		// Process Mentions (for Sessions)
-		const mentions = entityIsSession ? extractMentions(entity) : null;
+		// Extract Mentions (Sessions only)
+		const mentions =
+			entityIsSession && entity.relationships
+				? entity.relationships.reduce((acc, rel) => {
+						// Simple grouping logic moved inline or keep helper if complex
+						const type = rel.entity_type?.toLowerCase() || 'other';
+						if (!acc[type]) acc[type] = [];
+						acc[type].push({
+							id: rel.entity_id,
+							name: rel.entity_name,
+							type: rel.entity_type,
+						});
+						return acc;
+				  }, {})
+				: null;
 
-		// NEW: Extract Level Up
-		const levelUp = getAttributeValue(attributes, ['level_up', 'Level Up', 'levelup']);
+		const levelUp = getAttributeValue(attributes, ['level_up', 'Level Up']);
 
 		return {
 			objectives: entityIsQuest ? entity.objectives || [] : null,

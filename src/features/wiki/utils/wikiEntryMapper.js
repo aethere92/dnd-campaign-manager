@@ -1,25 +1,11 @@
-import { getAttributeValue, parseAttributes } from '@/domain/entity/utils/attributeParser'; // Imported here
+// features/wiki/utils/wikiEntryMapper.js
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
-const extractSessionMeta = (session, attributes = []) => {
-	// REUSE: Use our upgraded utility instead of manual reduce
-	const attrs = parseAttributes(attributes);
-
-	const sessionNumber = getAttributeValue(attrs, ['session_number', 'Session', 'session']) || 999;
-	const sessionDate = getAttributeValue(attrs, ['session_date', 'Date', 'date']) || '';
-
-	return {
-		...session,
-		session_number: Number(sessionNumber),
-		session_date: sessionDate,
-		attributes: attrs,
-	};
-};
-
 export const transformWikiEntry = (data, type, additionalData = {}) => {
+	// --- SESSION ---
 	if (type === 'session') {
-		const meta = extractSessionMeta(data, additionalData.attributes || []);
-		const sortedEvents = (data.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
+		// Data comes from view_campaign_timeline, so structure is cleaner
+		const sortedEvents = (data.events || []).sort((a, b) => (a.order || 0) - (b.order || 0));
 
 		const eventRelMap = additionalData.eventRelMap || new Map();
 		sortedEvents.forEach((evt) => {
@@ -28,73 +14,67 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 
 		return {
 			id: data.id,
-			name: data.title,
+			name: data.name || data.title, // Handle both View (title) and potential Table (name) keys
 			type: 'session',
-			description: getAttributeValue(meta.attributes, 'Summary') || data.narrative,
-			attributes: {
-				...meta.attributes,
-				Session: meta.session_number,
-				Date: meta.session_date,
-			},
+			description: data.description || data.narrative,
+			attributes: data.attributes || {},
 			relationships: additionalData.sessionRelationships || [],
-			events: sortedEvents || [],
+			events: sortedEvents,
 		};
 	}
 
-	// Standard Entity Transformation
+	// --- STANDARD ENTITY ---
 	let entity = { ...data };
 
 	// Quest Objectives
 	if (type === 'quest' && additionalData.objectives) {
-		entity.objectives = additionalData.objectives.map((obj) => ({
-			...obj,
-			completed_session_number: obj.session?.session_number || null,
-			completed_session_title: obj.session?.title || null,
-		}));
+		entity.objectives = additionalData.objectives.map((obj) => {
+			// Handle JSONB session attributes
+			const sessionAttrs = obj.session?.attributes || {};
+			return {
+				...obj,
+				completed_session_number: sessionAttrs.session_number,
+				completed_session_title: obj.session?.title,
+			};
+		});
 	}
 
-	// NEW: Encounter Actions Transformation
+	// Encounter Actions
 	if (type === 'encounter' && additionalData.encounterActions) {
 		const actions = additionalData.encounterActions.map((action) => {
-			// 1. Resolve Actor Icon
-			const actorAttrs = parseAttributes(action.actor?.attributes);
-			const actorIcon = resolveImageUrl(actorAttrs, 'icon');
+			// Data comes from view_encounter_actions_hydrated
+			// actor and target are JSON objects with { id, name, type, attributes }
 
-			// 2. Resolve Target Icon (NEW)
-			const targetAttrs = parseAttributes(action.target?.attributes);
-			const targetIcon = resolveImageUrl(targetAttrs, 'icon');
-
-			const targetName = action.target_name || action.target?.name;
-			const targetId = action.target?.id;
-			const targetType = action.target?.type || 'default';
+			const actorAttrs = action.actor?.attributes || {};
+			const targetAttrs = action.target?.attributes || {};
 
 			return {
 				id: action.id,
 				round: action.round_number,
 				order: action.action_order,
 				type: action.action_type,
-				isFriendly: action.is_friendly,
+				isFriendly: action.result === 'SUCCESS', // Fallback logic if is_friendly missing from view
 				description: action.action_description,
 				result: action.result,
 				effect: action.effect,
 				actor: {
 					id: action.actor?.id,
-					name: action.actor_name || action.actor?.name || 'Unknown',
+					name: action.actor?.name || 'Unknown',
 					type: action.actor?.type || 'default',
-					iconUrl: actorIcon, // Pass Resolved Icon
+					iconUrl: resolveImageUrl(actorAttrs, 'icon'),
 				},
-				target: targetName
+				target: action.target?.id
 					? {
-							id: targetId,
-							name: targetName,
-							type: targetType,
-							iconUrl: targetIcon, // Pass Resolved Icon
+							id: action.target.id,
+							name: action.target.name,
+							type: action.target.type,
+							iconUrl: resolveImageUrl(targetAttrs, 'icon'),
 					  }
 					: null,
 			};
 		});
 
-		// ... grouping logic
+		// Group by Round
 		const rounds = {};
 		actions.forEach((action) => {
 			if (!rounds[action.round]) rounds[action.round] = [];
@@ -104,7 +84,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 		entity.combatRounds = rounds;
 	}
 
-	// Event Processing
+	// Event Session Mapping
 	let events = entity.events;
 	if (events && typeof events === 'object' && !Array.isArray(events)) {
 		events = Object.values(events).flat();
@@ -115,7 +95,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 			...event,
 			session_number:
 				event.session_id && additionalData.sessionMap.has(event.session_id)
-					? additionalData.sessionMap.get(event.session_id) - 1
+					? additionalData.sessionMap.get(event.session_id) - 1 // 0-based index for calendar
 					: null,
 		}));
 
