@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-02 11:03:15
+Generated: 2026-01-02 12:30:15
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -36,7 +36,6 @@ app\components\RouteLoading.jsx:
   → @/shared/components/ui/LoadingSpinner
 
 domain\entity\api\entityService.js:
-  → @/domain/entity/utils/attributeParser
   → @/features/campaign/api/campaignService
   → @/shared/api/supabaseClient
 
@@ -571,7 +570,6 @@ features\timeline\TimelinePage.jsx:
   → @/features/table-of-contents/TableOfContents
 
 features\timeline\api\timelineService.js:
-  → @/domain/entity/utils/attributeParser
   → @/shared/api/supabaseClient
 
 features\timeline\components\TimelineEvent.jsx:
@@ -764,6 +762,7 @@ features\wiki\hooks\useEntityFetching.js:
   → @/domain/entity/api/entityService
   → @/features/campaign/CampaignContext
   → @tanstack/react-query
+  → react
 
 features\wiki\hooks\useEntityGrouping.js:
   → @/features/wiki/config/groupingConfig
@@ -839,7 +838,6 @@ features\wiki\utils\relationshipMapper.js:
   → @/domain/entity/config/entityConfig
 
 features\wiki\utils\wikiEntryMapper.js:
-  → @/domain/entity/utils/attributeParser
   → @/shared/utils/imageUtils
 
 features\wiki\utils\wikiUtils.js:

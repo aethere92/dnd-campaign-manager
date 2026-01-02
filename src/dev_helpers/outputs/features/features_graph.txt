@@ -327,10 +327,7 @@ export function useGraphViewModel() {
 import { supabase } from '@/shared/api/supabaseClient';
 
 export const getGraphData = async (campaignId) => {
-	const { data, error } = await supabase
-		.from('entity_complete_view')
-		.select('id, name, type, relationships, attributes')
-		.eq('campaign_id', campaignId);
+	const { data, error } = await supabase.from('view_campaign_graph').select('*').eq('campaign_id', campaignId);
 
 	if (error) {
 		console.error('Graph Fetch Error:', error);
@@ -608,35 +605,41 @@ const FALLBACK_ICON_PATH = 'images/icons';
 export const transformGraphData = (rawEntities) => {
 	if (!rawEntities || rawEntities.length === 0) return [];
 
-	const entities = rawEntities.filter((e) => {
-		const type = e.type?.toLowerCase();
-		return type !== 'session_event' && type !== 'event';
-	});
+	const entities = rawEntities;
 
 	const nodes = [];
 	const edges = [];
 	const entityIds = new Set(entities.map((e) => e.id));
-	const connectedNodeIds = new Set();
 	const uniqueEdgeTracker = new Set();
-	const degreeMap = new Map();
 
-	// Pass 1: Edges
+	// FIX: Re-introduce client-side degree calculation
+	// We must count ONLY the edges that actually appear in the graph
+	// to ensure the layout physics work correctly.
+	const visualDegreeMap = new Map();
+	const connectedNodeIds = new Set();
+
+	// Pass 1: Edges & Degree Calculation
 	entities.forEach((entity) => {
 		(entity.relationships || []).forEach((rel) => {
-			if (!entityIds.has(rel.entity_id)) return;
+			// Ensure target exists in our visible dataset
+			if (!entityIds.has(rel.target)) return;
 
-			const [id1, id2] = [entity.id, rel.entity_id].sort();
+			// Sort IDs to treat A->B and B->A as the same visual edge
+			const [id1, id2] = [entity.id, rel.target].sort();
 			const edgeKey = `${id1}-${id2}`;
 
 			if (uniqueEdgeTracker.has(edgeKey)) return;
 			uniqueEdgeTracker.add(edgeKey);
 
+			// Track connections
 			connectedNodeIds.add(entity.id);
-			connectedNodeIds.add(rel.entity_id);
+			connectedNodeIds.add(rel.target);
 
-			degreeMap.set(entity.id, (degreeMap.get(entity.id) || 0) + 1);
-			degreeMap.set(rel.entity_id, (degreeMap.get(rel.entity_id) || 0) + 1);
+			// Increment Visual Degree
+			visualDegreeMap.set(entity.id, (visualDegreeMap.get(entity.id) || 0) + 1);
+			visualDegreeMap.set(rel.target, (visualDegreeMap.get(rel.target) || 0) + 1);
 
+			// Determine Color
 			const rank = getAffinityRank(rel.type);
 			let edgeColor = INK_COLORS.NEUTRAL;
 			if (rank === 1) edgeColor = INK_COLORS.ALLY;
@@ -647,7 +650,7 @@ export const transformGraphData = (rawEntities) => {
 				data: {
 					id: `e-${edgeKey}`,
 					source: entity.id,
-					target: rel.entity_id,
+					target: rel.target,
 					color: edgeColor,
 				},
 			});
@@ -656,11 +659,17 @@ export const transformGraphData = (rawEntities) => {
 
 	// Pass 2: Nodes
 	entities.forEach((entity) => {
-		if (!connectedNodeIds.has(entity.id)) return;
+		// Filter orphans: Only show if connected OR if it's a major hub
+		// (Using the new visual degree for this check)
+		const degree = visualDegreeMap.get(entity.id) || 0;
+		if (degree === 0) return;
 
 		const config = getEntityConfig(entity.type);
-		const finalIconUrl = resolveImageUrl(entity.attributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
-		const degree = degreeMap.get(entity.id) || 1;
+
+		// Use pre-fetched icon string via compatibility wrapper
+		const mockAttributes = { icon: entity.icon };
+		const finalIconUrl = resolveImageUrl(mockAttributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
+
 		const isMinor = degree < 3;
 
 		nodes.push({
@@ -672,6 +681,7 @@ export const transformGraphData = (rawEntities) => {
 				color: config.color,
 				image: finalIconUrl,
 				type: entity.type,
+				// FIX: Pass the VISUAL degree, not the DB degree
 				degree: degree,
 			},
 		});

@@ -259,75 +259,38 @@ PARTIAL BUNDLE: DOMAIN ENTITY
 
 --- FILE: domain\entity\api\entityService.js ---
 import { supabase } from '@/shared/api/supabaseClient';
-import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { getCampaigns } from '@/features/campaign/api/campaignService';
-
-// --- HELPER: Extract Session Meta ---
-const extractSessionMeta = (session, attributes = []) => {
-	let attrs = attributes;
-	if (Array.isArray(attrs)) {
-		attrs = attrs.reduce((acc, curr) => {
-			acc[curr.name] = curr.value;
-			return acc;
-		}, {});
-	}
-	attrs = attrs || {};
-
-	const sessionNumber = getAttributeValue(attrs, ['session_number', 'Session', 'session']) || 999;
-	const sessionDate = getAttributeValue(attrs, ['session_date', 'Date', 'date']) || '';
-
-	return {
-		...session,
-		session_number: Number(sessionNumber),
-		session_date: sessionDate,
-		attributes: attrs,
-	};
-};
 
 // --- API METHODS ---
 
 export const getSessions = async (campaignId) => {
-	const { data: sessions, error } = await supabase
-		.from('sessions')
-		.select('id, title, narrative')
-		.eq('campaign_id', campaignId);
+	// OPTIMIZATION: Use the pre-aggregated view
+	const { data, error } = await supabase
+		.from('view_campaign_timeline')
+		.select('*')
+		.eq('campaign_id', campaignId)
+		.order('session_number', { ascending: true });
 
 	if (error) throw error;
-	if (!sessions.length) return [];
 
-	const sessionIds = sessions.map((s) => s.id);
-	const { data: attributes } = await supabase
-		.from('attributes')
-		.select('entity_id, name, value')
-		.in('entity_id', sessionIds);
-
-	const attrMap = new Map();
-	(attributes || []).forEach((attr) => {
-		if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
-		attrMap.get(attr.entity_id).push(attr);
-	});
-
-	const processed = sessions.map((s) => {
-		const sAttrs = attrMap.get(s.id) || [];
-		const meta = extractSessionMeta(s, sAttrs);
-
-		return {
-			id: meta.id,
-			name: meta.title,
-			type: 'session',
-			session_number: meta.session_number,
-			session_date: meta.session_date,
-			summary: getAttributeValue(meta.attributes, 'Summary') || meta.narrative,
-			narrative: meta.narrative,
-			attributes: meta.attributes,
-		};
-	});
-
-	return processed.sort((a, b) => a.session_number - b.session_number);
+	// Map View structure to Domain structure
+	return (data || []).map((s) => ({
+		id: s.session_id,
+		name: s.session_title,
+		type: 'session',
+		session_number: s.session_number,
+		session_date: s.session_date,
+		narrative: s.session_narrative,
+		// Ensure generic attributes object exists for compatibility
+		attributes: {
+			session_number: s.session_number,
+			session_date: s.session_date,
+		},
+	}));
 };
 
-// Generic fetcher
 const getCompleteEntities = async (campaignId, type) => {
+	// Uses the detailed view for full entity pages
 	const { data, error } = await supabase
 		.from('entity_complete_view')
 		.select('id, name, type, description, attributes, relationships')
@@ -352,10 +315,8 @@ export const getEntities = async (campaignId, type) => {
 };
 
 export const getGraphData = async (campaignId) => {
-	const { data, error } = await supabase
-		.from('entity_complete_view')
-		.select('id, name, type, relationships, attributes')
-		.eq('campaign_id', campaignId);
+	// OPTIMIZATION: Use the graph-specific view (Nodes + Adjacency List)
+	const { data, error } = await supabase.from('view_campaign_graph').select('*').eq('campaign_id', campaignId);
 
 	if (error) {
 		console.error('Graph Fetch Error:', error);
@@ -365,212 +326,177 @@ export const getGraphData = async (campaignId) => {
 };
 
 export const getEntityIndex = async (campaignId) => {
+	// OPTIMIZATION: Use lightweight index view (No heavy JSON joins)
 	const { data, error } = await supabase
-		.from('entity_complete_view')
-		.select('id, name, type, attributes, relationships, description')
+		.from('view_entity_index')
+		.select('*') // Selects: id, name, type, description, icon_url, status, affinity
 		.eq('campaign_id', campaignId);
 
 	if (error) return [];
-	return data.sort((a, b) => b.name.length - a.name.length);
+
+	// Remap flat columns to expected 'attributes' object for UI compatibility
+	return data
+		.map((e) => ({
+			...e,
+			attributes: {
+				icon: e.icon_url,
+				status: e.status,
+				affinity: e.affinity,
+			},
+		}))
+		.sort((a, b) => b.name.length - a.name.length);
 };
 
-export const getWikiEntry = async (id, type) => {
-	if (type === 'session') {
-		const { data, error } = await supabase
-			.from('sessions')
-			.select(`*, events:session_events (*)`)
-			.eq('id', id)
-			.single();
-		if (error) throw error;
+// --- WIKI ENTRY STRATEGIES ---
 
-		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
+const fetchSessionWikiEntry = async (id) => {
+	// 1. Fetch Core Data + Events + Mentions via View
+	// The view_campaign_timeline has everything we need for the session structure
+	const { data: timelineData, error } = await supabase
+		.from('view_campaign_timeline')
+		.select('*')
+		.eq('session_id', id)
+		.single();
 
-		const eventIds = (data.events || []).map((e) => e.id);
-		let eventRelMap = new Map();
+	if (error) throw error;
 
-		if (eventIds.length > 0) {
-			const { data: rels } = await supabase
-				.from('entity_relationships')
-				.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
-				.in('from_entity_id', eventIds);
+	// 2. Fetch Direct Session Relationships (not event-tied)
+	// We still need the generic relationships for the sidebar
+	const { data: directRels } = await supabase
+		.from('entity_relationships')
+		.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
+		.eq('from_entity_id', id);
 
-			(rels || []).forEach((rel) => {
-				if (!eventRelMap.has(rel.from_entity_id)) eventRelMap.set(rel.from_entity_id, []);
-				eventRelMap.get(rel.from_entity_id).push({
-					entity_id: rel.target.id,
-					entity_name: rel.target.name,
-					entity_type: rel.target.type,
+	const sessionRelationships = (directRels || []).map((rel) => ({
+		entity_id: rel.target.id,
+		entity_name: rel.target.name,
+		entity_type: rel.target.type,
+		type: rel.relationship_type,
+	}));
+
+	// 3. Transform Event Tags to Mention Map
+	// The view returns events with 'tags'. We need to flatten this for the UI.
+	const eventRelMap = new Map();
+	(timelineData.events || []).forEach((event) => {
+		if (event.tags && event.tags.length > 0) {
+			eventRelMap.set(
+				event.id,
+				event.tags.map((tag) => ({
+					entity_id: tag.entity_id,
+					entity_name: tag.name,
+					entity_type: tag.type,
 					type: 'mention',
-				});
-			});
+				}))
+			);
 		}
+	});
 
-		const { data: directRels } = await supabase
-			.from('entity_relationships')
-			.select(`target:entities!to_entity_id ( id, name, type ), relationship_type`)
-			.eq('from_entity_id', id);
+	return {
+		data: {
+			id: timelineData.session_id,
+			title: timelineData.session_title,
+			narrative: timelineData.session_narrative,
+			events: timelineData.events, // Pre-sorted and aggregated
+			attributes: {
+				session_number: timelineData.session_number,
+				session_date: timelineData.session_date,
+			},
+		},
+		type: 'session',
+		additional: { eventRelMap, sessionRelationships },
+	};
+};
 
-		const sessionRelationships = (directRels || []).map((rel) => ({
-			entity_id: rel.target.id,
-			entity_name: rel.target.name,
-			entity_type: rel.target.type,
-			type: rel.relationship_type,
-		}));
+const fetchEncounterWikiEntry = async (id, entityData) => {
+	// OPTIMIZATION: Use the Hydrated View
+	const { data: actions, error } = await supabase
+		.from('view_encounter_actions_hydrated')
+		.select('*')
+		.eq('encounter_id', id)
+		.order('round_number', { ascending: true })
+		.order('action_order', { ascending: true });
 
-		return {
-			data,
-			type: 'session',
-			additional: { attributes, eventRelMap, sessionRelationships },
-		};
-	}
+	if (error) console.error('Encounter Actions Fetch Error:', error);
 
-	// --- STANDARD ENTITY FETCH ---
-	const { data, error: entityError } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
-	if (entityError) throw entityError;
+	return {
+		data: entityData,
+		type: 'encounter',
+		additional: { encounterActions: actions || [] },
+	};
+};
 
-	const additional = {};
+const fetchQuestWikiEntry = async (id, entityData) => {
+	// OPTIMIZATION: Single query with nested select for Session Attributes
+	const { data: objectives, error } = await supabase
+		.from('quest_objectives')
+		.select(
+			`
+            *,
+            session:sessions (
+                id, 
+                title,
+                attributes
+            )
+        `
+		)
+		.eq('quest_id', id)
+		.order('order_index', { ascending: true });
 
-	// FETCH QUEST OBJECTIVES WITH SESSION DATA
-	if (type === 'quest') {
-		const { data: objectives, error: objError } = await supabase
-			.from('quest_objectives')
-			.select('*, session:sessions(id, title)') // Basic join for title
-			.eq('quest_id', id)
-			.order('order_index', { ascending: true });
+	if (error) console.error('Quest Objectives Error:', error);
 
-		if (objError) console.error('Error fetching objectives:', objError);
-
-		if (objectives && objectives.length > 0) {
-			// 2. Fetch Session Numbers (stored as attributes)
-			const sessionIds = objectives.map((o) => o.completed_session_id).filter(Boolean);
-
-			if (sessionIds.length > 0) {
-				const { data: attrs } = await supabase
-					.from('attributes')
-					.select('entity_id, value')
-					.in('entity_id', sessionIds)
-					.or('name.eq.session_number,name.eq.Session');
-
-				const sessionNumMap = new Map();
-				(attrs || []).forEach((a) => sessionNumMap.set(a.entity_id, a.value));
-
-				// 3. Attach number to the session object inside the objective
-				objectives.forEach((obj) => {
-					if (obj.session) {
-						obj.session.session_number = sessionNumMap.get(obj.session.id);
-					}
-				});
-			}
+	// Client-side cleanup: Extract session_number from JSONB
+	const processedObjectives = (objectives || []).map((obj) => {
+		if (obj.session) {
+			const attrs = obj.session.attributes || {};
+			obj.session.session_number = attrs.session_number || attrs.session;
 		}
+		return obj;
+	});
 
-		additional.objectives = objectives || [];
+	return {
+		data: entityData,
+		type: 'quest',
+		additional: { objectives: processedObjectives },
+	};
+};
+
+// Main Entry Point
+export const getWikiEntry = async (id, type) => {
+	// Strategy: Session is unique because it comes from a different base table/view
+	if (type === 'session') {
+		return fetchSessionWikiEntry(id);
 	}
 
-	// 2. ENCOUNTER ACTIONS (UPDATED)
-	if (type === 'encounter') {
-		// Step A: Fetch Actions with basic Actor/Target info
-		const { data: actions, error: actError } = await supabase
-			.from('encounter_actions')
-			.select(
-				`
-                *,
-                actor:entities!actor_entity_id (id, name, type),
-                target:entities!target_entity_id (id, name, type)
-            `
-			)
-			.eq('encounter_id', id)
-			.order('round_number', { ascending: true })
-			.order('action_order', { ascending: true });
+	// Standard Entities: Fetch Core Data first
+	const { data, error } = await supabase.from('entity_complete_view').select('*').eq('id', id).single();
+	if (error) throw error;
 
-		if (actError) console.error('Error fetching encounter actions:', actError);
+	// Strategy Pattern for Additional Data
+	if (type === 'encounter') return fetchEncounterWikiEntry(id, data);
+	if (type === 'quest') return fetchQuestWikiEntry(id, data);
 
-		if (actions && actions.length > 0) {
-			// Step B: Get ALL unique Entity IDs (Actors AND Targets)
-			const entityIds = new Set();
-			actions.forEach((a) => {
-				if (a.actor?.id) entityIds.add(a.actor.id);
-				if (a.target?.id) entityIds.add(a.target.id);
-			});
-
-			// Step C: Fetch attributes for these entities
-			let entityAttrs = [];
-			if (entityIds.size > 0) {
-				const { data: attrs } = await supabase
-					.from('attributes')
-					.select('entity_id, name, value')
-					.in('entity_id', Array.from(entityIds));
-				entityAttrs = attrs || [];
-			}
-
-			// Step D: Map attributes
-			const attrMap = new Map();
-			entityAttrs.forEach((attr) => {
-				if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
-				attrMap.get(attr.entity_id).push(attr);
-			});
-
-			// Step E: Attach to action objects
-			actions.forEach((action) => {
-				if (action.actor?.id) {
-					action.actor.attributes = attrMap.get(action.actor.id) || [];
-				}
-				if (action.target?.id) {
-					action.target.attributes = attrMap.get(action.target.id) || [];
-				}
-			});
-		}
-
-		additional.encounterActions = actions || [];
-	}
-
-	// RESOLVE SESSION NUMBERS FOR EVENTS
-	let events = data.events;
-	if (events && typeof events === 'object' && !Array.isArray(events)) {
-		events = Object.values(events).flat();
-	}
-
-	if (events && Array.isArray(events) && events.length > 0) {
-		const sessionIds = [...new Set(events.map((e) => e.session_id).filter(Boolean))];
-		if (sessionIds.length > 0) {
-			const { data: sessions } = await supabase.from('sessions').select('id').in('id', sessionIds);
-
-			const { data: attrs } = await supabase
-				.from('attributes')
-				.select('entity_id, name, value')
-				.in('entity_id', sessionIds)
-				.or('name.eq.session_number,name.eq.Session');
-
-			const sessionMap = new Map();
-			(sessions || []).forEach((s) => {
-				const sAttr = (attrs || []).find((a) => a.entity_id === s.id);
-				const num = sAttr ? parseInt(sAttr.value) : null;
-				sessionMap.set(s.id, num);
-			});
-
-			additional.sessionMap = sessionMap;
-		}
-	}
-
-	return { data, type, additional };
+	// Default
+	return { data, type, additional: {} };
 };
 
 export const getTooltipData = async (id, type) => {
 	if (type === 'session') {
 		const { data } = await supabase.from('sessions').select('title, narrative').eq('id', id).single();
-		const { data: attributes } = await supabase.from('attributes').select('name, value').eq('entity_id', id);
 		return {
 			name: data.title,
 			type: 'session',
 			description: data.narrative,
-			attributes,
+			attributes: {},
 		};
 	}
 
+	// Lightweight fetch for tooltip
 	const { data, error } = await supabase
-		.from('entity_complete_view')
+		.from('entity_complete_view') // Could optimize to view_entity_index if attributes aren't needed
 		.select('name, type, description, attributes')
 		.eq('id', id)
 		.single();
+
 	if (error) throw error;
 	return data;
 };

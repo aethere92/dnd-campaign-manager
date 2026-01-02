@@ -1,8 +1,9 @@
-// features/wiki/hooks/useEntityContent.js
 import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+// Removed unused resolveImageUrl import if not used elsewhere,
+// or keep if used for other things like parsing attributes (which it is often exported with)
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 export const useEntityContent = (entity, attributes, sections) => {
@@ -19,12 +20,12 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mainSummary = entity.description;
 		}
 
-		// Resolve Map Image
-		const mapImageUrl = resolveImageUrl(attributes, 'any');
+		// --- MAP RESOLUTION FIX ---
+		// 1. Look ONLY for specific map keys. Do not fallback to 'icon' or 'background'.
 		const specificMapPath = getAttributeValue(attributes, ['map_image', 'tactical_map', 'map']);
-		const finalMapUrl = specificMapPath
-			? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}`
-			: mapImageUrl; // Fallback to generic image if no specific map
+
+		// 2. Construct URL if path exists
+		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
 
 		// Safe JSON Parse for Markers
 		const rawMarkers = getAttributeValue(attributes, 'map_markers');
@@ -48,7 +49,6 @@ export const useEntityContent = (entity, attributes, sections) => {
 		const mentions =
 			entityIsSession && entity.relationships
 				? entity.relationships.reduce((acc, rel) => {
-						// Simple grouping logic moved inline or keep helper if complex
 						const type = rel.entity_type?.toLowerCase() || 'other';
 						if (!acc[type]) acc[type] = [];
 						acc[type].push({

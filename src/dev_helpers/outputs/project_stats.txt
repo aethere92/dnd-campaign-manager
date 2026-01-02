@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-02 11:03:15
+Generated: 2026-01-02 12:30:15
 ================================================================
 
 ### OVERALL STATISTICS
 
 Total files: 177
-Total lines: 16,298
-Non-empty lines: 14,447
-Comment lines: 1,336
-Total size: 504,801 bytes (492.97 KB)
-Average lines per file: 92.1
+Total lines: 16,044
+Non-empty lines: 14,233
+Comment lines: 1,353
+Total size: 497,503 bytes (485.84 KB)
+Average lines per file: 90.6
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 92.1
 
 .js:
   Files: 63
-  Lines: 6,050
-  Size: 167,925 bytes (163.99 KB)
+  Lines: 5,796
+  Size: 160,627 bytes (156.86 KB)
 
 .json:
   Files: 1
@@ -44,9 +44,9 @@ features\admin\api\adminService.js: 379 lines
 features\dashboard\api\dashboardService.js: 377 lines
 features\admin\components\AdminForm.jsx: 366 lines
 features\admin\components\EncounterManager.jsx: 354 lines
-domain\entity\api\entityService.js: 317 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
+domain\entity\api\entityService.js: 243 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\atlas\components\AtlasSidebar.jsx: 218 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
@@ -69,8 +69,8 @@ app:
 
 domain_entity:
   Files: 13
-  Lines: 1,487
-  Size: 40,743 bytes (39.79 KB)
+  Lines: 1,413
+  Size: 38,216 bytes (37.32 KB)
 
 features_admin:
   Files: 21
@@ -94,8 +94,8 @@ features_dashboard:
 
 features_graph:
   Files: 7
-  Lines: 404
-  Size: 10,629 bytes (10.38 KB)
+  Lines: 414
+  Size: 11,120 bytes (10.86 KB)
 
 features_navigation:
   Files: 7
@@ -124,13 +124,13 @@ features_table-of-contents:
 
 features_timeline:
   Files: 6
-  Lines: 453
-  Size: 13,519 bytes (13.20 KB)
+  Lines: 360
+  Size: 10,827 bytes (10.57 KB)
 
 features_wiki:
   Files: 41
-  Lines: 3,675
-  Size: 119,000 bytes (116.21 KB)
+  Lines: 3,578
+  Size: 116,430 bytes (113.70 KB)
 
 root:
   Files: 1
