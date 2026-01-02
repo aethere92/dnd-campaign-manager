@@ -4,7 +4,6 @@ PARTIAL BUNDLE: DOMAIN ENTITY
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
-  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx

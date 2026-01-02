@@ -22,6 +22,25 @@ const client = new Client({
 	ssl: { rejectUnauthorized: false },
 });
 
+/**
+ * Helper to truncate long text fields to 100 words for the diagnostic dump
+ */
+const processRows = (rows) => {
+	return rows.map((row) => {
+		const processedRow = { ...row };
+		for (const key in processedRow) {
+			const val = processedRow[key];
+			if (typeof val === 'string') {
+				const words = val.split(/\s+/).filter(Boolean);
+				if (words.length > 100) {
+					processedRow[key] = words.slice(0, 100).join(' ') + '... [TRUNCATED AT 100 WORDS]';
+				}
+			}
+		}
+		return processedRow;
+	});
+};
+
 const run = async () => {
 	try {
 		console.log('🔌 Connecting to Database...');
@@ -37,14 +56,14 @@ const run = async () => {
 		console.log('📦 Fetching Tables & Samples...');
 
 		const tablesRes = await client.query(`
-      SELECT 
-        c.relname as table_name,
-        c.relrowsecurity as rls_enabled
-      FROM pg_class c
-      JOIN pg_namespace n ON n.oid = c.relnamespace
-      WHERE n.nspname = 'public' AND c.relkind = 'r'
-      ORDER BY c.relname;
-    `);
+			SELECT 
+				c.relname as table_name,
+				c.relrowsecurity as rls_enabled
+			FROM pg_class c
+			JOIN pg_namespace n ON n.oid = c.relnamespace
+			WHERE n.nspname = 'public' AND c.relkind = 'r'
+			ORDER BY c.relname;
+		`);
 
 		for (const row of tablesRes.rows) {
 			const rlsStatus = row.rls_enabled ? '[🔒 RLS ENABLED]' : '[⚠️ RLS DISABLED]';
@@ -55,11 +74,11 @@ const run = async () => {
 			// Get Columns
 			const cols = await client.query(
 				`
-        SELECT column_name, data_type, is_nullable, column_default
-        FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = $1
-        ORDER BY ordinal_position;
-      `,
+					SELECT column_name, data_type, is_nullable, column_default
+					FROM information_schema.columns
+					WHERE table_schema = 'public' AND table_name = $1
+					ORDER BY ordinal_position;
+				`,
 				[row.table_name]
 			);
 
@@ -73,8 +92,10 @@ const run = async () => {
 			try {
 				const samples = await client.query(`SELECT * FROM "${row.table_name}" LIMIT 2`);
 				if (samples.rows.length > 0) {
+					// TRUNCATION APPLIED HERE
+					const cleanData = processRows(samples.rows);
 					output += `\n  -- EXAMPLE DATA (${samples.rows.length} rows) --\n`;
-					output += JSON.stringify(samples.rows, null, 2) + '\n';
+					output += JSON.stringify(cleanData, null, 2) + '\n';
 				} else {
 					output += `\n  -- NO DATA --\n`;
 				}
@@ -148,8 +169,10 @@ const run = async () => {
 			try {
 				const samples = await client.query(`SELECT * FROM "${view.table_name}" LIMIT 2`);
 				if (samples.rows.length > 0) {
+					// TRUNCATION APPLIED HERE
+					const cleanData = processRows(samples.rows);
 					output += `\n  -- VIEW EXAMPLE RESULT --\n`;
-					output += JSON.stringify(samples.rows, null, 2) + '\n';
+					output += JSON.stringify(cleanData, null, 2) + '\n';
 				}
 			} catch (err) {
 				output += `\n  -- ERROR READING VIEW: ${err.message} --\n`;

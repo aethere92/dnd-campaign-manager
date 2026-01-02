@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/2/2026, 9:30:38 AM
+   Generated: 1/2/2026, 11:03:10 AM
 =========================================
 
 -----------------------------------------
@@ -83,6 +83,7 @@ TABLE: characters [⚠️ RLS DISABLED]
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
   description               text             
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -91,16 +92,88 @@ TABLE: characters [⚠️ RLS DISABLED]
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Loraine",
     "created_at": "2025-12-07T20:22:47.251Z",
-    "updated_at": "2025-12-24T08:06:30.125Z",
-    "description": "Work in progress, will be available later."
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "description": "Work in progress, will be available later.",
+    "attributes": {
+      "race": "Vampire",
+      "class": "Fighter Battlemaster",
+      "level": "8",
+      "speed": "30ft.",
+      "is_active": "true",
+      "hit points": "N/A",
+      "armor class": "N/A"
+    }
   },
   {
     "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Olek",
     "created_at": "2025-11-21T11:18:32.073Z",
-    "updated_at": "2025-12-07T21:15:10.805Z",
-    "description": null
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "description": null,
+    "attributes": {
+      "icon": "../../images/assets/character_thumbnails/campaign_002/olek.jpeg",
+      "race": "Aasimar",
+      "class": "Paladin / Warlock",
+      "level": "8",
+      "speed": "40ft.",
+      "is_active": "true",
+      "hit points": "59",
+      "armor class": "19",
+      "saving throw": [
+        {
+          "value": "STR +6",
+          "is_private": false
+        },
+        {
+          "value": "DEX +3",
+          "is_private": false
+        },
+        {
+          "value": "CON +6",
+          "is_private": false
+        },
+        {
+          "value": "INT +4",
+          "is_private": false
+        },
+        {
+          "value": "WIS +8",
+          "is_private": false
+        },
+        {
+          "value": "CHA +11",
+          "is_private": false
+        }
+      ],
+      "ability score": [
+        {
+          "value": "STR 14 (+2)",
+          "is_private": false
+        },
+        {
+          "value": "DEX 8 (-1)",
+          "is_private": false
+        },
+        {
+          "value": "CON 14 (+2)",
+          "is_private": false
+        },
+        {
+          "value": "INT 10 (+0)",
+          "is_private": false
+        },
+        {
+          "value": "WIS 12 (+1)",
+          "is_private": false
+        },
+        {
+          "value": "CHA 18 (+4)",
+          "is_private": false
+        }
+      ],
+      "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg.jpg"
+    }
   }
 ]
 
@@ -167,6 +240,7 @@ TABLE: encounters [⚠️ RLS DISABLED]
   description               text             
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -176,15 +250,23 @@ TABLE: encounters [⚠️ RLS DISABLED]
     "name": "Demonic Ambush",
     "description": "Pursuing thieves into a dark alley, the party fell into a trap set by Brotherhood agents. A hooded summoner conjured lesser demons while archers rained poison arrows from the rooftops. Kaedin and Loraine held the line against the demonic onslaught, utilizing echoes and vampiric blood magic, while Soshi and Bonnie provided devastating fire support and healing. Despite being poisoned and outnumbered, the party broke the summoner's defenses, killing the demons and forcing the surviving agents to flee.",
     "created_at": "2025-12-25T15:17:42.658Z",
-    "updated_at": "2025-12-30T16:18:54.693Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "status": "Completed",
+      "map_image": "images/assets/map_backgrounds/demonic_ambush_map.png",
+      "background_image": "images/assets/encounter_backgrounds/campaign_002/demonic_ambush_bg.jpg"
+    }
   },
   {
-    "id": "43a48d9e-09c5-4d1f-aadf-8f3fe0288436",
+    "id": "8e2cb244-6777-4910-af72-5538358efc14",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "The Arthropleura Ambush",
-    "description": "While navigating the cavern depths, the party was ambushed by Arthropleura fersanguinus — giant millipedes under the control of the goblin Te Snatchers clan. The battle was particularly grueling as the creatures' highly acidic blood melted the party's equipment, destroying Olek's shield and severely damaging the group's armor. The tide turned when Bonnie successfully befriended two Megatheriums, Gică and Mișu, who went into a feral frenzy against the insects. The party managed to crush the insectoid hunters, though they were left half-armored and exhausted.",
-    "created_at": "2025-12-26T18:26:40.343Z",
-    "updated_at": "2025-12-26T19:16:59.205Z"
+    "name": "Reptile battle",
+    "description": null,
+    "created_at": "2025-12-26T18:26:12.756Z",
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "status": "Completed"
+    }
   }
 ]
 
@@ -201,20 +283,20 @@ TABLE: entities [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
     "type": "npc",
-    "name": "Jareth",
-    "created_at": "2025-11-21T16:55:16.081Z",
+    "name": "Bianca Turiados",
+    "created_at": "2025-11-21T06:46:31.612Z",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "description": "A remarkably muscled Drow found in the shopping district, operating a general store in Drellin's Ferry under an illusion magic to appear clothed, though he is actually nude. He has been waiting 20 years for a signal from Matron Zaya. During the evacuation, his shop was abandoned, looted by thieves, and subsequently became the site of trigger of the demon battle in Drellin's Ferry.\n"
+    "description": "Last descendant and true Queen of Pelagos. Fey-touched with lightning-veined eyes.\n"
   },
   {
-    "id": "1f839a67-9fe6-42fa-976a-741f6a5c0a99",
-    "type": "location",
-    "name": "Shrine of Pelor",
-    "created_at": "2025-11-21T06:38:22.522Z",
+    "id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "type": "npc",
+    "name": "Commander Turiados",
+    "created_at": "2025-11-19T21:06:38.740Z",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "description": "A small religious shrine dedicated to Pelor, maintained by Brother Denny and other clerics. Norr and Soshi visited with offerings seeking information about Vraath Keep, learning it was a cursed fortress with undead guardians and blighted lands. Brother Denny showed little interest in helping with the Thylacoleo cubs but accepted fruit offerings. The shrine serves as a minor waypoint for travelers seeking blessings, though Brother Denny's aggressive salesmanship and transactional approach to faith has diminished its spiritual reputation."
+    "description": "7-foot-tall warrior covered in Sahuagin shaman tattoos. Formerly Order of Inos."
   }
 ]
 
@@ -263,6 +345,7 @@ TABLE: factions [⚠️ RLS DISABLED]
   description               text             
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -272,7 +355,10 @@ TABLE: factions [⚠️ RLS DISABLED]
     "name": "The Harpers",
     "description": "A semi-secret organization dedicated to promoting good and preserving history. They have not yet made a direct appearance in the campaign, but their reputation as a network of spies and informants makes them a potential future ally against the widespread conspiracy of the Red Hand and Arcane Brotherhood.",
     "created_at": "2025-11-21T17:01:11.633Z",
-    "updated_at": "2025-12-24T14:22:04.489Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "affinity": "neutral"
+    }
   },
   {
     "id": "fe902f1d-1aeb-4029-97f4-1e247aa902ac",
@@ -280,7 +366,10 @@ TABLE: factions [⚠️ RLS DISABLED]
     "name": "Red Wizards of Thay",
     "description": "A notorious magocracy of evil wizards from the distant land of Thay. They have not been encountered directly, but they featured prominently in Soshi's apocalyptic vision. They were seen working alongside the Arcane Brotherhood and the Clan of the Blue Bear to conduct a massive ritual siege against the city of Neverwinter, using prisoners as magical fuel to tear down the walls. Their involvement confirms the global scale of the conspiracy.",
     "created_at": "2025-11-21T17:00:01.009Z",
-    "updated_at": "2025-12-24T14:15:59.190Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "affinity": "enemy"
+    }
   }
 ]
 
@@ -293,6 +382,7 @@ TABLE: items [⚠️ RLS DISABLED]
   description               text             
   created_at                timestamp with time zone NOT NULL DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -302,7 +392,8 @@ TABLE: items [⚠️ RLS DISABLED]
     "name": "Rabbit's Foot",
     "description": "Marks your allegiance to the Black Crag Horde and, as a free action once per day, allows you to gain 1d4 temporary hp. ",
     "created_at": "2025-11-30T14:23:26.356Z",
-    "updated_at": "2025-11-30T14:23:26.356Z"
+    "updated_at": "2025-11-30T14:23:26.356Z",
+    "attributes": {}
   },
   {
     "id": "491f2bd3-1d54-401b-b5f9-65690486728e",
@@ -310,7 +401,8 @@ TABLE: items [⚠️ RLS DISABLED]
     "name": "Giant Javelin",
     "description": "Deals 1d12 damage. When used against giant-sized creatures or larger, they gain +5 to hit and damage, though their range is limited to 20/40 feet and require 14 strength to wield effectively.",
     "created_at": "2025-11-30T14:24:30.716Z",
-    "updated_at": "2025-11-30T14:24:30.716Z"
+    "updated_at": "2025-11-30T14:24:30.716Z",
+    "attributes": {}
   }
 ]
 
@@ -323,6 +415,7 @@ TABLE: locations [⚠️ RLS DISABLED]
   description               text             
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -332,15 +425,24 @@ TABLE: locations [⚠️ RLS DISABLED]
     "name": "Elsir Vale",
     "description": "A broad region containing both Drellin's Ferry and Brindol, connected by the Dawn Way road system. The Vale is characterized by orchards, grain fields, farmlands, and the winding Elsir River. Once peaceful, it has become the primary theater of the Red Hand's invasion. The region contains the Witchwood, various smaller settlements, and strategic infrastructure like the destroyed bridge. Lord Aaron Jarmaath rules from Brindol, the largest fortified settlement in the area. The Vale's agricultural wealth and strategic position make it a key target for conquest.",
     "created_at": "2025-11-21T06:39:03.958Z",
-    "updated_at": "2025-12-31T07:38:18.137Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "type": "region",
+      "map_image": "images/assets/map_backgrounds/elsir_vale_map.png",
+      "map_markers": "[{\"lat\":-699,\"lng\":1091,\"label\":\"Strategic Bridge\",\"category\":\"quest\"},{\"lat\":-879,\"lng\":1068,\"label\":\"Vraath Keep\",\"category\":\"location\"},{\"lat\":-915,\"lng\":1239,\"label\":\"Drellin's Ferry\",\"category\":\"city\"},{\"lat\":-681,\"lng\":1969,\"label\":\"Brindol\",\"category\":\"city\"},{\"lat\":-1235,\"lng\":1447,\"label\":\"Hammerfist Hold\",\"category\":\"city\"}]"
+    }
   },
   {
-    "id": "99d9dfaa-835b-44c3-a840-97a8ad1fad42",
+    "id": "9008196f-350a-455f-a339-1adef7f7de70",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Green Apple Inn",
-    "description": "A welcoming inn run by the dwarven proprietress Tharma, serving as the primary lodging for adventurers and travelers in Drellin's Ferry. Known for hearty breakfasts, experimental cuisine using exotic mushrooms and herbs, and Tharma's collection of salacious romance novels. The inn suffered significant damage when the party's Thylacoleo cubs escaped their containment spheres, raiding the kitchen (particularly honey jars), destroying walls, and hunting neighborhood pets. The inn also witnessed a major brawl between intoxicated townspeople and Winter Rose mercenaries. Tharma has since evacuated toward Hammerfist Hold, leaving the business behind.",
-    "created_at": "2025-11-19T21:05:54.751Z",
-    "updated_at": "2025-12-30T12:17:56.994Z"
+    "name": "The Witchwood",
+    "description": "A haunted, lush wetland forest northwest of Drellin's Ferry with subtropical evergreens, oaks, and dense undergrowth interspersed with swampy stretches. The forest is corrupted by blighted magic that creates illusions, distorts perception, and causes travelers to walk in circles. Ancient human druidic spirits are said to haunt its depths. The forest contains Wrath Keep, the Strategic Bridge, and numerous Red Hand encampments. Recent battles have seen massive casualties here, including the destruction of the bridge and several enemy fortifications. The area is infested with dangerous creatures including worgs, hydras, and goblin tribes. Any party moving cross-country without following trails risks... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-21T06:40:02.968Z",
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "type": "forest",
+      "map_image": "images/assets/map_backgrounds/witchwood_map.jpg"
+    }
   }
 ]
 
@@ -354,6 +456,7 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
   created_at                timestamp with time zone NOT NULL DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
   order                     integer          
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -364,7 +467,10 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
     "description": "With the enemy army mere days from Drellin's Ferry, the party makes a desperate gambit: allying with Dreshi, a zealous goblin follower of Lamashtu, to destroy the only bridge across the gorge. The sabotage succeeds spectacularly, buying precious time for the town's evacuation. As refugees flee westward, the party encounters Loraine Martinique, a vampire noble investigating fey portals, and receives troubling news of an alliance between the Archlich of Pahuax and the approaching horde. The arc closes with Drellin's Ferry emptied, its people scattered, and new mysteries beckoning the heroes toward darker conspiracies.",
     "created_at": "2026-01-01T08:15:08.410Z",
     "updated_at": "2026-01-01T08:15:08.410Z",
-    "order": 5
+    "order": 5,
+    "attributes": {
+      "type": "primary"
+    }
   },
   {
     "id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
@@ -373,7 +479,10 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
     "description": "Delving into the cursed Witchwood and its flooded cave systems, the party uncovers a nightmare of transmutation experiments and breeding programs. The discovery of Kalistra's arena of horrors - where creatures are twisted and trained for war - reveals the Arcane Brotherhood's dark involvement. As they navigate illusion-shrouded forests and face hydras, megatheriums, and acid-spitting arthropods, the companions realize they've stumbled into something far more sinister than simple raiding parties.",
     "created_at": "2026-01-01T08:13:56.636Z",
     "updated_at": "2026-01-01T08:13:56.636Z",
-    "order": 2
+    "order": 2,
+    "attributes": {
+      "type": "primary"
+    }
   }
 ]
 
@@ -386,24 +495,42 @@ TABLE: npcs [⚠️ RLS DISABLED]
   description               text             
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
-  {
-    "id": "5d8c1d4a-6ea3-4e62-8a67-65f55104059f",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Marise Curs",
-    "description": "A colorful and intoxicated pirate aboard The Leviathan's Hull. Distinguished by her wooden peg leg and a bizarre, living mug that uses tentacles to hold her drink, she served as the party's primary source of lore regarding the ship's crew. In a drunken conversation with Bonnie, Marise revealed the tragic and rebellious history of the crew: they were not born pirates, but were former slaves in a penal colony who were liberated by a revolutionary named General Lee. Her loyalty to Queen Bianca is born from this liberation, making her a fiercely loyal, if perpetually tipsy, crewmate.",
-    "created_at": "2025-11-20T20:54:27.461Z",
-    "updated_at": "2025-12-29T16:55:22.826Z"
-  },
   {
     "id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Bianca Turiados",
     "description": "Last descendant and true Queen of Pelagos. Fey-touched with lightning-veined eyes.\n",
     "created_at": "2025-11-21T06:46:31.612Z",
-    "updated_at": "2025-12-29T16:53:01.156Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "icon": "../../images/icons/female.png",
+      "race": "Human",
+      "role": "Ship Co-Commander",
+      "gender": "Female",
+      "status": "alive",
+      "affinity": "Neutral",
+      "is_active": "true"
+    }
+  },
+  {
+    "id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Commander Turiados",
+    "description": "7-foot-tall warrior covered in Sahuagin shaman tattoos. Formerly Order of Inos.",
+    "created_at": "2025-11-19T21:06:38.740Z",
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "icon": "../../images/icons/male.png",
+      "role": "Ship Co-Commander",
+      "gender": "Male",
+      "status": "alive",
+      "affinity": "Neutral",
+      "is_active": "true"
+    }
   }
 ]
 
@@ -458,6 +585,7 @@ TABLE: quests [⚠️ RLS DISABLED]
   description               text             
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -467,7 +595,12 @@ TABLE: quests [⚠️ RLS DISABLED]
     "title": "The Shadow of Abuse",
     "description": "Olek discovered a woman suffering from domestic abuse after her son asked for help. He healed her wounds but promised to return to speak with the husband.",
     "created_at": "2025-12-20T19:30:42.129Z",
-    "updated_at": "2025-12-24T15:31:21.585Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "status": "Failed",
+      "priority": "Low",
+      "quest type": "Side Quest"
+    }
   },
   {
     "id": "231a3f04-fbd5-4273-bb89-994a177f7792",
@@ -475,7 +608,12 @@ TABLE: quests [⚠️ RLS DISABLED]
     "title": "The Missing Barmaid",
     "description": "Anya, a young barmaid at the Green Apple Inn, has gone missing. Her home shows signs of distress, and rumors suggest a troubled relationship with the town guard Lem.",
     "created_at": "2025-12-21T16:43:28.053Z",
-    "updated_at": "2025-12-26T13:43:01.005Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "status": "Completed",
+      "priority": "Low",
+      "quest type": "Side Quest"
+    }
   }
 ]
 
@@ -521,6 +659,7 @@ TABLE: sessions [⚠️ RLS DISABLED]
   narrative                 text             
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
+  attributes                jsonb            DEFAULT '{}'::jsonb
 
   -- EXAMPLE DATA (2 rows) --
 [
@@ -528,17 +667,28 @@ TABLE: sessions [⚠️ RLS DISABLED]
     "id": "20b73069-7a8f-4cd9-aa5b-1c27f40efd79",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "03 - Into the Depths",
-    "narrative": "### Return to the Tollhouse\n\nThe party's previous adventure had left them weary and, frankly, quite malodorous as they returned to Drellin's Ferry. Making their way back to the familiar Tollhouse, they sought out Soranna, who took one look at their disheveled state and quickly ushered them down into the basement. The discrete location would allow them to speak freely without alarming the townspeople with their rather pungent aroma.\n\nIn the privacy of the basement, the party recounted their harrowing encounters with the attacks they had witnessed. Soranna listened intently as they described the maimed corpses and the disappearance of at least one woodsman among the people dressed in green. When they mentioned the hydra, Soranna's puzzled expression revealed she had no knowledge of such creatures. As they spoke, she methodically placed red-flagged pins on a map, marking the locations of other similar attacks that had been reported.\n\nImpressed by their efforts, Soranna rewarded the party with 10 gold pieces. She then shared valuable intelligence about the growing threat, explaining that she had two skilled operatives under her command investigating the hordes. Of particular concern was an extensive cave system that sprawled beneath the city, which posed a significant risk as a potential infiltration route into Drellin's Ferry.\n\nThe two operatives, she explained, would seek out the party the following day to discuss their findings. When asked for their names, Bonnie's face lit up with recognition. Kat, a tiefling with an unusual passion for cats, and Yoghurt, a lactose-intolerant half-ogre assassin, were both former members of the Thieves Guild who had been exiled to this town due to their rather questionable competence.\n\n### The Green Apple Inn and a Disturbing Discovery\n\nExhausted and still reeking from their adventures, the party made their way back to the Green Apple Inn. Tharma, the understanding bartender, immediately directed them back to their rooms with firm instructions to clean themselves thoroughly before rejoining civilized company.\n\nAs Soshi undressed and began to clean herself, she made a startling discovery - two eggs had somehow ended up in her possession. After consulting with Bonnie and Kaedin, the trio realized with growing alarm that these were hydra eggs. The warm, humid conditions they had recently experienced meant the eggs could hatch at any moment.\n\nOnce cleaned and presentable, the party returned downstairs to find the common room populated with various patrons. Speaking with the barmaid, they learned troubling news: Anya, one of her young assistants, had gone missing two days prior. The girl was described as a 17-year-old human with striking red hair, standing about 1.8 meters tall, and bearing a distinctive pattern of freckles across her face.\n\n### The Search for Anya\n\nAfter finishing their dinner, the party decided to investigate Anya's disappearance. Her house sat on the outskirts of town, nestled near the forest's edge. The simple thatched wooden structure stood beside a modest shed, both showing signs of recent abandonment.\n\nEntering the darkened house, they found no signs of life. The simple interior contained only a bed and a nearby table, but what caught their attention was the blood on the floor - at least a day old by their estimation. The house showed no signs of ransacking, leading them to suspect that Anya might have been pregnant.\n\nTheir careful search revealed an unfinished letter that provided a crucial clue:\n\n> _Lem, you know I love you and I want us to be together. I'll go to our favourite meeting spot..._\n\nAs they prepared to leave the house, the party became aware they were being watched. At least three pairs of eyes observed them from the shadows - townspeople who had been eavesdropping on their investigation. Approaching an elderly woman among the watchers, they inquired about Anya's whereabouts. While the woman claimed no knowledge of the girl's current location, she revealed that many men had been regular visitors to Anya's home until about six months ago.\n\n### Encounters with the Winter Rose Mercenaries\n\nReturning to the inn, the party reunited with the Winter Rose mercenaries, who had their own harrowing tale to share. Their recent expedition to the east had nearly ended in disaster when they were ambushed while pursuing a hidden stash. Giant raptors and Thylacoleos - fearsome panther-bear hybrids - had attacked them, devouring their horses. Ironically, this grisly sacrifice had provided the mercenaries with the distraction they needed to escape with their lives.\n\nThe mercenaries shared valuable tactical information: the raptors showed a marked fear of fire and strong light, and notably, there had been no hobgoblins among their attackers. However, the raptors bore distinctive markings that resembled shackles, suggesting they belonged to a different hobgoblin clan than those previously encountered.\n\nAfter parting ways with the mercenaries, the party sought out Tharma once more. They discovered she was an avid reader of novels of ...questionable nature and interactions and even gifted one to the interested Bonnie. When asked about Lem, Tharma revealed he was a member of the town guard.\n\nWith this information gathered, the party retired to their rooms for a well-deserved rest, and through their experiences, they felt themselves grow stronger, reaching the 7th level of their abilities.\n\n### Morning Revelations\n\nThe next morning brought the promised meeting with the two exiled thieves. Over breakfast, the party observed Yoghurt approaching dressed in an elegant kimono with two katanas at his side, while Kat appeared as one of the most unremarkable individuals imaginable - forgettable in every way except for the several large globes attached to his waist.\n\nThrough conversation conducted partly in thieves' cant, with Bonnie taking the lead, they learned that the pair harbored ambitions of robbing the local wizard. More importantly, Soranna had tasked them with researching the cave system, and their findings were illuminating:\n\nThe caves extended beneath the city and were largely flooded. They connected to the temple near town but were protected by a barrier of light that prevented anyone affiliated with the city from passing through. This meant the party - and possibly the Winter Rose mercenaries - could potentially bypass this magical obstacle. The Wizard had described this barrier as a curse.\n\nBonnie's keen observation revealed that Kat's mysterious globes were actually cats and even a large tiger. The tiefling was in desperate need of 2 gold pieces to settle debts owed to wealthy townspeople, though none of the party felt inclined to assist with this particular financial burden.\n\nBoth thieves expressed considerable fear of the Winter Rose mercenaries, referring to them only by their codenames: Vandal and Scoundrel.\n\nAfter the thieves departed, Bonnie composed a letter for them, detailing information about the tunnel and suggesting they meet again later that day.\n\n### Seeking Expert Counsel\n\nThe party formulated a plan to visit both the local Druid and Wizard with their hydra eggs - hoping to convince the Druid to hatch one while selling the other to the Wizard for a substantial profit.\n\nThey found Avarthel, the druid, in the middle of officiating a wedding ceremony. Bonnie discreetly sent him a message explaining the urgency of their matter. As he approached them afterward, they learned he belonged to the Circle of the Land. He led them to the forest's edge, into a beautiful grove of his own creation.\n\nThe grove's proximity to the Feywild had an immediate positive effect on everyone, particularly Bonnie and Jacques, who actually grew in size within this magical space. However, when Avarthel examined their hydra eggs, his response was far from what they had hoped.\n\nThe Druid adamantly refused to hatch the eggs, explaining that hydras were uncontrollable creatures capable of destroying entire ecosystems. He could not send them back to the Fey plane - only druids in Ramashen possessed such power. Similarly, taming these beasts was beyond their capabilities, and the only Beastmaster skilled enough for such a task was currently traveling to Icewind Dale.\n\nUnderstanding the danger, the party agreed to leave the eggs in Avarthel's care under strict conditions that would prevent them from hatching.\n\nDuring their continued conversation, Avarthel shared additional useful information: Thylacoleos could be avoided using honey, as they would prioritize the sweet substance over attacking anyone who hadn't provoked them first. He also revealed that Lem had been attacked during his guard shift, treated for his injuries, and was now recovering at the town barracks.\n\n### Shopping and Unexpected Encounters\n\nBefore visiting the barracks, the party decided to procure some healing potions. The shopping district buzzed with activity, and there they encountered Jareth of House Corzina, a remarkably muscled drow who appeared to be hiding his nudity behind an illusion of clothing. Both Soshi and Bonnie found him quite appealing.\n\nJareth's story proved intriguing: his matron, Zaya, had sent him to this town twenty years ago with instructions to remain until he received a specific signal - one he had yet to see. Their society followed a matriarchal structure, explaining his deference to his absent matron's commands.\n\nThe party successfully purchased ten lesser healing potions (4d4 + 4 healing each) for 5 gold pieces total, with each member receiving two potions for their personal use.\n\n### The Barracks and Lem's Account\n\nAt the barracks, they discovered Soranna was away, but they were granted access to the infirmary where Lem was recovering. The young man proved to be quite different from what they had expected - a rotund human of only 1.5 meters in height and 19 years of age. His appearance left everyone wondering what exactly Anya had seen in him.\n\nLem's account of their relationship was rather callous. He admitted he hadn't taken their connection seriously and had been \"just having fun,\" remaining oblivious to how serious the relationship had become for Anya. He claimed ignorance about any pregnancy and revealed he hadn't seen her for two weeks.\n\nTheir secret meeting place, he explained, required a four-hour walk through the forest to reach a secluded pond. Regarding his recent attack, Lem described being assaulted by two worg riders, resulting in his fall onto a boulder. Two other guards had also been injured in the encounter, though fortunately, no one had died.\n\n### Rescue in the Forest\n\nPrioritizing Anya's welfare over their other concerns, the party set off for the forest meeting place. Their decision proved fortuitous, as they found the young woman in a dire state. Blood stained her ankles, and she appeared nearly delirious, singing incoherently while repeatedly muttering about her failed attempts to end both her own life and that of her unborn child.\n\nRecognizing the critical nature of her condition, Kaedin made the difficult decision to render her unconscious while Bonnie provided a comforting distraction with an embrace. Kaedin then carried her unconscious form toward Avarthel's grove, accompanied by Soshi, while Bonnie rushed ahead to bring the Druid to help.\n\nUpon reaching the magical grove, Anya's condition immediately began to improve. A phoenix named Loïc, who had been residing in the area, took notice of her plight and shed healing tears upon her, further stabilizing her condition. When Avarthel arrived, having transformed into a cheetah for swift travel, he determined that Anya needed extended care and took her deeper into the forest for both physical and mental healing.\n\n### Tavern Brawl\n\nReturning to the Green Apple Inn, the party walked directly into chaos. Bottles flew through the air and random punches were being thrown as 10-15 intoxicated townspeople engaged in a massive brawl. At the center of the conflict were Vandal and Scoundrel, the Winter Rose mercenaries.\n\nThe party quickly intervened, carefully avoiding serious injury to the drunk participants while efficiently knocking them unconscious to end the fight. Tharma expressed her gratitude for their assistance as they helped remove the unconscious troublemakers from her establishment.\n\nOnce order was restored, they learned from Vandal and Scoundrel that the brawl had erupted when the drunken townspeople had attempted to inappropriately grab Vandal's chest.\n\n### Into the Depths\n\nAfter taking a short rest to recover their strength, the party joined the mercenaries to meet with Kat and Yoghurt. They found the thieving duo engaged in petty crime, with Kat having just stolen fish from a vendor's stall and fleeing from the scene.\n\nThe group proceeded toward the temple, which was partially submerged underwater, and approached the mysterious barrier. As expected, the party passed through easily, while Kat and Yoghurt were prevented from entering. The thieves instructed them to collapse the caves if possible, ensuring they couldn't be used as an infiltration route into the town.\n\nVenturing deeper into the cave system, they discovered a stone entryway covered in indecipherable runes. Beyond this lay an impressive sight: a large superior ring, six meters in width, overlooking an arena littered with approximately fifty skeletal remains and scattered weaponry throughout.\n\nTwo entrances beckoned from atop the ring - one to the right bearing the carving of a large reptile, and one to the left decorated with a cloud surrounded by multiple lightning bolts.\n\nThe party chose the right entrance while the mercenaries took the left path.\n\n### The Reptilian Path\n\nApproximately ten minutes into their journey, they heard thunderous sounds echoing from the mercenaries' chosen route. Meanwhile, their own tunnel grew increasingly hot and humid - a fortunate circumstance that they had left the hydra eggs behind with Avarthel.\n\nTheir progress was soon impeded by a large poisonous cloud stretching fifteen feet across their path. Kaedin attempted to leap over the obstacle but landed on a concealed trap, suffering 4 points of damage. Bonnie rushed through the poisonous cloud and triggered a fire trap, which she managed to dodge, though Kaedin caught the full force of the flames for an additional 12 points of damage. Once the poison cloud dissipated, Soshi was able to pass through safely.\n\nThis dangerous encounter convinced the party to proceed with greater caution. They invoked Pass without Trace to mask their movements and continued stealthily through the increasingly treacherous environment.\n\nThe sounds of shrieking and chittering grew louder as they progressed, and they soon discovered the source: a pit filled with large snakes and spiders that moved freely through openings in the tunnel walls.\n\nFurther along, they encountered a pond inhabited by giant leeches, beside which slumbered a massive creature with glowing red eyes. Recognizing the need to bypass both the pond and avoid waking the sleeping beast, they employed their various magical abilities - Soshi used Misty Step, Bonnie cast Fly, and Kaedin teleported to his Echo.\n\nAt this moment, the entire temple structure shook violently, adding urgency to their mission.\n\n### The Laboratory of Horrors\n\nThey emerged into a vast chamber, partially flooded and containing the ruins of what had once been a substantial structure. Within the remains of a house, they discovered a crumpled note that revealed the sinister purpose of this place:\n\n> The experiment is going well. Me and the other disciples opened several gates to two of the Demon Lords' domains. We should be close to easily lure out enough creatures to start a breeding program to provide enough competitors for the games.\n\nThe chamber also contained a mysterious red glow emanating from beneath the water, where a chest rested on the bottom. However, the water teemed with piranhas and snakes, making retrieval extremely dangerous. Above them, they realized the source of the shrieking sounds they had been hearing - human-sized bats roosted in the chamber's upper reaches.\n\nAs they continued deeper, the environment grew noticeably colder, and they began to notice that the tracks on the floor had become slimy and sticky, suggesting the presence of some large creature.\n\n### The Final Laboratory\n\nTheir journey culminated in a room filled with electronic gadgets and scientific equipment. Multiple tables held the remains of various creatures they had encountered throughout their underground expedition. An entrance to the arena was visible, marked by a rune that appeared to be designed for activation.\n\nAt the back of the room stood the very reptile whose likeness had been carved into the entrance wall at the beginning of their journey.\n\nWhen Kaedin summoned his Echo, the massive reptile sprang into action, leaping an incredible 45 feet to attack them, initiating what would prove to be a challenging battle.\n\n### The Battle with the Reptile\n\nThe combat began with Kaedin hurling a javelin at their scaly opponent, followed by Bonnie's own attack. Soshi wisely used her Blink spell and discovered that spiders were approaching to assist the reptile in the fight.\n\nThe reptile retaliated with devastating effect, causing both Bonnie and Kaedin to fail their saving throws and become Fear. Its tail attack successfully struck Kaedin, adding to his mounting injuries.\n\nOn Kaedin's turn, despite unleashing four attacks, only one found its mark, though it dealt a substantial 23 points of damage including a grazing hit.\n\nBonnie's continued assault proved more successful, landing a critical hit that dealt 36 points of damage. The significant injury caused the reptile to begin emanating an aura of cold, indicating its desperation and rising power.\n\nHowever, Soshi ended the immediate threat with brilliant tactical thinking, using her polymorph spell to transform the dangerous reptile into a harmless caterpillar, bringing the combat to an abrupt and decisive conclusion.\n\n### Spoils of Victory and the Final Puzzle\n\nWith the battle won, Bonnie searched the area and discovered valuable treasures: jewelry worth 10 gold pieces, two vials containing mysterious elixirs, a magical bow, and an enchanted helmet.\n\nAs they approached the rune that would activate the arena mechanism, Bonnie received a message from the mercenaries indicating they were ready to press their corresponding rune. In perfect synchronization, both groups activated their respective runes.\n\nThe results were immediately visible: the door opened, and all the skeletal remains in the arena were pulled into the central pit. Had they failed to coordinate this action, all the skeletons would have animated, creating a far more dangerous situation.\n\nWith the arena's trap successfully bypassed, a third corridor opened before them. As they entered this new passage, the room behind them sealed shut, leaving them no choice but to continue forward into whatever mysteries lay ahead.",
+    "narrative": "### Return to the Tollhouse The party's previous adventure had left them weary and, frankly, quite malodorous as they returned to Drellin's Ferry. Making their way back to the familiar Tollhouse, they sought out Soranna, who took one look at their disheveled state and quickly ushered them down into the basement. The discrete location would allow them to speak freely without alarming the townspeople with their rather pungent aroma. In the privacy of the basement, the party recounted their harrowing encounters with the attacks they had witnessed. Soranna listened intently as they described the maimed corpses and the disappearance of... [TRUNCATED AT 100 WORDS]",
     "created_at": "2025-11-21T10:53:41.089Z",
-    "updated_at": "2025-12-31T16:40:12.590Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "level_up": "7",
+      "campaign_arc": "The Shadow of the Witchwood",
+      "session_date": "2025-06-07",
+      "session_number": "4"
+    }
   },
   {
     "id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "05 - Pirates, Pelts, and Cargo",
-    "narrative": "### The Leviathan's Hull\n\nThe party’s ascent from the subterranean hell of the caves had been a desperate, gasping scramble for life. They emerged into the world above only to find themselves adrift on a strange ship in an unknown sea. Their salvation, such as it was, came not as a gentle hand but as a grappling hook. A colossal vessel, all black wood and green-tinged sails, bore down on them. Its name was visible even from a distance: The Leviathan’s Hull.\n\nAs their small craft was pulled alongside the massive warship, pirates swarmed the deck, their voices rough and jeering. \"We got some plunder!\" one shouted, as the party—Bonnie, Kaedin, Soshi, and Norr—were hauled unceremoniously onto the deck. Olek, their stoic companion, assisted his friends, his divine aura dimmed by exhaustion and the pungent salt spray.\n\nThey were prodded toward the helm, where two figures stood observing them, silhouetted against the waning light. The first was a man of terrifying proportions, standing nearly seven feet tall. His weathered bronze skin was a canvas of glistening, ink-black tattoos. He was bare-chested, wearing only a heavy, open coat of what looked like wyvern hide, dyed a deep kelp green and studded with barnacle-like iron rivets. The coat’s interior shimmered with the iridescent scales of some deep-sea serpent, and as he moved, it seemed to flow like liquid night. A scent of sharp brine and old blood wafted from him.\n\nSoshi’s arcane knowledge prickled. The tattoos were not mere decoration; they were the ritualistic markings of Sahuagin shamans. A coiling kraken wrapped down his arm, its ink seeming to slither slowly on his skin. He wore a belt of braided sea snakes, a pair of throwing axes, and boots of manta ray hide. Around his neck hung a compass that appeared broken, its needle spinning wildly before stopping, pointing at Soshi, and then spinning again.\n\nBut it was the cutlass at his hip that made Soshi’s blood run cold. She recognized it instantly—a relic stolen from the Arcane Brotherhood’s treasury five years prior. It was the Breaker of Hulls, its blade curved like a shark’s tooth and glowing with faint blue runes. Runes, she knew, that flared to life when drawn against a traitor.\n\nThe second figure, a woman, glided across the deck with the grace of a phantom. She wore a regal, high-collared garment of night-blue velvet, stitched with silver thread in patterns resembling constellations and maelstroms. Form-fitting black leather trousers were tucked into boots inlaid with sapphires that flashed like bioluminescent plankton. Her corset was a mosaic of polished abalone shell, and a half-cloak of shimmering mist floated behind her, never quite touching the ground. Her pale skin seemed almost luminescent, a clear sign of her Fey-touched blood. Her eyes were a piercing, crystalline blue, laced with veins of lightning that flickered with latent power.\n\nAs she approached, Soshi felt the distinct thrum of magic being cast. Instinctively, she threw up a hand, weaving a counter-spell that shattered the woman's subtle probe. The woman’s eyes snapped to Soshi, a flicker of surprise in their electric depths.\n\nSoshi’s gaze dropped to the woman’s hands, where rings adorned each finger. Her sharp mind identified the sigils: each ring represented a different school of magic. At the woman's hip hung another stolen treasure, a delicately carved blade that Soshi also recognized from the Arcane Brotherhood's museum: Winder, crafted from a shard of storm-forged glass, humming with latent thunder.\n\nThe towering man’s voice rumbled like distant thunder. \"Please, bring our... esteemed guests... to the bridge.\"\n\n### A Queen's Plea & A Pirate's Price\n\nThe party was ushered before the two commanders. \"How did you end up in the mountains with your ship?\" the man asked.\n\nSoshi, taking the lead, quickly explained. \"It's not our ship. We found it and escaped... the caves. A hellish place.\" She recounted the runes, the monsters, the collapsing tunnels, and the monsters they had faced, including the hydra.\n\n\"The Sword Coast,\" Soshi said, trying to orient them. \"The closest city with a dry dock is Brindol.\"\n\nThe pirates seemed confused by this. \"Where is Nautica on your map?\" the woman, Bianca, asked.\n\nSoshi knew the name. \"It's a pirate archipelago,\" she explained, \"but it's not on this coast. It's far to the south, across the Shining Sea.\"\n\nThe two commanders exchanged a look. They were hopelessly lost.\n\n\"Well,\" Turiados said, his voice hardening, \"we require a fee for saving you from that ship.\"\n\nBonnie, never one to be intimidated, zipped forward. \"We didn't ask you to save us! We didn't need your 'save.' We are strong, independent people!\"\n\nTuriados merely raised an eyebrow. \"You have a very strong mouth for someone in your current position. It does not scare me. I've been through worse.\"\n\n\"Maybe we could introduce each other,\" Bonnie chirped, changing tactics.\n\n\"I am Commander Turiados,\" the man rumbled. \"Formerly of the Order of Inos, currently commander of the Leviathan's Hull.\"\n\nThe woman stepped forward, her fey-touched aura flaring with intensity. \"And I am Commander Bianca, House Corina. Last descendant and true Queen of Pelagos.\" Her voice, though melodic, was laced with steel. \"And I swear I will get my throne back, one way or another. The tyrant king will die.\"\n\nAs she spoke, the entire crew erupted in a unified shout.\n\n\"Who is this tyrant king?\" Norr asked, her curiosity piqued.\n\n\"An evil necromancer,\" Bianca spat. \"He came from nowhere, killed my father, and stole my throne. His name is Sandro.\"\n\nShe went on to explain their plight. They were from another continent, Lustria. They had been fighting a war with lizardfolk when a sudden, cataclysmic event—the regrowth of the deep jungles—caused the lizardfolk to inexplicably retreat. With no external enemy, the great houses of Pelagos turned on each other, plunging the realm into civil war, allowing Sandro to seize power.\n\nThe party was dismissed, the pirates leaving them to \"find their bearings\" and consider the 20% rescue fee. As they were led away, Soshi’s keen ears caught Bianca’s quiet, frustrated sigh to Turiados.\n\n\"I do wish he was here,\" she murmured. \"He would know what to do.\"\n\n### Whispers on the Deck\n\nThe party split up to explore the upper deck, a strange and dangerous menagerie. The crew was a motley collection of races from all corners of the world: minotaurs polished cannons, a turbaned Efreeti happily stoked the ship’s forge, and troglodytes skittered from below deck. Their two mercenary acquaintances, Vandal and Scoundrel, were tied up near the mast. Bonnie flew over and sent them a quick, telepathic message.\n\nAre you okay? Do you need help?\n\nVandal’s mental voice was grim. We’re fine. We agreed to pay the rescue fee. We won’t get far from these people. Don’t try anything stupid.\n\nBonnie, deciding that gathering information was not stupid, zipped over to a peg-legged pirate who was drinking from a bizarre mug that seemed to be alive, its tentacles wrapped around his wrist to prevent spills.\n\n\"Now that is a very cool mug,\" Bonnie said, striking up a conversation.\n\nThe pirate, who introduced himself as Marise Curs, was happy to talk. He boasted of their recent plunder, confirming they had raided three trader vessels from Brindol. \"The captain, her ship, her crew,\" he said with drunken pride. \"A thousand voices, we fight in her name. We are bound by blood to her family.\"\n\n\"All of you?\" Bonnie asked, gesturing to the minotaurs and the Efreeti.\n\n\"Even the least of us,\" Marise slurred.\n\nBonnie, ever the Rogue, pressed for more. \"You all seem very loyal. But who was this 'Lee' the captain was sad about?\"\n\nMarise’s face darkened. \"General Lee. A former convict, like many of us. We were all slaves in the penal colony, mining ore. Lee... he was the commander of the mercenaries who broke us out. He sent us to recover a ship, which Bianca... well, she took it.\"\n\nBonnie traded the pirate a small, tinkling bell from the Feylands for a pirate-themed bandana, mulling over this new information. Meanwhile, Kaedin approached the forge, where the Efreeti and a heavily augmented dwarf named Bardin Cratcho were tempering runes onto a batch of cutlasses.\n\n\"Pardon, friend,\" Kaedin said, his deep voice respectful. \"Could you put one of those runes on this short sword?\"\n\nBardin glared at him. \"I can. How much are you willing to pay? Fifty gold pieces.\"\n\nKaedin balked at the price. \"You must be lying. A rune can't cost that much.\"\n\nThe dwarf roared with laughter, his beard singed by the heat. \"Lying? I ate a batch of molten slag to prove to everyone that my forge is up to par! My skills are worth more than you can afford, boy.\"\n\nAcross the deck, Bonnie was formulating a dangerous plan. She knew the mountains near Drellin's Ferry were crawling with orcs and goblins—the very enemies they were trying to stop. She also knew her personal quest to retrieve a pair of magical boots led to a necromancer’s tower in that same region. If she could convince these pirates that vast, unguarded \"treasure\" waited for them in those mountains, she could potentially trick them into clearing out the orc fortress and get a free ride to her objective.\n\nShe also spoke briefly to a massive Ice Elemental named Glass, who appeared to be one of Bianca’s chief advisors. His voice was the sound of cracking glaciers, and he spoke with agonizing slowness. It took him five full minutes just to say \"Hello.\" He confirmed his loyalty, explaining that Bianca had freed him from shackles, and he had, in turn, pledged his \"blood loyalty\" to her.\n\n### The Negotiation\n\nSoshi noticed the ship was heading north, sailing parallel to the coast but steadily moving away from Drellin's Ferry and the river they needed to take. \"We have to talk to them,\" she urged, and the party—Bonnie, Soshi, and Norr—approached the two commanders at the helm.\n\nAs they drew near, Turiados’s strange, spinning compass went still, its needle pointing directly at Soshi.\n\n\"I keep this funny trinket,\" Turiados rumbled, noticing her gaze. \"It links me with the person I’m looking at and points to the direction of their greatest desire.\"\n\n\"I have no idea what you're talking about,\" Soshi said, her face an impassive mask, even as her mind raced. He knows. He knows I want to find the portal home.\n\n\"Can I borrow it for a while?\" she asked, feigning innocence. \"I just need to find the portal back home.\"\n\nBefore Turiados could answer, the Ice Elemental, Glass, materialized beside them. His voice was no longer slow; it was crisp, cold, and sharp. He was all business.\n\n\"I am the ship’s Quartermaster and negotiator,\" Glass stated. \"As such, I am here to assess your current belongings and take the fair due for rescuing you.\" He looked directly at Soshi. \"I see a renowned sword-master,\" he said, nodding to Kaedin. \"And by the way you resisted my probe, a member of the esteemed school in Lustria. A spell-breaker.\"\n\nBianca’s lightning-veined eyes narrowed. \"What's a member of the Arcane Brotherhood doing so far lost?\" she asked Soshi directly.\n\nSoshi deflected. \"It's... not your business to know.\"\n\nWhile Bianca’s attention was fixed on Soshi, Bonnie engaged Turiados about the compass. \"What would you want for that trinket?\"\n\n\"I can make a deal,\" Turiados said, a predatory glint in his eye. \"There is a necromancer whose lands I would like... cleansed. His name is Sandro.\"\n\nThe party froze. \"Sandro?\" Norr repeated. \"We know that name.\"\n\n\"He turned an entire village in Lustria into zombies,\" Turiados growled. \"I know he got to this side of the world, but I don't have time to chase him. Bring me a locket of his hair, and the compass is yours.\" He tossed Bonnie a small, intricately carved whistle. \"When you find him, whistle this. It will point the way.\"\n\nAs Bianca and Glass moved to discuss the 20% fee, Bonnie pulled them aside. \"Let's say,\" she whispered, \"one might have touched something... that might be cursed. In the form of a pirate coin.\"\n\nGlass’s icy form seemed to stiffen. \"A sort of cursed currency. Yes, I know of it. Congratulations. Then you can keep it all. We don't want it spreading to our crew.\"\n\nThe elemental explained the curse. The coins had infected all of the party's gold, transforming their entire savings into a pouch of near-worthless copper. The value could change daily, but for now, they were destitute.\n\n\"We take 20% of what you do have,\" Glass declared. The party members glumly presented their gear. The pirates took Olek’s javelins, Norr’s climbing rope, and eight of their precious pearls. As they sorted the items, Bianca’s eyes fell on Norr’s Fey-touched makeup kit.\n\n\"I am willing to give you a dress or a piece of armor for that makeup kit,\" Bianca offered.\n\n\"Nope,\" Norr said flatly.\n\nAs the party gathered their remaining belongings, Bonnie decided to try one last bit of pixie mischief. With a flick of her wrist, she attempted to slyly drop one of her cursed coins onto the deck, a parting gift for the pirates.\n\nShe was not fast enough. Bianca, who had been watching her with the intensity of a hawk, reacted instantly. \"Try that again,\" she hissed. A bolt of pure, crackling force erupted from her outstretched hand, slamming into Bonnie and sending her tumbling to the deck, her entire body aching from the impact.\n\nTuriados merely grunted. \"Row them to shore.\"\n\n### Stranded\n\nThe party, along with the two mercenaries, Vandal and Scoundrel, were unceremoniously dumped in a rowboat and left on a rocky, desolate beach. Tall, ancient trees pressed right up to the shoreline. It was nearly 6 PM, and the sun was beginning to dip below the horizon.\n\n\"Well, we've had enough of this fucking place,\" Vandal spat, rubbing his chafed wrists. \"Those fuckers! 'Saving us.' We have gills! We could have swum!\"\n\n\"At least on land, we have a chance to fight back,\" Scoundrel added.\n\n\"Don't worry,\" Bonnie chirped, trying to lighten the mood. \"They have no idea where they're going. They'll die on the way.\"\n\n\"I hope so,\" Vandal grumbled. \"Or I hope they meet the other pirates. The ones that don't die.\"\n\n\"Undead pirates?\" Bonnie’s eyes went wide with excitement. \"Where are they?\"\n\n\"Anywhere they want to be,\" Vandal said. He let out a sharp whistle. Two massive, crocodile-like mounts emerged from the trees. The mercenaries mounted up. \"We'll be heading north. Good luck.\"\n\nAs they rode off into the shallows, Bonnie cupped her hands and shouted after them, \"By the way, there's a necromancer named Sandro roaming the roads here! Be careful!\"\n\nThe party was alone. Soshi confirmed their location: they were a good six or seven-hour march from Drellin's Ferry. Traveling in the dark forest was too dangerous. With a near-perfect survival check, Soshi located a small, defensible cave in the rocky cliffs overlooking the beach, hidden by overgrown vines.\n\nAs the others settled in, Bonnie got to work. \"Just a moment,\" she announced, and spent twenty minutes meticulously setting two bear traps at the mouth of the cave, hidden beneath leaves and sand.\n\nBonnie, with her fey nature, took the first watch. Hours passed in silence, broken only by the rhythmic crash of waves. Then, near 1 AM, she heard it: a loud CLANK followed by a piercing shriek. She sent her familiar, Jac, to investigate. The tiny, rat-like creature returned moments later, its fur matted with blood and feathers. A giant, vicious-looking seagull lay dead in the jaws of her trap.\n\nSoshi took the second watch. In the pale moonlight, she watched as a skittering army of large crabs emerged from the surf. They swarmed the dead seagull, and within an hour, had picked the carcass clean, leaving nothing but scattered bones before retreating back to the sea. Kaedin took the final watch until dawn, which passed without incident.\n\n### Ambush in the Oaks\n\nThe party awoke, stiff and sore. The first order of business was Bonnie's cursed gold. She checked the pouch, hoping for a miracle. The DM rolled. A 70. The coins remained stubbornly copper.\n\nSoshi and Norr, both Eladrin, felt the shift of the new day. The magic of the Summer court flowed through them, making them feel supportive and strong, but also impatient and quick to action—a volatile combination.\n\nKaedin, his survival instincts sharp, took the lead. They set off at a steady pace, leaving the beach and entering the dense oak forest. They walked for nearly six hours, the ancient trees creating large, sun-dappled clearings.\n\nIn one such clearing, they spotted a group of otters playing in a brook. Bonnie, delighted, decided to sneak closer. Her pixie form was utterly silent as she flitted from shadow to shadow.\n\n[:: The Thylacoleo Ambush ::](#entity/d0c69424-fb56-49a4-80fc-8d0b652008b4/encounter)\n\nIt was this very silence that saved her. As she neared the brook, a blur of motion exploded from the canopy above. A massive, pouched beast with a powerfully built body and terrifying jaws—a Thylacoleo—pounced from a high branch, aiming for the spot Bonnie had just vacated. The ambush had failed, but the fight had just begun.\n\nTwo more of the beasts dropped from the trees, their spotted pelts blending with the dappled light. The party found themselves surrounded.\n\nBonnie, reacting with supernatural speed, was the first to act. She blurred forward, her blade already alight with fey fire, and sank it deep into the first beast. She channeled her power into the strike, and the creature roared as magical flames seared its flesh.\n\nThe second Thylacoleo, moving with terrifying speed, bounded toward Kaedin. It raked him with its claws, then clamped its powerful jaws onto his arm, its momentum carrying both of them backward. The third beast, the largest of the three, targeted Soshi. It leaped, catching her with its full weight, and with an incredible display of strength, scrambled back up the tree trunk, carrying the Wizard in its vise-like grip.\n\n\"Soshi!\" Kaedin yelled, as he, too, was hit again by the beast attacking him.\n\nHigh in the branches, Soshi found herself pinned and restrained. Below, Kaedin manifested his Echo, a ghostly double of himself, which immediately engaged the Thylacoleo attacking its creator. The Echo’s blade struck true, and the creature recoiled, a deep, bleeding gash opening on its flank.\n\nBonnie, seeing Soshi in peril, didn't hesitate. She dashed to the base of the tree, sprang into the air, and drove her short sword into the creature holding the Wizard. The blade bit deep, a perfect sneak attack, and the beast shrieked, its grip faltering.\n\nSoshi seized the opportunity. Gathering her will, she muttered a single word and vanished in a puff of silvery mist. She reappeared on the forest floor thirty feet below, stumbling but free. As she landed, she cast Mirror Image, and three illusory copies of herself flickered into existence around her.\n\nThe first beast, already wounded by Bonnie, succumbed to its injuries and collapsed. But the fight was far from over. The Thylacoleo that had been fighting Kaedin’s Echo abandoned the phantom, leaped past Kaedin, and clamped its jaws onto his leg. In one powerful motion, it, too, bounded up a tree, dragging the heavy Genasi with it.\n\nKaedin, now dangling precariously, cursed and tried to break the creature's iron grip, but failed. Thinking quickly, he used his Echo Knight ability, transposing himself with his Echo on the ground, and reappeared, free from the grapple. From the forest floor, he commanded his Echo—still adjacent to the beast in the tree—to strike again, slicing into its hide.\n\nAt the same time, Soshi saw Norr struggling to find a clear shot. \"Norr! Hold still!\" Soshi shouted, and unleashed the full power of a Polymorph spell. Norr’s form wavered and swelled, her elven features melting away as she erupted into the shape of a Giant Ape.\n\nBonnie, seeing the second beast still in the tree, took a running start. She Misty Stepped, teleporting in a flash of blue light directly onto the branch beside it. She unleashed a flurry of attacks, her blades a silver blur, and the beast, mortally wounded, fell crashing to the ground. As she landed, she quickly downed a healing potion, the world steadying around her.\n\nThe last Thylacoleo, seeing the new, massive ape, pounced. It slammed into Giant-Ape-Norr, its claws digging deep and making the ape bleed.\n\nSoshi, seeing the creature’s hide had absorbed Bonnie's fey fire, opted for a different approach. She unleashed a Scorching Ray, sending three bolts of pure fire searing into the beast. Its fur was instantly incinerated, but the flames seemed to gutter and die against its thick skin, doing less damage than she’d hoped.\n\nEnraged, Giant-Ape-Norr beat its chest and retaliated, pummeling the Thylacoleo with two massive fists. The creature staggered, badly wounded. Bonnie zipped in one last time, her dagger finding its mark, and the final beast fell silent.\n\n### The Spoils\n\nThe clearing was quiet, save for the party’s heavy breathing. Norr shifted back to her Eladrin form, rubbing her shoulders. The Giant Ape form had taken the brunt of the damage.\n\n\"Well,\" Bonnie panted, wiping her blade. \"That was something.\"\n\nKaedin, ever the practical one, retrieved his javelins and began the grim task of skinning the creatures. The hide was thick and strangely resilient. With his survival expertise, he managed to salvage three intact pelts and half a dozen sharp fangs.\n\nAs he worked, a new sound reached their ears—a faint, pitiful meowing.\n\n\"Kittens?\" Norr whispered.\n\nBonnie’s perception was sharp. She looked up, scanning the branches. \"Up there!\" She flew up to the tree the largest beast had fallen from and found a hollow in the trunk. Tucked inside were seven small, spotted, impossibly cute Thylacoleo cubs, their eyes barely open.\n\nThe party’s resolve melted. \"We can't just leave them,\" Soshi said, her voice soft.\n\n\"We can take them to Avarthel,\" Kaedin suggested. \"The Druid will know what to do.\"\n\nThey bundled the cubs, using Bonnie’s tattered leather to fashion a makeshift sling. They were weak with hunger, and they turned their noses up at the party's watered-down rations.\n\n### The Wizard and the Menagerie\n\nThe party finally reached the outskirts of Drellin’s Ferry. They made their way directly to the druid’s grove, but Avarthel was nowhere to be found. Only his giant snake guardian was present, and it eyed the cubs with a predatory hunger that made the party back away slowly.\n\nNorr headed to the church, hoping to find someone who knew where the druid had gone. She found a dour cleric, Brother Danny, who informed her that Avarthel and his followers had left for the mountains a month ago and would not return. When Norr pleaded for help with the \"kittens,\" the cleric was unsympathetic.\n\nDesperate, Norr ran back into the street, where she spotted a local goat-herd. She pressed a gold coin into his hand—a massive overpayment—and begged him for milk. The bewildered farmer, seeing her distress, ran to his home and returned not just with 5 liters, but 10 more, his entire stock.\n\nThey fed the hungry cubs, who drank greedily. As the tiny creatures settled, their bellies full, Bonnie had an idea.\n\n\"I'll be right back,\" she said, and zipped off toward the Wizard Sertieren’s mansion.\n\nShe found the old mage on his porch. \"Good afternoon, sir,\" she chirped. \"We haven't met. I'm Bonnie.\"\n\nSertieren smiled. \"I know of you.\" He offered her tea, a rare blend from the Summer Court that tasted like home. Bonnie explained her fey heritage, how she'd been exiled for befriending a member of the Winter Court. Then, she got to business. She described the \"wild cats\" they'd found.\n\nSertieren listened intently, then disappeared inside. He returned with a massive, dusty tome, which he slammed on the table, identifying the Thylacoleo. \"You want me to buy them?\" he chuckled. \"This is a laboratory, young lady, not a bestiary.\"\n\n\"But they'll die!\" Bonnie pleaded. \"Isn't there a way to... store them? Like those magical balls you adventurers use?\"\n\nSertieren’s eyes lit up. \"Ah! Yes, containers. I can provide them.\" He offered her seven containment spheres for a single gold piece each, a 90% discount.\n\nBonnie, however, was broke, her money still cursed copper. \"I don't have any money,\" she admitted. \"But my friends do. Can I take them on credit?\"\n\nThe Wizard studied her. \"I trust you,\" he said. \"But... collateral.\" He placed a hand on her arm, and she felt a brief, magical sting. A glowing, arcane brand appeared on her wrist. \"This will fade when the debt is paid. The spheres must be attuned to the creature with a name.\"\n\n### A Profitable Debrief\n\nBonnie returned to the party. After a lively debate, they named their new companions: Bonnie claimed Tom and Garfield; Soshi took Milly and Yoli; and Kaedin adopted Avatar and Bella. They spoke the names and the command words, and the seven cubs vanished into their respective spheres.\n\nThe party marched back to Sertieren’s mansion. Two suits of animated armor barred the door, but they parted as the Wizard emerged.\n\n\"Ah, my money,\" he smiled.\n\nKaedin and Soshi paid the 7 gold. \"We also have these,\" Bonnie said, presenting the Thylacoleo pelts. Sertieren offered 5 gold for each, but the party declined, deciding the hides would be better used to reinforce their own battered armor.\n\n\"What about this?\" Soshi asked, presenting their half-kilo of Storm Dust.\n\nSertieren’s eyes widened. He took a tiny pinch and sniffed it, a look of ecstatic concentration on his face. \"This is potent! I will buy it from you. 15 gold.\"\n\nThe deal was struck. \"While you're here,\" Soshi said, \"could you identify these?\" She produced the vials they had recovered from the caves.\n\nThe Wizard examined them closely. \"This green one... this is demonic magic. It increases your vitality and mind, but leaves you vulnerable to... influence. This white one,\" he said, holding up the radiant vial, \"is a simple, if potent, celerity potion. Thirty feet of extra movement for a minute.\" He then picked up the \"Hops\" potion. \"This one grants immunity to poison for a day. The drawback, however... is severe, explosive dysentery. The creator noted it wasn't worth the cost to remove the side effect.\"\n\nFinally, they showed him the preserved Artus Plura mushrooms and the stinking, acid-filled head of the cave worm. The Wizard’s face lit up with academic glee. \"Marvelous! The glands are intact!\" He eagerly bought the worm head and the mushrooms for another 10 gold.\n\nAs they prepared to leave, Soshi asked one final question. \"Sir... do you know of a mage named Kalistra?\"\n\nSertieren’s smile faded. \"I do,\" he said, his voice heavy. \"A long time ago, before she foolishly joined your Arcane Brotherhood, we were in an adventuring party together. We called ourselves the 'Crazy Hogs.' But we... had a falling out. She was always pragmatic. She wanted to use an earthquake spell to clear a goblin cave, but it would have collapsed a nearby settlement. I... stole her spellbook to stop her.\"\n\nHe looked tired. \"I'm leaving Drellin's Ferry soon. The things you've seen—the hydras, these potions, the tribes uniting—they are all portents. A storm is coming, and I do not intend to be here when it breaks.\"\n\nThe party thanked the Wizard and left his estate, their pockets significantly heavier and their minds buzzing with new information. They returned to the inn, weary but triumphant. Their plan was simple: barricade their doors, let the cubs out, and get some well-deserved rest.",
+    "narrative": "### The Leviathan's Hull The party’s ascent from the subterranean hell of the caves had been a desperate, gasping scramble for life. They emerged into the world above only to find themselves adrift on a strange ship in an unknown sea. Their salvation, such as it was, came not as a gentle hand but as a grappling hook. A colossal vessel, all black wood and green-tinged sails, bore down on them. Its name was visible even from a distance: The Leviathan’s Hull. As their small craft was pulled alongside the massive warship, pirates swarmed the deck, their voices rough and... [TRUNCATED AT 100 WORDS]",
     "created_at": "2025-11-21T10:54:53.587Z",
-    "updated_at": "2025-12-31T16:40:30.901Z"
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "attributes": {
+      "campaign_arc": "The Sunless Conspiracy",
+      "session_date": "2025-07-08",
+      "session_number": "6"
+    }
   }
 ]
 
@@ -578,6 +728,9 @@ TABLE: entity_relationships
 
 TABLE: entity_relationships
   CREATE INDEX idx_entity_relationships_bidirectional ON public.entity_relationships USING btree (to_entity_id, from_entity_id) WHERE (is_bidirectional = true)
+
+TABLE: entity_relationships
+  CREATE INDEX idx_entity_relationships_composite ON public.entity_relationships USING btree (from_entity_id, to_entity_id)
 
 TABLE: entity_relationships
   CREATE UNIQUE INDEX unique_relationship ON public.entity_relationships USING btree (from_entity_id, to_entity_id, relationship_type)
@@ -628,6 +781,12 @@ TABLE: quests
   CREATE INDEX idx_quests_campaign ON public.quests USING btree (campaign_id)
 
 TABLE: quests
+  CREATE INDEX idx_quests_status ON public.quests USING gin (((attributes -> 'status'::text)))
+
+TABLE: quests
+  CREATE INDEX idx_quests_status_jsonb ON public.quests USING gin (((attributes -> 'status'::text)))
+
+TABLE: quests
   CREATE UNIQUE INDEX quests_pkey ON public.quests USING btree (id)
 
 TABLE: session_events
@@ -638,6 +797,12 @@ TABLE: session_events
 
 TABLE: session_events
   CREATE UNIQUE INDEX session_events_pkey ON public.session_events USING btree (id)
+
+TABLE: sessions
+  CREATE INDEX idx_sessions_number ON public.sessions USING gin (((attributes -> 'session_number'::text)))
+
+TABLE: sessions
+  CREATE INDEX idx_sessions_number_jsonb ON public.sessions USING gin (((attributes -> 'session_number'::text)))
 
 TABLE: sessions
   CREATE UNIQUE INDEX sessions_pkey ON public.sessions USING btree (id)
@@ -712,78 +877,265 @@ VIEW: entity_complete_view
   -- VIEW EXAMPLE RESULT --
 [
   {
-    "id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
     "type": "npc",
-    "name": "Jareth",
-    "description": "A remarkably muscled Drow found in the shopping district, operating a general store in Drellin's Ferry under an illusion magic to appear clothed, though he is actually nude. He has been waiting 20 years for a signal from Matron Zaya. During the evacuation, his shop was abandoned, looted by thieves, and subsequently became the site of trigger of the demon battle in Drellin's Ferry.\n",
+    "name": "Bianca Turiados",
+    "description": "Last descendant and true Queen of Pelagos. Fey-touched with lightning-veined eyes.\n",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "created_at": "2025-11-21T16:55:16.081Z",
+    "created_at": "2025-11-21T06:46:31.612Z",
     "attributes": {
       "icon": [
         {
-          "id": "b88f8e0f-d814-4151-8293-77095f1eb5ab",
-          "value": "../../images/icons/male.png",
+          "id": "520ae8f1-5ccb-4cbb-a96f-f1258a35368d",
+          "value": "../../images/icons/female.png",
           "is_private": false
         }
       ],
       "race": [
         {
-          "id": "82cd96d5-df8a-4e13-8941-b67064f5275a",
-          "value": "Drow",
+          "id": "e55167a8-2b67-42f7-a2d2-92771d721498",
+          "value": "Human",
           "is_private": false
         }
       ],
       "role": [
         {
-          "id": "9ae0fafc-55f1-49a2-bb8f-f5a803c8f970",
-          "value": "Merchant",
-          "is_private": false
-        }
-      ],
-      "class": [
-        {
-          "id": "7cec8f82-22dd-4593-895d-c10e806dacc5",
-          "value": "Merchant",
+          "id": "b82d9572-663e-48ed-a446-301840a410a8",
+          "value": "Ship Co-Commander",
           "is_private": false
         }
       ],
       "gender": [
         {
-          "id": "9e4b1dbb-dfc9-41ca-9c6e-20e26965be27",
-          "value": "Male",
+          "id": "61d884e1-21b0-43bd-a2f7-365db306dbab",
+          "value": "Female",
           "is_private": false
         }
       ],
       "status": [
         {
-          "id": "b8066845-9f49-4f16-975e-c526b229ffcd",
+          "id": "af773613-bac8-495d-8fb1-e07cbc9b0f46",
           "value": "alive",
           "is_private": false
         }
       ],
       "affinity": [
         {
-          "id": "d3c90902-54f6-4e87-aa5d-98d35dc427b1",
+          "id": "053d37c7-2463-44fb-9073-2b982da95021",
           "value": "Neutral",
           "is_private": false
         }
       ],
       "is_active": [
         {
-          "id": "5f822815-ded1-474b-806d-658dbaf5f371",
+          "id": "04bfb799-3576-4be2-9c22-cad32707fbf6",
           "value": "true",
           "is_private": false
         }
-      ],
-      "personality": [
+      ]
+    },
+    "relationships": [
+      {
+        "type": "enemy",
+        "direction": "outgoing",
+        "entity_id": "72cfbf66-7b3b-1a10-12c7-065220922391",
+        "description": "Killed her father and stole her throne.",
+        "entity_name": "Sandro",
+        "entity_type": "npc",
+        "relationship_id": "8381aa42-a239-4a8d-b887-064cf24a76bf",
+        "is_bidirectional": false
+      },
+      {
+        "type": "encountered",
+        "direction": "bidirectional",
+        "entity_id": "14230e1c-07ea-4fe8-9157-335fb1554508",
+        "description": null,
+        "entity_name": "04 - Echoes of the Arena",
+        "entity_type": "session",
+        "relationship_id": "f326467e-227e-4b2c-a34c-a511a0cb95f8",
+        "is_bidirectional": true
+      },
+      {
+        "type": "member_of",
+        "direction": "bidirectional",
+        "entity_id": "1cbdb828-5aff-4269-bf57-8ef58fe559e6",
+        "description": null,
+        "entity_name": "The Leviathan's Hull Crew",
+        "entity_type": "faction",
+        "relationship_id": "82e03444-0a4f-4566-8b23-a4a8f9df8f8d",
+        "is_bidirectional": true
+      },
+      {
+        "type": "professional_relation",
+        "direction": "bidirectional",
+        "entity_id": "94e1d188-9e5d-7632-d4e9-62188658895d",
+        "description": "Wishes he was present for guidance.",
+        "entity_name": "General Lee",
+        "entity_type": "npc",
+        "relationship_id": "164c9a02-e144-4a0d-be9e-866ba5c508f4",
+        "is_bidirectional": true
+      },
+      {
+        "type": "professional_relation",
+        "direction": "bidirectional",
+        "entity_id": "964c0ea9-838b-46b0-a606-8d109749624f",
+        "description": "Ice elemental quartermaster and advisor.",
+        "entity_name": "Glass",
+        "entity_type": "npc",
+        "relationship_id": "fa8c2cce-7114-47b4-b0dc-63c51f98e58b",
+        "is_bidirectional": true
+      },
+      {
+        "type": "professional_relation",
+        "direction": "bidirectional",
+        "entity_id": "9977cad2-0e29-4283-8c57-b802db493c82",
+        "description": null,
+        "entity_name": "Bardin Cratcho",
+        "entity_type": "npc",
+        "relationship_id": "2d0fad3d-0d14-4459-ba5b-d558b2294c4b",
+        "is_bidirectional": true
+      },
+      {
+        "type": "encountered",
+        "direction": "bidirectional",
+        "entity_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+        "description": null,
+        "entity_name": "05 - Pirates, Pelts, and Cargo",
+        "entity_type": "session",
+        "relationship_id": "14c5fff1-07fb-42c9-8839-d37904ed7302",
+        "is_bidirectional": true
+      },
+      {
+        "type": "leadership_relation",
+        "direction": "bidirectional",
+        "entity_id": "ca9a1d7f-9a35-4a66-b14d-3237c267a948",
+        "description": null,
+        "entity_name": "The Leviathan's Hull",
+        "entity_type": "location",
+        "relationship_id": "56b329a0-6dad-4fb7-99c6-8138816dee71",
+        "is_bidirectional": true
+      },
+      {
+        "type": "affiliated_with",
+        "direction": "bidirectional",
+        "entity_id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+        "description": "Joint command of Leviathan's Hall.",
+        "entity_name": "Commander Turiados",
+        "entity_type": "npc",
+        "relationship_id": "a741f305-df39-455e-9e68-68a00e6d4f64",
+        "is_bidirectional": true
+      },
+      {
+        "type": "encountered",
+        "direction": "bidirectional",
+        "entity_id": "f8a98301-deef-4224-8c8e-f5dcb5343560",
+        "description": null,
+        "entity_name": "Guests of the Leviathan",
+        "entity_type": "quest",
+        "relationship_id": "12e298a3-b703-468f-a7c8-5305fe0d3573",
+        "is_bidirectional": true
+      }
+    ],
+    "events": {
+      "event": [
         {
-          "id": "4868ccba-02c1-43c5-a744-cf9eb7217fd2",
-          "value": "**Patient**: He has waited 20 years for a single signal.",
-          "is_private": false
+          "id": "aa1e8981-64cd-4c4c-a365-8d8d1d37a41a",
+          "order": 1,
+          "title": "Boarding The Leviathan's Hull",
+          "created_at": "2025-12-22T05:55:13.945783+00:00",
+          "event_type": "npc_encountered",
+          "session_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+          "description": "After a desperate ascent from the collapsing caves, the Party is hauled from the sea onto the deck of the massive warship The Leviathan's Hull. They are confronted by Commander Turiados, a towering figure clad in wyvern hide with Sahuagin tattoos, and Captain Bianca Turiados, a Fey-touched woman of regal bearing. Soshi chills to recognize that both commanders wield stolen relics from The Arcane Brotherhood: the Breaker of Hulls cutlass and the Winder dagger.",
+          "relationship_id": "6ac450c0-c60e-4d12-8ecf-b342a81f27fb",
+          "relationship_type": "encountered",
+          "relationship_direction": "outgoing"
         },
         {
-          "id": "d82a8ed2-5885-4195-8495-622e6b972f1a",
-          "value": "**Obedient**: He follows the matriarchal hierarchy of his culture without question.",
+          "id": "5ec28e3a-4267-4088-b74d-b4dedfe39a11",
+          "order": 2,
+          "title": "The Queen's Tale",
+          "created_at": "2025-12-22T05:55:27.446809+00:00",
+          "event_type": "social",
+          "session_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+          "description": "On the bridge, a confusion over geography reveals that the pirates are hopelessly lost, seeking the archipelago of Nautica far to the south. Captain Bianca Turiados reveals her true identity as the exiled Queen of Pelagos from the continent of Lustria. She recounts how a sudden regrowth of the deep jungles ended their war with lizardfolk, only for civil strife to allow the necromancer Sandro to usurp her throne.",
+          "relationship_id": "a94ebadd-c757-4e86-a515-75f8ce03cf48",
+          "relationship_type": "encountered",
+          "relationship_direction": "outgoing"
+        },
+        {
+          "id": "9853ce61-e637-44ce-88c3-ec8d2c0c9356",
+          "order": 5,
+          "title": "A Cursed Negotiation",
+          "created_at": "2025-12-22T05:57:29.897259+00:00",
+          "event_type": "npc_encountered",
+          "session_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+          "description": "Glass, the ship's Ice Elemental Quartermaster, assesses the party's assets for the 20% rescue fee. When Bonnie attempts to pass off their cursed copper coins, Glass recoils but permits them to keep the \"infected\" currency. Instead, the pirates confiscate Olek's javelins, Norr's rope, and their pearls. Bonnie's final attempt to drop a cursed coin on the deck earns her a punitive magical blast from Captain Bianca Turiados.",
+          "relationship_id": "335d1e23-7084-440f-a29f-00937444a188",
+          "relationship_type": "encountered",
+          "relationship_direction": "outgoing"
+        },
+        {
+          "id": "759fdd11-b07a-4b88-8816-f16ef41e2802",
+          "order": 9,
+          "title": "Guests of the Leviathan",
+          "created_at": "2025-12-21T21:46:41.284256+00:00",
+          "event_type": "quest_started",
+          "session_id": "14230e1c-07ea-4fe8-9157-335fb1554508",
+          "description": "Clinging to debris in the open sea, the battered survivors are approached by the warship The Leviathan's Hull. The crew, a bizarre mix of pirates and armored paladins, fishes the party out of the water, where they are greeted as \"new guests\" by Captain Bianca and her former Paladin partner, Captain Turiados.",
+          "relationship_id": "63c70a7a-b4a7-4856-b49b-9b7a695acfb3",
+          "relationship_type": "encountered",
+          "relationship_direction": "outgoing"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "type": "npc",
+    "name": "Commander Turiados",
+    "description": "7-foot-tall warrior covered in Sahuagin shaman tattoos. Formerly Order of Inos.",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "created_at": "2025-11-19T21:06:38.740Z",
+    "attributes": {
+      "icon": [
+        {
+          "id": "1b75ad65-b7f0-4846-8870-8ad115b18775",
+          "value": "../../images/icons/male.png",
+          "is_private": false
+        }
+      ],
+      "role": [
+        {
+          "id": "dd2d7a98-fc68-4cd0-8a1e-180904dc6f1d",
+          "value": "Ship Co-Commander",
+          "is_private": false
+        }
+      ],
+      "gender": [
+        {
+          "id": "f0234b8b-35e6-4736-af6a-a1420dc8731d",
+          "value": "Male",
+          "is_private": false
+        }
+      ],
+      "status": [
+        {
+          "id": "b519f49f-46c6-4789-98bf-99ead22a8123",
+          "value": "alive",
+          "is_private": false
+        }
+      ],
+      "affinity": [
+        {
+          "id": "8590c92f-316c-4d59-8f62-35a1af374a0e",
+          "value": "Neutral",
+          "is_private": false
+        }
+      ],
+      "is_active": [
+        {
+          "id": "153c97ba-b6fe-4976-9f59-8eac87a1ebe6",
+          "value": "true",
           "is_private": false
         }
       ]
@@ -792,165 +1144,120 @@ VIEW: entity_complete_view
       {
         "type": "encountered",
         "direction": "bidirectional",
-        "entity_id": "2249578d-60be-4968-b0c3-ba14fba1ed22",
+        "entity_id": "14230e1c-07ea-4fe8-9157-335fb1554508",
         "description": null,
-        "entity_name": "06 - The Ruined Fortress",
+        "entity_name": "04 - Echoes of the Arena",
         "entity_type": "session",
-        "relationship_id": "d39ad84b-06e5-4f14-9ce3-18a0ed159609",
+        "relationship_id": "14770e25-83b6-4eb3-bf17-8878200d8591",
         "is_bidirectional": true
       },
       {
-        "type": "workplace",
+        "type": "member_of",
         "direction": "bidirectional",
-        "entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
-        "description": "Current workplace.",
-        "entity_name": "Drellin's Ferry",
-        "entity_type": "location",
-        "relationship_id": "4c6428a1-a3cb-48df-9711-a70f8daf50cb",
+        "entity_id": "1cbdb828-5aff-4269-bf57-8ef58fe559e6",
+        "description": "Member of the crew.",
+        "entity_name": "The Leviathan's Hull Crew",
+        "entity_type": "faction",
+        "relationship_id": "b4659e79-8453-49a3-952d-1a993f2f42aa",
+        "is_bidirectional": true
+      },
+      {
+        "type": "affiliated_with",
+        "direction": "bidirectional",
+        "entity_id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
+        "description": "Joint command of Leviathan's Hall.",
+        "entity_name": "Bianca Turiados",
+        "entity_type": "npc",
+        "relationship_id": "c27e1d6d-f226-4a8e-bcb7-4dda8df0c265",
+        "is_bidirectional": true
+      },
+      {
+        "type": "enemy",
+        "direction": "bidirectional",
+        "entity_id": "72cfbf66-7b3b-1a10-12c7-065220922391",
+        "description": "Seeks revenge for village massacre.",
+        "entity_name": "Sandro",
+        "entity_type": "npc",
+        "relationship_id": "66fe289c-7dd8-404e-9fbf-34e1b4a18a6e",
         "is_bidirectional": true
       },
       {
         "type": "encountered",
         "direction": "bidirectional",
-        "entity_id": "afc5e329-552d-437e-b2da-85d32ed609b0",
+        "entity_id": "94e1d188-9e5d-7632-d4e9-62188658895d",
+        "description": "Former mercenary leader, whereabouts unknown.",
+        "entity_name": "General Lee",
+        "entity_type": "npc",
+        "relationship_id": "aabea851-0de2-4356-b214-436c224762cd",
+        "is_bidirectional": true
+      },
+      {
+        "type": "quest_giver",
+        "direction": "bidirectional",
+        "entity_id": "afe69839-25b9-466a-8f07-47401383a8ad",
         "description": null,
-        "entity_name": "10 - A New Friend",
+        "entity_name": "Hunt for the Necromancer King",
+        "entity_type": "quest",
+        "relationship_id": "0d5b407f-4bd5-4472-9abc-8b7a328426b0",
+        "is_bidirectional": true
+      },
+      {
+        "type": "encountered",
+        "direction": "bidirectional",
+        "entity_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+        "description": null,
+        "entity_name": "05 - Pirates, Pelts, and Cargo",
         "entity_type": "session",
-        "relationship_id": "c9c63468-5f72-484f-88c1-62d1b8c67595",
+        "relationship_id": "74ede487-53fa-41c7-bda8-6f460e21af3f",
         "is_bidirectional": true
       },
       {
         "type": "located_in",
         "direction": "bidirectional",
-        "entity_id": "df8bdb1b-8227-49a9-aef1-bb2c4ce902a6",
-        "description": null,
-        "entity_name": "The Underdark",
+        "entity_id": "ca9a1d7f-9a35-4a66-b14d-3237c267a948",
+        "description": "Current location.",
+        "entity_name": "The Leviathan's Hull",
         "entity_type": "location",
-        "relationship_id": "77150968-8d4e-412d-8182-7f26f5c37739",
+        "relationship_id": "5b48be19-7586-4ed0-a238-849d4f2603d2",
         "is_bidirectional": true
       }
     ],
     "events": {
       "event": [
         {
-          "id": "d98e43f5-de1f-4c8d-8307-bb5bf0dfe8f2",
-          "order": 4,
-          "title": "Deals in the Market",
-          "created_at": "2025-12-22T13:00:55.12651+00:00",
-          "event_type": "shopping",
-          "session_id": "2249578d-60be-4968-b0c3-ba14fba1ed22",
-          "description": "Navigating a market plastered with \"Missing Pet\" posters (courtesy of their own cats), the party resupplies. Bonnie shares a quiet moment of charity with a street urchin and contacts the The Thieves' Guild for tools. She then pulls off a daring con at the General Store, convincing the owner, Jareth, that their fake pearls are valuable spoils of war, while Kaedin is chastised for his shirtlessness by a local elder, whom Bonnie promptly pranks with telepathy.",
-          "relationship_id": "463baa83-d5b7-48cd-9ce1-e26da41badc4",
-          "relationship_type": "mention",
-          "relationship_direction": "incoming"
-        },
-        {
-          "id": "247198f0-d540-4291-9204-0a24d27e6cb5",
-          "order": 7,
-          "title": "Encounter with House Corzina",
-          "created_at": "2025-12-21T17:11:17.606682+00:00",
-          "event_type": "social",
-          "session_id": "20b73069-7a8f-4cd9-aa5b-1c27f40efd79",
-          "description": "While purchasing healing potions in the shopping district, Soshi and Bonnie encounter Jareth, a drow of House Corzina disguised by an illusion. He reveals he has been waiting in Drellin's Ferry for twenty years for a signal from his matron, Zaya.",
-          "relationship_id": "a87df584-c0c0-4417-9811-01a3e2f075a7",
+          "id": "aa1e8981-64cd-4c4c-a365-8d8d1d37a41a",
+          "order": 1,
+          "title": "Boarding The Leviathan's Hull",
+          "created_at": "2025-12-22T05:55:13.945783+00:00",
+          "event_type": "npc_encountered",
+          "session_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+          "description": "After a desperate ascent from the collapsing caves, the Party is hauled from the sea onto the deck of the massive warship The Leviathan's Hull. They are confronted by Commander Turiados, a towering figure clad in wyvern hide with Sahuagin tattoos, and Captain Bianca Turiados, a Fey-touched woman of regal bearing. Soshi chills to recognize that both commanders wield stolen relics from The Arcane Brotherhood: the Breaker of Hulls cutlass and the Winder dagger.",
+          "relationship_id": "3653d703-a366-4408-8abd-bdc6937fae0e",
           "relationship_type": "encountered",
           "relationship_direction": "outgoing"
         },
         {
-          "id": "c4a29ffc-d296-4155-8dab-c7e615fd7ff3",
+          "id": "02fbdb04-0c51-4f11-9cd2-030ebadd45ee",
+          "order": 4,
+          "title": "The Necromancer's Price",
+          "created_at": "2025-12-22T05:57:12.608147+00:00",
+          "event_type": "quest_started",
+          "session_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+          "description": "Soshi inquires about Commander Turiados's magical compass, which points to the holder's greatest desire. Turiados strikes a bargain: he will trade the compass for the death of the usurper Sandro. He provides the party with a whistle to summon him once they have obtained a lock of the necromancer's hair as proof.",
+          "relationship_id": "31a8e7e1-c7e4-417d-aab4-bd5dc8c46667",
+          "relationship_type": "quest_giver",
+          "relationship_direction": "outgoing"
+        },
+        {
+          "id": "759fdd11-b07a-4b88-8816-f16ef41e2802",
           "order": 9,
-          "title": "The Heist at Jareth's",
-          "created_at": "2025-12-24T08:56:17.453159+00:00",
-          "event_type": "location_visited",
-          "session_id": "afc5e329-552d-437e-b2da-85d32ed609b0",
-          "description": "Having decided to salvage Jareth's store for healing potions, the party approaches the general marker. Seeing the store abandoned, Bonnie and Soshi break in to scavenge supplies, only to interrupt three thieves emptying a hidden wall safe. The thieves flee to the rooftops, but Bonnie teleports to intercept, breaking one's leg while the others escape into the alleys.",
-          "relationship_id": "71bbd268-05e6-4073-99b3-e201dbc01de7",
-          "relationship_type": "mention",
-          "relationship_direction": "incoming"
-        }
-      ]
-    }
-  },
-  {
-    "id": "1f839a67-9fe6-42fa-976a-741f6a5c0a99",
-    "type": "location",
-    "name": "Shrine of Pelor",
-    "description": "A small religious shrine dedicated to Pelor, maintained by Brother Denny and other clerics. Norr and Soshi visited with offerings seeking information about Vraath Keep, learning it was a cursed fortress with undead guardians and blighted lands. Brother Denny showed little interest in helping with the Thylacoleo cubs but accepted fruit offerings. The shrine serves as a minor waypoint for travelers seeking blessings, though Brother Denny's aggressive salesmanship and transactional approach to faith has diminished its spiritual reputation.",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "created_at": "2025-11-21T06:38:22.522Z",
-    "attributes": {
-      "type": [
-        {
-          "id": "aef95c19-7f51-4b44-b42a-7dfb280e6db9",
-          "value": "landmark",
-          "is_private": false
-        }
-      ]
-    },
-    "relationships": [
-      {
-        "type": "parent_location",
-        "direction": "outgoing",
-        "entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
-        "description": "Located within",
-        "entity_name": "Drellin's Ferry",
-        "entity_type": "location",
-        "relationship_id": "2576d5f2-0a2e-4a63-aa5d-5bec5970a245",
-        "is_bidirectional": false
-      },
-      {
-        "type": "workplace_relation",
-        "direction": "bidirectional",
-        "entity_id": "4eb21ab1-71f5-4226-ad53-e4c37fc7c1f5",
-        "description": "Serves at shrine.",
-        "entity_name": "Brother Denny",
-        "entity_type": "npc",
-        "relationship_id": "c9d3153a-41f3-4d71-af68-816ae028af4d",
-        "is_bidirectional": true
-      },
-      {
-        "type": "workplace_relation",
-        "direction": "bidirectional",
-        "entity_id": "61f8a855-6b2a-4309-a1b6-39855325562a",
-        "description": "Serves at shrine.",
-        "entity_name": "Avarthel",
-        "entity_type": "npc",
-        "relationship_id": "b8a3b5bb-21f1-4043-8c55-2b1ca9cc2513",
-        "is_bidirectional": true
-      },
-      {
-        "type": "quest_update",
-        "direction": "bidirectional",
-        "entity_id": "812a2b4c-3c16-4270-8a98-9e230331f2dd",
-        "description": null,
-        "entity_name": "The Brotherhood's Secret",
-        "entity_type": "quest",
-        "relationship_id": "c65eb7ca-9ae7-49d1-9c67-822bc366e4a3",
-        "is_bidirectional": true
-      },
-      {
-        "type": "encountered",
-        "direction": "bidirectional",
-        "entity_id": "b2f8c12f-b108-4c35-87d1-8ae0e6e98ce5",
-        "description": null,
-        "entity_name": "01 - To Drellin's Ferry",
-        "entity_type": "session",
-        "relationship_id": "843aa74b-57ec-49ed-be59-c7f9fbfac48e",
-        "is_bidirectional": true
-      }
-    ],
-    "events": {
-      "event": [
-        {
-          "id": "2a4a377b-23a6-4edb-912d-1b9c468298b9",
-          "order": 8,
-          "title": "Meeting Brother Denny and Druid Avarthel",
-          "created_at": "2025-12-20T17:05:38.4042+00:00",
-          "event_type": "npc_encountered",
-          "session_id": "b2f8c12f-b108-4c35-87d1-8ae0e6e98ce5",
-          "description": "Norr and Soshi visit the Shrine of Pelor, bringing offerings. Brother Denny eagerly tries to hear confessions while Avarthel provides information about Vraath Keep - a cursed fortress near a lake in Witchwood, guarded by skeletons and surrounded by blighted land that ruins everything.",
-          "relationship_id": "547d6173-168c-4fbb-8840-0d37ea025a84",
-          "relationship_type": "located_in",
+          "title": "Guests of the Leviathan",
+          "created_at": "2025-12-21T21:46:41.284256+00:00",
+          "event_type": "quest_started",
+          "session_id": "14230e1c-07ea-4fe8-9157-335fb1554508",
+          "description": "Clinging to debris in the open sea, the battered survivors are approached by the warship The Leviathan's Hull. The crew, a bizarre mix of pirates and armored paladins, fishes the party out of the water, where they are greeted as \"new guests\" by Captain Bianca and her former Paladin partner, Captain Turiados.",
+          "relationship_id": "f9a80286-9c07-4599-b4d3-1528e0a30bb7",
+          "relationship_type": "encountered",
           "relationship_direction": "outgoing"
         }
       ]
@@ -958,67 +1265,23 @@ VIEW: entity_complete_view
   }
 ]
 
-VIEW: view_chronicle_arcs
+VIEW: view_recent_sessions
 -----------------------------------------
  SELECT id,
   campaign_id,
   title,
-  description,
-  "order",
-  COALESCE(( SELECT jsonb_object_agg(a.name, a.value) AS jsonb_object_agg
-  FROM attributes a
-  WHERE (a.entity_id = na.id)), '{}'::jsonb) AS attributes
-  FROM narrative_arcs na;
-
-  -- VIEW EXAMPLE RESULT --
-[
-  {
-    "id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "Thunder and Ash",
-    "description": "With the enemy army mere days from Drellin's Ferry, the party makes a desperate gambit: allying with Dreshi, a zealous goblin follower of Lamashtu, to destroy the only bridge across the gorge. The sabotage succeeds spectacularly, buying precious time for the town's evacuation. As refugees flee westward, the party encounters Loraine Martinique, a vampire noble investigating fey portals, and receives troubling news of an alliance between the Archlich of Pahuax and the approaching horde. The arc closes with Drellin's Ferry emptied, its people scattered, and new mysteries beckoning the heroes toward darker conspiracies.",
-    "order": 5,
-    "attributes": {
-      "type": "primary"
-    }
-  },
-  {
-    "id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "Shadows of the Witchwood",
-    "description": "Delving into the cursed Witchwood and its flooded cave systems, the party uncovers a nightmare of transmutation experiments and breeding programs. The discovery of Kalistra's arena of horrors - where creatures are twisted and trained for war - reveals the Arcane Brotherhood's dark involvement. As they navigate illusion-shrouded forests and face hydras, megatheriums, and acid-spitting arthropods, the companions realize they've stumbled into something far more sinister than simple raiding parties.",
-    "order": 2,
-    "attributes": {
-      "type": "primary"
-    }
-  }
-]
-
-VIEW: view_session_summary
------------------------------------------
- SELECT id,
-  campaign_id,
-  title,
-  narrative,
-  COALESCE(( SELECT jsonb_object_agg(a.name, a.value) AS jsonb_object_agg
-  FROM attributes a
-  WHERE (a.entity_id = s.id)), '{}'::jsonb) AS attributes,
-  ( SELECT entity_relationships.to_entity_id
-  FROM entity_relationships
-  WHERE ((entity_relationships.from_entity_id = s.id) AND (entity_relationships.relationship_type = 'part_of'::text))
-  LIMIT 1) AS arc_id,
-  ( SELECT jsonb_build_object('locations', count(*) FILTER (WHERE (e.type = 'location'::text)), 'npcs', count(*) FILTER (WHERE (e.type = 'npc'::text)), 'factions', count(*) FILTER (WHERE (e.type = 'faction'::text)), 'quests', count(*) FILTER (WHERE (e.type = 'quest'::text)), 'encounters', count(*) FILTER (WHERE (e.type = 'encounter'::text))) AS jsonb_build_object
+  narrative AS description,
+  created_at,
+  attributes,
+  ( SELECT count(*) AS count
+  FROM session_events se
+  WHERE (se.session_id = s.id)) AS event_count,
+  COALESCE(( SELECT jsonb_agg(DISTINCT jsonb_build_object('id', e.id, 'name', e.name, 'type', e.type)) AS jsonb_agg
   FROM (entity_relationships er
   JOIN entities e ON ((er.to_entity_id = e.id)))
-  WHERE (er.from_entity_id = s.id)) AS stats,
-  ( SELECT jsonb_agg(sub.*) AS jsonb_agg
-  FROM ( SELECT e.id,
-  e.name,
-  e.type
-  FROM (entity_relationships er
-  JOIN entities e ON ((er.to_entity_id = e.id)))
-  WHERE ((er.from_entity_id = s.id) AND (e.type = ANY (ARRAY['npc'::text, 'location'::text, 'faction'::text, 'quest'::text, 'encounter'::text])))
-  LIMIT 4) sub) AS starring
+  WHERE ((er.from_entity_id = s.id) OR (er.from_entity_id IN ( SELECT session_events.id
+  FROM session_events
+  WHERE (session_events.session_id = s.id))))), '[]'::jsonb) AS mentions
   FROM sessions s;
 
   -- VIEW EXAMPLE RESULT --
@@ -1027,22 +1290,16 @@ VIEW: view_session_summary
     "id": "20b73069-7a8f-4cd9-aa5b-1c27f40efd79",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "03 - Into the Depths",
-    "narrative": "### Return to the Tollhouse\n\nThe party's previous adventure had left them weary and, frankly, quite malodorous as they returned to Drellin's Ferry. Making their way back to the familiar Tollhouse, they sought out Soranna, who took one look at their disheveled state and quickly ushered them down into the basement. The discrete location would allow them to speak freely without alarming the townspeople with their rather pungent aroma.\n\nIn the privacy of the basement, the party recounted their harrowing encounters with the attacks they had witnessed. Soranna listened intently as they described the maimed corpses and the disappearance of at least one woodsman among the people dressed in green. When they mentioned the hydra, Soranna's puzzled expression revealed she had no knowledge of such creatures. As they spoke, she methodically placed red-flagged pins on a map, marking the locations of other similar attacks that had been reported.\n\nImpressed by their efforts, Soranna rewarded the party with 10 gold pieces. She then shared valuable intelligence about the growing threat, explaining that she had two skilled operatives under her command investigating the hordes. Of particular concern was an extensive cave system that sprawled beneath the city, which posed a significant risk as a potential infiltration route into Drellin's Ferry.\n\nThe two operatives, she explained, would seek out the party the following day to discuss their findings. When asked for their names, Bonnie's face lit up with recognition. Kat, a tiefling with an unusual passion for cats, and Yoghurt, a lactose-intolerant half-ogre assassin, were both former members of the Thieves Guild who had been exiled to this town due to their rather questionable competence.\n\n### The Green Apple Inn and a Disturbing Discovery\n\nExhausted and still reeking from their adventures, the party made their way back to the Green Apple Inn. Tharma, the understanding bartender, immediately directed them back to their rooms with firm instructions to clean themselves thoroughly before rejoining civilized company.\n\nAs Soshi undressed and began to clean herself, she made a startling discovery - two eggs had somehow ended up in her possession. After consulting with Bonnie and Kaedin, the trio realized with growing alarm that these were hydra eggs. The warm, humid conditions they had recently experienced meant the eggs could hatch at any moment.\n\nOnce cleaned and presentable, the party returned downstairs to find the common room populated with various patrons. Speaking with the barmaid, they learned troubling news: Anya, one of her young assistants, had gone missing two days prior. The girl was described as a 17-year-old human with striking red hair, standing about 1.8 meters tall, and bearing a distinctive pattern of freckles across her face.\n\n### The Search for Anya\n\nAfter finishing their dinner, the party decided to investigate Anya's disappearance. Her house sat on the outskirts of town, nestled near the forest's edge. The simple thatched wooden structure stood beside a modest shed, both showing signs of recent abandonment.\n\nEntering the darkened house, they found no signs of life. The simple interior contained only a bed and a nearby table, but what caught their attention was the blood on the floor - at least a day old by their estimation. The house showed no signs of ransacking, leading them to suspect that Anya might have been pregnant.\n\nTheir careful search revealed an unfinished letter that provided a crucial clue:\n\n> _Lem, you know I love you and I want us to be together. I'll go to our favourite meeting spot..._\n\nAs they prepared to leave the house, the party became aware they were being watched. At least three pairs of eyes observed them from the shadows - townspeople who had been eavesdropping on their investigation. Approaching an elderly woman among the watchers, they inquired about Anya's whereabouts. While the woman claimed no knowledge of the girl's current location, she revealed that many men had been regular visitors to Anya's home until about six months ago.\n\n### Encounters with the Winter Rose Mercenaries\n\nReturning to the inn, the party reunited with the Winter Rose mercenaries, who had their own harrowing tale to share. Their recent expedition to the east had nearly ended in disaster when they were ambushed while pursuing a hidden stash. Giant raptors and Thylacoleos - fearsome panther-bear hybrids - had attacked them, devouring their horses. Ironically, this grisly sacrifice had provided the mercenaries with the distraction they needed to escape with their lives.\n\nThe mercenaries shared valuable tactical information: the raptors showed a marked fear of fire and strong light, and notably, there had been no hobgoblins among their attackers. However, the raptors bore distinctive markings that resembled shackles, suggesting they belonged to a different hobgoblin clan than those previously encountered.\n\nAfter parting ways with the mercenaries, the party sought out Tharma once more. They discovered she was an avid reader of novels of ...questionable nature and interactions and even gifted one to the interested Bonnie. When asked about Lem, Tharma revealed he was a member of the town guard.\n\nWith this information gathered, the party retired to their rooms for a well-deserved rest, and through their experiences, they felt themselves grow stronger, reaching the 7th level of their abilities.\n\n### Morning Revelations\n\nThe next morning brought the promised meeting with the two exiled thieves. Over breakfast, the party observed Yoghurt approaching dressed in an elegant kimono with two katanas at his side, while Kat appeared as one of the most unremarkable individuals imaginable - forgettable in every way except for the several large globes attached to his waist.\n\nThrough conversation conducted partly in thieves' cant, with Bonnie taking the lead, they learned that the pair harbored ambitions of robbing the local wizard. More importantly, Soranna had tasked them with researching the cave system, and their findings were illuminating:\n\nThe caves extended beneath the city and were largely flooded. They connected to the temple near town but were protected by a barrier of light that prevented anyone affiliated with the city from passing through. This meant the party - and possibly the Winter Rose mercenaries - could potentially bypass this magical obstacle. The Wizard had described this barrier as a curse.\n\nBonnie's keen observation revealed that Kat's mysterious globes were actually cats and even a large tiger. The tiefling was in desperate need of 2 gold pieces to settle debts owed to wealthy townspeople, though none of the party felt inclined to assist with this particular financial burden.\n\nBoth thieves expressed considerable fear of the Winter Rose mercenaries, referring to them only by their codenames: Vandal and Scoundrel.\n\nAfter the thieves departed, Bonnie composed a letter for them, detailing information about the tunnel and suggesting they meet again later that day.\n\n### Seeking Expert Counsel\n\nThe party formulated a plan to visit both the local Druid and Wizard with their hydra eggs - hoping to convince the Druid to hatch one while selling the other to the Wizard for a substantial profit.\n\nThey found Avarthel, the druid, in the middle of officiating a wedding ceremony. Bonnie discreetly sent him a message explaining the urgency of their matter. As he approached them afterward, they learned he belonged to the Circle of the Land. He led them to the forest's edge, into a beautiful grove of his own creation.\n\nThe grove's proximity to the Feywild had an immediate positive effect on everyone, particularly Bonnie and Jacques, who actually grew in size within this magical space. However, when Avarthel examined their hydra eggs, his response was far from what they had hoped.\n\nThe Druid adamantly refused to hatch the eggs, explaining that hydras were uncontrollable creatures capable of destroying entire ecosystems. He could not send them back to the Fey plane - only druids in Ramashen possessed such power. Similarly, taming these beasts was beyond their capabilities, and the only Beastmaster skilled enough for such a task was currently traveling to Icewind Dale.\n\nUnderstanding the danger, the party agreed to leave the eggs in Avarthel's care under strict conditions that would prevent them from hatching.\n\nDuring their continued conversation, Avarthel shared additional useful information: Thylacoleos could be avoided using honey, as they would prioritize the sweet substance over attacking anyone who hadn't provoked them first. He also revealed that Lem had been attacked during his guard shift, treated for his injuries, and was now recovering at the town barracks.\n\n### Shopping and Unexpected Encounters\n\nBefore visiting the barracks, the party decided to procure some healing potions. The shopping district buzzed with activity, and there they encountered Jareth of House Corzina, a remarkably muscled drow who appeared to be hiding his nudity behind an illusion of clothing. Both Soshi and Bonnie found him quite appealing.\n\nJareth's story proved intriguing: his matron, Zaya, had sent him to this town twenty years ago with instructions to remain until he received a specific signal - one he had yet to see. Their society followed a matriarchal structure, explaining his deference to his absent matron's commands.\n\nThe party successfully purchased ten lesser healing potions (4d4 + 4 healing each) for 5 gold pieces total, with each member receiving two potions for their personal use.\n\n### The Barracks and Lem's Account\n\nAt the barracks, they discovered Soranna was away, but they were granted access to the infirmary where Lem was recovering. The young man proved to be quite different from what they had expected - a rotund human of only 1.5 meters in height and 19 years of age. His appearance left everyone wondering what exactly Anya had seen in him.\n\nLem's account of their relationship was rather callous. He admitted he hadn't taken their connection seriously and had been \"just having fun,\" remaining oblivious to how serious the relationship had become for Anya. He claimed ignorance about any pregnancy and revealed he hadn't seen her for two weeks.\n\nTheir secret meeting place, he explained, required a four-hour walk through the forest to reach a secluded pond. Regarding his recent attack, Lem described being assaulted by two worg riders, resulting in his fall onto a boulder. Two other guards had also been injured in the encounter, though fortunately, no one had died.\n\n### Rescue in the Forest\n\nPrioritizing Anya's welfare over their other concerns, the party set off for the forest meeting place. Their decision proved fortuitous, as they found the young woman in a dire state. Blood stained her ankles, and she appeared nearly delirious, singing incoherently while repeatedly muttering about her failed attempts to end both her own life and that of her unborn child.\n\nRecognizing the critical nature of her condition, Kaedin made the difficult decision to render her unconscious while Bonnie provided a comforting distraction with an embrace. Kaedin then carried her unconscious form toward Avarthel's grove, accompanied by Soshi, while Bonnie rushed ahead to bring the Druid to help.\n\nUpon reaching the magical grove, Anya's condition immediately began to improve. A phoenix named Loïc, who had been residing in the area, took notice of her plight and shed healing tears upon her, further stabilizing her condition. When Avarthel arrived, having transformed into a cheetah for swift travel, he determined that Anya needed extended care and took her deeper into the forest for both physical and mental healing.\n\n### Tavern Brawl\n\nReturning to the Green Apple Inn, the party walked directly into chaos. Bottles flew through the air and random punches were being thrown as 10-15 intoxicated townspeople engaged in a massive brawl. At the center of the conflict were Vandal and Scoundrel, the Winter Rose mercenaries.\n\nThe party quickly intervened, carefully avoiding serious injury to the drunk participants while efficiently knocking them unconscious to end the fight. Tharma expressed her gratitude for their assistance as they helped remove the unconscious troublemakers from her establishment.\n\nOnce order was restored, they learned from Vandal and Scoundrel that the brawl had erupted when the drunken townspeople had attempted to inappropriately grab Vandal's chest.\n\n### Into the Depths\n\nAfter taking a short rest to recover their strength, the party joined the mercenaries to meet with Kat and Yoghurt. They found the thieving duo engaged in petty crime, with Kat having just stolen fish from a vendor's stall and fleeing from the scene.\n\nThe group proceeded toward the temple, which was partially submerged underwater, and approached the mysterious barrier. As expected, the party passed through easily, while Kat and Yoghurt were prevented from entering. The thieves instructed them to collapse the caves if possible, ensuring they couldn't be used as an infiltration route into the town.\n\nVenturing deeper into the cave system, they discovered a stone entryway covered in indecipherable runes. Beyond this lay an impressive sight: a large superior ring, six meters in width, overlooking an arena littered with approximately fifty skeletal remains and scattered weaponry throughout.\n\nTwo entrances beckoned from atop the ring - one to the right bearing the carving of a large reptile, and one to the left decorated with a cloud surrounded by multiple lightning bolts.\n\nThe party chose the right entrance while the mercenaries took the left path.\n\n### The Reptilian Path\n\nApproximately ten minutes into their journey, they heard thunderous sounds echoing from the mercenaries' chosen route. Meanwhile, their own tunnel grew increasingly hot and humid - a fortunate circumstance that they had left the hydra eggs behind with Avarthel.\n\nTheir progress was soon impeded by a large poisonous cloud stretching fifteen feet across their path. Kaedin attempted to leap over the obstacle but landed on a concealed trap, suffering 4 points of damage. Bonnie rushed through the poisonous cloud and triggered a fire trap, which she managed to dodge, though Kaedin caught the full force of the flames for an additional 12 points of damage. Once the poison cloud dissipated, Soshi was able to pass through safely.\n\nThis dangerous encounter convinced the party to proceed with greater caution. They invoked Pass without Trace to mask their movements and continued stealthily through the increasingly treacherous environment.\n\nThe sounds of shrieking and chittering grew louder as they progressed, and they soon discovered the source: a pit filled with large snakes and spiders that moved freely through openings in the tunnel walls.\n\nFurther along, they encountered a pond inhabited by giant leeches, beside which slumbered a massive creature with glowing red eyes. Recognizing the need to bypass both the pond and avoid waking the sleeping beast, they employed their various magical abilities - Soshi used Misty Step, Bonnie cast Fly, and Kaedin teleported to his Echo.\n\nAt this moment, the entire temple structure shook violently, adding urgency to their mission.\n\n### The Laboratory of Horrors\n\nThey emerged into a vast chamber, partially flooded and containing the ruins of what had once been a substantial structure. Within the remains of a house, they discovered a crumpled note that revealed the sinister purpose of this place:\n\n> The experiment is going well. Me and the other disciples opened several gates to two of the Demon Lords' domains. We should be close to easily lure out enough creatures to start a breeding program to provide enough competitors for the games.\n\nThe chamber also contained a mysterious red glow emanating from beneath the water, where a chest rested on the bottom. However, the water teemed with piranhas and snakes, making retrieval extremely dangerous. Above them, they realized the source of the shrieking sounds they had been hearing - human-sized bats roosted in the chamber's upper reaches.\n\nAs they continued deeper, the environment grew noticeably colder, and they began to notice that the tracks on the floor had become slimy and sticky, suggesting the presence of some large creature.\n\n### The Final Laboratory\n\nTheir journey culminated in a room filled with electronic gadgets and scientific equipment. Multiple tables held the remains of various creatures they had encountered throughout their underground expedition. An entrance to the arena was visible, marked by a rune that appeared to be designed for activation.\n\nAt the back of the room stood the very reptile whose likeness had been carved into the entrance wall at the beginning of their journey.\n\nWhen Kaedin summoned his Echo, the massive reptile sprang into action, leaping an incredible 45 feet to attack them, initiating what would prove to be a challenging battle.\n\n### The Battle with the Reptile\n\nThe combat began with Kaedin hurling a javelin at their scaly opponent, followed by Bonnie's own attack. Soshi wisely used her Blink spell and discovered that spiders were approaching to assist the reptile in the fight.\n\nThe reptile retaliated with devastating effect, causing both Bonnie and Kaedin to fail their saving throws and become Fear. Its tail attack successfully struck Kaedin, adding to his mounting injuries.\n\nOn Kaedin's turn, despite unleashing four attacks, only one found its mark, though it dealt a substantial 23 points of damage including a grazing hit.\n\nBonnie's continued assault proved more successful, landing a critical hit that dealt 36 points of damage. The significant injury caused the reptile to begin emanating an aura of cold, indicating its desperation and rising power.\n\nHowever, Soshi ended the immediate threat with brilliant tactical thinking, using her polymorph spell to transform the dangerous reptile into a harmless caterpillar, bringing the combat to an abrupt and decisive conclusion.\n\n### Spoils of Victory and the Final Puzzle\n\nWith the battle won, Bonnie searched the area and discovered valuable treasures: jewelry worth 10 gold pieces, two vials containing mysterious elixirs, a magical bow, and an enchanted helmet.\n\nAs they approached the rune that would activate the arena mechanism, Bonnie received a message from the mercenaries indicating they were ready to press their corresponding rune. In perfect synchronization, both groups activated their respective runes.\n\nThe results were immediately visible: the door opened, and all the skeletal remains in the arena were pulled into the central pit. Had they failed to coordinate this action, all the skeletons would have animated, creating a far more dangerous situation.\n\nWith the arena's trap successfully bypassed, a third corridor opened before them. As they entered this new passage, the room behind them sealed shut, leaving them no choice but to continue forward into whatever mysteries lay ahead.",
+    "description": "### Return to the Tollhouse The party's previous adventure had left them weary and, frankly, quite malodorous as they returned to Drellin's Ferry. Making their way back to the familiar Tollhouse, they sought out Soranna, who took one look at their disheveled state and quickly ushered them down into the basement. The discrete location would allow them to speak freely without alarming the townspeople with their rather pungent aroma. In the privacy of the basement, the party recounted their harrowing encounters with the attacks they had witnessed. Soranna listened intently as they described the maimed corpses and the disappearance of... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-21T10:53:41.089Z",
     "attributes": {
       "level_up": "7",
       "campaign_arc": "The Shadow of the Witchwood",
       "session_date": "2025-06-07",
       "session_number": "4"
     },
-    "arc_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
-    "stats": {
-      "npcs": 10,
-      "quests": 3,
-      "factions": 3,
-      "locations": 4,
-      "encounters": 0
-    },
-    "starring": [
+    "event_count": "16",
+    "mentions": [
       {
         "id": "003af3ae-ce27-4139-8214-96eb96d5181d",
         "name": "Underground Temple Complex",
@@ -1059,9 +1316,129 @@ VIEW: view_session_summary
         "type": "npc"
       },
       {
+        "id": "1c695900-15d5-b4ba-bc61-065220922391",
+        "name": "Matron Zaya",
+        "type": "npc"
+      },
+      {
+        "id": "22de4109-6224-474a-9104-bc044c5562d2",
+        "name": "Party",
+        "type": "character"
+      },
+      {
         "id": "231a3f04-fbd5-4273-bb89-994a177f7792",
         "name": "The Missing Barmaid",
         "type": "quest"
+      },
+      {
+        "id": "35b13ecc-3d2e-4d54-b85b-7c786d25b6a3",
+        "name": "The Hydra's Offspring",
+        "type": "quest"
+      },
+      {
+        "id": "46065633-d1ec-47e4-a466-700930f84738",
+        "name": "The Winter Rose",
+        "type": "faction"
+      },
+      {
+        "id": "61f8a855-6b2a-4309-a1b6-39855325562a",
+        "name": "Avarthel",
+        "type": "npc"
+      },
+      {
+        "id": "646f15d5-34d1-49d0-81f4-df92669e22b6",
+        "name": "The Thieves' Guild",
+        "type": "faction"
+      },
+      {
+        "id": "77c2cdf3-1109-4628-aa52-0a6523ec0b03",
+        "name": "Avarthel's Grove",
+        "type": "location"
+      },
+      {
+        "id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+        "name": "Kaedin",
+        "type": "character"
+      },
+      {
+        "id": "83d0c077-8c4c-2b21-23d8-176331033402",
+        "name": "Scoundrel",
+        "type": "npc"
+      },
+      {
+        "id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+        "name": "Soshi",
+        "type": "character"
+      },
+      {
+        "id": "8427e65e-de6e-4419-b404-73b9704d9543",
+        "name": "Bonnie",
+        "type": "character"
+      },
+      {
+        "id": "9008196f-350a-455f-a339-1adef7f7de70",
+        "name": "The Witchwood",
+        "type": "location"
+      },
+      {
+        "id": "94e1d188-9d5d-3c32-34e9-287442144513",
+        "name": "Soranna Anitah",
+        "type": "npc"
+      },
+      {
+        "id": "99d9dfaa-835b-44c3-a840-97a8ad1fad42",
+        "name": "Green Apple Inn",
+        "type": "location"
+      },
+      {
+        "id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+        "name": "Drellin's Ferry",
+        "type": "location"
+      },
+      {
+        "id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+        "name": "Shadows of the Witchwood",
+        "type": "narrative_arc"
+      },
+      {
+        "id": "b603f3aa-bf7f-5e54-560b-409664366735",
+        "name": "Tharma",
+        "type": "npc"
+      },
+      {
+        "id": "bb39bb76-89ee-40c8-a380-5c2ae0a422ed",
+        "name": "The Underground Infiltration",
+        "type": "quest"
+      },
+      {
+        "id": "c555bcd2-a3bc-49be-8240-a8df5360d476",
+        "name": "Lem",
+        "type": "npc"
+      },
+      {
+        "id": "d82515cc-d191-7076-782d-621886588957",
+        "name": "Vandal",
+        "type": "npc"
+      },
+      {
+        "id": "e09a7bfa-fde1-44a6-80f0-7b8f216deaf1",
+        "name": "The Lion's Guard",
+        "type": "faction"
+      },
+      {
+        "id": "e11e864f-2baa-44d3-8b4a-5b816928cd25",
+        "name": "Anya",
+        "type": "npc"
+      },
+      {
+        "id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+        "name": "Jareth",
+        "type": "npc"
+      },
+      {
+        "id": "ffadbca2-50fa-489d-9756-ce390d274cd3",
+        "name": "Kat",
+        "type": "npc"
       }
     ]
   },
@@ -1069,21 +1446,15 @@ VIEW: view_session_summary
     "id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "05 - Pirates, Pelts, and Cargo",
-    "narrative": "### The Leviathan's Hull\n\nThe party’s ascent from the subterranean hell of the caves had been a desperate, gasping scramble for life. They emerged into the world above only to find themselves adrift on a strange ship in an unknown sea. Their salvation, such as it was, came not as a gentle hand but as a grappling hook. A colossal vessel, all black wood and green-tinged sails, bore down on them. Its name was visible even from a distance: The Leviathan’s Hull.\n\nAs their small craft was pulled alongside the massive warship, pirates swarmed the deck, their voices rough and jeering. \"We got some plunder!\" one shouted, as the party—Bonnie, Kaedin, Soshi, and Norr—were hauled unceremoniously onto the deck. Olek, their stoic companion, assisted his friends, his divine aura dimmed by exhaustion and the pungent salt spray.\n\nThey were prodded toward the helm, where two figures stood observing them, silhouetted against the waning light. The first was a man of terrifying proportions, standing nearly seven feet tall. His weathered bronze skin was a canvas of glistening, ink-black tattoos. He was bare-chested, wearing only a heavy, open coat of what looked like wyvern hide, dyed a deep kelp green and studded with barnacle-like iron rivets. The coat’s interior shimmered with the iridescent scales of some deep-sea serpent, and as he moved, it seemed to flow like liquid night. A scent of sharp brine and old blood wafted from him.\n\nSoshi’s arcane knowledge prickled. The tattoos were not mere decoration; they were the ritualistic markings of Sahuagin shamans. A coiling kraken wrapped down his arm, its ink seeming to slither slowly on his skin. He wore a belt of braided sea snakes, a pair of throwing axes, and boots of manta ray hide. Around his neck hung a compass that appeared broken, its needle spinning wildly before stopping, pointing at Soshi, and then spinning again.\n\nBut it was the cutlass at his hip that made Soshi’s blood run cold. She recognized it instantly—a relic stolen from the Arcane Brotherhood’s treasury five years prior. It was the Breaker of Hulls, its blade curved like a shark’s tooth and glowing with faint blue runes. Runes, she knew, that flared to life when drawn against a traitor.\n\nThe second figure, a woman, glided across the deck with the grace of a phantom. She wore a regal, high-collared garment of night-blue velvet, stitched with silver thread in patterns resembling constellations and maelstroms. Form-fitting black leather trousers were tucked into boots inlaid with sapphires that flashed like bioluminescent plankton. Her corset was a mosaic of polished abalone shell, and a half-cloak of shimmering mist floated behind her, never quite touching the ground. Her pale skin seemed almost luminescent, a clear sign of her Fey-touched blood. Her eyes were a piercing, crystalline blue, laced with veins of lightning that flickered with latent power.\n\nAs she approached, Soshi felt the distinct thrum of magic being cast. Instinctively, she threw up a hand, weaving a counter-spell that shattered the woman's subtle probe. The woman’s eyes snapped to Soshi, a flicker of surprise in their electric depths.\n\nSoshi’s gaze dropped to the woman’s hands, where rings adorned each finger. Her sharp mind identified the sigils: each ring represented a different school of magic. At the woman's hip hung another stolen treasure, a delicately carved blade that Soshi also recognized from the Arcane Brotherhood's museum: Winder, crafted from a shard of storm-forged glass, humming with latent thunder.\n\nThe towering man’s voice rumbled like distant thunder. \"Please, bring our... esteemed guests... to the bridge.\"\n\n### A Queen's Plea & A Pirate's Price\n\nThe party was ushered before the two commanders. \"How did you end up in the mountains with your ship?\" the man asked.\n\nSoshi, taking the lead, quickly explained. \"It's not our ship. We found it and escaped... the caves. A hellish place.\" She recounted the runes, the monsters, the collapsing tunnels, and the monsters they had faced, including the hydra.\n\n\"The Sword Coast,\" Soshi said, trying to orient them. \"The closest city with a dry dock is Brindol.\"\n\nThe pirates seemed confused by this. \"Where is Nautica on your map?\" the woman, Bianca, asked.\n\nSoshi knew the name. \"It's a pirate archipelago,\" she explained, \"but it's not on this coast. It's far to the south, across the Shining Sea.\"\n\nThe two commanders exchanged a look. They were hopelessly lost.\n\n\"Well,\" Turiados said, his voice hardening, \"we require a fee for saving you from that ship.\"\n\nBonnie, never one to be intimidated, zipped forward. \"We didn't ask you to save us! We didn't need your 'save.' We are strong, independent people!\"\n\nTuriados merely raised an eyebrow. \"You have a very strong mouth for someone in your current position. It does not scare me. I've been through worse.\"\n\n\"Maybe we could introduce each other,\" Bonnie chirped, changing tactics.\n\n\"I am Commander Turiados,\" the man rumbled. \"Formerly of the Order of Inos, currently commander of the Leviathan's Hull.\"\n\nThe woman stepped forward, her fey-touched aura flaring with intensity. \"And I am Commander Bianca, House Corina. Last descendant and true Queen of Pelagos.\" Her voice, though melodic, was laced with steel. \"And I swear I will get my throne back, one way or another. The tyrant king will die.\"\n\nAs she spoke, the entire crew erupted in a unified shout.\n\n\"Who is this tyrant king?\" Norr asked, her curiosity piqued.\n\n\"An evil necromancer,\" Bianca spat. \"He came from nowhere, killed my father, and stole my throne. His name is Sandro.\"\n\nShe went on to explain their plight. They were from another continent, Lustria. They had been fighting a war with lizardfolk when a sudden, cataclysmic event—the regrowth of the deep jungles—caused the lizardfolk to inexplicably retreat. With no external enemy, the great houses of Pelagos turned on each other, plunging the realm into civil war, allowing Sandro to seize power.\n\nThe party was dismissed, the pirates leaving them to \"find their bearings\" and consider the 20% rescue fee. As they were led away, Soshi’s keen ears caught Bianca’s quiet, frustrated sigh to Turiados.\n\n\"I do wish he was here,\" she murmured. \"He would know what to do.\"\n\n### Whispers on the Deck\n\nThe party split up to explore the upper deck, a strange and dangerous menagerie. The crew was a motley collection of races from all corners of the world: minotaurs polished cannons, a turbaned Efreeti happily stoked the ship’s forge, and troglodytes skittered from below deck. Their two mercenary acquaintances, Vandal and Scoundrel, were tied up near the mast. Bonnie flew over and sent them a quick, telepathic message.\n\nAre you okay? Do you need help?\n\nVandal’s mental voice was grim. We’re fine. We agreed to pay the rescue fee. We won’t get far from these people. Don’t try anything stupid.\n\nBonnie, deciding that gathering information was not stupid, zipped over to a peg-legged pirate who was drinking from a bizarre mug that seemed to be alive, its tentacles wrapped around his wrist to prevent spills.\n\n\"Now that is a very cool mug,\" Bonnie said, striking up a conversation.\n\nThe pirate, who introduced himself as Marise Curs, was happy to talk. He boasted of their recent plunder, confirming they had raided three trader vessels from Brindol. \"The captain, her ship, her crew,\" he said with drunken pride. \"A thousand voices, we fight in her name. We are bound by blood to her family.\"\n\n\"All of you?\" Bonnie asked, gesturing to the minotaurs and the Efreeti.\n\n\"Even the least of us,\" Marise slurred.\n\nBonnie, ever the Rogue, pressed for more. \"You all seem very loyal. But who was this 'Lee' the captain was sad about?\"\n\nMarise’s face darkened. \"General Lee. A former convict, like many of us. We were all slaves in the penal colony, mining ore. Lee... he was the commander of the mercenaries who broke us out. He sent us to recover a ship, which Bianca... well, she took it.\"\n\nBonnie traded the pirate a small, tinkling bell from the Feylands for a pirate-themed bandana, mulling over this new information. Meanwhile, Kaedin approached the forge, where the Efreeti and a heavily augmented dwarf named Bardin Cratcho were tempering runes onto a batch of cutlasses.\n\n\"Pardon, friend,\" Kaedin said, his deep voice respectful. \"Could you put one of those runes on this short sword?\"\n\nBardin glared at him. \"I can. How much are you willing to pay? Fifty gold pieces.\"\n\nKaedin balked at the price. \"You must be lying. A rune can't cost that much.\"\n\nThe dwarf roared with laughter, his beard singed by the heat. \"Lying? I ate a batch of molten slag to prove to everyone that my forge is up to par! My skills are worth more than you can afford, boy.\"\n\nAcross the deck, Bonnie was formulating a dangerous plan. She knew the mountains near Drellin's Ferry were crawling with orcs and goblins—the very enemies they were trying to stop. She also knew her personal quest to retrieve a pair of magical boots led to a necromancer’s tower in that same region. If she could convince these pirates that vast, unguarded \"treasure\" waited for them in those mountains, she could potentially trick them into clearing out the orc fortress and get a free ride to her objective.\n\nShe also spoke briefly to a massive Ice Elemental named Glass, who appeared to be one of Bianca’s chief advisors. His voice was the sound of cracking glaciers, and he spoke with agonizing slowness. It took him five full minutes just to say \"Hello.\" He confirmed his loyalty, explaining that Bianca had freed him from shackles, and he had, in turn, pledged his \"blood loyalty\" to her.\n\n### The Negotiation\n\nSoshi noticed the ship was heading north, sailing parallel to the coast but steadily moving away from Drellin's Ferry and the river they needed to take. \"We have to talk to them,\" she urged, and the party—Bonnie, Soshi, and Norr—approached the two commanders at the helm.\n\nAs they drew near, Turiados’s strange, spinning compass went still, its needle pointing directly at Soshi.\n\n\"I keep this funny trinket,\" Turiados rumbled, noticing her gaze. \"It links me with the person I’m looking at and points to the direction of their greatest desire.\"\n\n\"I have no idea what you're talking about,\" Soshi said, her face an impassive mask, even as her mind raced. He knows. He knows I want to find the portal home.\n\n\"Can I borrow it for a while?\" she asked, feigning innocence. \"I just need to find the portal back home.\"\n\nBefore Turiados could answer, the Ice Elemental, Glass, materialized beside them. His voice was no longer slow; it was crisp, cold, and sharp. He was all business.\n\n\"I am the ship’s Quartermaster and negotiator,\" Glass stated. \"As such, I am here to assess your current belongings and take the fair due for rescuing you.\" He looked directly at Soshi. \"I see a renowned sword-master,\" he said, nodding to Kaedin. \"And by the way you resisted my probe, a member of the esteemed school in Lustria. A spell-breaker.\"\n\nBianca’s lightning-veined eyes narrowed. \"What's a member of the Arcane Brotherhood doing so far lost?\" she asked Soshi directly.\n\nSoshi deflected. \"It's... not your business to know.\"\n\nWhile Bianca’s attention was fixed on Soshi, Bonnie engaged Turiados about the compass. \"What would you want for that trinket?\"\n\n\"I can make a deal,\" Turiados said, a predatory glint in his eye. \"There is a necromancer whose lands I would like... cleansed. His name is Sandro.\"\n\nThe party froze. \"Sandro?\" Norr repeated. \"We know that name.\"\n\n\"He turned an entire village in Lustria into zombies,\" Turiados growled. \"I know he got to this side of the world, but I don't have time to chase him. Bring me a locket of his hair, and the compass is yours.\" He tossed Bonnie a small, intricately carved whistle. \"When you find him, whistle this. It will point the way.\"\n\nAs Bianca and Glass moved to discuss the 20% fee, Bonnie pulled them aside. \"Let's say,\" she whispered, \"one might have touched something... that might be cursed. In the form of a pirate coin.\"\n\nGlass’s icy form seemed to stiffen. \"A sort of cursed currency. Yes, I know of it. Congratulations. Then you can keep it all. We don't want it spreading to our crew.\"\n\nThe elemental explained the curse. The coins had infected all of the party's gold, transforming their entire savings into a pouch of near-worthless copper. The value could change daily, but for now, they were destitute.\n\n\"We take 20% of what you do have,\" Glass declared. The party members glumly presented their gear. The pirates took Olek’s javelins, Norr’s climbing rope, and eight of their precious pearls. As they sorted the items, Bianca’s eyes fell on Norr’s Fey-touched makeup kit.\n\n\"I am willing to give you a dress or a piece of armor for that makeup kit,\" Bianca offered.\n\n\"Nope,\" Norr said flatly.\n\nAs the party gathered their remaining belongings, Bonnie decided to try one last bit of pixie mischief. With a flick of her wrist, she attempted to slyly drop one of her cursed coins onto the deck, a parting gift for the pirates.\n\nShe was not fast enough. Bianca, who had been watching her with the intensity of a hawk, reacted instantly. \"Try that again,\" she hissed. A bolt of pure, crackling force erupted from her outstretched hand, slamming into Bonnie and sending her tumbling to the deck, her entire body aching from the impact.\n\nTuriados merely grunted. \"Row them to shore.\"\n\n### Stranded\n\nThe party, along with the two mercenaries, Vandal and Scoundrel, were unceremoniously dumped in a rowboat and left on a rocky, desolate beach. Tall, ancient trees pressed right up to the shoreline. It was nearly 6 PM, and the sun was beginning to dip below the horizon.\n\n\"Well, we've had enough of this fucking place,\" Vandal spat, rubbing his chafed wrists. \"Those fuckers! 'Saving us.' We have gills! We could have swum!\"\n\n\"At least on land, we have a chance to fight back,\" Scoundrel added.\n\n\"Don't worry,\" Bonnie chirped, trying to lighten the mood. \"They have no idea where they're going. They'll die on the way.\"\n\n\"I hope so,\" Vandal grumbled. \"Or I hope they meet the other pirates. The ones that don't die.\"\n\n\"Undead pirates?\" Bonnie’s eyes went wide with excitement. \"Where are they?\"\n\n\"Anywhere they want to be,\" Vandal said. He let out a sharp whistle. Two massive, crocodile-like mounts emerged from the trees. The mercenaries mounted up. \"We'll be heading north. Good luck.\"\n\nAs they rode off into the shallows, Bonnie cupped her hands and shouted after them, \"By the way, there's a necromancer named Sandro roaming the roads here! Be careful!\"\n\nThe party was alone. Soshi confirmed their location: they were a good six or seven-hour march from Drellin's Ferry. Traveling in the dark forest was too dangerous. With a near-perfect survival check, Soshi located a small, defensible cave in the rocky cliffs overlooking the beach, hidden by overgrown vines.\n\nAs the others settled in, Bonnie got to work. \"Just a moment,\" she announced, and spent twenty minutes meticulously setting two bear traps at the mouth of the cave, hidden beneath leaves and sand.\n\nBonnie, with her fey nature, took the first watch. Hours passed in silence, broken only by the rhythmic crash of waves. Then, near 1 AM, she heard it: a loud CLANK followed by a piercing shriek. She sent her familiar, Jac, to investigate. The tiny, rat-like creature returned moments later, its fur matted with blood and feathers. A giant, vicious-looking seagull lay dead in the jaws of her trap.\n\nSoshi took the second watch. In the pale moonlight, she watched as a skittering army of large crabs emerged from the surf. They swarmed the dead seagull, and within an hour, had picked the carcass clean, leaving nothing but scattered bones before retreating back to the sea. Kaedin took the final watch until dawn, which passed without incident.\n\n### Ambush in the Oaks\n\nThe party awoke, stiff and sore. The first order of business was Bonnie's cursed gold. She checked the pouch, hoping for a miracle. The DM rolled. A 70. The coins remained stubbornly copper.\n\nSoshi and Norr, both Eladrin, felt the shift of the new day. The magic of the Summer court flowed through them, making them feel supportive and strong, but also impatient and quick to action—a volatile combination.\n\nKaedin, his survival instincts sharp, took the lead. They set off at a steady pace, leaving the beach and entering the dense oak forest. They walked for nearly six hours, the ancient trees creating large, sun-dappled clearings.\n\nIn one such clearing, they spotted a group of otters playing in a brook. Bonnie, delighted, decided to sneak closer. Her pixie form was utterly silent as she flitted from shadow to shadow.\n\n[:: The Thylacoleo Ambush ::](#entity/d0c69424-fb56-49a4-80fc-8d0b652008b4/encounter)\n\nIt was this very silence that saved her. As she neared the brook, a blur of motion exploded from the canopy above. A massive, pouched beast with a powerfully built body and terrifying jaws—a Thylacoleo—pounced from a high branch, aiming for the spot Bonnie had just vacated. The ambush had failed, but the fight had just begun.\n\nTwo more of the beasts dropped from the trees, their spotted pelts blending with the dappled light. The party found themselves surrounded.\n\nBonnie, reacting with supernatural speed, was the first to act. She blurred forward, her blade already alight with fey fire, and sank it deep into the first beast. She channeled her power into the strike, and the creature roared as magical flames seared its flesh.\n\nThe second Thylacoleo, moving with terrifying speed, bounded toward Kaedin. It raked him with its claws, then clamped its powerful jaws onto his arm, its momentum carrying both of them backward. The third beast, the largest of the three, targeted Soshi. It leaped, catching her with its full weight, and with an incredible display of strength, scrambled back up the tree trunk, carrying the Wizard in its vise-like grip.\n\n\"Soshi!\" Kaedin yelled, as he, too, was hit again by the beast attacking him.\n\nHigh in the branches, Soshi found herself pinned and restrained. Below, Kaedin manifested his Echo, a ghostly double of himself, which immediately engaged the Thylacoleo attacking its creator. The Echo’s blade struck true, and the creature recoiled, a deep, bleeding gash opening on its flank.\n\nBonnie, seeing Soshi in peril, didn't hesitate. She dashed to the base of the tree, sprang into the air, and drove her short sword into the creature holding the Wizard. The blade bit deep, a perfect sneak attack, and the beast shrieked, its grip faltering.\n\nSoshi seized the opportunity. Gathering her will, she muttered a single word and vanished in a puff of silvery mist. She reappeared on the forest floor thirty feet below, stumbling but free. As she landed, she cast Mirror Image, and three illusory copies of herself flickered into existence around her.\n\nThe first beast, already wounded by Bonnie, succumbed to its injuries and collapsed. But the fight was far from over. The Thylacoleo that had been fighting Kaedin’s Echo abandoned the phantom, leaped past Kaedin, and clamped its jaws onto his leg. In one powerful motion, it, too, bounded up a tree, dragging the heavy Genasi with it.\n\nKaedin, now dangling precariously, cursed and tried to break the creature's iron grip, but failed. Thinking quickly, he used his Echo Knight ability, transposing himself with his Echo on the ground, and reappeared, free from the grapple. From the forest floor, he commanded his Echo—still adjacent to the beast in the tree—to strike again, slicing into its hide.\n\nAt the same time, Soshi saw Norr struggling to find a clear shot. \"Norr! Hold still!\" Soshi shouted, and unleashed the full power of a Polymorph spell. Norr’s form wavered and swelled, her elven features melting away as she erupted into the shape of a Giant Ape.\n\nBonnie, seeing the second beast still in the tree, took a running start. She Misty Stepped, teleporting in a flash of blue light directly onto the branch beside it. She unleashed a flurry of attacks, her blades a silver blur, and the beast, mortally wounded, fell crashing to the ground. As she landed, she quickly downed a healing potion, the world steadying around her.\n\nThe last Thylacoleo, seeing the new, massive ape, pounced. It slammed into Giant-Ape-Norr, its claws digging deep and making the ape bleed.\n\nSoshi, seeing the creature’s hide had absorbed Bonnie's fey fire, opted for a different approach. She unleashed a Scorching Ray, sending three bolts of pure fire searing into the beast. Its fur was instantly incinerated, but the flames seemed to gutter and die against its thick skin, doing less damage than she’d hoped.\n\nEnraged, Giant-Ape-Norr beat its chest and retaliated, pummeling the Thylacoleo with two massive fists. The creature staggered, badly wounded. Bonnie zipped in one last time, her dagger finding its mark, and the final beast fell silent.\n\n### The Spoils\n\nThe clearing was quiet, save for the party’s heavy breathing. Norr shifted back to her Eladrin form, rubbing her shoulders. The Giant Ape form had taken the brunt of the damage.\n\n\"Well,\" Bonnie panted, wiping her blade. \"That was something.\"\n\nKaedin, ever the practical one, retrieved his javelins and began the grim task of skinning the creatures. The hide was thick and strangely resilient. With his survival expertise, he managed to salvage three intact pelts and half a dozen sharp fangs.\n\nAs he worked, a new sound reached their ears—a faint, pitiful meowing.\n\n\"Kittens?\" Norr whispered.\n\nBonnie’s perception was sharp. She looked up, scanning the branches. \"Up there!\" She flew up to the tree the largest beast had fallen from and found a hollow in the trunk. Tucked inside were seven small, spotted, impossibly cute Thylacoleo cubs, their eyes barely open.\n\nThe party’s resolve melted. \"We can't just leave them,\" Soshi said, her voice soft.\n\n\"We can take them to Avarthel,\" Kaedin suggested. \"The Druid will know what to do.\"\n\nThey bundled the cubs, using Bonnie’s tattered leather to fashion a makeshift sling. They were weak with hunger, and they turned their noses up at the party's watered-down rations.\n\n### The Wizard and the Menagerie\n\nThe party finally reached the outskirts of Drellin’s Ferry. They made their way directly to the druid’s grove, but Avarthel was nowhere to be found. Only his giant snake guardian was present, and it eyed the cubs with a predatory hunger that made the party back away slowly.\n\nNorr headed to the church, hoping to find someone who knew where the druid had gone. She found a dour cleric, Brother Danny, who informed her that Avarthel and his followers had left for the mountains a month ago and would not return. When Norr pleaded for help with the \"kittens,\" the cleric was unsympathetic.\n\nDesperate, Norr ran back into the street, where she spotted a local goat-herd. She pressed a gold coin into his hand—a massive overpayment—and begged him for milk. The bewildered farmer, seeing her distress, ran to his home and returned not just with 5 liters, but 10 more, his entire stock.\n\nThey fed the hungry cubs, who drank greedily. As the tiny creatures settled, their bellies full, Bonnie had an idea.\n\n\"I'll be right back,\" she said, and zipped off toward the Wizard Sertieren’s mansion.\n\nShe found the old mage on his porch. \"Good afternoon, sir,\" she chirped. \"We haven't met. I'm Bonnie.\"\n\nSertieren smiled. \"I know of you.\" He offered her tea, a rare blend from the Summer Court that tasted like home. Bonnie explained her fey heritage, how she'd been exiled for befriending a member of the Winter Court. Then, she got to business. She described the \"wild cats\" they'd found.\n\nSertieren listened intently, then disappeared inside. He returned with a massive, dusty tome, which he slammed on the table, identifying the Thylacoleo. \"You want me to buy them?\" he chuckled. \"This is a laboratory, young lady, not a bestiary.\"\n\n\"But they'll die!\" Bonnie pleaded. \"Isn't there a way to... store them? Like those magical balls you adventurers use?\"\n\nSertieren’s eyes lit up. \"Ah! Yes, containers. I can provide them.\" He offered her seven containment spheres for a single gold piece each, a 90% discount.\n\nBonnie, however, was broke, her money still cursed copper. \"I don't have any money,\" she admitted. \"But my friends do. Can I take them on credit?\"\n\nThe Wizard studied her. \"I trust you,\" he said. \"But... collateral.\" He placed a hand on her arm, and she felt a brief, magical sting. A glowing, arcane brand appeared on her wrist. \"This will fade when the debt is paid. The spheres must be attuned to the creature with a name.\"\n\n### A Profitable Debrief\n\nBonnie returned to the party. After a lively debate, they named their new companions: Bonnie claimed Tom and Garfield; Soshi took Milly and Yoli; and Kaedin adopted Avatar and Bella. They spoke the names and the command words, and the seven cubs vanished into their respective spheres.\n\nThe party marched back to Sertieren’s mansion. Two suits of animated armor barred the door, but they parted as the Wizard emerged.\n\n\"Ah, my money,\" he smiled.\n\nKaedin and Soshi paid the 7 gold. \"We also have these,\" Bonnie said, presenting the Thylacoleo pelts. Sertieren offered 5 gold for each, but the party declined, deciding the hides would be better used to reinforce their own battered armor.\n\n\"What about this?\" Soshi asked, presenting their half-kilo of Storm Dust.\n\nSertieren’s eyes widened. He took a tiny pinch and sniffed it, a look of ecstatic concentration on his face. \"This is potent! I will buy it from you. 15 gold.\"\n\nThe deal was struck. \"While you're here,\" Soshi said, \"could you identify these?\" She produced the vials they had recovered from the caves.\n\nThe Wizard examined them closely. \"This green one... this is demonic magic. It increases your vitality and mind, but leaves you vulnerable to... influence. This white one,\" he said, holding up the radiant vial, \"is a simple, if potent, celerity potion. Thirty feet of extra movement for a minute.\" He then picked up the \"Hops\" potion. \"This one grants immunity to poison for a day. The drawback, however... is severe, explosive dysentery. The creator noted it wasn't worth the cost to remove the side effect.\"\n\nFinally, they showed him the preserved Artus Plura mushrooms and the stinking, acid-filled head of the cave worm. The Wizard’s face lit up with academic glee. \"Marvelous! The glands are intact!\" He eagerly bought the worm head and the mushrooms for another 10 gold.\n\nAs they prepared to leave, Soshi asked one final question. \"Sir... do you know of a mage named Kalistra?\"\n\nSertieren’s smile faded. \"I do,\" he said, his voice heavy. \"A long time ago, before she foolishly joined your Arcane Brotherhood, we were in an adventuring party together. We called ourselves the 'Crazy Hogs.' But we... had a falling out. She was always pragmatic. She wanted to use an earthquake spell to clear a goblin cave, but it would have collapsed a nearby settlement. I... stole her spellbook to stop her.\"\n\nHe looked tired. \"I'm leaving Drellin's Ferry soon. The things you've seen—the hydras, these potions, the tribes uniting—they are all portents. A storm is coming, and I do not intend to be here when it breaks.\"\n\nThe party thanked the Wizard and left his estate, their pockets significantly heavier and their minds buzzing with new information. They returned to the inn, weary but triumphant. Their plan was simple: barricade their doors, let the cubs out, and get some well-deserved rest.",
+    "description": "### The Leviathan's Hull The party’s ascent from the subterranean hell of the caves had been a desperate, gasping scramble for life. They emerged into the world above only to find themselves adrift on a strange ship in an unknown sea. Their salvation, such as it was, came not as a gentle hand but as a grappling hook. A colossal vessel, all black wood and green-tinged sails, bore down on them. Its name was visible even from a distance: The Leviathan’s Hull. As their small craft was pulled alongside the massive warship, pirates swarmed the deck, their voices rough and... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-21T10:54:53.587Z",
     "attributes": {
       "campaign_arc": "The Sunless Conspiracy",
       "session_date": "2025-07-08",
       "session_number": "6"
     },
-    "arc_id": "c8ae0ed1-edba-4330-8853-a59cc6ea416d",
-    "stats": {
-      "npcs": 11,
-      "quests": 4,
-      "factions": 4,
-      "locations": 5,
-      "encounters": 1
-    },
-    "starring": [
+    "event_count": "11",
+    "mentions": [
       {
         "id": "0066c9b0-10ec-4a5b-815c-6d60a9764478",
         "name": "The Crazy Hogs",
@@ -1100,162 +1471,284 @@ VIEW: view_session_summary
         "type": "faction"
       },
       {
+        "id": "22de4109-6224-474a-9104-bc044c5562d2",
+        "name": "Party",
+        "type": "character"
+      },
+      {
         "id": "29de2f8f-40de-4813-9672-ee982e8372e8",
         "name": "Pelagos",
         "type": "location"
+      },
+      {
+        "id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
+        "name": "Bianca Turiados",
+        "type": "npc"
+      },
+      {
+        "id": "4eb21ab1-71f5-4226-ad53-e4c37fc7c1f5",
+        "name": "Brother Denny",
+        "type": "npc"
+      },
+      {
+        "id": "5d8c1d4a-6ea3-4e62-8a67-65f55104059f",
+        "name": "Marise Curs",
+        "type": "npc"
+      },
+      {
+        "id": "72cfbf66-7b3b-1a10-12c7-065220922391",
+        "name": "Sandro",
+        "type": "npc"
+      },
+      {
+        "id": "77c2cdf3-1109-4628-aa52-0a6523ec0b03",
+        "name": "Avarthel's Grove",
+        "type": "location"
+      },
+      {
+        "id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+        "name": "Kaedin",
+        "type": "character"
+      },
+      {
+        "id": "812a2b4c-3c16-4270-8a98-9e230331f2dd",
+        "name": "The Brotherhood's Secret",
+        "type": "quest"
+      },
+      {
+        "id": "83d0c077-8c4c-2b21-23d8-176331033402",
+        "name": "Scoundrel",
+        "type": "npc"
+      },
+      {
+        "id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+        "name": "Soshi",
+        "type": "character"
+      },
+      {
+        "id": "8427e65e-de6e-4419-b404-73b9704d9543",
+        "name": "Bonnie",
+        "type": "character"
+      },
+      {
+        "id": "93d1d0ac-3b0d-46f5-9e2d-37e0c466e6dc",
+        "name": "The Arcane Brotherhood",
+        "type": "faction"
+      },
+      {
+        "id": "94e1d188-9e5d-7632-d4e9-62188658895d",
+        "name": "General Lee",
+        "type": "npc"
+      },
+      {
+        "id": "957b14a8-c53f-4237-a540-9d5c3474bc5f",
+        "name": "Norr",
+        "type": "character"
+      },
+      {
+        "id": "964c0ea9-838b-46b0-a606-8d109749624f",
+        "name": "Glass",
+        "type": "npc"
+      },
+      {
+        "id": "9977cad2-0e29-4283-8c57-b802db493c82",
+        "name": "Bardin Cratcho",
+        "type": "npc"
+      },
+      {
+        "id": "99d9dfaa-835b-44c3-a840-97a8ad1fad42",
+        "name": "Green Apple Inn",
+        "type": "location"
+      },
+      {
+        "id": "afe69839-25b9-466a-8f07-47401383a8ad",
+        "name": "Hunt for the Necromancer King",
+        "type": "quest"
+      },
+      {
+        "id": "bb98adb9-4467-4e04-bb48-343102c0ce5a",
+        "name": "Lustria",
+        "type": "location"
+      },
+      {
+        "id": "bf063127-7e5a-48c4-a7e7-49103921a3c8",
+        "name": "The Thylacoleo Cubs",
+        "type": "quest"
+      },
+      {
+        "id": "c8ae0ed1-edba-4330-8853-a59cc6ea416d",
+        "name": "The Pirate Bargain",
+        "type": "narrative_arc"
+      },
+      {
+        "id": "ca9a1d7f-9a35-4a66-b14d-3237c267a948",
+        "name": "The Leviathan's Hull",
+        "type": "location"
+      },
+      {
+        "id": "caaa5274-9764-4922-ac11-106da710fc2c",
+        "name": "Sertieren",
+        "type": "npc"
+      },
+      {
+        "id": "d0c69424-fb56-49a4-80fc-8d0b652008b4",
+        "name": "The Thylacoleo Ambush",
+        "type": "encounter"
+      },
+      {
+        "id": "d761169b-0184-4931-a99f-7c8a67080349",
+        "name": "Sertieren's Mansion",
+        "type": "location"
+      },
+      {
+        "id": "d82515cc-d191-7076-782d-621886588957",
+        "name": "Vandal",
+        "type": "npc"
+      },
+      {
+        "id": "e93626dd-e2a2-2187-293e-176331033402",
+        "name": "Kalistra",
+        "type": "npc"
+      },
+      {
+        "id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+        "name": "Commander Turiados",
+        "type": "npc"
+      },
+      {
+        "id": "f8a98301-deef-4224-8c8e-f5dcb5343560",
+        "name": "Guests of the Leviathan",
+        "type": "quest"
+      },
+      {
+        "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+        "name": "Olek",
+        "type": "character"
       }
     ]
   }
 ]
 
-VIEW: view_chronicle_tree
------------------------------------------
- SELECT narrative_arcs.id,
-  narrative_arcs.campaign_id,
-  narrative_arcs.title AS name,
-  'chronicle_arc'::text AS type,
-  NULL::uuid AS parent_id,
-  narrative_arcs."order" AS order_index
-  FROM narrative_arcs
-UNION ALL
-  SELECT s.id,
-  s.campaign_id,
-  s.title AS name,
-  'session'::text AS type,
-  ( SELECT entity_relationships.to_entity_id
-  FROM entity_relationships
-  WHERE ((entity_relationships.from_entity_id = s.id) AND (entity_relationships.relationship_type = 'part_of'::text))
-  LIMIT 1) AS parent_id,
-  COALESCE((( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = s.id) AND (attributes.name = 'session_number'::text))
-  LIMIT 1))::integer, 999) AS order_index
-  FROM sessions s;
-
-  -- VIEW EXAMPLE RESULT --
-[
-  {
-    "id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Thunder and Ash",
-    "type": "chronicle_arc",
-    "parent_id": null,
-    "order_index": 5
-  },
-  {
-    "id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Shadows of the Witchwood",
-    "type": "chronicle_arc",
-    "parent_id": null,
-    "order_index": 2
-  }
-]
-
-VIEW: view_entity_summary
+VIEW: view_active_quests
 -----------------------------------------
  SELECT id,
   campaign_id,
-  name,
-  type,
-  COALESCE(description, ''::text) AS description,
-  ( SELECT entity_relationships.to_entity_id
-  FROM entity_relationships
-  WHERE ((entity_relationships.from_entity_id = e.id) AND (entity_relationships.relationship_type = ANY (ARRAY['parent_location'::text, 'located_in'::text, 'part_of'::text, 'member_of'::text, 'affiliated_with'::text])))
-  LIMIT 1) AS parent_id,
-  COALESCE(( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND (attributes.name ~~* 'region'::text))
-  LIMIT 1), ( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND (attributes.name ~~* 'parent location'::text))
-  LIMIT 1), ( SELECT entities.name
-  FROM entities
-  WHERE (entities.id = ( SELECT entity_relationships.to_entity_id
-  FROM entity_relationships
-  WHERE ((entity_relationships.from_entity_id = e.id) AND (entity_relationships.relationship_type = ANY (ARRAY['parent_location'::text, 'located_in'::text, 'part_of'::text])))
-  LIMIT 1))), 'General'::text) AS resolved_region,
-  COALESCE(( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND (attributes.name ~~* 'status'::text))
-  LIMIT 1), 'unknown'::text) AS res_status,
-  COALESCE(( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND (attributes.name ~~* 'affinity'::text))
-  LIMIT 1), 'unknown'::text) AS res_affinity,
-  COALESCE(( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND (attributes.name ~~* 'priority'::text))
-  LIMIT 1), 'normal'::text) AS res_priority,
-  COALESCE(( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND ((attributes.name ~~* 'Quest Type'::text) OR (attributes.name ~~* 'Type'::text)))
-  LIMIT 1), 'Side Quest'::text) AS res_quest_type,
-  ( SELECT attributes.value
-  FROM attributes
-  WHERE ((attributes.entity_id = e.id) AND (attributes.name ~~* 'icon'::text))
-  LIMIT 1) AS res_icon
-  FROM entities e;
+  title,
+  attributes,
+  updated_at,
+  COALESCE(( SELECT jsonb_agg(qo.* ORDER BY qo.order_index) AS jsonb_agg
+  FROM quest_objectives qo
+  WHERE (qo.quest_id = q.id)), '[]'::jsonb) AS objectives
+  FROM quests q
+  WHERE (((attributes ->> 'status'::text) ~~* '%active%'::text) OR ((attributes ->> 'status'::text) = 'pending'::text) OR ((attributes ->> 'status'::text) IS NULL));
 
   -- VIEW EXAMPLE RESULT --
 [
   {
-    "id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "id": "45e1849e-a9b7-40af-a93a-210029842c18",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Jareth",
-    "type": "npc",
-    "description": "A remarkably muscled Drow found in the shopping district, operating a general store in Drellin's Ferry under an illusion magic to appear clothed, though he is actually nude. He has been waiting 20 years for a signal from Matron Zaya. During the evacuation, his shop was abandoned, looted by thieves, and subsequently became the site of trigger of the demon battle in Drellin's Ferry.\n",
-    "parent_id": "df8bdb1b-8227-49a9-aef1-bb2c4ce902a6",
-    "resolved_region": "The Underdark",
-    "res_status": "alive",
-    "res_affinity": "Neutral",
-    "res_priority": "normal",
-    "res_quest_type": "Side Quest",
-    "res_icon": "../../images/icons/male.png"
+    "title": "Hunt for the Spider Demon",
+    "attributes": {
+      "status": "Active",
+      "priority": "Medium",
+      "quest type": "Side Quest"
+    },
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "objectives": [
+      {
+        "id": "e57db412-84b8-4b01-a3fb-7fae31f234d4",
+        "status": "active",
+        "quest_id": "45e1849e-a9b7-40af-a93a-210029842c18",
+        "created_at": "2025-12-21T13:41:11.499955+00:00",
+        "updated_at": "2025-12-21T13:41:11.499955+00:00",
+        "description": "Locate and slay the demonic creature in the woods.",
+        "order_index": 1,
+        "objective_name": "Defeat the Spider Demon",
+        "objective_update": null,
+        "completed_session_id": null
+      },
+      {
+        "id": "e2c02e29-f938-41f1-b0fc-9c4cc6a3d6ad",
+        "status": "active",
+        "quest_id": "45e1849e-a9b7-40af-a93a-210029842c18",
+        "created_at": "2025-12-21T13:41:25.927107+00:00",
+        "updated_at": "2025-12-21T13:41:25.927107+00:00",
+        "description": "If successful, report the kill to the Captain of the Lion's Guard in Brindol for a reward.",
+        "order_index": 2,
+        "objective_name": "Report to Captain Hans Mariner",
+        "objective_update": null,
+        "completed_session_id": null
+      }
+    ]
   },
   {
-    "id": "1f839a67-9fe6-42fa-976a-741f6a5c0a99",
+    "id": "ecfb0955-d289-4101-9d66-5d0246c580d9",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Shrine of Pelor",
-    "type": "location",
-    "description": "A small religious shrine dedicated to Pelor, maintained by Brother Denny and other clerics. Norr and Soshi visited with offerings seeking information about Vraath Keep, learning it was a cursed fortress with undead guardians and blighted lands. Brother Denny showed little interest in helping with the Thylacoleo cubs but accepted fruit offerings. The shrine serves as a minor waypoint for travelers seeking blessings, though Brother Denny's aggressive salesmanship and transactional approach to faith has diminished its spiritual reputation.",
-    "parent_id": "2a4a377b-23a6-4edb-912d-1b9c468298b9",
-    "resolved_region": "Meeting Brother Denny and Druid Avarthel",
-    "res_status": "unknown",
-    "res_affinity": "unknown",
-    "res_priority": "normal",
-    "res_quest_type": "landmark",
-    "res_icon": null
+    "title": "The Festival Of Life",
+    "attributes": {
+      "status": "Active",
+      "priority": "Medium",
+      "quest type": "Side Quest"
+    },
+    "updated_at": "2026-01-02T07:53:19.600Z",
+    "objectives": [
+      {
+        "id": "502dd9f0-d05e-42b0-b74f-873293805109",
+        "status": "active",
+        "quest_id": "ecfb0955-d289-4101-9d66-5d0246c580d9",
+        "created_at": "2025-12-21T19:50:12.078495+00:00",
+        "updated_at": "2025-12-21T19:50:29.445474+00:00",
+        "description": "Gather information on who Kilgor is and his ultimate goal.",
+        "order_index": 1,
+        "objective_name": "Identify Kilgor",
+        "objective_update": null,
+        "completed_session_id": null
+      },
+      {
+        "id": "13d630cc-2b24-402f-b171-4e59eba9e90b",
+        "status": "active",
+        "quest_id": "ecfb0955-d289-4101-9d66-5d0246c580d9",
+        "created_at": "2025-12-21T19:50:25.757544+00:00",
+        "updated_at": "2025-12-21T19:50:25.757544+00:00",
+        "description": "Discover what the \"Festival of Life\" entails and where it will be held.",
+        "order_index": 2,
+        "objective_name": " Learn about the Festival",
+        "objective_update": null,
+        "completed_session_id": null
+      }
+    ]
   }
 ]
 
 VIEW: view_dashboard_stats
 -----------------------------------------
- WITH quest_counts AS (
-  SELECT q.campaign_id,
-  count(*) FILTER (WHERE ((a.value ~~* '%active%'::text) OR (a.value ~~* '%progress%'::text) OR (a.value ~~* '%pending%'::text))) AS active_quests,
-  count(*) FILTER (WHERE ((a.value ~~* '%complete%'::text) OR (a.value ~~* '%success%'::text) OR (a.value ~~* '%done%'::text))) AS completed_quests
-  FROM (quests q
-  LEFT JOIN attributes a ON (((q.id = a.entity_id) AND (a.name ~~* 'status'::text))))
-  GROUP BY q.campaign_id
-  ), top_loc AS (
-  SELECT DISTINCT ON (l.campaign_id) l.campaign_id,
+ WITH top_loc AS (
+  SELECT l.campaign_id,
   l.name,
   count(er.id) AS visit_count
   FROM (locations l
-  LEFT JOIN entity_relationships er ON ((l.id = er.to_entity_id)))
-  GROUP BY l.campaign_id, l.id, l.name
-  ORDER BY l.campaign_id, (count(er.id)) DESC
+  JOIN entity_relationships er ON ((l.id = er.to_entity_id)))
+  GROUP BY l.campaign_id, l.name
+  ORDER BY (count(er.id)) DESC
   ), top_npc_mentioned AS (
-  SELECT DISTINCT ON (n.campaign_id) n.campaign_id,
+  SELECT n.campaign_id,
   n.name,
   count(er.id) AS mention_count
   FROM (npcs n
-  LEFT JOIN entity_relationships er ON ((n.id = er.to_entity_id)))
-  GROUP BY n.campaign_id, n.id, n.name
-  ORDER BY n.campaign_id, (count(er.id)) DESC
+  JOIN entity_relationships er ON ((n.id = er.to_entity_id)))
+  GROUP BY n.campaign_id, n.name
+  ORDER BY (count(er.id)) DESC
+  ), active_sess AS (
+  SELECT s.campaign_id,
+  s.id,
+  s.title,
+  count(se.id) AS event_count
+  FROM (sessions s
+  JOIN session_events se ON ((s.id = se.session_id)))
+  GROUP BY s.campaign_id, s.id, s.title
+  ORDER BY (count(se.id)) DESC
   )
-  SELECT c.id AS campaign_id,
+  SELECT id AS campaign_id,
   ( SELECT count(*) AS count
   FROM sessions
   WHERE (sessions.campaign_id = c.id)) AS total_sessions,
@@ -1268,20 +1761,32 @@ VIEW: view_dashboard_stats
   ( SELECT count(*) AS count
   FROM locations
   WHERE (locations.campaign_id = c.id)) AS unique_locations,
-  COALESCE(qc.active_quests, (0)::bigint) AS active_quests,
-  COALESCE(qc.completed_quests, (0)::bigint) AS completed_quests,
+  ( SELECT count(*) AS count
+  FROM quests q
+  WHERE ((q.campaign_id = c.id) AND (((q.attributes ->> 'status'::text) ~~* '%active%'::text) OR ((q.attributes ->> 'status'::text) = 'pending'::text) OR ((q.attributes ->> 'status'::text) IS NULL)))) AS active_quests,
+  ( SELECT count(*) AS count
+  FROM quests q
+  WHERE ((q.campaign_id = c.id) AND (((q.attributes ->> 'status'::text) ~~* '%completed%'::text) OR ((q.attributes ->> 'status'::text) ~~* '%success%'::text)))) AS completed_quests,
   ( SELECT row_to_json(tl.*) AS row_to_json
   FROM ( SELECT top_loc.name,
   top_loc.visit_count AS visits
   FROM top_loc
-  WHERE (top_loc.campaign_id = c.id)) tl) AS top_location,
+  WHERE (top_loc.campaign_id = c.id)
+  LIMIT 1) tl) AS top_location,
   ( SELECT row_to_json(tn.*) AS row_to_json
   FROM ( SELECT top_npc_mentioned.name,
   top_npc_mentioned.mention_count AS mentions
   FROM top_npc_mentioned
-  WHERE (top_npc_mentioned.campaign_id = c.id)) tn) AS top_npc
-  FROM (campaigns c
-  LEFT JOIN quest_counts qc ON ((c.id = qc.campaign_id)));
+  WHERE (top_npc_mentioned.campaign_id = c.id)
+  LIMIT 1) tn) AS top_npc,
+  ( SELECT row_to_json(asess.*) AS row_to_json
+  FROM ( SELECT active_sess.id,
+  active_sess.title,
+  active_sess.event_count
+  FROM active_sess
+  WHERE (active_sess.campaign_id = c.id)
+  LIMIT 1) asess) AS most_active_session
+  FROM campaigns c;
 
   -- VIEW EXAMPLE RESULT --
 [
@@ -1300,6 +1805,11 @@ VIEW: view_dashboard_stats
     "top_npc": {
       "name": "Soranna Anitah",
       "mentions": 24
+    },
+    "most_active_session": {
+      "id": "20b73069-7a8f-4cd9-aa5b-1c27f40efd79",
+      "title": "03 - Into the Depths",
+      "event_count": 16
     }
   },
   {
@@ -1317,13 +1827,37 @@ VIEW: view_dashboard_stats
     "top_npc": {
       "name": "Lobart",
       "mentions": 1
-    }
+    },
+    "most_active_session": null
   }
 ]
 
 =========================================
    FUNCTIONS
 =========================================
+
+FUNCTION: api_search_entities(p_campaign_id uuid, p_search_term text)
+-----------------------------------------
+
+BEGIN
+  RETURN QUERY
+  -- Search generic Entities
+  SELECT e.id, e.name, e.type, e.description
+  FROM entities e
+  WHERE e.campaign_id = p_campaign_id
+    AND (e.name ILIKE '%' || p_search_term || '%')
+  
+  UNION ALL
+  
+  -- Search Sessions (normalized)
+  SELECT s.id, s.title as name, 'session' as type, s.narrative as description
+  FROM sessions s
+  WHERE s.campaign_id = p_campaign_id
+    AND (s.title ILIKE '%' || p_search_term || '%')
+  
+  LIMIT 20;
+END;
+
 
 FUNCTION: sync_event_to_entity()
 -----------------------------------------
@@ -1340,6 +1874,54 @@ BEGIN
     DELETE FROM public.entities WHERE id = OLD.id;
   END IF;
   RETURN NULL;
+END;
+
+
+FUNCTION: api_scan_campaign_text(p_campaign_id uuid, p_term text)
+-----------------------------------------
+
+DECLARE
+  search_pattern TEXT := '%' || p_term || '%';
+BEGIN
+  RETURN QUERY
+  
+  -- 1. Entities (Name & Description)
+  SELECT 'entities'::TEXT, e.id, 'name'::TEXT, (e.type || ': ' || e.name)::TEXT, e.name
+  FROM entities e WHERE e.campaign_id = p_campaign_id AND e.name ILIKE search_pattern
+  UNION ALL
+  SELECT 'entities'::TEXT, e.id, 'description'::TEXT, (e.type || ': ' || e.name)::TEXT, e.description
+  FROM entities e WHERE e.campaign_id = p_campaign_id AND e.description ILIKE search_pattern
+  
+  UNION ALL
+
+  -- 2. Sessions (Title & Narrative)
+  SELECT 'sessions'::TEXT, s.id, 'title'::TEXT, ('Session: ' || s.title)::TEXT, s.title
+  FROM sessions s WHERE s.campaign_id = p_campaign_id AND s.title ILIKE search_pattern
+  UNION ALL
+  SELECT 'sessions'::TEXT, s.id, 'narrative'::TEXT, ('Session: ' || s.title)::TEXT, s.narrative
+  FROM sessions s WHERE s.campaign_id = p_campaign_id AND s.narrative ILIKE search_pattern
+
+  UNION ALL
+
+  -- 3. Session Events (Title & Description)
+  SELECT 'session_events'::TEXT, se.id, 'title'::TEXT, ('Event in: ' || s.title)::TEXT, se.title
+  FROM session_events se
+  JOIN sessions s ON se.session_id = s.id
+  WHERE s.campaign_id = p_campaign_id AND se.title ILIKE search_pattern
+  UNION ALL
+  SELECT 'session_events'::TEXT, se.id, 'description'::TEXT, ('Event in: ' || s.title)::TEXT, se.description
+  FROM session_events se
+  JOIN sessions s ON se.session_id = s.id
+  WHERE s.campaign_id = p_campaign_id AND se.description ILIKE search_pattern
+
+  UNION ALL
+
+  -- 4. Quest Objectives
+  SELECT 'quest_objectives'::TEXT, qo.id, 'description'::TEXT, ('Objective in: ' || e.name)::TEXT, qo.description
+  FROM quest_objectives qo
+  JOIN entities e ON qo.quest_id = e.id
+  WHERE e.campaign_id = p_campaign_id AND qo.description ILIKE search_pattern;
+
 END;
 
 
@@ -1433,144 +2015,6 @@ BEGIN
 END;
 
 
-FUNCTION: propagate_session_event()
------------------------------------------
-DECLARE
-  v_campaign_id uuid;
-  v_session_number integer;
-BEGIN
-  -- Get campaign and session info
-  SELECT s.campaign_id, s.session_number 
-  INTO v_campaign_id, v_session_number
-  FROM sessions s WHERE s.id = NEW.session_id;
-
-  -- Handle different event types
-  CASE NEW.event_type
-    
-    WHEN 'npc_introduced' THEN
-      -- Update NPC status if it was unknown
-      UPDATE npcs SET status = 'alive' 
-      WHERE id = NEW.npc_id AND status = 'unknown';
-    
-    WHEN 'npc_died' THEN
-      -- Mark NPC as dead
-      UPDATE npcs SET status = 'dead' 
-      WHERE id = NEW.npc_id;
-      -- Remove from current locations (set departure)
-      UPDATE npc_locations 
-      SET departure_session_id = NEW.session_id
-      WHERE npc_id = NEW.npc_id AND departure_session_id IS NULL;
-    
-    WHEN 'npc_relocated' THEN
-      -- Close old location
-      UPDATE npc_locations 
-      SET departure_session_id = NEW.session_id
-      WHERE npc_id = NEW.npc_id AND departure_session_id IS NULL;
-      -- Open new location if specified
-      IF NEW.location_id IS NOT NULL THEN
-        INSERT INTO npc_locations (npc_id, location_id, arrival_session_id, is_primary)
-        VALUES (NEW.npc_id, NEW.location_id, NEW.session_id, true)
-        ON CONFLICT (npc_id, location_id) DO UPDATE 
-        SET arrival_session_id = NEW.session_id, is_primary = true;
-      END IF;
-    
-    WHEN 'npc_joined_faction' THEN
-      INSERT INTO npc_factions (npc_id, faction_id, joined_session_id)
-      VALUES (NEW.npc_id, NEW.faction_id, NEW.session_id)
-      ON CONFLICT (npc_id, faction_id) DO UPDATE 
-      SET joined_session_id = NEW.session_id, left_session_id = NULL;
-    
-    WHEN 'npc_left_faction' THEN
-      UPDATE npc_factions 
-      SET left_session_id = NEW.session_id
-      WHERE npc_id = NEW.npc_id AND faction_id = NEW.faction_id;
-    
-    WHEN 'quest_started' THEN
-      UPDATE quests SET status = 'active' 
-      WHERE id = NEW.quest_id;
-    
-    WHEN 'quest_completed' THEN
-      UPDATE quests SET status = 'completed' 
-      WHERE id = NEW.quest_id;
-      -- Mark all objectives as completed
-      UPDATE quest_objectives 
-      SET status = 'completed', completed_session_id = NEW.session_id
-      WHERE quest_id = NEW.quest_id AND status != 'completed';
-    
-    WHEN 'quest_failed' THEN
-      UPDATE quests SET status = 'failed' 
-      WHERE id = NEW.quest_id;
-    
-    WHEN 'objective_completed' THEN
-      -- Extract objective ID from event_data
-      IF NEW.event_data ? 'objective_id' THEN
-        UPDATE quest_objectives 
-        SET status = 'completed', completed_session_id = NEW.session_id
-        WHERE id = (NEW.event_data->>'objective_id')::uuid;
-      END IF;
-    
-    WHEN 'character_leveled' THEN
-      -- Extract new level from event_data
-      IF NEW.event_data ? 'new_level' THEN
-        UPDATE characters 
-        SET level = (NEW.event_data->>'new_level')::integer
-        WHERE id = NEW.character_id;
-      END IF;
-    
-    ELSE
-      -- For other event types, just log them
-      NULL;
-  END CASE;
-
-  -- Update timeline cache
-  INSERT INTO timeline_cache (
-    campaign_id, session_id, event_id, event_order, 
-    title, description, location_name
-  )
-  SELECT 
-    v_campaign_id,
-    NEW.session_id,
-    NEW.id,
-    (v_session_number * 1000) + NEW.event_order, -- Unique global ordering
-    NEW.title,
-    NEW.description,
-    l.name
-  FROM sessions s
-  LEFT JOIN locations l ON l.id = NEW.location_id
-  WHERE s.id = NEW.session_id;
-
-  RETURN NEW;
-END;
-
-FUNCTION: add_session_event(p_session_id uuid, p_event_type text, p_title text, p_description text DEFAULT NULL::text, p_npc_id uuid DEFAULT NULL::uuid, p_location_id uuid DEFAULT NULL::uuid, p_quest_id uuid DEFAULT NULL::uuid, p_encounter_id uuid DEFAULT NULL::uuid, p_faction_id uuid DEFAULT NULL::uuid, p_character_id uuid DEFAULT NULL::uuid, p_event_data jsonb DEFAULT '{}'::jsonb)
------------------------------------------
-
-DECLARE
-  v_event_order integer;
-  v_event_id uuid;
-BEGIN
-  -- Get next event order for this session
-  SELECT COALESCE(MAX(event_order), 0) + 1 
-  INTO v_event_order
-  FROM session_events WHERE session_id = p_session_id;
-
-  -- Insert the event (triggers will handle propagation)
-  INSERT INTO session_events (
-    session_id, event_order, event_type, title, description,
-    npc_id, location_id, quest_id, encounter_id, faction_id, character_id,
-    event_data
-  )
-  VALUES (
-    p_session_id, v_event_order, p_event_type, p_title, p_description,
-    p_npc_id, p_location_id, p_quest_id, p_encounter_id, p_faction_id, p_character_id,
-    p_event_data
-  )
-  RETURNING id INTO v_event_id;
-
-  RETURN v_event_id;
-END;
-
-
 =========================================
    TRIGGERS
 =========================================
@@ -1596,11 +2040,11 @@ BEFORE UPDATE
 EXECUTE: EXECUTE FUNCTION update_updated_at()
 
 TRIGGER: tr_sync_factions_to_entities ON encounters
-AFTER DELETE
+AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('encounter')
 
 TRIGGER: tr_sync_factions_to_entities ON encounters
-AFTER INSERT
+AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('encounter')
 
 TRIGGER: tr_sync_factions_to_entities ON encounters
@@ -1620,11 +2064,11 @@ AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('faction')
 
 TRIGGER: tr_sync_factions_to_entities ON factions
-AFTER DELETE
+AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('faction')
 
 TRIGGER: tr_sync_factions_to_entities ON factions
-AFTER INSERT
+AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('faction')
 
 TRIGGER: locations_updated_at ON locations
@@ -1632,6 +2076,10 @@ BEFORE UPDATE
 EXECUTE: EXECUTE FUNCTION update_updated_at()
 
 TRIGGER: tr_sync_locations_to_entities ON locations
+AFTER DELETE
+EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
+
+TRIGGER: tr_sync_locations_to_entities ON locations
 AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
 
@@ -1639,9 +2087,9 @@ TRIGGER: tr_sync_locations_to_entities ON locations
 AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
 
-TRIGGER: tr_sync_locations_to_entities ON locations
+TRIGGER: sync_to_entities ON narrative_arcs
 AFTER DELETE
-EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
+EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
 
 TRIGGER: sync_to_entities ON narrative_arcs
 AFTER INSERT
@@ -1649,10 +2097,6 @@ EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
 
 TRIGGER: sync_to_entities ON narrative_arcs
 AFTER UPDATE
-EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
-
-TRIGGER: sync_to_entities ON narrative_arcs
-AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
 
 TRIGGER: npcs_updated_at ON npcs
@@ -1684,16 +2128,12 @@ AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('quest')
 
 TRIGGER: tr_sync_quests_to_entities ON quests
-AFTER UPDATE
+AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('quest')
 
 TRIGGER: tr_sync_quests_to_entities ON quests
-AFTER INSERT
+AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('quest')
-
-TRIGGER: session_event_propagation ON session_events
-AFTER INSERT
-EXECUTE: EXECUTE FUNCTION propagate_session_event()
 
 TRIGGER: trigger_sync_event_entity ON session_events
 AFTER UPDATE

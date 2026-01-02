@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-02 09:30:15
+Generated: 2026-01-02 11:03:15
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 178
-Total lines: 16,545
-Non-empty lines: 14,657
-Comment lines: 1,378
-Total size: 513,488 bytes (501.45 KB)
-Average lines per file: 92.9
+Total files: 177
+Total lines: 16,298
+Non-empty lines: 14,447
+Comment lines: 1,336
+Total size: 504,801 bytes (492.97 KB)
+Average lines per file: 92.1
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 92.9
 
 .js:
   Files: 63
-  Lines: 6,231
-  Size: 172,738 bytes (168.69 KB)
+  Lines: 6,050
+  Size: 167,925 bytes (163.99 KB)
 
 .json:
   Files: 1
@@ -32,24 +32,19 @@ Average lines per file: 92.9
 
 .jsx:
   Files: 112
-  Lines: 9,588
-  Size: 320,525 bytes (313.01 KB)
-
-.sh:
-  Files: 1
-  Lines: 127
-  Size: 5,459 bytes (5.33 KB)
+  Lines: 9,649
+  Size: 322,110 bytes (314.56 KB)
 
 
 ### LARGEST FILES (by lines)
 
-features\admin\api\adminService.js: 560 lines
 app\styles\global.css: 450 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
+features\admin\api\adminService.js: 379 lines
 features\dashboard\api\dashboardService.js: 377 lines
+features\admin\components\AdminForm.jsx: 366 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 domain\entity\api\entityService.js: 317 lines
-features\admin\components\AdminForm.jsx: 305 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
@@ -79,8 +74,8 @@ domain_entity:
 
 features_admin:
   Files: 21
-  Lines: 3,839
-  Size: 126,534 bytes (123.57 KB)
+  Lines: 3,719
+  Size: 123,306 bytes (120.42 KB)
 
 features_atlas:
   Files: 14
@@ -138,9 +133,9 @@ features_wiki:
   Size: 119,000 bytes (116.21 KB)
 
 root:
-  Files: 2
-  Lines: 169
-  Size: 6,649 bytes (6.49 KB)
+  Files: 1
+  Lines: 42
+  Size: 1,190 bytes (1.16 KB)
 
 shared:
   Files: 22

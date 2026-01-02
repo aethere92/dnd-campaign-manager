@@ -1,14 +1,21 @@
 import { supabase } from '@/shared/api/supabaseClient';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
 
+/**
+ * Helper to determine which column stores JSON attributes.
+ * Campaigns use 'metadata', others use 'attributes'.
+ */
+const getAttrColumn = (type) => (type === 'campaign' ? 'metadata' : 'attributes');
+
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
+	const attrCol = getAttrColumn(type);
 
 	// 1. Prepare Core Payload
 	const corePayload = {};
 
-	// Only add parent campaign_id if it's NOT a campaign itself
-	if (type !== 'campaign') {
+	// Parent ID logic
+	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
@@ -17,33 +24,36 @@ export const createEntity = async (type, data) => {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
 	}
+
+	// Entity Type Discriminator
 	if (strategy.primaryTable === 'entities') corePayload.type = type;
 
-	// FIX #4: Extract Special Columns from Attributes (e.g. Campaign ID, Map Data)
-	// We look at the incoming attributesList or attributes object
+	// 2. Process Attributes -> JSONB
+	// We merge explicit form attributes with the 'attributesList' array from the UI
 	const rawAttributes =
 		data.attributesList ||
 		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
 
-	const attributesToInsert = [];
+	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// Does this attribute match a known column in the definitions?
-		// Simple check: For campaigns, 'campaign_id' and 'map_data' are columns.
+		// If the strategy says this attribute is actually a top-level column (like 'map_data'), extract it.
+		// Otherwise, put it in the JSON blob.
 		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
 
 		if (isSpecialColumn) {
-			// It's a column! Add to core payload.
 			corePayload[attr.name] = attr.value;
 		} else {
-			// It's a normal attribute. Keep for attributes table.
-			attributesToInsert.push(attr);
+			jsonStorage[attr.name] = attr.value;
 		}
 	});
 
-	console.log('[Admin] Creating:', corePayload);
+	// Assign the JSON blob to the correct column
+	corePayload[attrCol] = jsonStorage;
 
-	// 2. Insert Core
+	console.log('[Admin] Creating DB Optimized:', corePayload);
+
+	// 3. Insert Single Row (No secondary table inserts needed)
 	const { data: insertedRecord, error: insertError } = await supabase
 		.from(strategy.primaryTable)
 		.insert(corePayload)
@@ -51,27 +61,13 @@ export const createEntity = async (type, data) => {
 		.single();
 
 	if (insertError) throw insertError;
-	const newId = insertedRecord.id;
 
-	// 3. Insert Remaining Attributes (if any)
-	// Campaigns usually don't use the attributes table, so this might be empty, which is fine.
-	if (attributesToInsert.length > 0 && strategy.primaryTable !== 'campaigns') {
-		const rows = attributesToInsert.map((attr) => ({
-			entity_id: newId,
-			name: attr.name,
-			value: attr.value,
-			is_private: false,
-		}));
-
-		const { error: attrError } = await supabase.from('attributes').insert(rows);
-		if (attrError) throw attrError;
-	}
-
-	return { id: newId, ...insertedRecord };
+	return insertedRecord;
 };
 
 export const updateEntity = async (type, id, data) => {
 	const strategy = getStrategy(type);
+	const attrCol = getAttrColumn(type);
 
 	// 1. Prepare Core Payload
 	const corePayload = {};
@@ -80,12 +76,12 @@ export const updateEntity = async (type, id, data) => {
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
 	}
 
-	// FIX: Extract Special Columns from Attributes
+	// 2. Process Attributes -> JSONB
 	const rawAttributes =
 		data.attributesList ||
 		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
 
-	const attributesToInsert = [];
+	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
 		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
@@ -93,41 +89,25 @@ export const updateEntity = async (type, id, data) => {
 		if (isSpecialColumn) {
 			corePayload[attr.name] = attr.value;
 		} else {
-			attributesToInsert.push(attr);
+			jsonStorage[attr.name] = attr.value;
 		}
 	});
 
-	// 2. Update Core
+	// Overwrite the JSON column completely (Single Source of Truth)
+	corePayload[attrCol] = jsonStorage;
+
+	// 3. Update Row
 	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
 
 	if (updateError) throw updateError;
-
-	// 3. Handle Attributes (Skip for campaigns usually)
-	if (strategy.primaryTable !== 'campaigns') {
-		// Delete old
-		const { error: deleteError } = await supabase.from('attributes').delete().eq('entity_id', id);
-		if (deleteError) throw deleteError;
-
-		// Insert new
-		if (attributesToInsert.length > 0) {
-			const rows = attributesToInsert.map((attr) => ({
-				entity_id: id,
-				name: attr.name,
-				value: attr.value,
-				is_private: false,
-			}));
-			const { error: insertError } = await supabase.from('attributes').insert(rows);
-			if (insertError) throw insertError;
-		}
-	}
-
 	return { success: true };
 };
 
 export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
+	const attrCol = getAttrColumn(type);
 
-	// 1. Fetch Core Data
+	// 1. Fetch Core Data AND the JSON column in one shot
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
 		.select('*')
@@ -136,15 +116,7 @@ export const fetchRawEntity = async (type, id) => {
 
 	if (coreError) throw coreError;
 
-	// 2. Fetch Attributes (As List)
-	const { data: attrData, error: attrError } = await supabase
-		.from('attributes')
-		.select('name, value')
-		.eq('entity_id', id);
-
-	if (attrError) throw attrError;
-
-	// 3. Reverse Map Core Columns
+	// 2. Transform DB Columns to Form Data
 	const formData = { ...coreData };
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
@@ -154,13 +126,22 @@ export const fetchRawEntity = async (type, id) => {
 		});
 	}
 
-	// 4. FIX: Map Column-based attributes (Campaigns) into the Attribute List
-	// If the strategy says 'campaign_id' is an attribute, but it exists on 'coreData',
-	// we fake it as an attribute so the UI renders it.
+	// 3. Transform JSONB -> Attribute List Array
+	// This maintains compatibility with the Generic Admin Forms
+	const attributesList = [];
+	const jsonSource = coreData[attrCol] || {};
+
+	// A. Add JSON attributes
+	Object.entries(jsonSource).forEach(([key, value]) => {
+		attributesList.push({ name: key, value: value });
+	});
+
+	// B. Add "Pseudo-Attributes" (Columns that look like attributes in the UI)
 	if (strategy.defaultAttributes) {
 		strategy.defaultAttributes.forEach((defAttr) => {
-			if (coreData[defAttr.key] !== undefined) {
-				attrData.push({
+			// If it's a real column on the table (not in JSON), add it to list
+			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
+				attributesList.push({
 					name: defAttr.key,
 					value: coreData[defAttr.key],
 				});
@@ -168,9 +149,7 @@ export const fetchRawEntity = async (type, id) => {
 		});
 	}
 
-	// RETURN RAW ATTRIBUTE LIST
-	// We intentionally do NOT convert to an object here to preserve duplicates
-	return { ...formData, attributesList: attrData };
+	return { ...formData, attributesList };
 };
 
 /**
@@ -195,136 +174,84 @@ export const fetchRelationships = async (id) => {
 	return data;
 };
 
-/**
- * Add a new relationship
- * Note: Your DB trigger 'create_reverse_relationship' handles the reverse link automatically
- * if is_bidirectional is true.
- */
 export const addRelationship = async (payload) => {
-	// payload = { from_entity_id, to_entity_id, relationship_type, is_bidirectional }
 	const { data, error } = await supabase.from('entity_relationships').insert(payload).select().single();
-
 	if (error) throw error;
 	return data;
 };
 
-/**
- * Delete a relationship
- */
 export const deleteRelationship = async (relId) => {
 	const { error } = await supabase.from('entity_relationships').delete().eq('id', relId);
-
 	if (error) throw error;
 	return true;
 };
 
-/**
- * Fetch child rows (e.g., session_events)
- */
 export const fetchChildRows = async (table, foreignKeyCol, parentId, orderBy = 'id') => {
 	const { data, error } = await supabase
 		.from(table)
 		.select('*')
 		.eq(foreignKeyCol, parentId)
 		.order(orderBy, { ascending: true });
-
 	if (error) throw error;
 	return data;
 };
 
-/**
- * Save a single event.
- * If no ID, it creates. If ID, it updates.
- */
 export const upsertSessionEvent = async (eventData) => {
-	// 1. Remove ID if it's a placeholder "new"
 	const payload = { ...eventData };
-	if (String(payload.id).startsWith('new')) {
-		delete payload.id;
-	}
-
+	if (String(payload.id).startsWith('new')) delete payload.id;
 	const { data, error } = await supabase.from('session_events').upsert(payload).select().single();
-
 	if (error) throw error;
 	return data;
 };
 
-/**
- * Delete a generic row
- */
 export const deleteRow = async (table, id) => {
 	const { error } = await supabase.from(table).delete().eq('id', id);
 	if (error) throw error;
 	return true;
 };
 
-/**
- * Save a single quest objective.
- */
 export const upsertQuestObjective = async (objectiveData) => {
-	// Remove temp ID
 	const payload = { ...objectiveData };
-	if (String(payload.id).startsWith('new')) {
-		delete payload.id;
-	}
-
+	if (String(payload.id).startsWith('new')) delete payload.id;
 	const { data, error } = await supabase.from('quest_objectives').upsert(payload).select().single();
-
 	if (error) throw error;
 	return data;
 };
 
 export const deleteEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-
-	// 1. Delete Attributes
-	const { error: attrError } = await supabase.from('attributes').delete().eq('entity_id', id);
-
-	if (attrError) console.warn('Attribute delete warning:', attrError);
-
-	// 2. Delete Primary Row (Cascades to 'entities' via DB trigger)
+	// No need to delete from 'attributes' table manually anymore.
+	// FK constraints or triggers should handle cleanup,
+	// but pure 'delete' is sufficient as attributes are now columns.
 	const { error: mainError } = await supabase.from(strategy.primaryTable).delete().eq('id', id);
-
 	if (mainError) throw mainError;
 	return true;
 };
 
 export const updateRelationship = async (relId, updates) => {
 	const { error } = await supabase.from('entity_relationships').update(updates).eq('id', relId);
-
 	if (error) throw error;
 	return true;
 };
 
+/**
+ * REPLACED with Database RPC
+ * Performs server-side search of entities and sessions.
+ */
 export const searchEntitiesByName = async (campaignId, query) => {
-	const searchTerm = `%${query}%`;
+	if (!query) return [];
 
-	// 1. Search Entities (NPCs, Locations, Characters, Factions, Quests, Items)
-	// We strictly search the 'name' column here.
-	const { data: entities } = await supabase
-		.from('entities')
-		.select('id, name, type, description')
-		.eq('campaign_id', campaignId)
-		.ilike('name', searchTerm)
-		.limit(15); // Higher limit
+	const { data, error } = await supabase.rpc('api_search_entities', {
+		p_campaign_id: campaignId,
+		p_search_term: query,
+	});
 
-	// 2. Search Sessions (Sessions are often separate)
-	const { data: sessions } = await supabase
-		.from('sessions')
-		.select('id, title, narrative')
-		.eq('campaign_id', campaignId)
-		.ilike('title', searchTerm)
-		.limit(5);
+	if (error) {
+		console.error('Search RPC failed', error);
+		throw error;
+	}
 
-	// Normalize Sessions to match Entity structure
-	const normSessions = (sessions || []).map((s) => ({
-		id: s.id,
-		name: s.title,
-		type: 'session',
-		description: s.narrative,
-	}));
-
-	return [...(entities || []), ...normSessions];
+	return data || [];
 };
 
 export const getSessionList = async (campaignId) => {
@@ -332,17 +259,12 @@ export const getSessionList = async (campaignId) => {
 		.from('sessions')
 		.select('id, title')
 		.eq('campaign_id', campaignId)
-		.order('title', { ascending: true }); // Assuming title starts with "01", "02", etc.
-
+		.order('title', { ascending: true });
 	if (error) throw error;
 	return data;
 };
 
-/**
- * Fetch session events AND their relationships (mentions) efficiently.
- */
 export const fetchSessionEventsWithRelationships = async (sessionId) => {
-	// 1. Fetch Events
 	const { data: events, error: eventError } = await supabase
 		.from('session_events')
 		.select('*')
@@ -352,7 +274,6 @@ export const fetchSessionEventsWithRelationships = async (sessionId) => {
 	if (eventError) throw eventError;
 	if (!events || events.length === 0) return [];
 
-	// 2. Fetch Relationships for ALL these events at once
 	const eventIds = events.map((e) => e.id);
 	const { data: rels, error: relError } = await supabase
 		.from('entity_relationships')
@@ -367,23 +288,18 @@ export const fetchSessionEventsWithRelationships = async (sessionId) => {
 
 	if (relError) throw relError;
 
-	// 3. Group Relationships by Event ID
 	const relMap = {};
 	rels.forEach((r) => {
 		if (!relMap[r.from_entity_id]) relMap[r.from_entity_id] = [];
 		relMap[r.from_entity_id].push(r);
 	});
 
-	// 4. Merge back into Event objects
 	return events.map((e) => ({
 		...e,
 		relationships: relMap[e.id] || [],
 	}));
 };
 
-/**
- * Fetch encounter actions with resolved actor/target names
- */
 export const fetchEncounterActions = async (encounterId) => {
 	const { data, error } = await supabase
 		.from('encounter_actions')
@@ -397,157 +313,60 @@ export const fetchEncounterActions = async (encounterId) => {
 		.eq('encounter_id', encounterId)
 		.order('round_number', { ascending: true })
 		.order('action_order', { ascending: true });
-
 	if (error) throw error;
 	return data;
 };
 
-/**
- * Upsert an encounter action (turn)
- */
 export const upsertEncounterAction = async (actionData) => {
 	const payload = { ...actionData };
-
-	// 1. Remove temporary ID
-	if (String(payload.id).startsWith('new')) {
-		delete payload.id;
-	}
-
-	// 2. Remove joined objects (derived data from the fetch) to prevent column errors
+	if (String(payload.id).startsWith('new')) delete payload.id;
 	delete payload.actor;
 	delete payload.target;
-
-	// 3. Ensure numeric types
 	if (payload.round_number) payload.round_number = parseInt(payload.round_number);
 	if (payload.action_order) payload.action_order = parseInt(payload.action_order);
-
-	// 4. Ensure optional UUIDs are null if empty string
 	if (payload.actor_entity_id === '') payload.actor_entity_id = null;
 	if (payload.target_entity_id === '') payload.target_entity_id = null;
 
 	const { data, error } = await supabase.from('encounter_actions').upsert(payload).select().single();
-
 	if (error) throw error;
 	return data;
 };
 
 /**
- * Scans the entire campaign for a term and returns a list of proposed changes.
- * Includes: Entities, Sessions, Attributes, Events, and Objectives.
+ * REPLACED with Database RPC
+ * Scans the database for text matches using a server-side function.
+ * Moves logic from O(N) JavaScript loop to O(1) DB Query.
  */
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
 	if (!findTerm.trim()) return [];
-	const term = findTerm.trim();
-	const regex = new RegExp(term, 'gi');
-	const matches = [];
 
-	// 1. Scan Entities (Characters, NPCs, etc)
-	const { data: ent } = await supabase
-		.from('entities')
-		.select('id, name, type, description')
-		.eq('campaign_id', campaignId);
-	ent?.forEach((row) => {
-		['name', 'description'].forEach((field) => {
-			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
-				matches.push({
-					table: 'entities',
-					id: row.id,
-					field,
-					context: `${row.type}: ${row.name}`,
-					original: row[field],
-					proposal: row[field].replace(regex, replaceTerm),
-				});
-			}
-		});
+	const { data, error } = await supabase.rpc('api_scan_campaign_text', {
+		p_campaign_id: campaignId,
+		p_term: findTerm.trim(),
 	});
 
-	// 2. Scan Sessions
-	const { data: sess } = await supabase.from('sessions').select('id, title, narrative').eq('campaign_id', campaignId);
-	sess?.forEach((row) => {
-		[
-			['title', 'title'],
-			['narrative', 'narrative'],
-		].forEach(([field, label]) => {
-			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
-				matches.push({
-					table: 'sessions',
-					id: row.id,
-					field,
-					context: `Session: ${row.title}`,
-					original: row[field],
-					proposal: row[field].replace(regex, replaceTerm),
-				});
-			}
-		});
-	});
+	if (error) {
+		console.error('Scan RPC failed', error);
+		throw error;
+	}
 
-	// 3. Scan Attributes (linked via entity)
-	const { data: attr } = await supabase
-		.from('attributes')
-		.select('id, name, value, entity:entities!inner(name, type, campaign_id)')
-		.eq('entities.campaign_id', campaignId);
-	attr?.forEach((row) => {
-		if (row.value?.toLowerCase().includes(term.toLowerCase())) {
-			matches.push({
-				table: 'attributes',
-				id: row.id,
-				field: 'value',
-				context: `${row.entity.type} Attribute: ${row.name}`,
-				original: row.value,
-				proposal: row.value.replace(regex, replaceTerm),
-			});
-		}
-	});
+	const regex = new RegExp(findTerm.trim(), 'gi');
 
-	// 4. Scan Session Events (linked via session)
-	const { data: evts } = await supabase
-		.from('session_events')
-		.select('id, title, description, session:sessions!inner(title, campaign_id)')
-		.eq('sessions.campaign_id', campaignId);
-	evts?.forEach((row) => {
-		['title', 'description'].forEach((field) => {
-			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
-				matches.push({
-					table: 'session_events',
-					id: row.id,
-					field,
-					context: `Event in ${row.session.title}`,
-					original: row[field],
-					proposal: row[field].replace(regex, replaceTerm),
-				});
-			}
-		});
-	});
-
-	// 5. Scan Quest Objectives (linked via quest/entity)
-	const { data: objs } = await supabase
-		.from('quest_objectives')
-		.select('id, objective_name, description, objective_update, quest:entities!inner(name, campaign_id)')
-		.eq('entities.campaign_id', campaignId);
-	objs?.forEach((row) => {
-		['objective_name', 'description', 'objective_update'].forEach((field) => {
-			if (row[field]?.toLowerCase().includes(term.toLowerCase())) {
-				matches.push({
-					table: 'quest_objectives',
-					id: row.id,
-					field,
-					context: `Objective in ${row.quest.name}`,
-					original: row[field],
-					proposal: row[field].replace(regex, replaceTerm),
-				});
-			}
-		});
-	});
-
-	return matches;
+	// We still use JS for the "proposal" string generation because it's purely UI logic
+	// and doing Regex Replace in SQL can be brittle with flags.
+	// But the heavy lifting (filtering 10k rows) is now done by Postgres.
+	return data.map((row) => ({
+		table: row.table_name,
+		id: row.record_id,
+		field: row.field_name,
+		context: row.context,
+		original: row.current_value,
+		proposal: row.current_value.replace(regex, replaceTerm),
+	}));
 };
 
-/**
- * Takes a list of confirmed changes and executes updates.
- */
 export const executeBulkReplace = async (changeList) => {
 	const results = { count: 0 };
-	// Process in sequence to avoid Supabase rate limits on heavy campaigns
 	for (const change of changeList) {
 		const { error } = await supabase
 			.from(change.table)

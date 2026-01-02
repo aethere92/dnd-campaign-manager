@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { getTimeline } from '@/features/timeline/api/timelineService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getEventStyle } from './utils/eventStyles';
-// import './types';
 
 /**
  * @returns {{ sessions: import('./types').TimelineSessionModel[], isLoading: boolean }}
@@ -19,37 +18,24 @@ export function useTimelineViewModel() {
 
 	const sessions = useMemo(() => {
 		return (data || []).map((session) => {
-			// Sort events safely: Use spread to avoid mutating read-only cache, handle nulls
-			const sortedEvents = [...(session.events || [])].sort((a, b) => (a.event_order || 0) - (b.event_order || 0));
-
-			// Map events to View Model
-			const events = sortedEvents.map((event) => {
-				// TRANSFORMATION: Convert relationships to tags
-				const tags = (event.relationships || [])
-					.map((rel) => {
-						if (!rel.target) return null;
-						return {
-							name: rel.target.name,
-							type: rel.target.type?.toLowerCase() || 'default',
-						};
-					})
-					.filter(Boolean); // Remove nulls
-
+			// Events are already sorted by the SQL View
+			const events = (session.events || []).map((event) => {
 				return {
 					id: event.id,
 					title: event.title,
-					typeLabel: event.event_type?.replace(/_/g, ' ') || 'Event',
+					typeLabel: event.type?.replace(/_/g, ' ') || 'Event',
 					description: event.description,
-					tags, // New property containing all connected entities
-					style: getEventStyle(event.event_type),
+					// View returns 'tags' directly with { name, type }
+					tags: event.tags || [],
+					style: getEventStyle(event.type),
 				};
 			});
 
 			return {
-				id: session.id,
-				number: session.session_number,
+				id: session.session_id,
+				number: session.session_number ?? 999,
 				dateLabel: session.session_date || 'Unknown Date',
-				title: session.title,
+				title: session.session_title,
 				events,
 			};
 		});

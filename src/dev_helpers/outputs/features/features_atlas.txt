@@ -4,7 +4,6 @@ PARTIAL BUNDLE: FEATURES ATLAS
 
 ### PROJECT MAP (FILE STRUCTURE)
 ./
-  fix-dark-mode.sh
   main.jsx
   app/
     App.jsx

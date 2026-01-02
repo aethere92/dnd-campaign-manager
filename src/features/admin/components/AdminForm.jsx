@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { useQueryClient } from '@tanstack/react-query'; // CHANGED: Import
+import { useQueryClient } from '@tanstack/react-query';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
@@ -20,14 +20,45 @@ import RelationshipManager from '@/features/admin/components/RelationshipManager
 import EncounterActionManager from './EncounterManager';
 import TacticalMapManager from './TacticalMapManager';
 
+/**
+ * Helper: Smart Textarea that grows with content
+ * Useful for editing JSON arrays without feeling like a "code editor"
+ */
+const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
+	const { ref, ...rest } = register(path);
+	const textareaRef = useRef(null);
+
+	const adjustHeight = () => {
+		const el = textareaRef.current;
+		if (el) {
+			el.style.height = 'auto'; // Reset
+			el.style.height = el.scrollHeight + 2 + 'px'; // Grow
+		}
+	};
+
+	return (
+		<textarea
+			{...rest}
+			ref={(e) => {
+				ref(e);
+				textareaRef.current = e;
+			}}
+			rows={1}
+			onInput={adjustHeight}
+			placeholder={placeholder}
+			className={`${className} min-h-[42px] py-2 resize-none overflow-hidden font-mono text-sm`}
+			onFocus={adjustHeight} // Ensure it expands if loaded with data
+		/>
+	);
+};
+
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
 	const { campaignId } = useCampaign();
-	const queryClient = useQueryClient(); // CHANGED: Hook
+	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 
-	// ... (useForm setup remains same) ...
 	const {
 		register,
 		control,
@@ -44,7 +75,7 @@ export default function AdminForm({ type, id }) {
 	});
 	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
 
-	// ... (useEffect loadEntity remains same) ...
+	// --- 1. LOADER LOGIC ---
 	useEffect(() => {
 		const loadEntity = async () => {
 			setIsLoading(true);
@@ -55,14 +86,21 @@ export default function AdminForm({ type, id }) {
 					return;
 				}
 				const rawData = await fetchRawEntity(type, id);
-				// ... (Parsing logic remains same) ...
+
 				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
 				const standardAttrs = {};
 				const customAttrs = [];
 
 				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
-					const value = attr.value;
+					let value = attr.value;
+
+					// FIX: Detect Object/Array and Stringify it for the Form
+					if (typeof value === 'object' && value !== null) {
+						// null, 2 spacing makes it readable (multi-line) instead of a blob
+						value = JSON.stringify(value, null, 2);
+					}
+
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
 						else customAttrs.push({ key, value });
@@ -86,19 +124,40 @@ export default function AdminForm({ type, id }) {
 		loadEntity();
 	}, [type, id, reset, strategy]);
 
+	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
 			alert('No Campaign Selected! Select one from the home screen first.');
 			return;
 		}
 
-		// ... (Payload construction remains same) ...
 		const attributesList = [];
+
+		// Process Standard Attributes
 		Object.entries(data.attributes).forEach(([key, value]) => {
-			if (value && String(value).trim() !== '') attributesList.push({ name: key, value });
+			if (value && String(value).trim() !== '') {
+				attributesList.push({ name: key, value });
+			}
 		});
+
+		// Process Custom Attributes (With JSON Auto-Parse)
 		data.customAttributes.forEach((item) => {
-			if (item.key && item.key.trim() !== '') attributesList.push({ name: item.key, value: item.value });
+			if (item.key && item.key.trim() !== '') {
+				let finalValue = item.value;
+
+				// FIX: Try to parse JSON strings back into Objects
+				// This allows "['a','b']" string to be saved as ["a","b"] array
+				try {
+					const trimmed = String(item.value).trim();
+					if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+						finalValue = JSON.parse(trimmed);
+					}
+				} catch (e) {
+					// If parse fails, it's just a normal string. Ignore error.
+				}
+
+				attributesList.push({ name: item.key, value: finalValue });
+			}
 		});
 
 		const payload = {
@@ -117,11 +176,9 @@ export default function AdminForm({ type, id }) {
 				if (!id) reset();
 			}
 
-			// CHANGED: Invalidate all relevant queries to force a refresh despite strict caching
 			queryClient.invalidateQueries({
 				predicate: (query) => {
 					const key = query.queryKey[0];
-					// Invalidate lists, wikis, dashboard, and graph
 					return ['entities', 'entry', 'dashboard', 'graph', 'timeline', 'globalSearch', 'admin-list'].includes(key);
 				},
 			});
@@ -141,18 +198,15 @@ export default function AdminForm({ type, id }) {
 	const activeMarkersValue = standardMarkers || customMarkers || '[]';
 
 	const handleMarkersChange = (jsonValue) => {
-		// Check if map_markers exists in custom list, update it there
 		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
 		if (customIdx >= 0) {
 			setValue(`customAttributes.${customIdx}.value`, jsonValue);
 		} else {
-			// Otherwise set in standard attributes
 			setValue('attributes.map_markers', jsonValue);
 		}
 	};
 
 	return (
-		// ... (Return JSX remains exactly same) ...
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
 			{/* Top Bar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
@@ -263,27 +317,34 @@ export default function AdminForm({ type, id }) {
 
 				<div className='space-y-2'>
 					{fields.map((field, index) => (
-						<div key={field.id} className='flex gap-3 items-start animate-in fade-in'>
-							<div className='w-1/3'>
+						<div key={field.id} className='flex gap-3 items-start animate-in fade-in group'>
+							<div className='w-1/3 pt-1'>
 								<input
 									type='text'
 									{...register(`customAttributes.${index}.key`)}
-									placeholder='Key (e.g. SecretIdentity)'
-									className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground`}
+									placeholder='Key'
+									className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
 								/>
 							</div>
-							<div className='flex-1'>
-								<input
-									type='text'
-									{...register(`customAttributes.${index}.value`)}
-									placeholder='Value'
+
+							{/* FIX: Smart Textarea for Value */}
+							<div className='flex-1 relative'>
+								<AutoSizeTextarea
+									register={register}
+									path={`customAttributes.${index}.value`}
+									placeholder='Value (Text or JSON)'
 									className={ADMIN_INPUT_CLASS}
 								/>
+								{/* Optional: Tiny indicator if it detects JSON */}
+								{watch(`customAttributes.${index}.value`)?.toString().trim().startsWith('{') && (
+									<Code size={12} className='absolute right-2 top-3 text-amber-500 opacity-50 pointer-events-none' />
+								)}
 							</div>
+
 							<button
 								type='button'
 								onClick={() => remove(index)}
-								className='p-2 text-muted-foreground/70 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors'>
+								className='mt-2 p-1.5 text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors'>
 								<Trash2 size={16} />
 							</button>
 						</div>
