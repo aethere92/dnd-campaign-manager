@@ -22,7 +22,7 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 					{link && (
 						<Link
 							to={link}
-							className='text-muted-foreground/50 hover:text-accent transition-colors'
+							className='text-muted-foreground/50 hover:text-primary transition-colors'
 							title={`View ${title}`}>
 							<ArrowRight size={12} />
 						</Link>

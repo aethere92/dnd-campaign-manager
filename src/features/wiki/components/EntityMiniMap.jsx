@@ -93,7 +93,7 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 			{!activeFullscreen && (
 				<div className='flex items-center justify-between px-1'>
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
-						<MapIcon size={16} className='text-accent' /> Map
+						<MapIcon size={16} className='text-primary' /> Map
 					</h3>
 				</div>
 			)}

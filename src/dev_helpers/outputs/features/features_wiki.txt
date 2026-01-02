@@ -822,7 +822,6 @@ export const EntityBody = ({
 					return (
 						<div key={prop.key}>
 							<SectionDivider />
-							{/* FIX: Changed text-accent (invisible) to text-amber-900/text-foreground for brown/dark headers */}
 							<h3 className='capitalize text-lg mt-0 font-serif text-amber-900 dark:text-foreground mb-2 font-bold'>
 								{prop.key}
 							</h3>
@@ -844,7 +843,6 @@ export const EntityBody = ({
 				return (
 					<div key={prop.key}>
 						<SectionDivider />
-						{/* FIX: Changed text-accent (invisible) to text-amber-900/text-foreground */}
 						<h3 className='capitalize text-lg font-serif text-amber-900 dark:text-foreground mb-1 mt-0 inline-block pb-0.5'>
 							{prop.key}
 						</h3>
@@ -1226,7 +1224,7 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 			{!activeFullscreen && (
 				<div className='flex items-center justify-between px-1'>
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
-						<MapIcon size={16} className='text-accent' /> Map
+						<MapIcon size={16} className='text-primary' /> Map
 					</h3>
 				</div>
 			)}
@@ -2074,7 +2072,7 @@ export const Swimlane = ({ title, parentTitle, link, items, config, context }) =
 					{link && (
 						<Link
 							to={link}
-							className='text-muted-foreground/50 hover:text-accent transition-colors'
+							className='text-muted-foreground/50 hover:text-primary transition-colors'
 							title={`View ${title}`}>
 							<ArrowRight size={12} />
 						</Link>
@@ -2527,7 +2525,6 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 					className={({ isActive }) =>
 						clsx(
 							'flex-1 flex items-center gap-1.5 pr-2 text-[13px] truncate transition-colors rounded-r-sm',
-							// FIX: Replaced 'text-accent' with 'text-primary' and background
 							isActive ? 'text-primary font-bold bg-primary/10' : 'text-foreground/80'
 						)
 					}>

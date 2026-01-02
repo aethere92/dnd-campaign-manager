@@ -83,7 +83,7 @@ export const SessionRecapCard = ({ session, featured = false }) => {
 					<div className='space-y-1.5'>
 						{highlights.map((event) => (
 							<div key={event.id} className='flex items-start gap-2 text-xs'>
-								<span className='text-accent mt-0.5'>•</span>
+								<span className='text-primary mt-0.5'>•</span>
 								<span className='text-foreground leading-snug'>{event.title}</span>
 							</div>
 						))}

@@ -80,7 +80,6 @@ export const EntityBody = ({
 					return (
 						<div key={prop.key}>
 							<SectionDivider />
-							{/* FIX: Changed text-accent (invisible) to text-amber-900/text-foreground for brown/dark headers */}
 							<h3 className='capitalize text-lg mt-0 font-serif text-amber-900 dark:text-foreground mb-2 font-bold'>
 								{prop.key}
 							</h3>
@@ -102,7 +101,6 @@ export const EntityBody = ({
 				return (
 					<div key={prop.key}>
 						<SectionDivider />
-						{/* FIX: Changed text-accent (invisible) to text-amber-900/text-foreground */}
 						<h3 className='capitalize text-lg font-serif text-amber-900 dark:text-foreground mb-1 mt-0 inline-block pb-0.5'>
 							{prop.key}
 						</h3>

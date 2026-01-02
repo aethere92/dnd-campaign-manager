@@ -313,8 +313,8 @@ def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_l
 
 if __name__ == "__main__":
     TARGET_FOLDER = '.' 
-    OUTPUT_FILE = 'dev_helpers/context_bundle.txt'
-    PARTS_DIR = 'dev_helpers/parts'
+    OUTPUT_FILE = 'dev_helpers/outputs/context_bundle.txt'
+    PARTS_DIR = 'dev_helpers/outputs/features'
     
     FILES_TO_IGNORE = [
         '.git', '__pycache__', 'node_modules', 'venv', '.idea', '.vscode',

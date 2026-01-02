@@ -40,7 +40,6 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 					className={({ isActive }) =>
 						clsx(
 							'flex-1 flex items-center gap-1.5 pr-2 text-[13px] truncate transition-colors rounded-r-sm',
-							// FIX: Replaced 'text-accent' with 'text-primary' and background
 							isActive ? 'text-primary font-bold bg-primary/10' : 'text-foreground/80'
 						)
 					}>
