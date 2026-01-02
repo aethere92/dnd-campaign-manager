@@ -148,6 +148,14 @@
     ]
   },
   {
+    "category": "Icons > Weapons",
+    "path": "images/icons/weapons/",
+    "files": [
+      "boots_jungle_strider.png",
+      "veilbranch.jpeg"
+    ]
+  },
+  {
     "category": "Overlays > Korinis_island",
     "path": "images/overlays/korinis_island/",
     "files": [
