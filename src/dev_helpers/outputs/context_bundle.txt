@@ -5474,6 +5474,8 @@ export const IMAGE_LIBRARY = [
     "path": "images/icons/factions/campaign_002/",
     "files": [
       "arcane_brotherhood_icon.png",
+      "circle_of_the_land_icon.png",
+      "crazy_hogs_icon.jpg",
       "kryn_dynasty_icon.png",
       "red_hand_icon.png",
       "red_wizards_of_thay_icon.jpg",
