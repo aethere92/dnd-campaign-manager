@@ -88,11 +88,10 @@ const run = async () => {
 				output += `  ${col.column_name.padEnd(25)} ${col.data_type.padEnd(15)} ${nullable} ${def}\n`;
 			});
 
-			// Get Sample Data
+			// Get Sample Data (TRUNCATED)
 			try {
 				const samples = await client.query(`SELECT * FROM "${row.table_name}" LIMIT 2`);
 				if (samples.rows.length > 0) {
-					// TRUNCATION APPLIED HERE
 					const cleanData = processRows(samples.rows);
 					output += `\n  -- EXAMPLE DATA (${samples.rows.length} rows) --\n`;
 					output += JSON.stringify(cleanData, null, 2) + '\n';
@@ -149,8 +148,8 @@ const run = async () => {
 			}
 		}
 
-		// --- 4. VIEWS & SAMPLES ---
-		console.log('👁️  Fetching Views & Samples...');
+		// --- 4. VIEWS (Definition Only) ---
+		console.log('👁️  Fetching View Definitions...');
 		output += `=========================================\n`;
 		output += `   VIEWS\n`;
 		output += `=========================================\n\n`;
@@ -163,21 +162,8 @@ const run = async () => {
 		for (const view of viewsRes.rows) {
 			output += `VIEW: ${view.table_name}\n`;
 			output += `-----------------------------------------\n`;
-			output += `${view.view_definition.replace(/\n\s+/g, '\n  ')}\n`;
-
-			// Get Sample Data for View
-			try {
-				const samples = await client.query(`SELECT * FROM "${view.table_name}" LIMIT 2`);
-				if (samples.rows.length > 0) {
-					// TRUNCATION APPLIED HERE
-					const cleanData = processRows(samples.rows);
-					output += `\n  -- VIEW EXAMPLE RESULT --\n`;
-					output += JSON.stringify(cleanData, null, 2) + '\n';
-				}
-			} catch (err) {
-				output += `\n  -- ERROR READING VIEW: ${err.message} --\n`;
-			}
-			output += `\n`;
+			output += `${view.view_definition.replace(/\n\s+/g, '\n  ')}\n\n`;
+			// EXAMPLES REMOVED FOR VIEWS
 		}
 
 		// --- 5. FUNCTIONS ---

@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-02 12:30:15
+Generated: 2026-01-02 21:50:59
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -676,16 +676,23 @@ features\wiki\components\WikiEntryView.jsx:
   → @/features/wiki/useEntityView
 
 features\wiki\components\landing\EntityGridCard.jsx:
-  → @/domain/entity/utils/attributeParser
   → @/domain/entity/utils/statusUtils
   → @/shared/utils/imageUtils
   → clsx
+  → react-router-dom
+
+features\wiki\components\landing\EntityPosterCard.jsx:
+  → @/domain/entity/components/EntityBadge
+  → @/domain/entity/utils/attributeParser
+  → @/features/smart-text/SmartMarkdown
+  → @/shared/utils/imageUtils
   → react-router-dom
 
 features\wiki\components\landing\EntityTableGroup.jsx:
   → @/domain/entity/components/EntityBadge
   → @/domain/entity/utils/attributeParser
   → @/domain/entity/utils/statusUtils
+  → @/features/smart-text/SmartMarkdown
   → @/shared/utils/imageUtils
   → clsx
   → lucide-react
@@ -693,7 +700,12 @@ features\wiki\components\landing\EntityTableGroup.jsx:
 
 features\wiki\components\landing\Swimlane.jsx:
   → ./EntityGridCard
+  → ./EntityPosterCard
+  → @/features/smart-text/SmartMarkdown
+  → @/shared/components/ui/SectionDivider
+  → clsx
   → lucide-react
+  → react
   → react-router-dom
 
 features\wiki\components\navigation\SidebarEmptyState.jsx:
@@ -755,12 +767,12 @@ features\wiki\hooks\useEntityContent.js:
   → @/domain/entity/utils/attributeParser
   → @/domain/entity/utils/entityUtils
   → @/features/wiki/utils/eventMapper
-  → @/shared/utils/imageUtils
   → react
 
 features\wiki\hooks\useEntityFetching.js:
   → @/domain/entity/api/entityService
   → @/features/campaign/CampaignContext
+  → @/shared/api/supabaseClient
   → @tanstack/react-query
   → react
 
@@ -970,9 +982,9 @@ Files with most outgoing dependencies:
   features\search\useGlobalSearch.js: 8 imports
   features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
+  features\wiki\components\landing\EntityTableGroup.jsx: 8 imports
+  features\wiki\components\landing\Swimlane.jsx: 8 imports
   features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports
   features\admin\components\TacticalMapManager.jsx: 7 imports
   features\smart-text\components\EntityEmbed.jsx: 7 imports
   features\smart-tooltip\components\TooltipCard.jsx: 7 imports
-  features\table-of-contents\TableOfContents.jsx: 7 imports
-  features\wiki\components\landing\EntityTableGroup.jsx: 7 imports

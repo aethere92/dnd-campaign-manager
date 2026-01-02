@@ -1,106 +1,229 @@
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { ArrowRight, CornerDownRight } from 'lucide-react';
+import { ArrowRight, CornerDownRight, Activity } from 'lucide-react';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
 import { parseAttributes } from '@/shared/utils/imageUtils';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
-export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
+/**
+ * CONFIGURATION: Table Definitions
+ * Defines columns, widths, and RENDER logic in one place.
+ */
+const TABLE_DEFINITIONS = {
+	session: [
+		{
+			header: 'Session Title',
+			width: '45%',
+			render: (e, attr) => (
+				<Link
+					to={`/wiki/session/${e.id}`}
+					className='font-serif font-bold text-foreground hover:text-primary transition-colors text-sm'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Date',
+			width: '20%',
+			render: (e, attr) => <span className='text-xs text-muted-foreground'>{attr.session_date || '-'}</span>,
+		},
+	],
+	quest: [
+		{
+			header: 'Quest',
+			width: '40%',
+			render: (e) => (
+				<Link
+					to={`/wiki/quest/${e.id}`}
+					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Status',
+			width: '20%',
+			render: (e) => {
+				const s = getStatusInfo(e);
+				if (!s.display) return <span className='text-muted-foreground'>-</span>;
+				return (
+					<span
+						className={clsx(
+							'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+							s.isCompleted
+								? 'bg-emerald-500/10 text-emerald-600'
+								: s.isFailed
+								? 'bg-red-500/10 text-red-600'
+								: 'bg-amber-500/10 text-amber-600'
+						)}>
+						{s.display}
+					</span>
+				);
+			},
+		},
+		{
+			header: 'Priority',
+			width: '20%',
+			render: (e) => <span className='text-xs font-semibold text-muted-foreground'>{e.meta.priority || '-'}</span>,
+		},
+	],
+	location: [
+		{
+			header: 'Location',
+			width: '40%',
+			render: (e) => (
+				<Link
+					to={`/wiki/location/${e.id}`}
+					className='font-serif font-bold text-sm text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Type',
+			width: '30%',
+			hiddenOnMobile: true,
+			render: (e, attr) => <EntityBadge type='location' label={attr.type} variant='subtle' />,
+		},
+	],
+	npc: [
+		{
+			header: 'Name',
+			width: '40%',
+			render: (e) => (
+				<Link
+					to={`/wiki/npc/${e.id}`}
+					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Affinity',
+			width: '20%',
+			render: (e) => {
+				const s = getStatusInfo(e);
+				if (!s.display) return <span className='text-muted-foreground'>-</span>;
+				return (
+					<span
+						className={clsx(
+							'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+							s.rank === 1
+								? 'bg-emerald-500/10 text-emerald-600'
+								: s.rank === 3
+								? 'bg-red-500/10 text-red-600'
+								: 'bg-muted text-muted-foreground'
+						)}>
+						{s.display}
+					</span>
+				);
+			},
+		},
+		{
+			header: 'Role',
+			width: '40%',
+			hiddenOnMobile: true,
+			render: (e, attr) => (
+				<span className='text-sm text-muted-foreground'>
+					{getAttributeValue(attr, ['role', 'class', 'occupation']) || '-'}
+				</span>
+			),
+		},
+	],
+	// Fallback for others
+	default: [
+		{
+			header: 'Name',
+			width: '60%',
+			render: (e) => (
+				<Link to={`/wiki/${e.type}/${e.id}`} className='font-serif font-bold text-sm text-foreground'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Type',
+			width: '40%',
+			render: (e) => <EntityBadge type={e.type} variant='outline' size='sm' />,
+		},
+	],
+};
+
+const getColumns = (type) => TABLE_DEFINITIONS[type] || TABLE_DEFINITIONS[type === 'faction' ? 'npc' : 'default'];
+
+export const EntityTableGroup = ({ title, description, parentTitle, link, items }) => {
 	if (!items || items.length === 0) return null;
 
+	const type = items[0].type;
+	const columns = getColumns(type);
+
 	return (
-		<div className='mb-8 animate-in fade-in duration-500'>
-			{/* Group Header */}
-			<div className='flex items-center gap-2 border-b border-border/60 pb-2 mb-3'>
-				{parentTitle && (
-					// FIX: Increased opacity from /40 to /80 for visibility
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
-						{parentTitle}
-						{/* FIX: Removed opacity-50 to make arrow visible */}
-						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
+		<div className='mb-10 animate-in fade-in duration-500'>
+			{/* Header */}
+			<div className='mb-3'>
+				<div className='flex items-center gap-2 border-b border-border/60 pb-2'>
+					{parentTitle && (
+						<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
+							{parentTitle}
+							<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
+						</div>
+					)}
+					<h2 className='text-lg font-bold font-serif text-foreground flex items-center gap-2'>
+						{title}
+						{link && (
+							<Link to={link} className='text-muted-foreground/50 hover:text-primary transition-colors'>
+								<ArrowRight size={14} />
+							</Link>
+						)}
+					</h2>
+					<span className='text-[10px] font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground ml-auto'>
+						{items.length}
+					</span>
+				</div>
+				{description && (
+					<div className='mt-2 text-sm text-muted-foreground/80 leading-relaxed pl-2 border-l-2 border-primary/20'>
+						<SmartMarkdown>{description.substring(0, 300) + '...'}</SmartMarkdown>
 					</div>
 				)}
-				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
-					{title}
-					{link && (
-						<Link
-							to={link}
-							className='text-muted-foreground/50 hover:text-primary transition-colors'
-							title={`View ${title}`}>
-							<ArrowRight size={12} />
-						</Link>
-					)}
-				</h2>
-				<span className='text-[9px] font-bold bg-muted px-1.5 py-px rounded text-muted-foreground/60 ml-auto'>
-					{items.length}
-				</span>
 			</div>
 
-			{/* Table Container */}
-			<div className='bg-background border border-border rounded-lg overflow-hidden shadow-sm'>
-				<table className='w-full text-left text-sm'>
-					<thead className='bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider border-b border-border'>
+			{/* The Table */}
+			<div className='border border-border rounded-lg overflow-hidden shadow-sm'>
+				<table className='w-full text-left border-collapse'>
+					<thead className='bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider'>
 						<tr>
-							<th className='px-4 py-2 w-[40%]'>Name</th>
-							<th className='px-4 py-2 w-[20%]'>Status</th>
-							<th className='px-4 py-2 hidden md:table-cell'>Details</th>
+							{columns.map((col, i) => (
+								<th
+									key={i}
+									className={clsx(
+										'px-4 py-2.5 font-semibold',
+										col.hiddenOnMobile && 'hidden md:table-cell',
+										col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
+									)}
+									style={{ width: col.width }}>
+									{col.header}
+								</th>
+							))}
 						</tr>
 					</thead>
-					<tbody className='divide-y divide-border/50'>
+					<tbody className='divide-y divide-border/40'>
 						{items.map((entity) => {
-							const status = getStatusInfo(entity);
 							const attributes = parseAttributes(entity.attributes);
-							const role = getAttributeValue(attributes, ['role', 'occupation', 'class', 'type']) || entity.type;
-
-							// Check if row needs highlighting
-							const isSpecialStatus = status.isDead || status.isFailed || status.rank === 1 || status.rank === 3;
-
 							return (
 								<tr key={entity.id} className='group hover:bg-muted/30 transition-colors'>
-									<td className='px-4 py-2.5'>
-										<Link
-											to={`/wiki/${entity.type}/${entity.id}`}
-											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-primary transition-colors'>
-											{/* Small colored indicator bar */}
-											{isSpecialStatus && (
-												<div
-													className={clsx(
-														'w-1 h-4 rounded-full shrink-0',
-														status.isDead || status.isFailed
-															? 'bg-red-500/100'
-															: status.rank === 1
-															? 'bg-emerald-500/100'
-															: status.rank === 3
-															? 'bg-red-600'
-															: 'bg-gray-300'
-													)}
-												/>
-											)}
-											{entity.name}
-										</Link>
-									</td>
-									<td className='px-4 py-2.5'>
-										{status.display && (
-											<span
-												className={clsx(
-													'inline-flex items-center text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border',
-													status.isDead || status.isFailed
-														? 'bg-red-500/10 text-red-700 border-red-100'
-														: 'bg-muted text-muted-foreground border-border'
-												)}>
-												{status.display}
-											</span>
-										)}
-									</td>
-									<td className='px-4 py-2.5 hidden md:table-cell'>
-										<div className='flex items-center gap-2'>
-											<EntityBadge type={entity.type} size='sm' variant='subtle' />
-											<span className='text-xs text-muted-foreground truncate max-w-[200px]'>
-												{role !== entity.type ? role : ''}
-											</span>
-										</div>
-									</td>
+									{columns.map((col, i) => (
+										<td
+											key={i}
+											className={clsx(
+												'px-4 py-2.5',
+												col.hiddenOnMobile && 'hidden md:table-cell',
+												col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
+											)}>
+											{col.render(entity, attributes)}
+										</td>
+									))}
 								</tr>
 							);
 						})}

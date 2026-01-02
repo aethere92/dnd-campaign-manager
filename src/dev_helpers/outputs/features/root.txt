@@ -187,6 +187,7 @@ PARTIAL BUNDLE: ROOT
         WikiEntryView.jsx
         landing/
           EntityGridCard.jsx
+          EntityPosterCard.jsx
           EntityTableGroup.jsx
           Swimlane.jsx
         navigation/

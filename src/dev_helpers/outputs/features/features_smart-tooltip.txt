@@ -187,6 +187,7 @@ PARTIAL BUNDLE: FEATURES SMART-TOOLTIP
         WikiEntryView.jsx
         landing/
           EntityGridCard.jsx
+          EntityPosterCard.jsx
           EntityTableGroup.jsx
           Swimlane.jsx
         navigation/

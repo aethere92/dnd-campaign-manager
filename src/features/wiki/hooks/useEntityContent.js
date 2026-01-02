@@ -2,9 +2,6 @@ import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
-// Removed unused resolveImageUrl import if not used elsewhere,
-// or keep if used for other things like parsing attributes (which it is often exported with)
-import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 export const useEntityContent = (entity, attributes, sections) => {
 	return useMemo(() => {

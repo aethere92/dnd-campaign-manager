@@ -2,36 +2,16 @@ import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
-import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
-// Helper: Description Extraction
-const resolveDescription = (entity, attributes) => {
-	if (entity.description && entity.description.length > 0) return entity.description;
-	const text = getAttributeValue(attributes, [
-		'summary',
-		'narrative',
-		'background',
-		'description',
-		'short_description',
-		'appearance',
-		'history',
-		'role',
-	]);
-	return text || null;
-};
-
-export const EntityGridCard = ({ entity, config, context }) => {
+export const EntityGridCard = ({ entity, config }) => {
 	const attributes = parseAttributes(entity.attributes);
 	const imageUrl = resolveImageUrl(attributes, 'background') || resolveImageUrl(attributes, 'icon');
 	const status = getStatusInfo(entity);
-	const description = resolveDescription(entity, attributes);
 
-	// Status Logic
 	const isActorOrQuest = ['npc', 'character', 'faction', 'quest'].includes(entity.type);
 	const hasMeaningfulStatus = status.isDead || status.isFailed || status.rank === 1 || status.rank === 3;
 	const showStatus = isActorOrQuest && hasMeaningfulStatus;
 
-	// Determine Status Color
 	let statusBorderClass = 'border-l-transparent';
 	if (showStatus) {
 		if (status.isDead || status.isFailed) statusBorderClass = 'border-l-red-500';
@@ -39,25 +19,17 @@ export const EntityGridCard = ({ entity, config, context }) => {
 		else if (status.rank === 1) statusBorderClass = 'border-l-emerald-500';
 	}
 
-	// Metadata Logic
-	let footerLabel = entity.type;
-	if (context === 'geo') {
-		const role = getAttributeValue(attributes, ['role', 'occupation', 'class', 'monster type']);
-		footerLabel = role || entity.type;
-	} else {
-		footerLabel = entity.meta?.region || entity.type;
-	}
-
 	return (
 		<Link
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
-				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
-				'hover:shadow-sm hover:bg-muted/10',
+				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200',
+				entity.footerLabel ? 'h-28' : 'h-24',
+				'hover:shadow-md hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
-			{/* Left: Image/Icon Square */}
-			<div className='w-20 shrink-0 relative bg-muted/30 border-r border-border/50'>
+			{/* Left: Image */}
+			<div className='w-24 shrink-0 relative bg-muted/30 border-r border-border/50'>
 				{imageUrl ? (
 					<>
 						<img
@@ -69,23 +41,35 @@ export const EntityGridCard = ({ entity, config, context }) => {
 					</>
 				) : (
 					<div className='w-full h-full flex items-center justify-center bg-muted'>
-						{/* FIX: Removed 'mix-blend-multiply' to fix invisible icons in Dark Mode */}
 						<config.icon size={28} className='text-muted-foreground/70' strokeWidth={1.5} />
 					</div>
 				)}
 			</div>
 
 			{/* Right: Content */}
-			<div className='flex-1 px-3 py-2 flex flex-col min-w-0 justify-center'>
-				<div className='flex items-center justify-between gap-2'>
-					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
-						{entity.name}
-					</h3>
+			<div
+				className={clsx(
+					'flex-1 px-3 py-2 flex flex-col min-w-0',
+					// FIX: If footer exists, space between. If not, center vertically.
+					entity.footerLabel ? 'justify-between' : 'justify-center'
+				)}>
+				<div>
+					<div className='flex items-center justify-between gap-2'>
+						<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
+							{entity.name}
+						</h3>
+					</div>
+
+					<div className='text-[11px] text-muted-foreground/80 leading-snug mt-1 line-clamp-3'>
+						{entity.description || <span className='opacity-50 italic'>No details available.</span>}
+					</div>
 				</div>
 
-				<div className='text-[11px] text-muted-foreground truncate opacity-80 mt-0.5'>
-					{description || <span className='opacity-50 italic'>{footerLabel}</span>}
-				</div>
+				{entity.footerLabel && (
+					<div className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-auto pt-2 truncate border-t border-border/40'>
+						{entity.footerLabel}
+					</div>
+				)}
 			</div>
 		</Link>
 	);

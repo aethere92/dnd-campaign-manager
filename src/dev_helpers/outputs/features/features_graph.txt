@@ -187,6 +187,7 @@ PARTIAL BUNDLE: FEATURES GRAPH
         WikiEntryView.jsx
         landing/
           EntityGridCard.jsx
+          EntityPosterCard.jsx
           EntityTableGroup.jsx
           Swimlane.jsx
         navigation/

@@ -27,14 +27,51 @@ export const GROUPING_CONFIG = {
 			return a.name.localeCompare(b.name);
 		},
 	},
-	// FIX: Added Session grouping configuration
 	session: {
-		groupBy: (item) => item.meta.campaignArc,
+		// Group by Arc ID
+		groupBy: (item, context) => {
+			if (context?.sessionArcMap) {
+				const arcId = context.sessionArcMap.get(item.id);
+				if (arcId) return arcId;
+			}
+			return 'ungrouped';
+		},
+
+		// Map View Data to UI Props
+		getGroupMeta: (arcId, context) => {
+			if (arcId === 'ungrouped') return { title: 'Uncharted / Side Adventures', order: 9999 };
+
+			const arc = context?.arcs?.find((a) => a.id === arcId);
+			if (!arc) return { title: 'Unknown Arc', order: 9998 };
+
+			return {
+				title: arc.title,
+				description: arc.description,
+				order: arc.order,
+				type: arc.arc_type, // Maps SQL 'arc_type'
+				stats: {
+					npcs: arc.npc_count,
+					locations: arc.location_count,
+					quests: arc.quest_count,
+					encounters: arc.encounter_count,
+				},
+			};
+		},
+
+		sortGroups: (ids, context) => {
+			return ids.sort((a, b) => {
+				if (a === 'ungrouped') return 1;
+				if (b === 'ungrouped') return -1;
+				const arcA = context?.arcs?.find((x) => x.id === a);
+				const arcB = context?.arcs?.find((x) => x.id === b);
+				return (arcA?.order || 999) - (arcB?.order || 999);
+			});
+		},
+
 		sortItems: (a, b) => {
-			// Extract numbers from titles (e.g., "01 - Intro") to sort numerically
-			const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
-			const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
-			if (numA !== numB) return numA - numB;
+			const numA = Number(a.attributes?.session_number || 0);
+			const numB = Number(b.attributes?.session_number || 0);
+			if (numA !== 0 || numB !== 0) return numA - numB;
 			return a.name.localeCompare(b.name);
 		},
 	},

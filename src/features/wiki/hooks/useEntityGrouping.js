@@ -2,44 +2,29 @@ import { useMemo } from 'react';
 import { GROUPING_CONFIG } from '@/features/wiki/config/groupingConfig';
 import { transformEntityToViewModel } from '@/features/wiki/utils/wikiUtils';
 
-// --- TREE BUILDER HELPER ---
+// Helper to build hierarchy trees (unchanged)
 const buildTree = (items, sortFn) => {
 	const idMap = new Map();
 	const roots = [];
-
-	// 1. Initialize map
-	items.forEach((item) => {
-		idMap.set(item.id, { ...item, children: [] });
-	});
-
-	// 2. Build Hierarchy
+	items.forEach((item) => idMap.set(item.id, { ...item, children: [] }));
 	items.forEach((item) => {
 		const node = idMap.get(item.id);
 		const parentId = item.meta.parentId;
-
 		if (parentId && idMap.has(parentId)) {
-			const parent = idMap.get(parentId);
-			parent.children.push(node);
+			idMap.get(parentId).children.push(node);
 		} else {
 			roots.push(node);
 		}
 	});
 
-	// 3. Prune Empty Folders (Recursive)
 	const prune = (nodes) => {
-		// Generalize: If the list contains ANYTHING that isn't a location (e.g. NPC, Encounter),
-		// then we assume 'locations' are acting as folders and should be pruned if empty.
-		// If the list is ONLY locations, we are in the Location Wiki, so we keep everything.
 		const hasMixedTypes = items.some((i) => i.type !== 'location');
-
-		if (!hasMixedTypes) return nodes; // Don't prune if we are just listing locations
+		if (!hasMixedTypes) return nodes;
 
 		return nodes.filter((node) => {
 			if (node.children.length > 0) {
 				node.children = prune(node.children);
 			}
-
-			// If it's a location (folder) and has no children after pruning, remove it
 			if (node.type === 'location' && node.children.length === 0) {
 				return false;
 			}
@@ -49,7 +34,6 @@ const buildTree = (items, sortFn) => {
 
 	let finalRoots = prune(roots);
 
-	// 4. Recursive Sort
 	const sortRecursive = (nodes) => {
 		if (sortFn) nodes.sort(sortFn);
 		nodes.forEach((node) => {
@@ -63,23 +47,18 @@ const buildTree = (items, sortFn) => {
 	return finalRoots;
 };
 
-// ... (rest of the file remains unchanged) ...
-export function useEntityGrouping(entities, type, searchQuery = '') {
-	// ... existing implementation ...
+export function useEntityGrouping(entities, type, searchQuery = '', context = {}) {
 	return useMemo(() => {
 		if (!entities || entities.length === 0) return [];
 
-		// 1. Filter by search
 		const filtered = searchQuery
 			? entities.filter((e) => e.name.toLowerCase().includes(searchQuery.toLowerCase()))
 			: entities;
 
-		// 2. Transform to view model
 		const items = filtered.map((entity) => transformEntityToViewModel(entity, type));
-
 		const strategy = GROUPING_CONFIG[type];
 
-		// --- STRATEGY 1: TREE (Nested) ---
+		// TREE STRATEGY
 		if (strategy?.mode === 'tree') {
 			const treeRoots = buildTree(items, strategy.sortItems);
 			return [
@@ -92,19 +71,29 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 			];
 		}
 
-		// --- STRATEGY 2: GROUPED (Flat Categories) ---
+		// CATEGORY STRATEGY
 		if (strategy && strategy.groupBy) {
 			const grouped = {};
+			const metadataMap = new Map(); // Store metadata for the group keys
+
 			items.forEach((item) => {
-				const groupKey = strategy.groupBy(item) || 'Other';
-				if (!grouped[groupKey]) grouped[groupKey] = [];
+				const groupKey = strategy.groupBy(item, context) || 'General';
+
+				if (!grouped[groupKey]) {
+					grouped[groupKey] = [];
+					// If the strategy provides a way to get metadata for this key, fetch it
+					if (strategy.getGroupMeta) {
+						metadataMap.set(groupKey, strategy.getGroupMeta(groupKey, context));
+					}
+				}
 				grouped[groupKey].push(item);
 			});
 
 			let groupKeys = Object.keys(grouped);
 
+			// Handle Sorting Groups
 			if (typeof strategy.sortGroups === 'function') {
-				groupKeys.sort(strategy.sortGroups);
+				groupKeys = strategy.sortGroups(groupKeys, context);
 			} else if (Array.isArray(strategy.sortGroups)) {
 				groupKeys.sort((a, b) => {
 					const idxA = strategy.sortGroups.indexOf(a);
@@ -113,26 +102,33 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 					const valB = idxB === -1 ? 999 : idxB;
 					return valA - valB || a.localeCompare(b);
 				});
-			} else if (strategy.sortGroups === 'alpha') {
+			} else {
 				groupKeys.sort();
 			}
 
 			return groupKeys.map((key) => {
 				const groupItems = grouped[key];
+				const meta = metadataMap.get(key) || {};
+
 				if (typeof strategy.sortItems === 'function') {
 					groupItems.sort(strategy.sortItems);
 				} else {
 					groupItems.sort((a, b) => a.name.localeCompare(b.name));
 				}
+
 				return {
 					id: key,
-					title: key,
+					title: meta.title || key,
+					description: meta.description || null,
+					order: meta.order || 999,
+					type: meta.type || null,
+					stats: meta.stats || null,
 					items: groupItems,
 				};
 			});
 		}
 
-		// --- STRATEGY 3: DEFAULT (Flat A-Z) ---
+		// FLAT STRATEGY
 		return [
 			{
 				id: 'all',
@@ -140,5 +136,5 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 				items: items.sort((a, b) => a.name.localeCompare(b.name)),
 			},
 		];
-	}, [entities, type, searchQuery]);
+	}, [entities, type, searchQuery, context]);
 }

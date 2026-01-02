@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-02 12:30:15
+Generated: 2026-01-02 21:50:59
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 177
-Total lines: 16,044
-Non-empty lines: 14,233
-Comment lines: 1,353
-Total size: 497,503 bytes (485.84 KB)
-Average lines per file: 90.6
+Total files: 178
+Total lines: 16,544
+Non-empty lines: 14,696
+Comment lines: 1,367
+Total size: 512,317 bytes (500.31 KB)
+Average lines per file: 92.9
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,18 +22,18 @@ Average lines per file: 90.6
 
 .js:
   Files: 63
-  Lines: 5,796
-  Size: 160,627 bytes (156.86 KB)
+  Lines: 5,962
+  Size: 165,500 bytes (161.62 KB)
 
 .json:
   Files: 1
-  Lines: 149
-  Size: 3,594 bytes (3.51 KB)
+  Lines: 160
+  Size: 3,885 bytes (3.79 KB)
 
 .jsx:
-  Files: 112
-  Lines: 9,649
-  Size: 322,110 bytes (314.56 KB)
+  Files: 113
+  Lines: 9,972
+  Size: 331,760 bytes (323.98 KB)
 
 
 ### LARGEST FILES (by lines)
@@ -44,9 +44,10 @@ features\admin\api\adminService.js: 379 lines
 features\dashboard\api\dashboardService.js: 377 lines
 features\admin\components\AdminForm.jsx: 366 lines
 features\admin\components\EncounterManager.jsx: 354 lines
+domain\entity\api\entityService.js: 272 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
-domain\entity\api\entityService.js: 243 lines
+features\wiki\components\landing\EntityTableGroup.jsx: 236 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\atlas\components\AtlasSidebar.jsx: 218 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
@@ -56,8 +57,7 @@ features\wiki\components\EntityHeader.jsx: 204 lines
 features\wiki\components\EntitySidebar.jsx: 201 lines
 features\smart-text\components\EntityEmbed.jsx: 200 lines
 domain\entity\utils\entityUtils.js: 181 lines
-features\wiki\utils\attributeMapper.js: 172 lines
-features\admin\config\adminStrategies.js: 171 lines
+features\wiki\components\landing\Swimlane.jsx: 177 lines
 
 
 ### STATISTICS BY CATEGORY
@@ -69,13 +69,13 @@ app:
 
 domain_entity:
   Files: 13
-  Lines: 1,413
-  Size: 38,216 bytes (37.32 KB)
+  Lines: 1,442
+  Size: 39,077 bytes (38.16 KB)
 
 features_admin:
   Files: 21
-  Lines: 3,719
-  Size: 123,306 bytes (120.42 KB)
+  Lines: 3,730
+  Size: 123,597 bytes (120.70 KB)
 
 features_atlas:
   Files: 14
@@ -128,9 +128,9 @@ features_timeline:
   Size: 10,827 bytes (10.57 KB)
 
 features_wiki:
-  Files: 41
-  Lines: 3,578
-  Size: 116,430 bytes (113.70 KB)
+  Files: 42
+  Lines: 4,038
+  Size: 130,092 bytes (127.04 KB)
 
 root:
   Files: 1

@@ -187,6 +187,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         WikiEntryView.jsx
         landing/
           EntityGridCard.jsx
+          EntityPosterCard.jsx
           EntityTableGroup.jsx
           Swimlane.jsx
         navigation/
@@ -3349,6 +3350,17 @@ export const IMAGE_LIBRARY = [
       "soshi.png",
       "tabaxi.png",
       "unknown.png"
+    ]
+  },
+  {
+    "category": "Icons > Factions > Campaign_002",
+    "path": "images/icons/factions/campaign_002/",
+    "files": [
+      "arcane_brotherhood_icon.png",
+      "kryn_dynasty_icon.png",
+      "red_hand_icon.png",
+      "red_wizards_of_thay_icon.jpg",
+      "thieves_guild.jpg"
     ]
   },
   {

@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { useEntityFetching } from './hooks/useEntityFetching';
 import { useEntityGrouping } from './hooks/useEntityGrouping';
-// import './types';
 
 export function useWikiNavigation() {
 	const { type } = useParams();
@@ -11,14 +10,22 @@ export function useWikiNavigation() {
 
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
-	// 1. Fetch entities
-	const { entities, isLoading } = useEntityFetching(normalizedType);
+	// 1. Fetch entities AND context (Arcs, Relationships)
+	// FIX: Destructure 'context' here
+	const { entities, context, isLoading } = useEntityFetching(normalizedType);
 
 	// 2. Group and filter entities
-	const groups = useEntityGrouping(entities, normalizedType, search);
+	// FIX: Pass 'context' to the grouping hook so it can map Session -> Arc
+	const groups = useEntityGrouping(entities, normalizedType, search, context);
 
 	// 3. Build UI config
 	const entityConfig = getEntityConfig(normalizedType);
+
+	// Guard clause in case config isn't found (e.g. invalid URL)
+	if (!entityConfig) {
+		return { isLoading: true, groups: [], config: { label: 'Loading...', textClass: '' } };
+	}
+
 	const config = {
 		label: `${entityConfig.label}s`,
 		Icon: entityConfig.icon,

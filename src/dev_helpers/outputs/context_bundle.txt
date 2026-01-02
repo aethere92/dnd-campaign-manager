@@ -193,6 +193,7 @@ INSTRUCTIONS FOR AI:
         WikiEntryView.jsx
         landing/
           EntityGridCard.jsx
+          EntityPosterCard.jsx
           EntityTableGroup.jsx
           Swimlane.jsx
         navigation/
@@ -938,11 +939,33 @@ const getCompleteEntities = async (campaignId, type) => {
 	return data;
 };
 
-const entityStrategies = {
-	session: getSessions,
-	quest: getCompleteEntities,
-	default: getCompleteEntities,
-	campaign: async () => getCampaigns(),
+/**
+ * Fetch Narrative Arcs and their links to Sessions
+ * Used for organizing the Wiki Swimlanes
+ */
+export const getCampaignArcs = async (campaignId) => {
+	// 1. Fetch the Pre-Calculated View
+	const { data: arcs, error: arcError } = await supabase
+		.from('view_narrative_arc_summary')
+		.select('*')
+		.eq('campaign_id', campaignId) // Ensure your view handles campaign_id or filter via join if needed
+		.order('order', { ascending: true });
+
+	if (arcError) throw arcError;
+
+	// 2. Fetch the Session Links (needed for grouping logic in JS)
+	const { data: rels, error: relError } = await supabase
+		.from('entity_relationships')
+		.select('from_entity_id, to_entity_id')
+		.eq('relationship_type', 'part_of')
+		.in(
+			'to_entity_id',
+			arcs.map((a) => a.id)
+		); // Only get links for these arcs
+
+	if (relError) throw relError;
+
+	return { arcs, rels };
 };
 
 export const getEntities = async (campaignId, type) => {
@@ -1135,6 +1158,13 @@ export const getTooltipData = async (id, type) => {
 
 	if (error) throw error;
 	return data;
+};
+
+const entityStrategies = {
+	session: getSessions,
+	quest: getCompleteEntities,
+	default: getCompleteEntities,
+	campaign: async () => getCampaigns(),
 };
 
 --- END OF domain\entity\api\entityService.js ---
@@ -5437,6 +5467,17 @@ export const IMAGE_LIBRARY = [
       "soshi.png",
       "tabaxi.png",
       "unknown.png"
+    ]
+  },
+  {
+    "category": "Icons > Factions > Campaign_002",
+    "path": "images/icons/factions/campaign_002/",
+    "files": [
+      "arcane_brotherhood_icon.png",
+      "kryn_dynasty_icon.png",
+      "red_hand_icon.png",
+      "red_wizards_of_thay_icon.jpg",
+      "thieves_guild.jpg"
     ]
   },
   {
@@ -11583,7 +11624,6 @@ import { useParams } from 'react-router-dom';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { useEntityFetching } from './hooks/useEntityFetching';
 import { useEntityGrouping } from './hooks/useEntityGrouping';
-// import './types';
 
 export function useWikiNavigation() {
 	const { type } = useParams();
@@ -11591,14 +11631,22 @@ export function useWikiNavigation() {
 
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
-	// 1. Fetch entities
-	const { entities, isLoading } = useEntityFetching(normalizedType);
+	// 1. Fetch entities AND context (Arcs, Relationships)
+	// FIX: Destructure 'context' here
+	const { entities, context, isLoading } = useEntityFetching(normalizedType);
 
 	// 2. Group and filter entities
-	const groups = useEntityGrouping(entities, normalizedType, search);
+	// FIX: Pass 'context' to the grouping hook so it can map Session -> Arc
+	const groups = useEntityGrouping(entities, normalizedType, search, context);
 
 	// 3. Build UI config
 	const entityConfig = getEntityConfig(normalizedType);
+
+	// Guard clause in case config isn't found (e.g. invalid URL)
+	if (!entityConfig) {
+		return { isLoading: true, groups: [], config: { label: 'Loading...', textClass: '' } };
+	}
+
 	const config = {
 		label: `${entityConfig.label}s`,
 		Icon: entityConfig.icon,
@@ -13077,36 +13125,16 @@ import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
-import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
-// Helper: Description Extraction
-const resolveDescription = (entity, attributes) => {
-	if (entity.description && entity.description.length > 0) return entity.description;
-	const text = getAttributeValue(attributes, [
-		'summary',
-		'narrative',
-		'background',
-		'description',
-		'short_description',
-		'appearance',
-		'history',
-		'role',
-	]);
-	return text || null;
-};
-
-export const EntityGridCard = ({ entity, config, context }) => {
+export const EntityGridCard = ({ entity, config }) => {
 	const attributes = parseAttributes(entity.attributes);
 	const imageUrl = resolveImageUrl(attributes, 'background') || resolveImageUrl(attributes, 'icon');
 	const status = getStatusInfo(entity);
-	const description = resolveDescription(entity, attributes);
 
-	// Status Logic
 	const isActorOrQuest = ['npc', 'character', 'faction', 'quest'].includes(entity.type);
 	const hasMeaningfulStatus = status.isDead || status.isFailed || status.rank === 1 || status.rank === 3;
 	const showStatus = isActorOrQuest && hasMeaningfulStatus;
 
-	// Determine Status Color
 	let statusBorderClass = 'border-l-transparent';
 	if (showStatus) {
 		if (status.isDead || status.isFailed) statusBorderClass = 'border-l-red-500';
@@ -13114,25 +13142,17 @@ export const EntityGridCard = ({ entity, config, context }) => {
 		else if (status.rank === 1) statusBorderClass = 'border-l-emerald-500';
 	}
 
-	// Metadata Logic
-	let footerLabel = entity.type;
-	if (context === 'geo') {
-		const role = getAttributeValue(attributes, ['role', 'occupation', 'class', 'monster type']);
-		footerLabel = role || entity.type;
-	} else {
-		footerLabel = entity.meta?.region || entity.type;
-	}
-
 	return (
 		<Link
 			to={`/wiki/${entity.type}/${entity.id}`}
 			className={clsx(
-				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200 h-20',
-				'hover:shadow-sm hover:bg-muted/10',
+				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200',
+				entity.footerLabel ? 'h-28' : 'h-24',
+				'hover:shadow-md hover:bg-muted/10',
 				showStatus ? `border-l-[3px] ${statusBorderClass}` : 'border-l'
 			)}>
-			{/* Left: Image/Icon Square */}
-			<div className='w-20 shrink-0 relative bg-muted/30 border-r border-border/50'>
+			{/* Left: Image */}
+			<div className='w-24 shrink-0 relative bg-muted/30 border-r border-border/50'>
 				{imageUrl ? (
 					<>
 						<img
@@ -13144,23 +13164,35 @@ export const EntityGridCard = ({ entity, config, context }) => {
 					</>
 				) : (
 					<div className='w-full h-full flex items-center justify-center bg-muted'>
-						{/* FIX: Removed 'mix-blend-multiply' to fix invisible icons in Dark Mode */}
 						<config.icon size={28} className='text-muted-foreground/70' strokeWidth={1.5} />
 					</div>
 				)}
 			</div>
 
 			{/* Right: Content */}
-			<div className='flex-1 px-3 py-2 flex flex-col min-w-0 justify-center'>
-				<div className='flex items-center justify-between gap-2'>
-					<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
-						{entity.name}
-					</h3>
+			<div
+				className={clsx(
+					'flex-1 px-3 py-2 flex flex-col min-w-0',
+					// FIX: If footer exists, space between. If not, center vertically.
+					entity.footerLabel ? 'justify-between' : 'justify-center'
+				)}>
+				<div>
+					<div className='flex items-center justify-between gap-2'>
+						<h3 className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
+							{entity.name}
+						</h3>
+					</div>
+
+					<div className='text-[11px] text-muted-foreground/80 leading-snug mt-1 line-clamp-3'>
+						{entity.description || <span className='opacity-50 italic'>No details available.</span>}
+					</div>
 				</div>
 
-				<div className='text-[11px] text-muted-foreground truncate opacity-80 mt-0.5'>
-					{description || <span className='opacity-50 italic'>{footerLabel}</span>}
-				</div>
+				{entity.footerLabel && (
+					<div className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-auto pt-2 truncate border-t border-border/40'>
+						{entity.footerLabel}
+					</div>
+				)}
 			</div>
 		</Link>
 	);
@@ -13168,110 +13200,326 @@ export const EntityGridCard = ({ entity, config, context }) => {
 
 --- END OF features\wiki\components\landing\EntityGridCard.jsx ---
 
+--- FILE: features\wiki\components\landing\EntityPosterCard.jsx ---
+import { Link } from 'react-router-dom';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import EntityBadge from '@/domain/entity/components/EntityBadge';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser'; // Added missing import
+
+export const EntityPosterCard = ({ entity, config }) => {
+	const attributes = parseAttributes(entity.attributes);
+
+	const imageUrl =
+		resolveImageUrl(attributes, ['portrait', 'image']) ||
+		resolveImageUrl(attributes, 'background') ||
+		resolveImageUrl(attributes, 'icon');
+
+	// Fallback Description Logic
+	const description =
+		entity.description ||
+		getAttributeValue(attributes, ['summary', 'narrative', 'background', 'bio']) ||
+		'No description available.';
+
+	// Smart Subtitle for Characters
+	const role = getAttributeValue(attributes, ['class', 'role', 'occupation', 'type']);
+	const level = getAttributeValue(attributes, ['level']);
+
+	let subtitle = role || entity.type;
+	if (level && role) {
+		subtitle = `Lvl ${level} ${role}`;
+	} else if (level) {
+		subtitle = `Level ${level}`;
+	}
+
+	// FIX: Changed outer wrapper from <Link> to <div> to prevent <a> nesting errors
+	return (
+		<div className='group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 h-[380px]'>
+			{/* FIX: Stretched Link - This makes the whole card clickable without nesting tags */}
+			<Link
+				to={`/wiki/${entity.type}/${entity.id}`}
+				className='absolute inset-0 z-0'
+				aria-label={`View ${entity.name}`}
+			/>
+
+			{/* 1. Image Area */}
+			{/* Added pointer-events-none so clicks fall through to the link, or you can leave it interactive if needed */}
+			<div className='relative h-[60%] bg-muted overflow-hidden'>
+				{imageUrl ? (
+					<>
+						<img
+							src={imageUrl}
+							alt={entity.name}
+							className='w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105'
+							loading='lazy'
+						/>
+						<div className='absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-40 transition-opacity duration-300' />
+					</>
+				) : (
+					<div className='w-full h-full flex flex-col items-center justify-center bg-muted/50 p-6 text-center'>
+						<config.icon size={48} className='text-muted-foreground/30 mb-2' strokeWidth={1} />
+						<span className='text-xs font-serif text-muted-foreground/50 uppercase tracking-widest'>No Image</span>
+					</div>
+				)}
+
+				{/* Floating Badge */}
+				<div className='absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+					<EntityBadge type={entity.type} size='sm' variant='solid' className='shadow-lg' />
+				</div>
+			</div>
+
+			{/* 2. Content Area */}
+			{/* Relative z-10 places text above the stretched link if you want text selection, 
+                but usually for a card link we want the click to work everywhere. 
+                Using pointer-events-none on the container allows clicks to pass to the Link below. */}
+			<div className='flex-1 p-4 flex flex-col bg-card relative z-10 border-t border-border/50 pointer-events-none'>
+				<div className='mb-2'>
+					<h3 className='font-serif font-bold text-lg text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-1'>
+						{entity.name}
+					</h3>
+					<p className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate mt-1'>
+						{subtitle}
+					</p>
+				</div>
+
+				<div className='text-xs text-muted-foreground/80 leading-relaxed line-clamp-4 overflow-hidden text-ellipsis'>
+					{/* SmartMarkdown can now safely render links because we are inside a div, not an <a> */}
+					<SmartMarkdown components={{ p: 'span' }}>{description}</SmartMarkdown>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\landing\EntityPosterCard.jsx ---
+
 --- FILE: features\wiki\components\landing\EntityTableGroup.jsx ---
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { ArrowRight, CornerDownRight } from 'lucide-react';
+import { ArrowRight, CornerDownRight, Activity } from 'lucide-react';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
 import { parseAttributes } from '@/shared/utils/imageUtils';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
-export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
+/**
+ * CONFIGURATION: Table Definitions
+ * Defines columns, widths, and RENDER logic in one place.
+ */
+const TABLE_DEFINITIONS = {
+	session: [
+		{
+			header: 'Session Title',
+			width: '45%',
+			render: (e, attr) => (
+				<Link
+					to={`/wiki/session/${e.id}`}
+					className='font-serif font-bold text-foreground hover:text-primary transition-colors text-sm'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Date',
+			width: '20%',
+			render: (e, attr) => <span className='text-xs text-muted-foreground'>{attr.session_date || '-'}</span>,
+		},
+	],
+	quest: [
+		{
+			header: 'Quest',
+			width: '40%',
+			render: (e) => (
+				<Link
+					to={`/wiki/quest/${e.id}`}
+					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Status',
+			width: '20%',
+			render: (e) => {
+				const s = getStatusInfo(e);
+				if (!s.display) return <span className='text-muted-foreground'>-</span>;
+				return (
+					<span
+						className={clsx(
+							'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+							s.isCompleted
+								? 'bg-emerald-500/10 text-emerald-600'
+								: s.isFailed
+								? 'bg-red-500/10 text-red-600'
+								: 'bg-amber-500/10 text-amber-600'
+						)}>
+						{s.display}
+					</span>
+				);
+			},
+		},
+		{
+			header: 'Priority',
+			width: '20%',
+			render: (e) => <span className='text-xs font-semibold text-muted-foreground'>{e.meta.priority || '-'}</span>,
+		},
+	],
+	location: [
+		{
+			header: 'Location',
+			width: '40%',
+			render: (e) => (
+				<Link
+					to={`/wiki/location/${e.id}`}
+					className='font-serif font-bold text-sm text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Type',
+			width: '30%',
+			hiddenOnMobile: true,
+			render: (e, attr) => <EntityBadge type='location' label={attr.type} variant='subtle' />,
+		},
+	],
+	npc: [
+		{
+			header: 'Name',
+			width: '40%',
+			render: (e) => (
+				<Link
+					to={`/wiki/npc/${e.id}`}
+					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Affinity',
+			width: '20%',
+			render: (e) => {
+				const s = getStatusInfo(e);
+				if (!s.display) return <span className='text-muted-foreground'>-</span>;
+				return (
+					<span
+						className={clsx(
+							'px-2 py-0.5 rounded text-[10px] font-bold uppercase',
+							s.rank === 1
+								? 'bg-emerald-500/10 text-emerald-600'
+								: s.rank === 3
+								? 'bg-red-500/10 text-red-600'
+								: 'bg-muted text-muted-foreground'
+						)}>
+						{s.display}
+					</span>
+				);
+			},
+		},
+		{
+			header: 'Role',
+			width: '40%',
+			hiddenOnMobile: true,
+			render: (e, attr) => (
+				<span className='text-sm text-muted-foreground'>
+					{getAttributeValue(attr, ['role', 'class', 'occupation']) || '-'}
+				</span>
+			),
+		},
+	],
+	// Fallback for others
+	default: [
+		{
+			header: 'Name',
+			width: '60%',
+			render: (e) => (
+				<Link to={`/wiki/${e.type}/${e.id}`} className='font-serif font-bold text-sm text-foreground'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Type',
+			width: '40%',
+			render: (e) => <EntityBadge type={e.type} variant='outline' size='sm' />,
+		},
+	],
+};
+
+const getColumns = (type) => TABLE_DEFINITIONS[type] || TABLE_DEFINITIONS[type === 'faction' ? 'npc' : 'default'];
+
+export const EntityTableGroup = ({ title, description, parentTitle, link, items }) => {
 	if (!items || items.length === 0) return null;
 
+	const type = items[0].type;
+	const columns = getColumns(type);
+
 	return (
-		<div className='mb-8 animate-in fade-in duration-500'>
-			{/* Group Header */}
-			<div className='flex items-center gap-2 border-b border-border/60 pb-2 mb-3'>
-				{parentTitle && (
-					// FIX: Increased opacity from /40 to /80 for visibility
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
-						{parentTitle}
-						{/* FIX: Removed opacity-50 to make arrow visible */}
-						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
+		<div className='mb-10 animate-in fade-in duration-500'>
+			{/* Header */}
+			<div className='mb-3'>
+				<div className='flex items-center gap-2 border-b border-border/60 pb-2'>
+					{parentTitle && (
+						<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
+							{parentTitle}
+							<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
+						</div>
+					)}
+					<h2 className='text-lg font-bold font-serif text-foreground flex items-center gap-2'>
+						{title}
+						{link && (
+							<Link to={link} className='text-muted-foreground/50 hover:text-primary transition-colors'>
+								<ArrowRight size={14} />
+							</Link>
+						)}
+					</h2>
+					<span className='text-[10px] font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground ml-auto'>
+						{items.length}
+					</span>
+				</div>
+				{description && (
+					<div className='mt-2 text-sm text-muted-foreground/80 leading-relaxed pl-2 border-l-2 border-primary/20'>
+						<SmartMarkdown>{description.substring(0, 300) + '...'}</SmartMarkdown>
 					</div>
 				)}
-				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
-					{title}
-					{link && (
-						<Link
-							to={link}
-							className='text-muted-foreground/50 hover:text-primary transition-colors'
-							title={`View ${title}`}>
-							<ArrowRight size={12} />
-						</Link>
-					)}
-				</h2>
-				<span className='text-[9px] font-bold bg-muted px-1.5 py-px rounded text-muted-foreground/60 ml-auto'>
-					{items.length}
-				</span>
 			</div>
 
-			{/* Table Container */}
-			<div className='bg-background border border-border rounded-lg overflow-hidden shadow-sm'>
-				<table className='w-full text-left text-sm'>
-					<thead className='bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider border-b border-border'>
+			{/* The Table */}
+			<div className='border border-border rounded-lg overflow-hidden shadow-sm'>
+				<table className='w-full text-left border-collapse'>
+					<thead className='bg-muted/50 text-[10px] uppercase font-bold text-muted-foreground tracking-wider'>
 						<tr>
-							<th className='px-4 py-2 w-[40%]'>Name</th>
-							<th className='px-4 py-2 w-[20%]'>Status</th>
-							<th className='px-4 py-2 hidden md:table-cell'>Details</th>
+							{columns.map((col, i) => (
+								<th
+									key={i}
+									className={clsx(
+										'px-4 py-2.5 font-semibold',
+										col.hiddenOnMobile && 'hidden md:table-cell',
+										col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
+									)}
+									style={{ width: col.width }}>
+									{col.header}
+								</th>
+							))}
 						</tr>
 					</thead>
-					<tbody className='divide-y divide-border/50'>
+					<tbody className='divide-y divide-border/40'>
 						{items.map((entity) => {
-							const status = getStatusInfo(entity);
 							const attributes = parseAttributes(entity.attributes);
-							const role = getAttributeValue(attributes, ['role', 'occupation', 'class', 'type']) || entity.type;
-
-							// Check if row needs highlighting
-							const isSpecialStatus = status.isDead || status.isFailed || status.rank === 1 || status.rank === 3;
-
 							return (
 								<tr key={entity.id} className='group hover:bg-muted/30 transition-colors'>
-									<td className='px-4 py-2.5'>
-										<Link
-											to={`/wiki/${entity.type}/${entity.id}`}
-											className='flex items-center gap-3 font-serif font-bold text-foreground group-hover:text-primary transition-colors'>
-											{/* Small colored indicator bar */}
-											{isSpecialStatus && (
-												<div
-													className={clsx(
-														'w-1 h-4 rounded-full shrink-0',
-														status.isDead || status.isFailed
-															? 'bg-red-500/100'
-															: status.rank === 1
-															? 'bg-emerald-500/100'
-															: status.rank === 3
-															? 'bg-red-600'
-															: 'bg-gray-300'
-													)}
-												/>
-											)}
-											{entity.name}
-										</Link>
-									</td>
-									<td className='px-4 py-2.5'>
-										{status.display && (
-											<span
-												className={clsx(
-													'inline-flex items-center text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border',
-													status.isDead || status.isFailed
-														? 'bg-red-500/10 text-red-700 border-red-100'
-														: 'bg-muted text-muted-foreground border-border'
-												)}>
-												{status.display}
-											</span>
-										)}
-									</td>
-									<td className='px-4 py-2.5 hidden md:table-cell'>
-										<div className='flex items-center gap-2'>
-											<EntityBadge type={entity.type} size='sm' variant='subtle' />
-											<span className='text-xs text-muted-foreground truncate max-w-[200px]'>
-												{role !== entity.type ? role : ''}
-											</span>
-										</div>
-									</td>
+									{columns.map((col, i) => (
+										<td
+											key={i}
+											className={clsx(
+												'px-4 py-2.5',
+												col.hiddenOnMobile && 'hidden md:table-cell',
+												col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
+											)}>
+											{col.render(entity, attributes)}
+										</td>
+									))}
 								</tr>
 							);
 						})}
@@ -13285,48 +13533,179 @@ export const EntityTableGroup = ({ title, parentTitle, link, items }) => {
 --- END OF features\wiki\components\landing\EntityTableGroup.jsx ---
 
 --- FILE: features\wiki\components\landing\Swimlane.jsx ---
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CornerDownRight } from 'lucide-react';
+import { ArrowRight, CornerDownRight, Users, MapPin, Scroll, Swords, Hash, ChevronDown, ChevronUp } from 'lucide-react';
 import { EntityGridCard } from './EntityGridCard';
+import { EntityPosterCard } from './EntityPosterCard';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { SectionDivider } from '@/shared/components/ui/SectionDivider';
+import { clsx } from 'clsx';
 
-export const Swimlane = ({ title, parentTitle, link, items, config, context }) => {
-	if (!items || items.length === 0) return null;
+// --- SUB-COMPONENT: HIGHLIGHT BADGE ---
+const HighlightBadge = ({ icon: Icon, count, label }) => {
+	if (!count) return null;
+	return (
+		<div className='flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-muted-foreground'>
+			<Icon size={12} className='text-primary/70' />
+			<span>
+				{count} {label}
+			</span>
+		</div>
+	);
+};
+
+// --- SUB-COMPONENT: ARC HERO ---
+const ArcHero = ({ title, description, type, order, stats, isSessionGroup }) => {
+	const [isExpanded, setIsExpanded] = useState(false);
+	const formattedOrder = order && order < 999 ? `Arc ${String(order).padStart(2, '0')}` : null;
+
+	// LOGIC:
+	// 1. If it's a Session Group, NEVER truncate (always show full narrative context).
+	// 2. If it's NOT a Session Group (e.g. Locations folder), check if > 300 chars.
+	const shouldTruncate = !isSessionGroup && description && description.length > 300;
 
 	return (
-		<div className='mb-8 last:mb-0 animate-in fade-in slide-in-from-bottom-3 duration-500'>
-			{/* Header: Compact Visual Hierarchy */}
-			<div className='flex items-center gap-2 border-b border-border/60 pb-1.5 mb-3 group/header'>
-				{parentTitle && (
-					// FIX: Increased visibility (was /40)
-					<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
-						{parentTitle}
-						<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
-					</div>
+		<div className='flex flex-col gap-3 mb-8 items-center'>
+			{/* 1. Arc Number / Arc Type */}
+			<div className='flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground/60'>
+				{formattedOrder && (
+					<span className='flex items-center gap-1'>
+						<Hash size={10} />
+						{formattedOrder}
+					</span>
 				)}
-
-				<h2 className='text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-wide'>
-					{title}
-					{link && (
-						<Link
-							to={link}
-							className='text-muted-foreground/50 hover:text-primary transition-colors'
-							title={`View ${title}`}>
-							<ArrowRight size={12} />
-						</Link>
-					)}
-				</h2>
-
-				<span className='text-[9px] font-bold bg-muted px-1.5 py-px rounded text-muted-foreground/60 ml-auto'>
-					{items.length}
-				</span>
+				{formattedOrder && type && <span>•</span>}
+				{type && <span className='text-primary/80'>{type}</span>}
 			</div>
 
-			{/* Grid - Reverted to Standard Responsive Grid */}
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3'>
-				{items.map((entity) => (
-					<EntityGridCard key={entity.id} entity={entity} config={config} context={context} />
-				))}
+			{/* 2. Arc Name */}
+			<h2 className='text-3xl md:text-4xl font-serif font-bold text-foreground text-center max-w-4xl'>{title}</h2>
+
+			{/* 3. Arc Description */}
+			<div className='max-w-3xl text-center mx-auto'>
+				<div
+					className={clsx(
+						'text-sm text-muted-foreground leading-relaxed',
+						// Only apply line-clamp if we are allowed to truncate and haven't expanded yet
+						shouldTruncate && !isExpanded ? 'line-clamp-3 overflow-hidden' : ''
+					)}>
+					<SmartMarkdown components={{ p: 'span' }}>{description || 'No description available.'}</SmartMarkdown>
+				</div>
+
+				{/* Toggle Button (Only shows for non-sessions with long text) */}
+				{shouldTruncate && (
+					<button
+						onClick={() => setIsExpanded(!isExpanded)}
+						className='inline-flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-widest text-primary/80 hover:text-primary transition-colors'>
+						{isExpanded ? (
+							<>
+								Read Less <ChevronUp size={12} />
+							</>
+						) : (
+							<>
+								Read More <ChevronDown size={12} />
+							</>
+						)}
+					</button>
+				)}
 			</div>
+
+			{/* 4. Arc Highlights */}
+			{stats && (stats.npcs > 0 || stats.locations > 0 || stats.quests > 0 || stats.encounters > 0) && (
+				<div className='flex flex-wrap justify-center gap-4 mt-2'>
+					<HighlightBadge icon={Users} count={stats.npcs} label='NPCs' />
+					<HighlightBadge icon={MapPin} count={stats.locations} label='Locations' />
+					<HighlightBadge icon={Scroll} count={stats.quests} label='Quests' />
+					<HighlightBadge icon={Swords} count={stats.encounters} label='Encounters' />
+				</div>
+			)}
+		</div>
+	);
+};
+
+// --- SUB-COMPONENT: STANDARD HEADER ---
+const StandardHeader = ({ title, parentTitle, link, count }) => (
+	<div className='mb-4'>
+		<div className='flex items-center gap-2 border-b border-border/60 pb-2'>
+			{parentTitle && (
+				<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest'>
+					{parentTitle}
+					<CornerDownRight size={10} className='translate-y-px text-muted-foreground' />
+				</div>
+			)}
+
+			<h2 className='text-lg font-bold font-serif text-foreground flex items-center gap-2'>
+				{title || 'General'}
+				{link && (
+					<Link
+						to={link}
+						className='text-muted-foreground/50 hover:text-primary transition-colors'
+						title={`View ${title}`}>
+						<ArrowRight size={14} />
+					</Link>
+				)}
+			</h2>
+
+			<span className='text-[10px] font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground ml-auto'>
+				{count}
+			</span>
+		</div>
+	</div>
+);
+
+// --- MAIN COMPONENT ---
+export const Swimlane = ({ title, description, items, config, context, type, stats, order, parentTitle, link }) => {
+	if (!items || items.length === 0) return null;
+
+	const visualTypes = ['character'];
+	const usePoster = items.length > 0 && visualTypes.includes(items[0].type);
+
+	const isArc = !!description || !!type;
+
+	// Determine if this is a Session Group (e.g. Narrative Arc) vs a Category Group (e.g. Locations)
+	const isSessionGroup = items[0].type === 'session';
+
+	return (
+		<div className='animate-in fade-in slide-in-from-bottom-3 duration-500'>
+			{/* HEADER SECTION */}
+			{isArc ? (
+				<ArcHero
+					title={title}
+					description={description} // Pass full description
+					type={type}
+					order={order}
+					stats={stats}
+					isSessionGroup={isSessionGroup} // Pass flag to control truncation
+				/>
+			) : (
+				<StandardHeader title={title} parentTitle={parentTitle} link={link} count={items.length} />
+			)}
+
+			{/* CONTENT SECTION */}
+			<div className='max-w-7xl mx-auto pb-4'>
+				<div className='flex flex-wrap justify-center gap-4'>
+					{items.map((entity) => (
+						<div
+							key={entity.id}
+							className={clsx(
+								'w-full',
+								// Adjust width: Posters are narrower but taller, Grid cards are wider
+								usePoster ? 'sm:w-[240px]' : 'sm:w-[320px]',
+								'grow-0 shrink-0'
+							)}>
+							{usePoster ? (
+								<EntityPosterCard entity={entity} config={config} />
+							) : (
+								<EntityGridCard entity={entity} config={config} context={context} />
+							)}
+						</div>
+					))}
+				</div>
+			</div>
+
+			{/* SEPARATOR */}
+			{isArc && <SectionDivider />}
 		</div>
 	);
 };
@@ -13850,14 +14229,51 @@ export const GROUPING_CONFIG = {
 			return a.name.localeCompare(b.name);
 		},
 	},
-	// FIX: Added Session grouping configuration
 	session: {
-		groupBy: (item) => item.meta.campaignArc,
+		// Group by Arc ID
+		groupBy: (item, context) => {
+			if (context?.sessionArcMap) {
+				const arcId = context.sessionArcMap.get(item.id);
+				if (arcId) return arcId;
+			}
+			return 'ungrouped';
+		},
+
+		// Map View Data to UI Props
+		getGroupMeta: (arcId, context) => {
+			if (arcId === 'ungrouped') return { title: 'Uncharted / Side Adventures', order: 9999 };
+
+			const arc = context?.arcs?.find((a) => a.id === arcId);
+			if (!arc) return { title: 'Unknown Arc', order: 9998 };
+
+			return {
+				title: arc.title,
+				description: arc.description,
+				order: arc.order,
+				type: arc.arc_type, // Maps SQL 'arc_type'
+				stats: {
+					npcs: arc.npc_count,
+					locations: arc.location_count,
+					quests: arc.quest_count,
+					encounters: arc.encounter_count,
+				},
+			};
+		},
+
+		sortGroups: (ids, context) => {
+			return ids.sort((a, b) => {
+				if (a === 'ungrouped') return 1;
+				if (b === 'ungrouped') return -1;
+				const arcA = context?.arcs?.find((x) => x.id === a);
+				const arcB = context?.arcs?.find((x) => x.id === b);
+				return (arcA?.order || 999) - (arcB?.order || 999);
+			});
+		},
+
 		sortItems: (a, b) => {
-			// Extract numbers from titles (e.g., "01 - Intro") to sort numerically
-			const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
-			const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
-			if (numA !== numB) return numA - numB;
+			const numA = Number(a.attributes?.session_number || 0);
+			const numB = Number(b.attributes?.session_number || 0);
+			if (numA !== 0 || numB !== 0) return numA - numB;
 			return a.name.localeCompare(b.name);
 		},
 	},
@@ -13908,17 +14324,14 @@ export const VIEW_STRATEGIES = {
 	session: { mode: 'category' },
 };
 
-// Recursive Flattening with Deduplication
+// Recursive Flattening
 const flattenGeoTree = (nodes, targetType, parentName = 'Uncharted', visitedIds) => {
 	let lanes = [];
 	const directItems = [];
 
 	nodes.forEach((node) => {
-		// 1. Handle "Children" (Traverse deeper first)
 		if (node.children && node.children.length > 0) {
 			const childLanes = flattenGeoTree(node.children, targetType, node.name, visitedIds);
-
-			// Check for direct items inside this folder
 			const myContent = childLanes.find((l) => l.title === null);
 
 			if (myContent && myContent.items.length > 0) {
@@ -13928,12 +14341,12 @@ const flattenGeoTree = (nodes, targetType, parentName = 'Uncharted', visitedIds)
 					parentTitle: parentName,
 					link: `/wiki/${node.type}/${node.id}`,
 					items: myContent.items,
+					description: node.fullDescription || node.description,
 				});
 			}
 			lanes = [...lanes, ...childLanes.filter((l) => l.title !== null)];
 		}
 
-		// 2. Handle "Self" (Is this node a target item?)
 		if (node.type === targetType) {
 			if (!visitedIds.has(node.id)) {
 				visitedIds.add(node.id);
@@ -13953,33 +14366,35 @@ export const getSwimlanes = (groups, normalizedType) => {
 
 	const strategy = VIEW_STRATEGIES[normalizedType] || VIEW_STRATEGIES.location;
 
-	// STRATEGY 1: GEOGRAPHICAL (Tree Unrolling)
+	// STRATEGY 1: GEOGRAPHICAL
 	if (strategy.mode === 'geo' && groups[0].isTree) {
 		const rootItems = groups[0].items;
 		const visitedIds = new Set();
-
 		const rawLanes = flattenGeoTree(rootItems, normalizedType, null, visitedIds);
-
 		const rootLane = rawLanes.find((l) => l.title === null);
 		const otherLanes = rawLanes.filter((l) => l.title !== null);
 
 		if (rootLane) {
-			otherLanes.push({ ...rootLane, title: 'Uncharted / General', id: 'root-ungrouped' });
+			otherLanes.push({ ...rootLane, title: 'Uncharted entries', id: 'root-ungrouped' });
 		}
 		return otherLanes;
 	}
 
-	// STRATEGY 2: CATEGORICAL (Flat Groups)
+	// STRATEGY 2: CATEGORICAL
 	if (strategy.mode === 'category') {
 		return groups.map((g) => ({
 			id: g.id,
 			title: g.title || 'Other',
 			link: null,
 			items: g.items,
+			description: g.description,
+			type: g.type,
+			stats: g.stats,
+			order: g.order,
 		}));
 	}
 
-	// STRATEGY 3: FLAT (One big group)
+	// STRATEGY 3: FLAT
 	if (strategy.mode === 'flat') {
 		const allItems = groups.flatMap((g) => g.items).sort((a, b) => a.name.localeCompare(b.name));
 		return [
@@ -14006,9 +14421,6 @@ import { useMemo } from 'react';
 import { isSession } from '@/domain/entity/utils/entityUtils';
 import { transformEvents } from '@/features/wiki/utils/eventMapper';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
-// Removed unused resolveImageUrl import if not used elsewhere,
-// or keep if used for other things like parsing attributes (which it is often exported with)
-import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 export const useEntityContent = (entity, attributes, sections) => {
 	return useMemo(() => {
@@ -14086,22 +14498,47 @@ export const useEntityContent = (entity, attributes, sections) => {
 --- FILE: features\wiki\hooks\useEntityFetching.js ---
 import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '@/features/campaign/CampaignContext';
-import { getEntities } from '@/domain/entity/api/entityService';
+import { getEntities, getCampaignArcs } from '@/domain/entity/api/entityService';
+import { supabase } from '@/shared/api/supabaseClient'; // Import Supabase directly
 import { useMemo } from 'react';
 
 export function useEntityFetching(type) {
 	const { campaignId } = useCampaign();
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
-	// 1. Primary Query (The requested type)
+	// 1. Primary Query
 	const mainQuery = useQuery({
 		queryKey: ['entities', campaignId, normalizedType],
-		queryFn: () => getEntities(campaignId, normalizedType),
+		queryFn: async () => {
+			// FIX: If fetching sessions, query the sessions table directly
+			// to ensure we get the 'narrative' (mapped to description)
+			if (normalizedType === 'session') {
+				const { data, error } = await supabase
+					.from('sessions')
+					.select('id, title, narrative, attributes, created_at')
+					.eq('campaign_id', campaignId);
+
+				if (error) throw error;
+
+				// Normalize to Entity shape
+				return data.map((s) => ({
+					id: s.id,
+					type: 'session',
+					name: s.title,
+					description: s.narrative, // Map narrative to description
+					attributes: s.attributes,
+					created_at: s.created_at,
+				}));
+			}
+
+			// Otherwise use the standard service
+			return getEntities(campaignId, normalizedType);
+		},
 		enabled: !!campaignId && !!normalizedType,
 		staleTime: 1000 * 60 * 5,
 	});
 
-	// 2. Secondary Query (Locations - only if needed for tree building)
+	// 2. Locations (for hierarchy)
 	const needsLocations = normalizedType === 'npc' || normalizedType === 'encounter';
 	const locationQuery = useQuery({
 		queryKey: ['entities', campaignId, 'location'],
@@ -14110,25 +14547,44 @@ export function useEntityFetching(type) {
 		staleTime: 1000 * 60 * 5,
 	});
 
-	// 3. Merge Results
-	const mergedData = useMemo(() => {
-		if (mainQuery.isLoading || (needsLocations && locationQuery.isLoading)) return [];
+	// 3. Narrative Arcs
+	const needsArcs = normalizedType === 'session';
+	const arcQuery = useQuery({
+		queryKey: ['entities', campaignId, 'narrative_arc_context'],
+		queryFn: () => getCampaignArcs(campaignId),
+		enabled: !!campaignId && needsArcs,
+		staleTime: 1000 * 60 * 5,
+	});
+
+	// 4. Merge
+	const { entities, context } = useMemo(() => {
+		if (mainQuery.isLoading) return { entities: [], context: {} };
 
 		let data = mainQuery.data || [];
 
 		if (needsLocations && locationQuery.data) {
-			// Deduplicate: Don't add locations if they are already in the main list (e.g. if type was 'location')
 			const existingIds = new Set(data.map((e) => e.id));
 			const newLocations = locationQuery.data.filter((l) => !existingIds.has(l.id));
 			data = [...data, ...newLocations];
 		}
 
-		return data;
-	}, [mainQuery.data, locationQuery.data, needsLocations, mainQuery.isLoading, locationQuery.isLoading]);
+		const context = {};
+		if (needsArcs && arcQuery.data) {
+			context.arcs = arcQuery.data.arcs;
+			const sessionArcMap = new Map();
+			(arcQuery.data.rels || []).forEach((r) => {
+				sessionArcMap.set(r.from_entity_id, r.to_entity_id);
+			});
+			context.sessionArcMap = sessionArcMap;
+		}
+
+		return { entities: data, context };
+	}, [mainQuery.data, locationQuery.data, arcQuery.data, needsLocations, needsArcs, mainQuery.isLoading]);
 
 	return {
-		entities: mergedData,
-		isLoading: mainQuery.isLoading || (needsLocations && locationQuery.isLoading),
+		entities,
+		context,
+		isLoading: mainQuery.isLoading || (needsLocations && locationQuery.isLoading) || (needsArcs && arcQuery.isLoading),
 		error: mainQuery.error || locationQuery.error,
 	};
 }
@@ -14140,44 +14596,29 @@ import { useMemo } from 'react';
 import { GROUPING_CONFIG } from '@/features/wiki/config/groupingConfig';
 import { transformEntityToViewModel } from '@/features/wiki/utils/wikiUtils';
 
-// --- TREE BUILDER HELPER ---
+// Helper to build hierarchy trees (unchanged)
 const buildTree = (items, sortFn) => {
 	const idMap = new Map();
 	const roots = [];
-
-	// 1. Initialize map
-	items.forEach((item) => {
-		idMap.set(item.id, { ...item, children: [] });
-	});
-
-	// 2. Build Hierarchy
+	items.forEach((item) => idMap.set(item.id, { ...item, children: [] }));
 	items.forEach((item) => {
 		const node = idMap.get(item.id);
 		const parentId = item.meta.parentId;
-
 		if (parentId && idMap.has(parentId)) {
-			const parent = idMap.get(parentId);
-			parent.children.push(node);
+			idMap.get(parentId).children.push(node);
 		} else {
 			roots.push(node);
 		}
 	});
 
-	// 3. Prune Empty Folders (Recursive)
 	const prune = (nodes) => {
-		// Generalize: If the list contains ANYTHING that isn't a location (e.g. NPC, Encounter),
-		// then we assume 'locations' are acting as folders and should be pruned if empty.
-		// If the list is ONLY locations, we are in the Location Wiki, so we keep everything.
 		const hasMixedTypes = items.some((i) => i.type !== 'location');
-
-		if (!hasMixedTypes) return nodes; // Don't prune if we are just listing locations
+		if (!hasMixedTypes) return nodes;
 
 		return nodes.filter((node) => {
 			if (node.children.length > 0) {
 				node.children = prune(node.children);
 			}
-
-			// If it's a location (folder) and has no children after pruning, remove it
 			if (node.type === 'location' && node.children.length === 0) {
 				return false;
 			}
@@ -14187,7 +14628,6 @@ const buildTree = (items, sortFn) => {
 
 	let finalRoots = prune(roots);
 
-	// 4. Recursive Sort
 	const sortRecursive = (nodes) => {
 		if (sortFn) nodes.sort(sortFn);
 		nodes.forEach((node) => {
@@ -14201,23 +14641,18 @@ const buildTree = (items, sortFn) => {
 	return finalRoots;
 };
 
-// ... (rest of the file remains unchanged) ...
-export function useEntityGrouping(entities, type, searchQuery = '') {
-	// ... existing implementation ...
+export function useEntityGrouping(entities, type, searchQuery = '', context = {}) {
 	return useMemo(() => {
 		if (!entities || entities.length === 0) return [];
 
-		// 1. Filter by search
 		const filtered = searchQuery
 			? entities.filter((e) => e.name.toLowerCase().includes(searchQuery.toLowerCase()))
 			: entities;
 
-		// 2. Transform to view model
 		const items = filtered.map((entity) => transformEntityToViewModel(entity, type));
-
 		const strategy = GROUPING_CONFIG[type];
 
-		// --- STRATEGY 1: TREE (Nested) ---
+		// TREE STRATEGY
 		if (strategy?.mode === 'tree') {
 			const treeRoots = buildTree(items, strategy.sortItems);
 			return [
@@ -14230,19 +14665,29 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 			];
 		}
 
-		// --- STRATEGY 2: GROUPED (Flat Categories) ---
+		// CATEGORY STRATEGY
 		if (strategy && strategy.groupBy) {
 			const grouped = {};
+			const metadataMap = new Map(); // Store metadata for the group keys
+
 			items.forEach((item) => {
-				const groupKey = strategy.groupBy(item) || 'Other';
-				if (!grouped[groupKey]) grouped[groupKey] = [];
+				const groupKey = strategy.groupBy(item, context) || 'General';
+
+				if (!grouped[groupKey]) {
+					grouped[groupKey] = [];
+					// If the strategy provides a way to get metadata for this key, fetch it
+					if (strategy.getGroupMeta) {
+						metadataMap.set(groupKey, strategy.getGroupMeta(groupKey, context));
+					}
+				}
 				grouped[groupKey].push(item);
 			});
 
 			let groupKeys = Object.keys(grouped);
 
+			// Handle Sorting Groups
 			if (typeof strategy.sortGroups === 'function') {
-				groupKeys.sort(strategy.sortGroups);
+				groupKeys = strategy.sortGroups(groupKeys, context);
 			} else if (Array.isArray(strategy.sortGroups)) {
 				groupKeys.sort((a, b) => {
 					const idxA = strategy.sortGroups.indexOf(a);
@@ -14251,26 +14696,33 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 					const valB = idxB === -1 ? 999 : idxB;
 					return valA - valB || a.localeCompare(b);
 				});
-			} else if (strategy.sortGroups === 'alpha') {
+			} else {
 				groupKeys.sort();
 			}
 
 			return groupKeys.map((key) => {
 				const groupItems = grouped[key];
+				const meta = metadataMap.get(key) || {};
+
 				if (typeof strategy.sortItems === 'function') {
 					groupItems.sort(strategy.sortItems);
 				} else {
 					groupItems.sort((a, b) => a.name.localeCompare(b.name));
 				}
+
 				return {
 					id: key,
-					title: key,
+					title: meta.title || key,
+					description: meta.description || null,
+					order: meta.order || 999,
+					type: meta.type || null,
+					stats: meta.stats || null,
 					items: groupItems,
 				};
 			});
 		}
 
-		// --- STRATEGY 3: DEFAULT (Flat A-Z) ---
+		// FLAT STRATEGY
 		return [
 			{
 				id: 'all',
@@ -14278,7 +14730,7 @@ export function useEntityGrouping(entities, type, searchQuery = '') {
 				items: items.sort((a, b) => a.name.localeCompare(b.name)),
 			},
 		];
-	}, [entities, type, searchQuery]);
+	}, [entities, type, searchQuery, context]);
 }
 
 --- END OF features\wiki\hooks\useEntityGrouping.js ---
@@ -14617,13 +15069,16 @@ export default function WikiLandingPage() {
 	const { type } = useParams();
 	const normalizedType = type === 'sessions' ? 'session' : type;
 
-	const { entities, isLoading } = useEntityFetching(normalizedType);
+	// 1. Fetch Entities & Context (Arcs)
+	const { entities, context, isLoading } = useEntityFetching(normalizedType);
 	const [viewMode, setViewMode] = useState('grid');
 	const [search, setSearch] = useState('');
 
 	const config = getEntityConfig(normalizedType);
 	const mode = getStrategyMode(normalizedType);
-	const groups = useEntityGrouping(entities, normalizedType, search);
+
+	// 2. Grouping
+	const groups = useEntityGrouping(entities, normalizedType, search, context);
 	const swimlanes = useMemo(() => getSwimlanes(groups, normalizedType), [groups, normalizedType]);
 
 	if (isLoading) return <LoadingSpinner text={`Loading ${config.labelPlural}...`} />;
@@ -14631,49 +15086,43 @@ export default function WikiLandingPage() {
 	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
 
 	return (
-		// OPTIMIZATION: Removed fixed p-12, used responsive padding
 		<div className='p-4 md:p-8 lg:p-12 max-w-[1920px] mx-auto min-h-full pb-safe'>
 			{/* Header */}
-			<div className='flex flex-col gap-6 mb-6 border-b border-border pb-6'>
-				{/* Top Row: Title */}
-				<div className='flex items-center gap-4'>
-					<div
-						className={clsx(
-							'p-3 rounded-xl border shadow-sm bg-background hidden md:block',
-							config.tailwind.border,
-							config.tailwind.text
-						)}>
-						<config.icon size={32} strokeWidth={1.5} />
+			<div className='flex flex-col gap-6 mb-8 border-b border-border pb-6'>
+				<div className='flex items-center justify-between'>
+					<div className='flex items-center gap-4'>
+						<div
+							className={clsx(
+								'p-3 rounded-xl border shadow-sm bg-background hidden md:block',
+								config.tailwind.border,
+								config.tailwind.text
+							)}>
+							<config.icon size={32} strokeWidth={1.5} />
+						</div>
+						<div>
+							<h1 className='text-3xl font-serif font-bold text-foreground capitalize leading-none mb-1'>
+								{config.labelPlural}
+							</h1>
+							<p className='text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
+						</div>
 					</div>
-					<div>
-						<h1 className='text-2xl md:text-3xl font-serif font-bold text-foreground capitalize leading-none mb-1'>
-							{config.labelPlural}
-						</h1>
-						<p className='text-xs md:text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
-					</div>
-				</div>
-
-				{/* Controls Area - Stacks on mobile, Row on desktop */}
-				<div className='flex flex-col sm:flex-row gap-3 w-full'>
-					{/* Search Bar - Full width on mobile */}
-					<div className='relative flex-1 order-2 sm:order-1'>
+					{/* Search Bar */}
+					<div className='relative max-w-2xl ml-auto mr-2'>
 						<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
 						<input
 							type='text'
 							placeholder={`Search ${config.labelPlural}...`}
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							// text-base on mobile prevents zoom
-							className='w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
+							className='w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
 						/>
 					</div>
-
-					{/* View Toggle - Beside search on desktop, Top on mobile */}
-					<div className='flex bg-muted p-1 rounded-lg border border-border/50 shrink-0 self-start order-1 sm:order-2'>
+					{/* View Toggle */}
+					<div className='hidden md:flex bg-muted p-1 rounded-lg border border-border/50'>
 						<button
 							onClick={() => setViewMode('grid')}
 							className={clsx(
-								'p-2 sm:p-1.5 rounded-md transition-all flex-1 sm:flex-none flex justify-center',
+								'p-1.5 rounded-md transition-all',
 								viewMode === 'grid'
 									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
 									: 'text-muted-foreground hover:text-foreground'
@@ -14684,7 +15133,7 @@ export default function WikiLandingPage() {
 						<button
 							onClick={() => setViewMode('table')}
 							className={clsx(
-								'p-2 sm:p-1.5 rounded-md transition-all flex-1 sm:flex-none flex justify-center',
+								'p-1.5 rounded-md transition-all',
 								viewMode === 'table'
 									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
 									: 'text-muted-foreground hover:text-foreground'
@@ -14703,31 +15152,29 @@ export default function WikiLandingPage() {
 						<Swimlane
 							key={lane.id}
 							title={lane.title}
+							description={lane.description}
 							parentTitle={lane.parentTitle}
 							link={lane.link}
 							items={lane.items}
 							config={config}
 							context={mode}
+							type={lane.type}
+							stats={lane.stats}
+							order={lane.order} // <--- Added this
 						/>
 					))
 				) : (
-					<div className='max-w-5xl mx-auto'>
+					<div className='max-w-6xl mx-auto'>
 						{swimlanes.map((lane) => (
 							<EntityTableGroup
 								key={lane.id}
 								title={lane.title}
+								description={lane.description}
 								parentTitle={lane.parentTitle}
 								link={lane.link}
 								items={lane.items}
 							/>
 						))}
-					</div>
-				)}
-
-				{totalCount === 0 && (
-					<div className='text-center py-20 opacity-40 flex flex-col items-center gap-4 border-2 border-dashed border-border rounded-xl mt-4'>
-						<Folder size={48} strokeWidth={1} />
-						<p className='text-lg font-serif text-muted-foreground'>No entries found.</p>
 					</div>
 				)}
 			</div>
@@ -15171,36 +15618,87 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
 import { getParentId } from '@/domain/entity/utils/entityUtils';
 
+// Helper: Strip Markdown
+const stripMarkdown = (text) => {
+	if (!text) return '';
+	return text
+		.replace(/^#+\s+/gm, '')
+		.replace(/(\*\*|__)(.*?)\1/g, '$2')
+		.replace(/(\*|_)(.*?)\1/g, '$2')
+		.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+		.replace(/`{1,3}[^`]+`{1,3}/g, '')
+		.replace(/\n/g, ' ')
+		.trim();
+};
+
 export function transformEntityToViewModel(entity, type) {
-	// Context type (e.g. 'npc' or 'location')
 	const contextType = type === 'sessions' ? 'session' : type;
-
-	// Actual entity type
 	const actualType = entity.type || contextType;
+	const attributes = entity.attributes || {};
 
-	// Extract raw values
-	const statusRaw = getAttributeValue(entity.attributes, ['status', 'Quest Status']) || entity.status || 'unknown';
-	const affinityRaw = getAttributeValue(entity.attributes, ['affinity', 'disposition']);
-
+	// 1. Resolve Status
+	const statusRaw = getAttributeValue(attributes, ['status', 'Quest Status']) || entity.status || 'unknown';
+	const affinityRaw = getAttributeValue(attributes, ['affinity', 'disposition']);
 	const status = statusRaw.toLowerCase();
 	const affinity = affinityRaw ? affinityRaw.toLowerCase() : 'unknown';
+	const affinityRank = getAffinityRank(affinity !== 'unknown' ? affinity : status);
 
-	// Determine effective sorting rank
-	const effectiveSortString = affinity !== 'unknown' ? affinity : status;
-	const affinityRank = getAffinityRank(effectiveSortString);
-
-	// Extract Region & Quest Type
-	const region = getAttributeValue(entity.attributes, ['region', 'parent location']) || 'Uncharted';
-	const questType = getAttributeValue(entity.attributes, ['Quest Type', 'Type']) || 'Side Quest';
-
-	// Extract Priority for Quests
-	const priority = getAttributeValue(entity.attributes, ['Priority', 'priority']) || null;
-
-	// FIX: Extract Campaign Arc for Sessions
-	const campaignArc = getAttributeValue(entity.attributes, ['campaign_arc', 'arc', 'Arc']) || 'General Chronicles';
-
-	// Extract Parent ID using the smarter logic
+	// 2. Resolve Meta Fields
+	const questType = getAttributeValue(attributes, ['Quest Type', 'Type']) || 'Side Quest';
+	const region = getAttributeValue(attributes, ['region', 'parent location']) || null;
+	const priority = getAttributeValue(attributes, ['Priority', 'priority']) || null;
 	const parentId = getParentId(entity);
+	const campaignArc = getAttributeValue(attributes, ['campaign_arc', 'arc']);
+
+	// 3. Resolve Description
+	// We need two versions:
+	// - One for the Card (short, plain text)
+	// - One for the Header (long, markdown preserved)
+	let rawDescription = entity.description;
+
+	if (actualType === 'session') {
+		rawDescription = entity.description || getAttributeValue(attributes, ['narrative', 'summary']);
+	} else {
+		rawDescription =
+			getAttributeValue(attributes, ['synopsis', 'summary', 'short_description', 'hook']) || entity.description;
+	}
+
+	// Version A: For Grid Cards (Stripped & Truncated)
+	const description = rawDescription
+		? stripMarkdown(rawDescription).substring(0, 140) + (rawDescription.length > 140 ? '...' : '')
+		: null;
+
+	// Version B: For Hero Headers (Full & Rich)
+	// FIX: Passing the raw string so Swimlane.jsx can handle the truncation logic itself
+	const fullDescription = rawDescription || null;
+
+	// 4. Resolve Footer Label
+	let footerLabel = null;
+	if (actualType === 'session') {
+		footerLabel = attributes.session_date || attributes.Date || `Session ${attributes.session_number || '#'}`;
+	} else if (actualType === 'npc') {
+		footerLabel = getAttributeValue(attributes, ['role', 'occupation', 'class', 'title']);
+	} else if (actualType === 'location') {
+		footerLabel = getAttributeValue(attributes, ['type']) || region;
+	} else if (actualType === 'encounter') {
+		footerLabel = getAttributeValue(attributes, ['status']) || 'Encounter';
+	} else if (actualType === 'quest') {
+		footerLabel = questType;
+	}
+
+	if (!footerLabel) {
+		footerLabel = region || getAttributeValue(attributes, ['type', 'subtype']);
+	}
+
+	// 5. Resolve Hero Subtitle
+	let heroSubtitle = footerLabel;
+	if (actualType === 'character') {
+		const role = getAttributeValue(attributes, ['class', 'role', 'occupation']);
+		const level = getAttributeValue(attributes, ['level']);
+		if (level && role) heroSubtitle = `Lvl ${level} ${role}`;
+		else if (level) heroSubtitle = `Level ${level}`;
+		else heroSubtitle = role;
+	}
 
 	return {
 		id: entity.id,
@@ -15208,20 +15706,26 @@ export function transformEntityToViewModel(entity, type) {
 		path: `/wiki/${contextType}/${entity.id}`,
 		type: actualType,
 
+		// UI Props
+		description, // Short (Cards)
+		fullDescription, // New: Long (Headers)
+		footerLabel,
+		heroSubtitle,
+
 		status,
 		affinity,
-		attributes: entity.attributes || {},
+		attributes,
 		relationships: entity.relationships,
 
 		meta: {
 			status,
 			affinity,
 			affinityRank,
-			region,
 			questType,
+			region,
 			priority,
 			parentId,
-			campaignArc, // Added to meta
+			campaignArc,
 		},
 	};
 }

@@ -42,11 +42,33 @@ const getCompleteEntities = async (campaignId, type) => {
 	return data;
 };
 
-const entityStrategies = {
-	session: getSessions,
-	quest: getCompleteEntities,
-	default: getCompleteEntities,
-	campaign: async () => getCampaigns(),
+/**
+ * Fetch Narrative Arcs and their links to Sessions
+ * Used for organizing the Wiki Swimlanes
+ */
+export const getCampaignArcs = async (campaignId) => {
+	// 1. Fetch the Pre-Calculated View
+	const { data: arcs, error: arcError } = await supabase
+		.from('view_narrative_arc_summary')
+		.select('*')
+		.eq('campaign_id', campaignId) // Ensure your view handles campaign_id or filter via join if needed
+		.order('order', { ascending: true });
+
+	if (arcError) throw arcError;
+
+	// 2. Fetch the Session Links (needed for grouping logic in JS)
+	const { data: rels, error: relError } = await supabase
+		.from('entity_relationships')
+		.select('from_entity_id, to_entity_id')
+		.eq('relationship_type', 'part_of')
+		.in(
+			'to_entity_id',
+			arcs.map((a) => a.id)
+		); // Only get links for these arcs
+
+	if (relError) throw relError;
+
+	return { arcs, rels };
 };
 
 export const getEntities = async (campaignId, type) => {
@@ -239,4 +261,11 @@ export const getTooltipData = async (id, type) => {
 
 	if (error) throw error;
 	return data;
+};
+
+const entityStrategies = {
+	session: getSessions,
+	quest: getCompleteEntities,
+	default: getCompleteEntities,
+	campaign: async () => getCampaigns(),
 };
