@@ -47,6 +47,12 @@ const ENTITY_TAILWIND_CLASSES = {
 		border: 'border-orange-500/20',
 		hover: 'hover:bg-orange-500/10',
 	},
+	[ENTITY_TYPES.ITEM]: {
+		text: 'text-[var(--entity-item,theme(colors.cyan.600))] dark:text-[var(--entity-item,theme(colors.cyan.400))]',
+		bg: 'bg-cyan-500/10',
+		border: 'border-cyan-500/20',
+		hover: 'hover:bg-cyan-500/10',
+	},
 	[ENTITY_TYPES.DEFAULT]: {
 		text: 'text-muted-foreground',
 		bg: 'bg-muted',

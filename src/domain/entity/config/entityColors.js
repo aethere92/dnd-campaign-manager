@@ -16,6 +16,7 @@ export const ENTITY_COLORS = {
 	[ENTITY_TYPES.QUEST]: '#3b82f6', // blue-500
 	[ENTITY_TYPES.FACTION]: '#a855f7', // purple-500
 	[ENTITY_TYPES.ENCOUNTER]: '#f97316', // orange-500
+	[ENTITY_TYPES.ITEM]: '#06b6d4', // cyan-500
 	[ENTITY_TYPES.DEFAULT]: '#6b7280', // gray-500
 };
 
@@ -82,6 +83,14 @@ export const ENTITY_COLOR_PALETTES = {
 		500: '#f97316',
 		700: '#c2410c',
 		900: '#7c2d12',
+	},
+	[ENTITY_TYPES.ITEM]: {
+		// <--- ADDED
+		50: '#ecfeff',
+		100: '#cffafe',
+		500: '#06b6d4',
+		700: '#0e7490',
+		900: '#164e63',
 	},
 	[ENTITY_TYPES.DEFAULT]: {
 		50: '#f9fafb',

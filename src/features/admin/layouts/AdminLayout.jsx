@@ -84,7 +84,7 @@ export default function AdminLayout() {
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Campaign
 					</div>
-					<NavItem to='/dm/manage/session' icon={BookOpen} label='Sessions' />
+					<NavItem to='/dm/manage/session' icon={BookOpen} label='Chronicles' />
 					<NavItem to='/dm/manage/quest' icon={Scroll} label='Quests' />
 				</nav>
 

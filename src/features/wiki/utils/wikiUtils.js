@@ -68,6 +68,10 @@ export function transformEntityToViewModel(entity, type) {
 		footerLabel = getAttributeValue(attributes, ['status']) || 'Encounter';
 	} else if (actualType === 'quest') {
 		footerLabel = questType;
+	} else if (actualType === 'item') {
+		const rarity = getAttributeValue(attributes, ['rarity']);
+		const type = getAttributeValue(attributes, ['type', 'item_type']) || 'Item';
+		footerLabel = rarity ? `${rarity} ${type}` : type;
 	}
 
 	if (!footerLabel) {

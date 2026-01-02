@@ -132,6 +132,37 @@ const TABLE_DEFINITIONS = {
 			),
 		},
 	],
+	item: [
+		// <--- ADDED
+		{
+			header: 'Item Name',
+			width: '45%',
+			render: (e) => (
+				<Link
+					to={`/wiki/item/${e.id}`}
+					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Rarity',
+			width: '25%',
+			render: (e, attr) => {
+				const rarity = getAttributeValue(attr, ['rarity']) || '-';
+				return <span className='text-xs font-medium text-muted-foreground capitalize'>{rarity}</span>;
+			},
+		},
+		{
+			header: 'Type',
+			width: '30%',
+			hiddenOnMobile: true,
+			render: (e, attr) => {
+				const type = getAttributeValue(attr, ['type', 'item_type']) || 'Item';
+				return <EntityBadge type='item' label={type} variant='subtle' size='sm' />;
+			},
+		},
+	],
 	// Fallback for others
 	default: [
 		{

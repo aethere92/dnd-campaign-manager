@@ -860,6 +860,7 @@ export const ENTITY_COLORS = {
 	[ENTITY_TYPES.QUEST]: '#3b82f6', // blue-500
 	[ENTITY_TYPES.FACTION]: '#a855f7', // purple-500
 	[ENTITY_TYPES.ENCOUNTER]: '#f97316', // orange-500
+	[ENTITY_TYPES.ITEM]: '#06b6d4', // cyan-500
 	[ENTITY_TYPES.DEFAULT]: '#6b7280', // gray-500
 };
 
@@ -926,6 +927,14 @@ export const ENTITY_COLOR_PALETTES = {
 		500: '#f97316',
 		700: '#c2410c',
 		900: '#7c2d12',
+	},
+	[ENTITY_TYPES.ITEM]: {
+		// <--- ADDED
+		50: '#ecfeff',
+		100: '#cffafe',
+		500: '#06b6d4',
+		700: '#0e7490',
+		900: '#164e63',
 	},
 	[ENTITY_TYPES.DEFAULT]: {
 		50: '#f9fafb',
@@ -1013,6 +1022,7 @@ import {
 	Globe,
 	Home,
 	Mountain,
+	Gem,
 } from 'lucide-react';
 import { ENTITY_TYPES } from './entityTypes';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
@@ -1025,6 +1035,7 @@ export const ENTITY_ICONS = {
 	[ENTITY_TYPES.QUEST]: Scroll,
 	[ENTITY_TYPES.FACTION]: Flag,
 	[ENTITY_TYPES.ENCOUNTER]: Sword,
+	[ENTITY_TYPES.ITEM]: Gem,
 	[ENTITY_TYPES.DEFAULT]: BookOpen,
 };
 
@@ -1112,6 +1123,12 @@ const ENTITY_TAILWIND_CLASSES = {
 		border: 'border-orange-500/20',
 		hover: 'hover:bg-orange-500/10',
 	},
+	[ENTITY_TYPES.ITEM]: {
+		text: 'text-[var(--entity-item,theme(colors.cyan.600))] dark:text-[var(--entity-item,theme(colors.cyan.400))]',
+		bg: 'bg-cyan-500/10',
+		border: 'border-cyan-500/20',
+		hover: 'hover:bg-cyan-500/10',
+	},
 	[ENTITY_TYPES.DEFAULT]: {
 		text: 'text-muted-foreground',
 		bg: 'bg-muted',
@@ -1194,6 +1211,7 @@ export const ENTITY_TYPES = {
 	QUEST: 'quest',
 	FACTION: 'faction',
 	ENCOUNTER: 'encounter',
+	ITEM: 'item',
 	DEFAULT: 'default',
 };
 
@@ -1208,6 +1226,7 @@ export const ENTITY_LABELS = {
 	[ENTITY_TYPES.QUEST]: 'Quest',
 	[ENTITY_TYPES.FACTION]: 'Faction',
 	[ENTITY_TYPES.ENCOUNTER]: 'Encounter',
+	[ENTITY_TYPES.ITEM]: 'Item',
 	[ENTITY_TYPES.DEFAULT]: 'Entity',
 };
 
@@ -1222,6 +1241,7 @@ export const ENTITY_LABELS_PLURAL = {
 	[ENTITY_TYPES.QUEST]: 'Quests',
 	[ENTITY_TYPES.FACTION]: 'Factions',
 	[ENTITY_TYPES.ENCOUNTER]: 'Encounters',
+	[ENTITY_TYPES.ITEM]: 'Items',
 	[ENTITY_TYPES.DEFAULT]: 'Entities',
 };
 

@@ -14,6 +14,7 @@ import {
 	Globe,
 	Home,
 	Mountain,
+	Gem,
 } from 'lucide-react';
 import { ENTITY_TYPES } from './entityTypes';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
@@ -26,6 +27,7 @@ export const ENTITY_ICONS = {
 	[ENTITY_TYPES.QUEST]: Scroll,
 	[ENTITY_TYPES.FACTION]: Flag,
 	[ENTITY_TYPES.ENCOUNTER]: Sword,
+	[ENTITY_TYPES.ITEM]: Gem,
 	[ENTITY_TYPES.DEFAULT]: BookOpen,
 };
 

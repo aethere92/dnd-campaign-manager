@@ -1,3 +1,5 @@
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
 export const GROUPING_CONFIG = {
 	location: {
 		mode: 'tree',
@@ -103,5 +105,15 @@ export const GROUPING_CONFIG = {
 			if (valA !== valB) return valA - valB;
 			return a.name.localeCompare(b.name);
 		},
+	},
+	item: {
+		// <--- ADDED
+		// Group items by their 'type' attribute (e.g. Weapon, Armor), or 'General' if missing
+		groupBy: (item) => {
+			const type = getAttributeValue(item.attributes, ['type', 'item_type', 'category']);
+			return type ? type.charAt(0).toUpperCase() + type.slice(1) : 'General';
+		},
+		sortGroups: (keys) => keys.sort(), // Alphabetical groups
+		sortItems: (a, b) => a.name.localeCompare(b.name),
 	},
 };

@@ -2118,6 +2118,37 @@ const TABLE_DEFINITIONS = {
 			),
 		},
 	],
+	item: [
+		// <--- ADDED
+		{
+			header: 'Item Name',
+			width: '45%',
+			render: (e) => (
+				<Link
+					to={`/wiki/item/${e.id}`}
+					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
+					{e.name}
+				</Link>
+			),
+		},
+		{
+			header: 'Rarity',
+			width: '25%',
+			render: (e, attr) => {
+				const rarity = getAttributeValue(attr, ['rarity']) || '-';
+				return <span className='text-xs font-medium text-muted-foreground capitalize'>{rarity}</span>;
+			},
+		},
+		{
+			header: 'Type',
+			width: '30%',
+			hiddenOnMobile: true,
+			render: (e, attr) => {
+				const type = getAttributeValue(attr, ['type', 'item_type']) || 'Item';
+				return <EntityBadge type='item' label={type} variant='subtle' size='sm' />;
+			},
+		},
+	],
 	// Fallback for others
 	default: [
 		{
@@ -2890,6 +2921,8 @@ export const StatusIcon = ({ entity }) => {
 --- END OF features\wiki\components\navigation\sidebar\StatusIcon.jsx ---
 
 --- FILE: features\wiki\config\groupingConfig.js ---
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
 export const GROUPING_CONFIG = {
 	location: {
 		mode: 'tree',
@@ -2995,6 +3028,16 @@ export const GROUPING_CONFIG = {
 			if (valA !== valB) return valA - valB;
 			return a.name.localeCompare(b.name);
 		},
+	},
+	item: {
+		// <--- ADDED
+		// Group items by their 'type' attribute (e.g. Weapon, Armor), or 'General' if missing
+		groupBy: (item) => {
+			const type = getAttributeValue(item.attributes, ['type', 'item_type', 'category']);
+			return type ? type.charAt(0).toUpperCase() + type.slice(1) : 'General';
+		},
+		sortGroups: (keys) => keys.sort(), // Alphabetical groups
+		sortItems: (a, b) => a.name.localeCompare(b.name),
 	},
 };
 
@@ -4374,6 +4417,10 @@ export function transformEntityToViewModel(entity, type) {
 		footerLabel = getAttributeValue(attributes, ['status']) || 'Encounter';
 	} else if (actualType === 'quest') {
 		footerLabel = questType;
+	} else if (actualType === 'item') {
+		const rarity = getAttributeValue(attributes, ['rarity']);
+		const type = getAttributeValue(attributes, ['type', 'item_type']) || 'Item';
+		footerLabel = rarity ? `${rarity} ${type}` : type;
 	}
 
 	if (!footerLabel) {

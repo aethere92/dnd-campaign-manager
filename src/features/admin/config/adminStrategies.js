@@ -44,7 +44,7 @@ export const ADMIN_STRATEGIES = {
 
 	// 3. SESSION
 	session: {
-		label: 'Session',
+		label: 'Chronicles',
 		type: 'session',
 		primaryTable: 'sessions',
 		colMapping: { name: 'title', description: 'narrative' },
@@ -72,6 +72,7 @@ export const ADMIN_STRATEGIES = {
 				options: ['Main Quest', 'Side Quest', 'Personal Quest'],
 			},
 			{ key: 'priority', label: 'Priority', type: 'select', options: ['Critical', 'High', 'Medium', 'Low', 'Trivial'] },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -86,6 +87,7 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'leader', label: 'Leader', type: 'text' },
 			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy'] },
 			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -95,6 +97,7 @@ export const ADMIN_STRATEGIES = {
 		type: 'item',
 		primaryTable: 'items',
 		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
 		defaultAttributes: [
 			{
 				key: 'type',
@@ -108,9 +111,9 @@ export const ADMIN_STRATEGIES = {
 				type: 'select',
 				options: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'],
 			},
-			{ key: 'value', label: 'Gold Value', type: 'text' },
 			{ key: 'attunement', label: 'Attunement?', type: 'select', options: ['Yes', 'No'] },
 			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 

@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-02 22:25:24
+Generated: 2026-01-02 22:50:53
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -759,6 +759,9 @@ features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx:
 
 features\wiki\components\navigation\sidebar\StatusIcon.jsx:
   → @/domain/entity/utils/statusUtils
+
+features\wiki\config\groupingConfig.js:
+  → @/domain/entity/utils/attributeParser
 
 features\wiki\config\viewStrategies.js:
   → lucide-react

@@ -14,6 +14,7 @@ export const ENTITY_TYPES = {
 	QUEST: 'quest',
 	FACTION: 'faction',
 	ENCOUNTER: 'encounter',
+	ITEM: 'item',
 	DEFAULT: 'default',
 };
 
@@ -28,6 +29,7 @@ export const ENTITY_LABELS = {
 	[ENTITY_TYPES.QUEST]: 'Quest',
 	[ENTITY_TYPES.FACTION]: 'Faction',
 	[ENTITY_TYPES.ENCOUNTER]: 'Encounter',
+	[ENTITY_TYPES.ITEM]: 'Item',
 	[ENTITY_TYPES.DEFAULT]: 'Entity',
 };
 
@@ -42,6 +44,7 @@ export const ENTITY_LABELS_PLURAL = {
 	[ENTITY_TYPES.QUEST]: 'Quests',
 	[ENTITY_TYPES.FACTION]: 'Factions',
 	[ENTITY_TYPES.ENCOUNTER]: 'Encounters',
+	[ENTITY_TYPES.ITEM]: 'Items',
 	[ENTITY_TYPES.DEFAULT]: 'Entities',
 };
 
