@@ -134,6 +134,7 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'hit points', label: 'Hit Points', type: 'text' },
 			{ key: 'armor class', label: 'Armor Class', type: 'text' },
 			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 

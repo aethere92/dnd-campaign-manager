@@ -3,10 +3,14 @@
     "category": "Assets > Character_backgrounds > Campaign_002",
     "path": "images/assets/character_backgrounds/campaign_002/",
     "files": [
-      "bonnie_bg.jpeg",
-      "kaedin_bg.jpg",
-      "olek_bg.jpg",
-      "soshi_bg.jpeg"
+      "bonnie_bg_horizontal.png",
+      "bonnie_bg_square.jpeg",
+      "kaedin_bg_horizontal.png",
+      "kaedin_bg_vertical.jpg",
+      "olek_bg_horizontal.png",
+      "olek_bg_square.jpg",
+      "soshi_bg_horizontal.png",
+      "soshi_bg_vertical.jpeg"
     ]
   },
   {

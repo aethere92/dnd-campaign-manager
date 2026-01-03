@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
-import fcose from 'cytoscape-fcose'; // IMPLEMENTATION: fCoSE
-import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
+import fcose from 'cytoscape-fcose';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { getGraphStyles, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
 
 // Register the layout extension
 cytoscape.use(fcose);
@@ -12,6 +13,22 @@ export const CytoscapeCanvas = ({ elements }) => {
 	const cyRef = useRef(null);
 	const navigate = useNavigate();
 
+	// 1. Get the theme from the hook
+	const { theme } = useTheme();
+
+	// 2. Memoize styles based on theme
+	const styles = useMemo(() => {
+		return getGraphStyles(theme);
+	}, [theme]);
+
+	// FIX: Live Style Update Effect
+	// This watches for changes to the 'styles' object and injects them into the active graph
+	useEffect(() => {
+		if (cyRef.current) {
+			cyRef.current.style().fromJson(styles).update();
+		}
+	}, [styles]);
+
 	useEffect(() => {
 		if (!containerRef.current) return;
 
@@ -19,45 +36,37 @@ export const CytoscapeCanvas = ({ elements }) => {
 		cyRef.current = cytoscape({
 			container: containerRef.current,
 			elements: [],
-			style: CYTOSCAPE_STYLES,
+			style: styles, // Initial styles
 			layout: LAYOUT_CONFIG,
 			wheelSensitivity: 3,
 			minZoom: 0.2,
 			maxZoom: 3,
-			autoungrabify: true, // CHANGED: Set to true to disable node dragging
+			autoungrabify: true,
 		});
 
 		const cy = cyRef.current;
 
 		// --- EVENT HANDLERS ---
 
-		// 1. Click Node: Highlight Connections
 		cy.on('tap', 'node', (evt) => {
 			const node = evt.target;
-
-			// Clear previous states
 			cy.elements().removeClass('highlighted dimmed');
-
 			const connectedEdges = node.connectedEdges();
 			const connectedNodes = connectedEdges.connectedNodes();
 
-			// Dim everything else
 			cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
 
-			// Highlight selection
 			node.addClass('highlighted');
 			connectedNodes.addClass('highlighted');
 			connectedEdges.addClass('highlighted');
 		});
 
-		// 2. Click Background: Reset
 		cy.on('tap', (evt) => {
 			if (evt.target === cy) {
 				cy.elements().removeClass('highlighted dimmed');
 			}
 		});
 
-		// 3. IMPLEMENTATION: Double Click to Navigate
 		cy.on('dblclick', 'node', (evt) => {
 			const node = evt.target;
 			const { id, type } = node.data();
@@ -72,9 +81,11 @@ export const CytoscapeCanvas = ({ elements }) => {
 				cyRef.current = null;
 			}
 		};
+		// We exclude 'styles' here because we handle style updates
+		// in the separate useEffect above to prevent destroying the whole graph.
 	}, [navigate]);
 
-	// 2. Handle Data Updates
+	// Handle Data Updates
 	useEffect(() => {
 		if (!cyRef.current || !elements) return;
 
@@ -86,7 +97,6 @@ export const CytoscapeCanvas = ({ elements }) => {
 		});
 
 		if (elements.length > 0) {
-			// Run fCoSE layout
 			cy.layout(LAYOUT_CONFIG).run();
 		}
 	}, [elements]);

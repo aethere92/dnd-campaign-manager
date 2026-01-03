@@ -2,7 +2,7 @@ import { clsx } from 'clsx';
 
 export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 	return (
-		<div className='flex-1 overflow-y-auto px-4 space-y-6'>
+		<div className='flex-1 overflow-y-auto px-4 space-y-6 custom-scrollbar'>
 			{structure.map((group) => (
 				<div key={group.title}>
 					<h3 className='px-3 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2'>
