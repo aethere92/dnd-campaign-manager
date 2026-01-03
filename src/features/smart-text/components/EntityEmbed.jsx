@@ -67,7 +67,7 @@ export const EntityEmbed = ({ id, type, label }) => {
 	// Resolve Images
 	const attributes = parseAttributes(entity?.attributes);
 	const customIcon = entity?.iconUrl || resolveImageUrl(attributes, 'icon');
-	const bgImage = resolveImageUrl(attributes, 'background');
+	const bgImage = resolveImageUrl(attributes, 'background_image');
 
 	// State for brightness detection
 	const [isDarkBackground, setIsDarkBackground] = useState(false);
