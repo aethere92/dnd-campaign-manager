@@ -152,7 +152,11 @@
     "path": "images/icons/weapons/",
     "files": [
       "boots_jungle_strider.png",
-      "veilbranch.jpeg"
+      "bracers_spell_plague_icon.png",
+      "crocodile_tears_icon.jpg",
+      "gloves_brotherhood_icon.png",
+      "talisman_elemental_acuity_icon.jpg",
+      "veilbranch.png"
     ]
   },
   {

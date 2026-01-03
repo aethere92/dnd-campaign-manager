@@ -9,6 +9,7 @@ import {
 	List,
 	Heading1,
 	Heading2,
+	Heading3,
 	Quote,
 	Code,
 	Link as LinkIcon,
@@ -70,6 +71,12 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 					title='H2'
 					onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
 					isActive={editor?.isActive('heading', { level: 2 })}
+				/>
+				<Btn
+					icon={Heading3}
+					title='H3'
+					onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+					isActive={editor?.isActive('heading', { level: 3 })}
 				/>
 				<Btn
 					icon={List}

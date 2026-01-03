@@ -43,6 +43,7 @@ PARTIAL BUNDLE: FEATURES SMART-TOOLTIP
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -541,6 +542,7 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { ArrowRight } from 'lucide-react';
 import { useSmartPosition } from '@/features/smart-tooltip/useSmartPosition';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
 	const navigate = useNavigate();
@@ -644,10 +646,23 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 			</div>
 
 			<div className='p-4 pt-3'>
-				{/* FIX: Added 'custom-scrollbar' to allow styled scrolling if description is long */}
-				<p className='text-xs text-muted-foreground overflow-auto h-full max-h-32 leading-relaxed custom-scrollbar'>
-					{data.description || 'No overview available.'}
-				</p>
+				{/* ARCHITECTURE FIX: Use div instead of p to avoid invalid nesting (p cannot contain div/p) */}
+				<div
+					className='text-xs text-muted-foreground overflow-auto h-full max-h-32 leading-relaxed custom-scrollbar'
+					onClick={(e) => {
+						// CRITICAL: Stop propagation if clicking a link/embed inside the tooltip.
+						// Otherwise, the card's main onClick fires and navigates to the card's entity instead of the link's target.
+						if (e.target.closest('a') || e.target.closest('[role="button"]')) {
+							e.stopPropagation();
+						}
+					}}>
+					<SmartMarkdown
+						// Prevent huge headers or images inside the tooltip
+						disallowedElements={['h1', 'h2', 'img']}
+						unwrapDisallowed={true}>
+						{data.description || 'No overview available.'}
+					</SmartMarkdown>
+				</div>
 			</div>
 
 			<div className='bg-muted/50 p-2 border-t border-border flex justify-end'>

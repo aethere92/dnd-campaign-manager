@@ -43,6 +43,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx

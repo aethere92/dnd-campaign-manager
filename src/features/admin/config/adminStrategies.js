@@ -103,7 +103,7 @@ export const ADMIN_STRATEGIES = {
 				key: 'type',
 				label: 'Type',
 				type: 'select',
-				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Item', 'Key Item', 'Treasure'],
+				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Weapon', 'Wondrous Armor', 'Key Item', 'Treasure'],
 			},
 			{
 				key: 'rarity',

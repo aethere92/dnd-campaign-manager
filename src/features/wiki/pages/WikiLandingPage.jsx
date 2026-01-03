@@ -34,7 +34,7 @@ export default function WikiLandingPage() {
 		<div className='p-4 md:p-8 lg:p-12 max-w-[1920px] mx-auto min-h-full pb-safe'>
 			{/* Header */}
 			<div className='flex flex-col gap-6 mb-8 border-b border-border pb-6'>
-				<div className='flex items-center justify-between'>
+				<div className='flex items-center justify-between sm:justify-center gap-2'>
 					<div className='flex items-center gap-4'>
 						<div
 							className={clsx(
@@ -48,11 +48,11 @@ export default function WikiLandingPage() {
 							<h1 className='text-3xl font-serif font-bold text-foreground capitalize leading-none mb-1'>
 								{config.labelPlural}
 							</h1>
-							<p className='text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
+							<p className='hidden sm:block text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
 						</div>
 					</div>
 					{/* Search Bar */}
-					<div className='relative max-w-2xl ml-auto mr-2'>
+					<div className='relative max-w-2xl md:ml-auto'>
 						<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
 						<input
 							type='text'
@@ -63,7 +63,7 @@ export default function WikiLandingPage() {
 						/>
 					</div>
 					{/* View Toggle */}
-					<div className='hidden md:flex bg-muted p-1 rounded-lg border border-border/50'>
+					<div className='flex bg-muted p-1 rounded-lg border border-border/50'>
 						<button
 							onClick={() => setViewMode('grid')}
 							className={clsx(

@@ -49,6 +49,7 @@ INSTRUCTIONS FOR AI:
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -3845,139 +3846,387 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 --- END OF features\admin\components\ImageLibraryModal.jsx ---
 
 --- FILE: features\admin\components\MarkdownEditor.jsx ---
-import React, { useState, useRef, useEffect } from 'react';
-import { Eye, Edit3, Wand2, X, AtSign } from 'lucide-react';
-import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
-import EntitySearch from './EntitySearch';
-import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+// features/admin/components/MarkdownEditor.jsx
+import React, { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+import { ADMIN_LABEL_CLASS } from './AdminFormStyles';
 
-export default function MarkdownEditor({ label, value, onChange, placeholder, rows = 8 }) {
-	const [mode, setMode] = useState('write');
-	const [showSearch, setShowSearch] = useState(false);
-	const textareaRef = useRef(null);
+const HeavyEditor = React.lazy(() => import('./MarkdownEditorImpl'));
 
-	const handleInputChange = (e) => {
-		const newValue = e.target.value;
-		const selectionStart = e.target.selectionStart;
-		onChange(e);
-
-		// Detect '@' trigger
-		const charBefore = newValue.charAt(selectionStart - 1);
-		if (charBefore === '@') {
-			setShowSearch(true);
-		}
-	};
-
-	const handleInsertEntity = (entity) => {
-		const textarea = textareaRef.current;
-		const textToInsert = `[:: ${entity.name} ::](#entity/${entity.id}/${entity.type})`;
-
-		if (textarea) {
-			const start = textarea.selectionStart;
-			const end = textarea.selectionEnd;
-			const currentText = value || '';
-
-			let insertPos = start;
-			let beforeText = currentText.substring(0, start);
-			const afterText = currentText.substring(end);
-
-			if (beforeText.endsWith('@')) {
-				beforeText = beforeText.slice(0, -1);
-				insertPos = start - 1;
-			}
-
-			const newValue = beforeText + textToInsert + afterText;
-			onChange({ target: { value: newValue } });
-
-			// Return focus and fix cursor position
-			setTimeout(() => {
-				textarea.focus();
-				const newCursorPos = insertPos + textToInsert.length;
-				textarea.setSelectionRange(newCursorPos, newCursorPos);
-			}, 0);
-		}
-		setShowSearch(false);
-	};
-
+export default function MarkdownEditor(props) {
 	return (
-		<div className='relative flex flex-col'>
-			<div className='flex items-end justify-between mb-1.5'>
-				<label className={ADMIN_LABEL_CLASS}>{label}</label>
-				<div className='flex bg-muted/50 rounded-md p-0.5 border border-border shadow-sm'>
-					<button
-						type='button'
-						onClick={() => setShowSearch(!showSearch)}
-						className={`px-2 py-1 text-[10px] font-bold uppercase rounded flex items-center gap-1.5 transition-all ${
-							showSearch
-								? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
-								: 'text-muted-foreground hover:text-foreground'
-						}`}>
-						<AtSign size={12} /> Mentions
-					</button>
-					<div className='w-px bg-border mx-1 my-1' />
-					<button
-						type='button'
-						onClick={() => setMode('write')}
-						className={`px-2 py-1 text-[10px] font-bold uppercase rounded transition-all ${
-							mode === 'write'
-								? 'bg-background text-foreground shadow-sm'
-								: 'text-muted-foreground hover:text-foreground'
-						}`}>
-						Write
-					</button>
-					<button
-						type='button'
-						onClick={() => setMode('preview')}
-						className={`px-2 py-1 text-[10px] font-bold uppercase rounded transition-all ${
-							mode === 'preview'
-								? 'bg-background text-foreground shadow-sm'
-								: 'text-muted-foreground hover:text-foreground'
-						}`}>
-						Preview
-					</button>
-				</div>
-			</div>
+		<Suspense fallback={<LoadingFallback label={props.label} />}>
+			<HeavyEditor {...props} />
+		</Suspense>
+	);
+}
 
-			<div className='relative'>
-				{/* FLOATING MENTION MODAL - Now Absolute and Z-Indexed to prevent layout push */}
-				{showSearch && (
-					<div className='absolute inset-x-0 top-0 z-50 p-3 bg-background border border-amber-300 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-150'>
-						<div className='flex justify-between items-center mb-2'>
-							<span className='text-[10px] font-bold uppercase text-amber-600 tracking-widest flex items-center gap-1'>
-								<Wand2 size={10} /> Link Entity
-							</span>
-							<button onClick={() => setShowSearch(false)} className='text-muted-foreground hover:text-red-500'>
-								<X size={14} />
-							</button>
-						</div>
-						<EntitySearch onSelect={handleInsertEntity} autoFocus />
-					</div>
-				)}
-
-				{mode === 'write' ? (
-					<textarea
-						ref={textareaRef}
-						rows={rows}
-						className={`${ADMIN_INPUT_CLASS} font-mono text-xs leading-relaxed min-h-[150px] resize-y`}
-						value={value}
-						onChange={handleInputChange}
-						placeholder={placeholder}
-					/>
-				) : (
-					<div className='w-full px-4 py-3 bg-muted/10 border border-border rounded-md min-h-[150px] prose prose-sm max-w-none'>
-						{value ? (
-							<SmartMarkdown>{value}</SmartMarkdown>
-						) : (
-							<span className='text-muted-foreground italic text-xs'>Nothing to preview.</span>
-						)}
-					</div>
-				)}
+function LoadingFallback({ label }) {
+	return (
+		<div className='flex flex-col gap-1.5'>
+			{label && <label className={ADMIN_LABEL_CLASS}>{label}</label>}
+			<div className='h-[230px] w-full border border-border rounded-lg bg-muted/10 flex items-center justify-center text-muted-foreground gap-2 animate-pulse'>
+				<Loader2 size={20} className='animate-spin' />
+				<span className='text-xs'>Loading Editor...</span>
 			</div>
 		</div>
 	);
 }
 
 --- END OF features\admin\components\MarkdownEditor.jsx ---
+
+--- FILE: features\admin\components\MarkdownEditorImpl.jsx ---
+import React, { useState, useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import { Markdown } from 'tiptap-markdown';
+import {
+	Bold,
+	Italic,
+	List,
+	Heading1,
+	Heading2,
+	Heading3,
+	Quote,
+	Code,
+	Link as LinkIcon,
+	Undo,
+	Redo,
+	AtSign,
+	Wand2,
+	X,
+	FileCode,
+	Eye,
+} from 'lucide-react';
+import EntitySearch from './EntitySearch';
+import { ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import clsx from 'clsx';
+
+// --- TOOLBAR COMPONENT ---
+const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
+	// Helper for buttons
+	const Btn = ({ icon: Icon, onClick, isActive, disabled, title }) => (
+		<button
+			type='button'
+			onClick={onClick}
+			disabled={disabled}
+			title={title}
+			className={clsx(
+				'p-1.5 rounded transition-colors flex items-center justify-center h-7 w-7',
+				isActive ? 'bg-amber-500/20 text-amber-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+				disabled && 'opacity-30 cursor-not-allowed'
+			)}>
+			<Icon size={14} strokeWidth={2.5} />
+		</button>
+	);
+
+	return (
+		<div className='flex items-center gap-1 p-1.5 border-b border-border bg-muted/20 select-none flex-wrap'>
+			{/* Standard Formatting Tools - Only active in Visual Mode */}
+			<div className={clsx('flex items-center gap-1', mode === 'source' && 'opacity-30 pointer-events-none grayscale')}>
+				<Btn
+					icon={Bold}
+					title='Bold'
+					onClick={() => editor?.chain().focus().toggleBold().run()}
+					isActive={editor?.isActive('bold')}
+				/>
+				<Btn
+					icon={Italic}
+					title='Italic'
+					onClick={() => editor?.chain().focus().toggleItalic().run()}
+					isActive={editor?.isActive('italic')}
+				/>
+				<div className='w-px h-4 bg-border mx-1 opacity-50' />
+				<Btn
+					icon={Heading1}
+					title='H1'
+					onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+					isActive={editor?.isActive('heading', { level: 1 })}
+				/>
+				<Btn
+					icon={Heading2}
+					title='H2'
+					onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+					isActive={editor?.isActive('heading', { level: 2 })}
+				/>
+				<Btn
+					icon={Heading3}
+					title='H3'
+					onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+					isActive={editor?.isActive('heading', { level: 3 })}
+				/>
+				<Btn
+					icon={List}
+					title='Bullet List'
+					onClick={() => editor?.chain().focus().toggleBulletList().run()}
+					isActive={editor?.isActive('bulletList')}
+				/>
+				<Btn
+					icon={Quote}
+					title='Blockquote'
+					onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+					isActive={editor?.isActive('blockquote')}
+				/>
+				<Btn
+					icon={Code}
+					title='Code Block'
+					onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+					isActive={editor?.isActive('codeBlock')}
+				/>
+				<div className='w-px h-4 bg-border mx-1 opacity-50' />
+				<Btn
+					icon={LinkIcon}
+					title='Link'
+					isActive={editor?.isActive('link')}
+					onClick={() => {
+						const previousUrl = editor?.getAttributes('link').href;
+						const url = window.prompt('URL', previousUrl);
+						if (url === null) return;
+						if (url === '') {
+							editor?.chain().focus().extendMarkRange('link').unsetLink().run();
+							return;
+						}
+						editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+					}}
+				/>
+			</div>
+
+			{/* Mention Button (Works in both, but handled manually in Source) */}
+			<div className='w-px h-4 bg-border mx-1 opacity-50' />
+			<button
+				type='button'
+				onClick={onMentionClick}
+				className={clsx(
+					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-amber-500/10 transition-colors',
+					'text-amber-600/80 hover:text-amber-600'
+				)}
+				title='Mention Entity (@)'>
+				<AtSign size={13} />
+				<span className='hidden sm:inline'>Mention</span>
+			</button>
+
+			{/* Right Side: Mode Toggle */}
+			<div className='flex-1' />
+
+			{/* Undo/Redo - Only Visual */}
+			<div className={clsx('flex gap-1 mr-2', mode === 'source' && 'hidden')}>
+				<Btn
+					icon={Undo}
+					title='Undo'
+					onClick={() => editor?.chain().focus().undo().run()}
+					disabled={!editor?.can().undo()}
+				/>
+				<Btn
+					icon={Redo}
+					title='Redo'
+					onClick={() => editor?.chain().focus().redo().run()}
+					disabled={!editor?.can().redo()}
+				/>
+			</div>
+
+			<div className='flex bg-muted rounded p-0.5 border border-border'>
+				<button
+					type='button'
+					onClick={() => setMode('visual')}
+					className={clsx(
+						'px-2 py-0.5 text-[10px] font-bold uppercase rounded flex items-center gap-1.5 transition-all',
+						mode === 'visual' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'
+					)}>
+					<Eye size={12} /> Visual
+				</button>
+				<button
+					type='button'
+					onClick={() => setMode('source')}
+					className={clsx(
+						'px-2 py-0.5 text-[10px] font-bold uppercase rounded flex items-center gap-1.5 transition-all',
+						mode === 'source' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'
+					)}>
+					<FileCode size={12} /> Source
+				</button>
+			</div>
+		</div>
+	);
+};
+
+export default function MarkdownEditorImpl({ label, value, onChange, placeholder }) {
+	const [mode, setMode] = useState('visual'); // 'visual' | 'source'
+	const [mentionPos, setMentionPos] = useState(null);
+	const sourceRef = React.useRef(null);
+
+	// --- TIPTAP CONFIG ---
+	const editor = useEditor({
+		extensions: [
+			StarterKit.configure({
+				heading: { levels: [1, 2, 3] },
+			}),
+			Link.configure({
+				openOnClick: false,
+				HTMLAttributes: { class: 'text-blue-500 underline cursor-pointer' },
+			}),
+			Markdown,
+		],
+		editorProps: {
+			attributes: {
+				class:
+					'prose prose-sm prose-neutral dark:prose-invert max-w-none min-h-[180px] px-4 py-3 focus:outline-none custom-scrollbar',
+			},
+			handleKeyDown: (view, event) => {
+				if (event.key === '@') {
+					const { top, left } = view.coordsAtPos(view.state.selection.from);
+					setMentionPos({ top: top + 20, left });
+					return false;
+				}
+				return false;
+			},
+		},
+		content: value,
+		onUpdate: ({ editor }) => {
+			// Sync to parent form
+			if (mode === 'visual') {
+				onChange({ target: { value: editor.storage.markdown.getMarkdown() } });
+			}
+		},
+	});
+
+	// --- SYNCING LOGIC ---
+	useEffect(() => {
+		// When switching back to Visual, or when Form resets, sync Tiptap
+		if (editor && mode === 'visual') {
+			const currentContent = editor.storage.markdown.getMarkdown();
+			if (value !== currentContent) {
+				// Check if empty to avoid jumping cursor on slight formatting diffs
+				if (value === '' || value === undefined) {
+					editor.commands.setContent('');
+				} else if (Math.abs(value.length - currentContent.length) > 5) {
+					// Only hard reset if significant change (e.g. from Source edit)
+					editor.commands.setContent(value);
+				}
+			}
+		}
+	}, [value, editor, mode]);
+
+	// --- HANDLERS ---
+	const handleMentionClick = (e) => {
+		e.stopPropagation();
+		const rect = e.currentTarget.getBoundingClientRect();
+		setMentionPos({ top: rect.bottom + 5, left: rect.left });
+	};
+
+	const handleInsertEntity = (entity) => {
+		const link = `[:: ${entity.name} ::](#entity/${entity.id}/${entity.type})`;
+
+		if (mode === 'visual' && editor) {
+			// Visual Mode: Insert as Link Node
+			const href = `#entity/${entity.id}/${entity.type}`;
+			const label = `:: ${entity.name} ::`;
+
+			// Remove pending '@'
+			const { from } = editor.state.selection;
+			const textBefore = editor.state.doc.textBetween(Math.max(0, from - 1), from);
+			if (textBefore === '@')
+				editor
+					.chain()
+					.focus()
+					.deleteRange({ from: from - 1, to: from })
+					.run();
+
+			editor.chain().focus().setLink({ href }).insertContent(label).run();
+		} else {
+			// Source Mode: Insert raw text
+			const textarea = sourceRef.current;
+			if (textarea) {
+				const start = textarea.selectionStart;
+				const end = textarea.selectionEnd;
+				const text = textarea.value;
+				const before = text.substring(0, start);
+				const after = text.substring(end);
+
+				// Remove pending '@' if exists
+				const finalBefore = before.endsWith('@') ? before.slice(0, -1) : before;
+
+				const newValue = finalBefore + link + after;
+
+				// Fire change event manually for React Hook Form
+				onChange({ target: { value: newValue } });
+
+				// Restore focus
+				setTimeout(() => {
+					textarea.focus();
+					textarea.setSelectionRange(finalBefore.length + link.length, finalBefore.length + link.length);
+				}, 0);
+			}
+		}
+		setMentionPos(null);
+	};
+
+	return (
+		<div className='flex flex-col gap-1.5 group'>
+			{label && <label className={ADMIN_LABEL_CLASS}>{label}</label>}
+
+			<div
+				className={clsx(
+					'border rounded-lg bg-background overflow-hidden shadow-sm transition-all flex flex-col',
+					'focus-within:ring-1 focus-within:ring-amber-500 focus-within:border-amber-500',
+					'border-border'
+				)}>
+				<MenuBar editor={editor} mode={mode} setMode={setMode} onMentionClick={handleMentionClick} />
+
+				<div className='relative bg-background min-h-[180px]'>
+					{mode === 'visual' ? (
+						<div onClick={() => editor?.commands.focus()} className='cursor-text h-full'>
+							<EditorContent editor={editor} />
+						</div>
+					) : (
+						<textarea
+							ref={sourceRef}
+							value={value}
+							onChange={onChange}
+							className='w-full h-full min-h-[180px] p-4 font-mono text-sm resize-y outline-none bg-transparent'
+							placeholder='Type raw markdown here...'
+							onKeyDown={(e) => {
+								if (e.key === '@') {
+									// Naive source mode positioning (bottom of textarea)
+									// Precise positioning in textarea is hard without libraries,
+									// so we default to the mention button position logic or fixed center
+									const rect = e.target.getBoundingClientRect();
+									setMentionPos({ top: rect.top + 20, left: rect.left + 20 });
+								}
+							}}
+						/>
+					)}
+				</div>
+			</div>
+
+			{/* Mention Popup */}
+			{mentionPos && (
+				<div
+					className='fixed z-[9999] w-72 bg-background border border-amber-500/50 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+					style={{ top: mentionPos.top, left: mentionPos.left }}
+					onClick={(e) => e.stopPropagation()}>
+					<div className='flex justify-between items-center p-2 border-b border-border bg-muted/50'>
+						<span className='text-[10px] font-bold uppercase text-amber-600 tracking-widest flex items-center gap-1'>
+							<Wand2 size={10} /> Link Entity
+						</span>
+						<button
+							type='button'
+							onClick={() => setMentionPos(null)}
+							className='text-muted-foreground hover:text-red-500'>
+							<X size={14} />
+						</button>
+					</div>
+					<div className='p-2'>
+						<EntitySearch onSelect={handleInsertEntity} autoFocus />
+					</div>
+					{/* Click-away listener backdrop */}
+					<div className='fixed inset-0 z-[-1]' onClick={() => setMentionPos(null)} />
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\MarkdownEditorImpl.jsx ---
 
 --- FILE: features\admin\components\QuestObjectiveManager.jsx ---
 import React, { useEffect, useState } from 'react';
@@ -5261,7 +5510,7 @@ export const ADMIN_STRATEGIES = {
 				key: 'type',
 				label: 'Type',
 				type: 'select',
-				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Item', 'Key Item', 'Treasure'],
+				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Weapon', 'Wondrous Armor', 'Key Item', 'Treasure'],
 			},
 			{
 				key: 'rarity',
@@ -5503,6 +5752,18 @@ export const IMAGE_LIBRARY = [
       "red_hand_icon.png",
       "red_wizards_of_thay_icon.jpg",
       "thieves_guild.jpg"
+    ]
+  },
+  {
+    "category": "Icons > Weapons",
+    "path": "images/icons/weapons/",
+    "files": [
+      "boots_jungle_strider.png",
+      "bracers_spell_plague_icon.png",
+      "crocodile_tears_icon.jpg",
+      "gloves_brotherhood_icon.png",
+      "talisman_elemental_acuity_icon.jpg",
+      "veilbranch.png"
     ]
   },
   {
@@ -10883,6 +11144,7 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { ArrowRight } from 'lucide-react';
 import { useSmartPosition } from '@/features/smart-tooltip/useSmartPosition';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
 	const navigate = useNavigate();
@@ -10986,10 +11248,23 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 			</div>
 
 			<div className='p-4 pt-3'>
-				{/* FIX: Added 'custom-scrollbar' to allow styled scrolling if description is long */}
-				<p className='text-xs text-muted-foreground overflow-auto h-full max-h-32 leading-relaxed custom-scrollbar'>
-					{data.description || 'No overview available.'}
-				</p>
+				{/* ARCHITECTURE FIX: Use div instead of p to avoid invalid nesting (p cannot contain div/p) */}
+				<div
+					className='text-xs text-muted-foreground overflow-auto h-full max-h-32 leading-relaxed custom-scrollbar'
+					onClick={(e) => {
+						// CRITICAL: Stop propagation if clicking a link/embed inside the tooltip.
+						// Otherwise, the card's main onClick fires and navigates to the card's entity instead of the link's target.
+						if (e.target.closest('a') || e.target.closest('[role="button"]')) {
+							e.stopPropagation();
+						}
+					}}>
+					<SmartMarkdown
+						// Prevent huge headers or images inside the tooltip
+						disallowedElements={['h1', 'h2', 'img']}
+						unwrapDisallowed={true}>
+						{data.description || 'No overview available.'}
+					</SmartMarkdown>
+				</div>
 			</div>
 
 			<div className='bg-muted/50 p-2 border-t border-border flex justify-end'>
@@ -15158,7 +15433,7 @@ export default function WikiLandingPage() {
 		<div className='p-4 md:p-8 lg:p-12 max-w-[1920px] mx-auto min-h-full pb-safe'>
 			{/* Header */}
 			<div className='flex flex-col gap-6 mb-8 border-b border-border pb-6'>
-				<div className='flex items-center justify-between'>
+				<div className='flex items-center justify-between sm:justify-center gap-2'>
 					<div className='flex items-center gap-4'>
 						<div
 							className={clsx(
@@ -15172,11 +15447,11 @@ export default function WikiLandingPage() {
 							<h1 className='text-3xl font-serif font-bold text-foreground capitalize leading-none mb-1'>
 								{config.labelPlural}
 							</h1>
-							<p className='text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
+							<p className='hidden sm:block text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
 						</div>
 					</div>
 					{/* Search Bar */}
-					<div className='relative max-w-2xl ml-auto mr-2'>
+					<div className='relative max-w-2xl md:ml-auto'>
 						<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
 						<input
 							type='text'
@@ -15187,7 +15462,7 @@ export default function WikiLandingPage() {
 						/>
 					</div>
 					{/* View Toggle */}
-					<div className='hidden md:flex bg-muted p-1 rounded-lg border border-border/50'>
+					<div className='flex bg-muted p-1 rounded-lg border border-border/50'>
 						<button
 							onClick={() => setViewMode('grid')}
 							className={clsx(

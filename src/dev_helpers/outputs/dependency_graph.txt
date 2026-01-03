@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-02 22:50:53
+Generated: 2026-01-03 08:50:20
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -133,10 +133,19 @@ features\admin\components\ImageLibraryModal.jsx:
 
 features\admin\components\MarkdownEditor.jsx:
   → ./AdminFormStyles
-  → ./EntitySearch
-  → @/features/smart-text/SmartMarkdown
+  → ./MarkdownEditorImpl
   → lucide-react
   → react
+
+features\admin\components\MarkdownEditorImpl.jsx:
+  → ./AdminFormStyles
+  → ./EntitySearch
+  → @tiptap/extension-link
+  → @tiptap/react
+  → @tiptap/starter-kit
+  → clsx
+  → react
+  → tiptap-markdown
 
 features\admin\components\QuestObjectiveManager.jsx:
   → ./AdminFormStyles
@@ -530,6 +539,7 @@ features\smart-tooltip\TooltipContext.jsx:
 features\smart-tooltip\components\TooltipCard.jsx:
   → @/domain/entity/config/entityConfig
   → @/domain/entity/utils/attributeParser
+  → @/features/smart-text/SmartMarkdown
   → @/features/smart-tooltip/useSmartPosition
   → @/shared/utils/imageUtils
   → clsx
@@ -948,7 +958,7 @@ shared\utils\markdownUtils.js:
 ### DEPENDENCY STATISTICS
 
 Most imported files (relative imports):
-  ./AdminFormStyles: 9 imports
+  ./AdminFormStyles: 10 imports
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
   ./StatusIcon: 2 imports
@@ -962,12 +972,12 @@ Most imported files (relative imports):
   ./EncounterManager: 1 imports
   ./TacticalMapManager: 1 imports
   ../config/imageManifest.json: 1 imports
+  ./MarkdownEditorImpl: 1 imports
   ./EventTagger: 1 imports
   ./ImageLibraryModal: 1 imports
   ./useMapData: 1 imports
   ./components/MapCanvas: 1 imports
   ./utils/mapNavigation: 1 imports
-  ./layers/MapMarkers: 1 imports
 
 
 Files with most outgoing dependencies:
@@ -981,13 +991,13 @@ Files with most outgoing dependencies:
   features\admin\pages\SplitPaneManager.jsx: 9 imports
   features\atlas\components\layers\MapMarkers.jsx: 9 imports
   features\wiki\layouts\SessionLayout.jsx: 9 imports
+  features\admin\components\MarkdownEditorImpl.jsx: 8 imports
   features\navigation\MainLayout.jsx: 8 imports
   features\search\useGlobalSearch.js: 8 imports
+  features\smart-tooltip\components\TooltipCard.jsx: 8 imports
   features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 8 imports
   features\wiki\components\landing\Swimlane.jsx: 8 imports
   features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports
   features\admin\components\TacticalMapManager.jsx: 7 imports
-  features\smart-text\components\EntityEmbed.jsx: 7 imports
-  features\smart-tooltip\components\TooltipCard.jsx: 7 imports
