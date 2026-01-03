@@ -76,7 +76,7 @@ export const transformGraphData = (rawEntities) => {
 
 		// Use pre-fetched icon string via compatibility wrapper
 		const mockAttributes = { icon: entity.icon };
-		const finalIconUrl = resolveImageUrl(mockAttributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
+		const finalIconUrl = resolveImageUrl(mockAttributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.webp`;
 
 		const isMinor = degree < 3;
 

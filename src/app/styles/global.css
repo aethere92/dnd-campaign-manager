@@ -373,22 +373,12 @@
 	color: var(--card-foreground) !important;
 	border-radius: 0.5rem !important; /* rounded-lg */
 	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; /* shadow-lg */
+	padding: 0 !important;
+	margin: 0 !important;
 }
 
 .leaflet-popup-tip {
 	background-color: var(--card) !important;
-}
-
-/* Custom Clean Popup - Removes padding so our internal card fits perfectly */
-.custom-popup-clean .leaflet-popup-content {
-	margin: 0 !important;
-	width: 260px !important;
-	line-height: 1.5 !important;
-}
-
-.custom-popup-clean .leaflet-popup-content-wrapper {
-	padding: 0 !important;
-	overflow: hidden;
 }
 
 /* Marker Popup Cards */
@@ -435,15 +425,22 @@
 	background: transparent !important; /* Let the card handle bg */
 	border: none !important;
 	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+	margin: 0 !important;
 }
 
 .custom-popup-clean .leaflet-popup-content {
 	margin: 0 !important;
 	width: 300px !important; /* Fixed width for consistency */
 	line-height: 1.5 !important;
+	padding: 0 !important;
 }
 
 /* Ensure the tip matches the theme card color */
 .custom-popup-clean .leaflet-popup-tip {
 	background-color: var(--card) !important;
+}
+
+.leaflet-popup-content {
+	padding: 0 !important;
+	margin: 0 !important;
 }

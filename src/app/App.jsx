@@ -11,7 +11,7 @@ function AppContent() {
 
 	// 1. Set global texture
 	useEffect(() => {
-		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.png`;
+		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.webp`;
 		document.documentElement.style.setProperty('--bg-texture', `url('${texturePath}')`);
 	}, []);
 
