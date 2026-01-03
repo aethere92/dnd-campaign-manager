@@ -59,19 +59,6 @@
     ]
   },
   {
-    "category": "Assets > Map_backgrounds",
-    "path": "images/assets/map_backgrounds/",
-    "files": [
-      "brindol_map.webp",
-      "demonic_ambush_map.webp",
-      "drellin_ferry_map.webp",
-      "elsir_vale_map.webp",
-      "strategic_bridge_map.webp",
-      "vraath_courtyard_map.webp",
-      "witchwood_map.webp"
-    ]
-  },
-  {
     "category": "Assets > Map_backgrounds > Backups",
     "path": "images/assets/map_backgrounds/backups/",
     "files": [
@@ -79,6 +66,29 @@
       "drellin_ferry_map.webp",
       "elsir_vale_map (2).webp",
       "elsir_vale_map.webp",
+      "witchwood_map.webp"
+    ]
+  },
+  {
+    "category": "Assets > Map_backgrounds > Campaign_001",
+    "path": "images/assets/map_backgrounds/campaign_001/",
+    "files": [
+      "korinis_city_harbour.webp",
+      "korinis_city_lower_city.webp",
+      "korinis_city_upper_city.webp",
+      "lobart_farm.webp"
+    ]
+  },
+  {
+    "category": "Assets > Map_backgrounds > Campaign_002",
+    "path": "images/assets/map_backgrounds/campaign_002/",
+    "files": [
+      "brindol_map.webp",
+      "demonic_ambush_map.webp",
+      "drellin_ferry_map.webp",
+      "elsir_vale_map.webp",
+      "strategic_bridge_map.webp",
+      "vraath_courtyard_map.webp",
       "witchwood_map.webp"
     ]
   },
