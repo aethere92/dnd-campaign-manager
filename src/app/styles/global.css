@@ -209,6 +209,10 @@
 	border-bottom-color: var(--border);
 }
 
+.prose h3:first-of-type {
+	margin-top: 0 !important;
+}
+
 /* --- SCROLLBAR --- */
 .custom-scrollbar::-webkit-scrollbar {
 	width: 6px;

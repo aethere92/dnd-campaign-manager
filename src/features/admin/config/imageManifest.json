@@ -155,8 +155,19 @@
     ]
   },
   {
-    "category": "Icons > Weapons",
-    "path": "images/icons/weapons/",
+    "category": "Icons > Weapons > Campaign_001",
+    "path": "images/icons/weapons/campaign_001/",
+    "files": [
+      "amulet_of_mualthar.webp",
+      "amulet_of_slow.webp",
+      "boots_of_speed.webp",
+      "ring_of_haste.webp",
+      "tiny_oracle.webp"
+    ]
+  },
+  {
+    "category": "Icons > Weapons > Campaign_002",
+    "path": "images/icons/weapons/campaign_002/",
     "files": [
       "boots_jungle_strider.webp",
       "bracers_spell_plague_icon.webp",
