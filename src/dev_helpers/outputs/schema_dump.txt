@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/3/2026, 8:52:19 AM
+   Generated: 1/3/2026, 5:25:54 PM
 =========================================
 
 -----------------------------------------
@@ -42,35 +42,36 @@ TABLE: campaigns [⚠️ RLS DISABLED]
   id                        uuid            NOT NULL DEFAULT gen_random_uuid()
   campaign_id               integer         NOT NULL 
   name                      text            NOT NULL 
-  metadata                  jsonb            DEFAULT '{}'::jsonb
+  attributes                jsonb            DEFAULT '{}'::jsonb
   created_at                timestamp with time zone  DEFAULT now()
   updated_at                timestamp with time zone  DEFAULT now()
   description               text             
-  map_data                  text             
 
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "campaign_id": 2,
-    "name": "Red Hand of Doom",
-    "metadata": {},
-    "created_at": "2025-11-19T18:55:54.343Z",
-    "updated_at": "2025-11-19T18:55:54.343Z",
-    "description": "Five unlikely heroes journey through lush subtropical forests. Bound by shared purpose or hidden motives, their story begins on a wild path where camaraderie grows with each step.\n",
-    "map_data": null
-  },
-  {
     "id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
     "campaign_id": 1,
     "name": "A quest, a questin' we shall go",
-    "metadata": {
+    "attributes": {
+      "map_data": "CAMPAIGN_01",
       "defaultMap": "korinis_island"
     },
     "created_at": "2025-12-01T12:40:52.720Z",
     "updated_at": "2025-12-01T12:40:52.720Z",
-    "description": "Six adventurers receive mysterious invitations to a strange, distant land. Teaming up with pirates, they battle monsters and navigate treacherous seas toward the enigmatic island of Korinis.",
-    "map_data": "CAMPAIGN_01"
+    "description": "Six adventurers receive mysterious invitations to a strange, distant land. Teaming up with pirates, they battle monsters and navigate treacherous seas toward the enigmatic island of Korinis."
+  },
+  {
+    "id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "campaign_id": 2,
+    "name": "Red Hand of Doom",
+    "attributes": {
+      "campaign_id": 2,
+      "background_image": "images/assets/character_backgrounds/campaign_002/kaedin_bg_horizontal.webp"
+    },
+    "created_at": "2025-11-19T18:55:54.343Z",
+    "updated_at": "2025-11-19T18:55:54.343Z",
+    "description": "Five unlikely heroes journey through lush subtropical forests. Bound by shared purpose or hidden motives, their story begins on a wild path where camaraderie grows with each step.\n"
   }
 ]
 
@@ -109,10 +110,10 @@ TABLE: characters [⚠️ RLS DISABLED]
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Olek",
     "created_at": "2025-11-21T11:18:32.073Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
-    "description": null,
+    "updated_at": "2026-01-03T07:54:02.501Z",
+    "description": "He is devotion given form - an angelic soul clad in armor, kind and just, friendly and ever ready for conversation. Olek is honorable to his very core, though humble in his ways, never one to boast or seek glory. His story is unlike any other. As a child, he and his sibling were raised not by kin of their own kind, but by wolves, deep within the forest. How they came to be there, he cannot say. The memory is lost to time or fate. But the pack was family, and he knew love in fur and fang. Then... [TRUNCATED AT 100 WORDS]",
     "attributes": {
-      "icon": "../../images/assets/character_thumbnails/campaign_002/olek.jpeg",
+      "icon": "images/assets/character_thumbnails/campaign_002/olek.webp",
       "race": "Aasimar",
       "class": "Paladin / Warlock",
       "level": "8",
@@ -172,7 +173,7 @@ TABLE: characters [⚠️ RLS DISABLED]
           "is_private": false
         }
       ],
-      "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg.jpg"
+      "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg_horizontal.webp"
     }
   }
 ]
@@ -261,11 +262,11 @@ TABLE: encounters [⚠️ RLS DISABLED]
     "name": "Demonic Ambush",
     "description": "Pursuing thieves into a dark alley, the party fell into a trap set by Brotherhood agents. A hooded summoner conjured lesser demons while archers rained poison arrows from the rooftops. Kaedin and Loraine held the line against the demonic onslaught, utilizing echoes and vampiric blood magic, while Soshi and Bonnie provided devastating fire support and healing. Despite being poisoned and outnumbered, the party broke the summoner's defenses, killing the demons and forcing the surviving agents to flee.",
     "created_at": "2025-12-25T15:17:42.658Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
+    "updated_at": "2026-01-03T10:51:41.615Z",
     "attributes": {
       "status": "Completed",
-      "map_image": "images/assets/map_backgrounds/demonic_ambush_map.png",
-      "background_image": "images/assets/encounter_backgrounds/campaign_002/demonic_ambush_bg.jpg"
+      "map_image": "images/assets/map_backgrounds/campaign_002/demonic_ambush_map.webp",
+      "background_image": "images/assets/encounter_backgrounds/campaign_002/demonic_ambush_bg.webp"
     }
   }
 ]
@@ -283,20 +284,20 @@ TABLE: entities [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
+    "id": "964c0ea9-838b-46b0-a606-8d109749624f",
     "type": "npc",
-    "name": "Bianca Turiados",
-    "created_at": "2025-11-21T06:46:31.612Z",
+    "name": "Glass",
+    "created_at": "2025-11-20T20:53:50.456Z",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "description": "Last descendant and true Queen of Pelagos. Fey-touched with lightning-veined eyes.\n"
+    "description": "Massive ice elemental who speaks agonizingly slowly except when conducting business.\n"
   },
   {
-    "id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "id": "0b5848ff-04c4-43a9-4b50-398553255624",
     "type": "npc",
-    "name": "Commander Turiados",
-    "created_at": "2025-11-19T21:06:38.740Z",
+    "name": "Kresimir",
+    "created_at": "2025-11-23T17:09:23.293Z",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "description": "7-foot-tall warrior covered in Sahuagin shaman tattoos. Formerly Order of Inos."
+    "description": "A resurrected deity who serves as the admiral and spiritual leader of the Angevin Fleet. He appeared in the shared vision of Olek and Norr, leading a devastating naval assault on the Paladin fortress of Bremen."
   }
 ]
 
@@ -423,28 +424,28 @@ TABLE: locations [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "af13371c-eea3-432b-a188-714861e5591b",
+    "id": "dcdb9c63-0211-4472-8632-acc5068e862f",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Elsir Vale",
-    "description": "A broad region containing both Drellin's Ferry and Brindol, connected by the Dawn Way road system. The Vale is characterized by orchards, grain fields, farmlands, and the winding Elsir River. Once peaceful, it has become the primary theater of the Red Hand's invasion. The region contains the Witchwood, various smaller settlements, and strategic infrastructure like the destroyed bridge. Lord Aaron Jarmaath rules from Brindol, the largest fortified settlement in the area. The Vale's agricultural wealth and strategic position make it a key target for conquest.",
-    "created_at": "2025-11-21T06:39:03.958Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
+    "name": "Brindol",
+    "description": "A city with a dry dock and home to the Lion's Guard. Trade hub that has been raided by pirates. Brindol is a small city in the heart of Elsir Vale. One of the largest settlements in the Vale, Brindol is a prosperous farming community and caravan stopover located along the Dawn Way on the south bank of the Elsir River. Orchards of apple and pear trees follow the river's winding shores, while broad grain fields and farmlands surround the town for miles in all directions. Brindol is the home of Lord Aaron Jarmaath. His small keep and the city... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-21T16:51:32.713Z",
+    "updated_at": "2026-01-03T10:51:00.809Z",
     "attributes": {
-      "type": "region",
-      "map_image": "images/assets/map_backgrounds/elsir_vale_map.png",
-      "map_markers": "[{\"lat\":-699,\"lng\":1091,\"label\":\"Strategic Bridge\",\"category\":\"quest\"},{\"lat\":-879,\"lng\":1068,\"label\":\"Vraath Keep\",\"category\":\"location\"},{\"lat\":-915,\"lng\":1239,\"label\":\"Drellin's Ferry\",\"category\":\"city\"},{\"lat\":-681,\"lng\":1969,\"label\":\"Brindol\",\"category\":\"city\"},{\"lat\":-1235,\"lng\":1447,\"label\":\"Hammerfist Hold\",\"category\":\"city\"}]"
+      "type": "city",
+      "ruler": "Lord Aaron Jarmaath",
+      "map_image": "images/assets/map_backgrounds/campaign_002/brindol_map.webp",
+      "population": "6.700"
     }
   },
   {
-    "id": "9008196f-350a-455f-a339-1adef7f7de70",
+    "id": "bb98adb9-4467-4e04-bb48-343102c0ce5a",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "The Witchwood",
-    "description": "A haunted, lush wetland forest northwest of Drellin's Ferry with subtropical evergreens, oaks, and dense undergrowth interspersed with swampy stretches. The forest is corrupted by blighted magic that creates illusions, distorts perception, and causes travelers to walk in circles. Ancient human druidic spirits are said to haunt its depths. The forest contains Wrath Keep, the Strategic Bridge, and numerous Red Hand encampments. Recent battles have seen massive casualties here, including the destruction of the bridge and several enemy fortifications. The area is infested with dangerous creatures including worgs, hydras, and goblin tribes. Any party moving cross-country without following trails risks... [TRUNCATED AT 100 WORDS]",
-    "created_at": "2025-11-21T06:40:02.968Z",
+    "name": "Lustria",
+    "description": "A distant southern continent featuring deep jungles and lizardfolk populations. Home to Pelagos and the origin point of the Arcane Brotherhood operations that affected Norr and Soshi. The continent experienced sudden jungle regrowth that dramatically altered regional politics and warfare. Contains penal mining colonies where General Lee led slave revolts.",
+    "created_at": "2025-11-21T06:39:21.788Z",
     "updated_at": "2026-01-02T07:53:19.600Z",
     "attributes": {
-      "type": "forest",
-      "map_image": "images/assets/map_backgrounds/witchwood_map.jpg"
+      "type": "region"
     }
   }
 ]
@@ -503,36 +504,38 @@ TABLE: npcs [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
+    "id": "72e9b966-7c3b-5410-b2c7-40966436673b",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Bianca Turiados",
-    "description": "Last descendant and true Queen of Pelagos. Fey-touched with lightning-veined eyes.\n",
-    "created_at": "2025-11-21T06:46:31.612Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
+    "name": "Clyde",
+    "description": "Bonnie's best friend in Feywild. Saved from execution by Bonnie's sacrifice. Captured with Bonnie, sentenced to death. Bonnie chose banishment to spare Clyde's life.",
+    "created_at": "2025-11-09T10:06:04.612Z",
+    "updated_at": "2026-01-03T07:54:57.890Z",
     "attributes": {
-      "icon": "../../images/icons/female.png",
-      "race": "Human",
-      "role": "Ship Co-Commander",
-      "gender": "Female",
+      "icon": "../../images/icons/quickling.webp",
+      "race": "Quickling",
+      "role": "Friend",
+      "gender": "Male",
       "status": "alive",
-      "affinity": "Neutral",
+      "affinity": "Ally",
       "is_active": "true"
     }
   },
   {
-    "id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "id": "964c0ea9-838b-46b0-a606-8d109749624f",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Commander Turiados",
-    "description": "7-foot-tall warrior covered in Sahuagin shaman tattoos. Formerly Order of Inos.",
-    "created_at": "2025-11-19T21:06:38.740Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
+    "name": "Glass",
+    "description": "Massive ice elemental who speaks agonizingly slowly except when conducting business.\n",
+    "created_at": "2025-11-20T20:53:50.456Z",
+    "updated_at": "2026-01-03T07:55:14.287Z",
     "attributes": {
-      "icon": "../../images/icons/male.png",
-      "role": "Ship Co-Commander",
-      "gender": "Male",
+      "icon": "../../images/icons/elemental.webp",
+      "race": "Ice Elemental",
+      "role": "Quartermaster",
+      "gender": "male",
       "status": "alive",
       "affinity": "Neutral",
-      "is_active": "true"
+      "is_active": "true",
+      "personality": "Loyal, methodical, all-business when negotiating."
     }
   }
 ]
@@ -910,6 +913,18 @@ UNION ALL
   sessions.attributes
   FROM sessions;
 
+VIEW: view_active_party
+-----------------------------------------
+ SELECT id,
+  campaign_id,
+  name,
+  (attributes ->> 'race'::text) AS race,
+  (attributes ->> 'class'::text) AS class,
+  (attributes ->> 'icon'::text) AS icon,
+  (attributes ->> 'level'::text) AS level
+  FROM characters c
+  WHERE ((((attributes ->> 'is_active'::text))::boolean = true) OR ((attributes ->> 'is_active'::text) = 'true'::text));
+
 VIEW: entity_complete_view
 -----------------------------------------
  SELECT e.id,
@@ -960,6 +975,25 @@ VIEW: entity_complete_view
   WHERE ((er_event_in.to_entity_id = e.id) AND (e_event.type = 'event'::text) AND (er_event_in.is_bidirectional = false))) macro_events_inner
   GROUP BY macro_events_inner.macro_type) macro_events
   WHERE (macro_events.macro_type IS NOT NULL)) events ON (true));
+
+VIEW: view_session_arcs
+-----------------------------------------
+ SELECT s.id,
+  s.campaign_id,
+  s.title,
+  s.narrative,
+  s.created_at,
+  ((s.attributes ->> 'session_number'::text))::integer AS session_number,
+  (s.attributes ->> 'session_date'::text) AS session_date,
+  (s.attributes ->> 'background_image'::text) AS image,
+  na.id AS arc_id,
+  na.title AS arc_title,
+  na.description AS arc_description,
+  na."order" AS arc_order,
+  na.attributes AS arc_attributes
+  FROM ((sessions s
+  LEFT JOIN entity_relationships er ON (((er.from_entity_id = s.id) AND (er.relationship_type = 'part_of'::text))))
+  LEFT JOIN narrative_arcs na ON ((er.to_entity_id = na.id)));
 
 VIEW: view_campaign_timeline
 -----------------------------------------

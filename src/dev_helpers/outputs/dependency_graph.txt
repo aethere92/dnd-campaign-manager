@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-03 11:06:02
+Generated: 2026-01-03 17:25:51
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -332,62 +332,59 @@ features\campaign\useCampaignSelection.js:
   → react-router-dom
 
 features\dashboard\DashboardPage.jsx:
-  → ./components/ActiveQuestsWidget
-  → ./components/CampaignHero
-  → ./components/LatestSessionCard
-  → ./components/QuickInsights
-  → ./components/RecentEncountersWidget
-  → ./components/RecentSessionsList
+  → ./components/ActiveThreads
+  → ./components/ArchiveTree
+  → ./components/CampaignHeader
+  → ./components/CurrentArcMetadata
+  → ./components/CurrentStoryStack
+  → ./components/InsightsGrid
+  → ./components/PartyWidget
   → @/features/campaign/CampaignContext
   → @/features/dashboard/api/dashboardService
   → @/shared/components/ui/LoadingSpinner
+  → @/shared/components/ui/SectionDivider
   → @tanstack/react-query
 
 features\dashboard\api\dashboardService.js:
-  → @/domain/entity/utils/attributeParser
   → @/shared/api/supabaseClient
 
-features\dashboard\components\ActiveQuestsWidget.jsx:
+features\dashboard\components\ActiveThreads.jsx:
+  → @/features/smart-text/SmartMarkdown
   → clsx
   → lucide-react
   → react-router-dom
 
-features\dashboard\components\CampaignHero.jsx:
-  → clsx
+features\dashboard\components\ArchiveTree.jsx:
+  → lucide-react
+  → react
+  → react-router-dom
+
+features\dashboard\components\CampaignHeader.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → @/shared/components/ui/HighlightBadge
   → lucide-react
 
-features\dashboard\components\LatestSessionCard.jsx:
-  → @/domain/entity/config/entityConfig
-  → @/shared/components/ui/SectionDivider
+features\dashboard\components\CurrentArcMetadata.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → lucide-react
+
+features\dashboard\components\CurrentStoryStack.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → @/shared/utils/textUtils
   → clsx
   → lucide-react
   → react-router-dom
 
-features\dashboard\components\NpcsOfTheMoment.jsx:
-  → @/domain/entity/config/entityConfig
+features\dashboard\components\InsightsGrid.jsx:
   → lucide-react
+
+features\dashboard\components\PartyWidget.jsx:
+  → @/features/smart-text/SmartMarkdown
   → react-router-dom
 
 features\dashboard\components\QuickInsights.jsx:
   → clsx
   → lucide-react
-
-features\dashboard\components\RecentEncountersWidget.jsx:
-  → clsx
-  → lucide-react
-  → react-router-dom
-
-features\dashboard\components\RecentSessionsList.jsx:
-  → clsx
-  → lucide-react
-  → react-router-dom
-
-features\dashboard\components\SessionRecapCard.jsx:
-  → @/domain/entity/components/EntityIcon
-  → @/domain/entity/config/entityConfig
-  → clsx
-  → lucide-react
-  → react-router-dom
 
 features\graph\GraphPage.jsx:
   → ./components/CytoscapeCanvas
@@ -720,6 +717,7 @@ features\wiki\components\landing\Swimlane.jsx:
   → ./EntityGridCard
   → ./EntityPosterCard
   → @/features/smart-text/SmartMarkdown
+  → @/shared/components/ui/HighlightBadge
   → @/shared/components/ui/SectionDivider
   → clsx
   → lucide-react
@@ -947,6 +945,7 @@ shared\components\ui\LoadingSpinner.jsx:
   → lucide-react
 
 shared\components\ui\SectionDivider.jsx:
+  → clsx
   → lucide-react
 
 shared\hooks\useBreadcrumbs.js:
@@ -991,13 +990,14 @@ Most imported files (relative imports):
 Files with most outgoing dependencies:
   features\admin\components\AdminForm.jsx: 17 imports
   app\AppRoutes.jsx: 16 imports
+  features\dashboard\DashboardPage.jsx: 12 imports
   features\wiki\components\EntityMiniMap.jsx: 12 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
-  features\dashboard\DashboardPage.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
   features\admin\pages\SplitPaneManager.jsx: 9 imports
   features\atlas\components\layers\MapMarkers.jsx: 9 imports
+  features\wiki\components\landing\Swimlane.jsx: 9 imports
   features\wiki\layouts\SessionLayout.jsx: 9 imports
   features\admin\components\MarkdownEditorImpl.jsx: 8 imports
   features\navigation\MainLayout.jsx: 8 imports
@@ -1006,6 +1006,5 @@ Files with most outgoing dependencies:
   features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 8 imports
-  features\wiki\components\landing\Swimlane.jsx: 8 imports
   features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports
   features\admin\components\TacticalMapManager.jsx: 7 imports

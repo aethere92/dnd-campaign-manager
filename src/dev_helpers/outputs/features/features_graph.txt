@@ -96,14 +96,14 @@ PARTIAL BUNDLE: FEATURES GRAPH
       api/
         dashboardService.js
       components/
-        ActiveQuestsWidget.jsx
-        CampaignHero.jsx
-        LatestSessionCard.jsx
-        NpcsOfTheMoment.jsx
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
         QuickInsights.jsx
-        RecentEncountersWidget.jsx
-        RecentSessionsList.jsx
-        SessionRecapCard.jsx
     graph/
       GraphPage.jsx
       useGraphView.js
@@ -244,6 +244,7 @@ PARTIAL BUNDLE: FEATURES GRAPH
         DevAdminButton.jsx
         Drawer.jsx
         EmptyState.jsx
+        HighlightBadge.jsx
         LoadingSpinner.jsx
         SectionDivider.jsx
     hooks/

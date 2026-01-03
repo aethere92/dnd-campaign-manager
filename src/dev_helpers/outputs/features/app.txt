@@ -96,14 +96,14 @@ PARTIAL BUNDLE: APP
       api/
         dashboardService.js
       components/
-        ActiveQuestsWidget.jsx
-        CampaignHero.jsx
-        LatestSessionCard.jsx
-        NpcsOfTheMoment.jsx
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
         QuickInsights.jsx
-        RecentEncountersWidget.jsx
-        RecentSessionsList.jsx
-        SessionRecapCard.jsx
     graph/
       GraphPage.jsx
       useGraphView.js
@@ -244,6 +244,7 @@ PARTIAL BUNDLE: APP
         DevAdminButton.jsx
         Drawer.jsx
         EmptyState.jsx
+        HighlightBadge.jsx
         LoadingSpinner.jsx
         SectionDivider.jsx
     hooks/
@@ -603,6 +604,10 @@ export const RouteLoading = ({ text }) => (
 	font-family: var(--font-serif);
 	color: var(--foreground);
 	border-bottom-color: var(--border);
+}
+
+.prose h3:first-of-type {
+	margin-top: 0 !important;
 }
 
 /* --- SCROLLBAR --- */

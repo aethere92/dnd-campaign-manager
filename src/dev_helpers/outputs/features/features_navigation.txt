@@ -96,14 +96,14 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
       api/
         dashboardService.js
       components/
-        ActiveQuestsWidget.jsx
-        CampaignHero.jsx
-        LatestSessionCard.jsx
-        NpcsOfTheMoment.jsx
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
         QuickInsights.jsx
-        RecentEncountersWidget.jsx
-        RecentSessionsList.jsx
-        SessionRecapCard.jsx
     graph/
       GraphPage.jsx
       useGraphView.js
@@ -244,6 +244,7 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
         DevAdminButton.jsx
         Drawer.jsx
         EmptyState.jsx
+        HighlightBadge.jsx
         LoadingSpinner.jsx
         SectionDivider.jsx
     hooks/
@@ -373,7 +374,7 @@ export function useMainLayout() {
 	// -----------------------------------
 
 	const navStructure = useMemo(() => {
-		const hasMapData = !!currentCampaignData?.map_data;
+		const hasMapData = !!currentCampaignData?.attributes?.map_data;
 
 		return NAV_STRUCTURE.map((group) => ({
 			...group,

@@ -96,14 +96,14 @@ PARTIAL BUNDLE: FEATURES WIKI
       api/
         dashboardService.js
       components/
-        ActiveQuestsWidget.jsx
-        CampaignHero.jsx
-        LatestSessionCard.jsx
-        NpcsOfTheMoment.jsx
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
         QuickInsights.jsx
-        RecentEncountersWidget.jsx
-        RecentSessionsList.jsx
-        SessionRecapCard.jsx
     graph/
       GraphPage.jsx
       useGraphView.js
@@ -244,6 +244,7 @@ PARTIAL BUNDLE: FEATURES WIKI
         DevAdminButton.jsx
         Drawer.jsx
         EmptyState.jsx
+        HighlightBadge.jsx
         LoadingSpinner.jsx
         SectionDivider.jsx
     hooks/
@@ -2264,20 +2265,8 @@ import { EntityGridCard } from './EntityGridCard';
 import { EntityPosterCard } from './EntityPosterCard';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
+import { HighlightBadge } from '@/shared/components/ui/HighlightBadge';
 import { clsx } from 'clsx';
-
-// --- SUB-COMPONENT: HIGHLIGHT BADGE ---
-const HighlightBadge = ({ icon: Icon, count, label }) => {
-	if (!count) return null;
-	return (
-		<div className='flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-muted-foreground'>
-			<Icon size={12} className='text-primary/70' />
-			<span>
-				{count} {label}
-			</span>
-		</div>
-	);
-};
 
 // --- SUB-COMPONENT: ARC HERO ---
 const ArcHero = ({ title, description, type, order, stats, isSessionGroup }) => {
@@ -3179,21 +3168,6 @@ export const useEntityContent = (entity, attributes, sections) => {
 		// 2. Construct URL if path exists
 		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
 
-		// Safe JSON Parse for Markers
-		const rawMarkers = getAttributeValue(attributes, 'map_markers');
-		let parsedMarkers = [];
-		if (rawMarkers) {
-			if (typeof rawMarkers === 'object') {
-				parsedMarkers = rawMarkers;
-			} else {
-				try {
-					parsedMarkers = JSON.parse(rawMarkers);
-				} catch (e) {
-					console.warn('Map markers parse error', e);
-				}
-			}
-		}
-
 		// Transform Events
 		const events = transformEvents(entity.events);
 
@@ -3224,7 +3198,7 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mentions,
 			levelUp,
 			mapImageUrl: finalMapUrl,
-			mapMarkers: parsedMarkers,
+			mapMarkers: attributes?.map_markers,
 		};
 	}, [entity, attributes, sections]);
 };

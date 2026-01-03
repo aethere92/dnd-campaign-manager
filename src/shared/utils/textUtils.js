@@ -166,3 +166,16 @@ export const hasMarkdown = (text) => {
 
 	return markdownPatterns.some((pattern) => pattern.test(text));
 };
+
+/**
+ * Formats a YYYY-MM-DD string into a readable date (e.g., "Dec 06, 2025")
+ */
+export const formatDate = (dateString) => {
+	if (!dateString) return '';
+	const options = { year: 'numeric', month: 'short', day: '2-digit' };
+	try {
+		return new Date(dateString).toLocaleDateString('en-US', options);
+	} catch (e) {
+		return dateString;
+	}
+};

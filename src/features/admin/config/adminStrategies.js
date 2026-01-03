@@ -9,6 +9,8 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'campaign_id', label: 'Campaign ID (Integer)', type: 'number' }, // Required by your schema
 			{ key: 'map_data', label: 'Map Data (JSON)', type: 'text' }, // Advanced: map config
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 

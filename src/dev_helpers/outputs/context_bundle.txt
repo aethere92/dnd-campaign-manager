@@ -102,14 +102,14 @@ INSTRUCTIONS FOR AI:
       api/
         dashboardService.js
       components/
-        ActiveQuestsWidget.jsx
-        CampaignHero.jsx
-        LatestSessionCard.jsx
-        NpcsOfTheMoment.jsx
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
         QuickInsights.jsx
-        RecentEncountersWidget.jsx
-        RecentSessionsList.jsx
-        SessionRecapCard.jsx
     graph/
       GraphPage.jsx
       useGraphView.js
@@ -250,6 +250,7 @@ INSTRUCTIONS FOR AI:
         DevAdminButton.jsx
         Drawer.jsx
         EmptyState.jsx
+        HighlightBadge.jsx
         LoadingSpinner.jsx
         SectionDivider.jsx
     hooks/
@@ -654,6 +655,10 @@ export const RouteLoading = ({ text }) => (
 	font-family: var(--font-serif);
 	color: var(--foreground);
 	border-bottom-color: var(--border);
+}
+
+.prose h3:first-of-type {
+	margin-top: 0 !important;
 }
 
 /* --- SCROLLBAR --- */
@@ -2401,15 +2406,15 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 
 /**
  * Helper to determine which column stores JSON attributes.
- * Campaigns use 'metadata', others use 'attributes'.
+ * Now standardized: All entities use 'attributes'.
  */
-const getAttrColumn = (type) => (type === 'campaign' ? 'metadata' : 'attributes');
+const getAttrColumn = (type) => 'attributes';
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Prepare Core Payload
+	// 1. Prepare Core Payload (Columns that actually exist on the table)
 	const corePayload = {};
 
 	// Parent ID logic
@@ -2435,15 +2440,9 @@ export const createEntity = async (type, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// If the strategy says this attribute is actually a top-level column (like 'map_data'), extract it.
-		// Otherwise, put it in the JSON blob.
-		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
-
-		if (isSpecialColumn) {
-			corePayload[attr.name] = attr.value;
-		} else {
-			jsonStorage[attr.name] = attr.value;
-		}
+		// UNIFIED LOGIC: All attributes go to JSON storage.
+		// No more special handling for map_data or metadata columns.
+		jsonStorage[attr.name] = attr.value;
 	});
 
 	// Assign the JSON blob to the correct column
@@ -2451,7 +2450,7 @@ export const createEntity = async (type, data) => {
 
 	console.log('[Admin] Creating DB Optimized:', corePayload);
 
-	// 3. Insert Single Row (No secondary table inserts needed)
+	// 3. Insert Single Row
 	const { data: insertedRecord, error: insertError } = await supabase
 		.from(strategy.primaryTable)
 		.insert(corePayload)
@@ -2482,13 +2481,8 @@ export const updateEntity = async (type, id, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
-
-		if (isSpecialColumn) {
-			corePayload[attr.name] = attr.value;
-		} else {
-			jsonStorage[attr.name] = attr.value;
-		}
+		// UNIFIED LOGIC: All attributes go to JSON storage.
+		jsonStorage[attr.name] = attr.value;
 	});
 
 	// Overwrite the JSON column completely (Single Source of Truth)
@@ -2525,7 +2519,6 @@ export const fetchRawEntity = async (type, id) => {
 	}
 
 	// 3. Transform JSONB -> Attribute List Array
-	// This maintains compatibility with the Generic Admin Forms
 	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
@@ -2534,10 +2527,13 @@ export const fetchRawEntity = async (type, id) => {
 		attributesList.push({ name: key, value: value });
 	});
 
-	// B. Add "Pseudo-Attributes" (Columns that look like attributes in the UI)
+	// B. Add "Pseudo-Attributes" (Legacy/Fallback)
+	// This ensures that if you have other specific columns defined in strategies
+	// that AREN'T in the JSON, they still get picked up.
+	// Since we dropped 'map_data' column, this loop will naturally skip it,
+	// and step A will pick it up from JSON.
 	if (strategy.defaultAttributes) {
 		strategy.defaultAttributes.forEach((defAttr) => {
-			// If it's a real column on the table (not in JSON), add it to list
 			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
 				attributesList.push({
 					name: defAttr.key,
@@ -2550,6 +2546,7 @@ export const fetchRawEntity = async (type, id) => {
 	return { ...formData, attributesList };
 };
 
+// ... Rest of the file (Relationships, Child Rows, etc.) remains unchanged ...
 /**
  * Fetch all relationships for a specific entity
  */
@@ -2618,9 +2615,6 @@ export const upsertQuestObjective = async (objectiveData) => {
 
 export const deleteEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-	// No need to delete from 'attributes' table manually anymore.
-	// FK constraints or triggers should handle cleanup,
-	// but pure 'delete' is sufficient as attributes are now columns.
 	const { error: mainError } = await supabase.from(strategy.primaryTable).delete().eq('id', id);
 	if (mainError) throw mainError;
 	return true;
@@ -2632,10 +2626,6 @@ export const updateRelationship = async (relId, updates) => {
 	return true;
 };
 
-/**
- * REPLACED with Database RPC
- * Performs server-side search of entities and sessions.
- */
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
@@ -2730,11 +2720,6 @@ export const upsertEncounterAction = async (actionData) => {
 	return data;
 };
 
-/**
- * REPLACED with Database RPC
- * Scans the database for text matches using a server-side function.
- * Moves logic from O(N) JavaScript loop to O(1) DB Query.
- */
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
 	if (!findTerm.trim()) return [];
 
@@ -2749,10 +2734,6 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 	}
 
 	const regex = new RegExp(findTerm.trim(), 'gi');
-
-	// We still use JS for the "proposal" string generation because it's purely UI logic
-	// and doing Regex Replace in SQL can be brittle with flags.
-	// But the heavy lifting (filtering 10k rows) is now done by Postgres.
 	return data.map((row) => ({
 		table: row.table_name,
 		id: row.record_id,
@@ -5329,14 +5310,15 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 					<MapContainer
 						crs={L.CRS.Simple}
 						bounds={dimensions}
-						zoom={0}
+						zoom={-2}
+						minZoom={-3}
 						attributionControl={false}
 						style={{ height: '100%', width: '100%', background: 'var(--background)' }}>
 						<MapController bounds={dimensions} />
 						<MapClickHandler onMapClick={handleMapClick} />
 						<ImageOverlay url={imageUrl} bounds={dimensions} />
 
-						{markers.map((m, i) => (
+						{markers?.map((m, i) => (
 							<Marker
 								key={i}
 								position={[m.lat, m.lng]}
@@ -5415,6 +5397,8 @@ export const ADMIN_STRATEGIES = {
 		defaultAttributes: [
 			{ key: 'campaign_id', label: 'Campaign ID (Integer)', type: 'number' }, // Required by your schema
 			{ key: 'map_data', label: 'Map Data (JSON)', type: 'text' }, // Advanced: map config
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -5666,8 +5650,29 @@ export const IMAGE_LIBRARY = [
     ]
   },
   {
-    "category": "Assets > Map_backgrounds",
-    "path": "images/assets/map_backgrounds/",
+    "category": "Assets > Map_backgrounds > Backups",
+    "path": "images/assets/map_backgrounds/backups/",
+    "files": [
+      "brindol_map.webp",
+      "drellin_ferry_map.webp",
+      "elsir_vale_map (2).webp",
+      "elsir_vale_map.webp",
+      "witchwood_map.webp"
+    ]
+  },
+  {
+    "category": "Assets > Map_backgrounds > Campaign_001",
+    "path": "images/assets/map_backgrounds/campaign_001/",
+    "files": [
+      "korinis_city_harbour.webp",
+      "korinis_city_lower_city.webp",
+      "korinis_city_upper_city.webp",
+      "lobart_farm.webp"
+    ]
+  },
+  {
+    "category": "Assets > Map_backgrounds > Campaign_002",
+    "path": "images/assets/map_backgrounds/campaign_002/",
     "files": [
       "brindol_map.webp",
       "demonic_ambush_map.webp",
@@ -5676,14 +5681,6 @@ export const IMAGE_LIBRARY = [
       "strategic_bridge_map.webp",
       "vraath_courtyard_map.webp",
       "witchwood_map.webp"
-    ]
-  },
-  {
-    "category": "Assets > Map_backgrounds > Backups",
-    "path": "images/assets/map_backgrounds/backups/",
-    "files": [
-      "drellin_ferry_map.webp",
-      "elsir_vale_map.webp"
     ]
   },
   {
@@ -5759,8 +5756,19 @@ export const IMAGE_LIBRARY = [
     ]
   },
   {
-    "category": "Icons > Weapons",
-    "path": "images/icons/weapons/",
+    "category": "Icons > Weapons > Campaign_001",
+    "path": "images/icons/weapons/campaign_001/",
+    "files": [
+      "amulet_of_mualthar.webp",
+      "amulet_of_slow.webp",
+      "boots_of_speed.webp",
+      "ring_of_haste.webp",
+      "tiny_oracle.webp"
+    ]
+  },
+  {
+    "category": "Icons > Weapons > Campaign_002",
+    "path": "images/icons/weapons/campaign_002/",
     "files": [
       "boots_jungle_strider.webp",
       "bracers_spell_plague_icon.webp",
@@ -6489,11 +6497,11 @@ export function useMapData() {
 	const { campaignData } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const currentMapKey = searchParams.get('map') || 'world_map';
+	const currentMapKey = searchParams.get('map') || 'world_maps'; // Default updated to match typical ID
 
 	const mapConfig = useMemo(() => {
-		const sourceData = campaignData?.map_data || null;
-		return getMapConfig(currentMapKey, sourceData);
+		// If campaignData comes from API/DB, ensure it matches the { maps: { ... } } structure
+		return getMapConfig(currentMapKey, campaignData);
 	}, [currentMapKey, campaignData]);
 
 	const viewData = useMemo(() => {
@@ -6509,6 +6517,7 @@ export function useMapData() {
 		];
 
 		// --- MARKER FLATTENING ---
+		// The modular structure still passes 'annotations' as an object with categories
 		const markers = [];
 		if (annotations) {
 			Object.entries(annotations).forEach(([categoryKey, category]) => {
@@ -6525,7 +6534,7 @@ export function useMapData() {
 			});
 		}
 
-		// 3. Process Areas
+		// Process Areas
 		const mapAreas = [];
 		if (areas) {
 			Object.values(areas).forEach((category) => {
@@ -6539,7 +6548,7 @@ export function useMapData() {
 		}
 
 		return {
-			config: metadata,
+			config: metadata, // mapConfig.metadata usually contains path, sizes, etc.
 			bounds,
 			markers,
 			sessions: paths || [],
@@ -6556,7 +6565,7 @@ export function useMapData() {
 		data: viewData,
 		currentMapKey,
 		navigateToMap,
-		isLoading: false, // FIX: Since we're using static data, never loading
+		isLoading: false,
 	};
 }
 
@@ -8226,7 +8235,7 @@ export const getCampaigns = async () => {
 			campaign_id,
             name, 
             description,
-			map_data,
+			attributes,
             characters:entity_complete_view(name)
         `
 		)
@@ -8359,69 +8368,86 @@ import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getDashboardData } from '@/features/dashboard/api/dashboardService';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
-import { CampaignHero } from './components/CampaignHero';
-import { LatestSessionCard } from './components/LatestSessionCard';
-import { RecentSessionsList } from './components/RecentSessionsList';
-import { QuickInsights } from './components/QuickInsights';
-import { ActiveQuestsWidget } from './components/ActiveQuestsWidget';
-import { RecentEncountersWidget } from './components/RecentEncountersWidget';
+import { SectionDivider, SectionDividerVertical } from '@/shared/components/ui/SectionDivider';
+
+import { CampaignHeader } from './components/CampaignHeader';
+import { CurrentArcMetadata } from './components/CurrentArcMetadata';
+import { CurrentStoryStack } from './components/CurrentStoryStack';
+import { ArchiveTree } from './components/ArchiveTree';
+import { InsightsGrid } from './components/InsightsGrid';
+import { PartyWidget } from './components/PartyWidget';
+import { ActiveThreads } from './components/ActiveThreads';
 
 export default function DashboardView() {
 	const { campaignId } = useCampaign();
 
 	const { data, isLoading } = useQuery({
-		queryKey: ['dashboard', campaignId],
+		queryKey: ['dashboard_final', campaignId],
 		queryFn: () => getDashboardData(campaignId),
 		enabled: !!campaignId,
 		staleTime: 1000 * 60 * 5,
 	});
 
-	if (isLoading) {
-		return (
-			<div className='h-full flex items-center justify-center bg-background'>
-				<LoadingSpinner text='Loading campaign overview...' size='lg' />
-			</div>
-		);
-	}
+	if (isLoading) return <LoadingSpinner text='Opening chronicle...' fullScreen />;
 
-	const { campaign, sessions, stats, activeQuests, recentEncounters } = data || {};
-	const latestSession = sessions?.[0];
-	const olderSessions = sessions?.slice(1, 4) || [];
+	const { campaign, counts, currentArc, otherArcs, activeParty, activeThreads, stats } = data || {};
+
+	const currentSessions = currentArc?.sessions || [];
+	const latestSession = currentArc?.latestSession;
+	const otherCurrentSessions = currentSessions.filter((s) => s.id !== latestSession?.id);
 
 	return (
 		<div className='h-full overflow-y-auto bg-background custom-scrollbar'>
-			{/* Hero Section */}
-			<CampaignHero campaign={campaign} stats={stats} />
-
-			{/* Main Content Grid */}
-			<div className='max-w-[1600px] mx-auto px-4 sm:px-6 pb-12'>
-				{/* Latest Session - Full Width Feature */}
-				{latestSession && (
-					<div className='mb-8 -mt-10 relative z-10'>
-						<LatestSessionCard session={latestSession} />
-					</div>
-				)}
-
-				{/* Two Column Layout */}
-				<div className='grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8'>
-					{/* Left Column - Recent Sessions & Insights */}
-					<div className='lg:col-span-2 space-y-6'>
-						{/* Quick Insights */}
-						<QuickInsights stats={stats} sessions={sessions} />
-
-						{/* Recent Sessions */}
-						{olderSessions.length > 0 && <RecentSessionsList sessions={olderSessions} />}
+			<div className='p-6 pb-12'>
+				<div className='max-w-[1600px] mx-auto space-y-12'>
+					{/* ROW 1: Campaign Hero */}
+					<div className='w-full'>
+						<CampaignHeader campaign={campaign} counts={counts} />
 					</div>
 
-					{/* Right Column - Widgets */}
-					<div className='space-y-6'>
-						{/* Active Quests */}
-						{activeQuests && activeQuests.length > 0 && <ActiveQuestsWidget quests={activeQuests} />}
+					{/* ROW 2: Main Story Area */}
+					<div className='grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch lg:min-h-[600px]'>
+						{/* Left: Metadata */}
+						<div className='lg:col-span-3'>
+							<CurrentArcMetadata arc={currentArc?.data} />
+						</div>
 
-						{/* Recent Encounters */}
-						{recentEncounters && recentEncounters.length > 0 && (
-							<RecentEncountersWidget encounters={recentEncounters} />
-						)}
+						{/* Middle: Unified Story Stack */}
+						<div className='lg:col-span-6'>
+							<CurrentStoryStack latestSession={latestSession} previousSessions={otherCurrentSessions} />
+						</div>
+
+						{/* Right: Archive */}
+						<div className='lg:col-span-3'>
+							<ArchiveTree arcs={otherArcs} />
+						</div>
+					</div>
+
+					<SectionDivider className='my-6 mb-12' />
+
+					{/* ROW 3: Status Panel */}
+					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[500px]'>
+						<div
+							className='absolute inset-0 opacity-[0.03] pointer-events-none'
+							style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+						/>
+
+						<div className='grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10 h-full'>
+							{/* Insights */}
+							<div className='lg:col-span-5 h-full'>
+								<InsightsGrid stats={stats} counts={counts} />
+							</div>
+
+							{/* Party */}
+							<div className='lg:col-span-4 h-full'>
+								<PartyWidget party={activeParty} />
+							</div>
+
+							{/* Threads (Simple List) */}
+							<div className='lg:col-span-3 h-full'>
+								<ActiveThreads quests={activeThreads} />
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -8433,703 +8459,573 @@ export default function DashboardView() {
 
 --- FILE: features\dashboard\api\dashboardService.js ---
 import { supabase } from '@/shared/api/supabaseClient';
-import { getAttributeValue, parseAttributes } from '@/domain/entity/utils/attributeParser';
 
-/**
- * Fetch comprehensive dashboard data
- */
 export const getDashboardData = async (campaignId) => {
-	// 1. Fetch Campaign Info
-	const { data: campaign } = await supabase.from('campaigns').select('*').eq('id', campaignId).single();
+	const [{ data: campaign }, { data: stats }, { data: activeParty }, { data: activeThreads }, { data: sessions }] =
+		await Promise.all([
+			supabase.from('campaigns').select('*').eq('id', campaignId).single(),
+			supabase.from('view_dashboard_stats').select('*').eq('campaign_id', campaignId).single(),
+			supabase.from('view_active_party').select('*').eq('campaign_id', campaignId),
+			supabase.from('view_active_quests').select('*').eq('campaign_id', campaignId),
+			supabase
+				.from('view_session_arcs')
+				.select('*')
+				.eq('campaign_id', campaignId)
+				.order('session_number', { ascending: false }),
+		]);
 
-	// 2. Fetch Sessions with Events (Get ALL sessions, we'll sort by session_number later)
-	const { data: sessions, error: sessionError } = await supabase
-		.from('sessions')
-		.select(
-			`
-            id, 
-            title, 
-            narrative,
-            created_at,
-            events:session_events (
-                id, 
-                title, 
-                description, 
-                event_type, 
-                event_order
-            )
-        `
-		)
-		.eq('campaign_id', campaignId);
+	const allSessions = sessions || [];
+	const latestSession = allSessions[0];
 
-	if (sessionError) throw sessionError;
-	if (!sessions || sessions.length === 0) {
-		return { campaign, sessions: [], stats: {}, activeQuests: [], recentEncounters: [] };
-	}
+	// 1. Sort Threads (Quests)
+	// Order: Main > Personal > Side, then by Priority
+	const sortedThreads = sortThreads(activeThreads || []);
 
-	// 3. Fetch Attributes for Sessions
-	const sessionIds = sessions.map((s) => s.id);
-	const { data: attributes } = await supabase
-		.from('attributes')
-		.select('entity_id, name, value')
-		.in('entity_id', sessionIds);
+	// 2. Identify Current Arc
+	const currentArcId = latestSession?.arc_id;
 
-	const attrMap = new Map();
-	(attributes || []).forEach((attr) => {
-		if (!attrMap.has(attr.entity_id)) attrMap.set(attr.entity_id, []);
-		attrMap.get(attr.entity_id).push(attr);
-	});
+	// 3. Group Sessions into Arcs
+	const arcMap = new Map();
 
-	// 4. Process Sessions with Attributes
-	const processedSessions = sessions.map((s) => {
-		const rawAttrs = attrMap.get(s.id) || [];
-		const attrs = rawAttrs.reduce((acc, c) => {
-			acc[c.name] = c.value;
-			return acc;
-		}, {});
+	allSessions.forEach((session) => {
+		if (!session.arc_id) return;
 
-		const num = getAttributeValue(attrs, ['session_number', 'Session']) || 999;
-		const date = getAttributeValue(attrs, ['session_date', 'Date']) || '';
-		const summary = getAttributeValue(attrs, 'Summary');
-
-		return {
-			...s,
-			name: s.title,
-			session_number: Number(num),
-			session_date: date,
-			description: summary || s.narrative?.substring(0, 200) || '',
-			attributes: attrs,
-			events: (s.events || []).sort((a, b) => (a.event_order || 0) - (b.event_order || 0)),
-		};
-	});
-
-	// Sort by session_number DESC to get proper latest session
-	processedSessions.sort((a, b) => b.session_number - a.session_number);
-
-	// Take only the 10 most recent for display
-	const recentSessions = processedSessions.slice(0, 10);
-
-	// 5. Fetch Event Relationships (for tags/mentions)
-	const allEvents = recentSessions.flatMap((s) => s.events);
-	const eventIds = allEvents.map((e) => e.id);
-
-	if (eventIds.length > 0) {
-		const { data: relationships } = await supabase
-			.from('entity_relationships')
-			.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
-			.in('from_entity_id', eventIds);
-
-		const relMap = new Map();
-		(relationships || []).forEach((rel) => {
-			if (!relMap.has(rel.from_entity_id)) relMap.set(rel.from_entity_id, []);
-			relMap.get(rel.from_entity_id).push(rel);
-		});
-
-		recentSessions.forEach((session) => {
-			session.events.forEach((event) => {
-				event.relationships = relMap.get(event.id) || [];
-			});
-		});
-	}
-
-	// 6. Fetch Direct Session Relationships (only for recent sessions)
-	const recentSessionIds = recentSessions.map((s) => s.id);
-	const { data: sessionRels } = await supabase
-		.from('entity_relationships')
-		.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
-		.in('from_entity_id', recentSessionIds);
-
-	const sessionRelMap = new Map();
-	(sessionRels || []).forEach((rel) => {
-		if (!sessionRelMap.has(rel.from_entity_id)) sessionRelMap.set(rel.from_entity_id, []);
-		sessionRelMap.get(rel.from_entity_id).push(rel.target);
-	});
-
-	// 7. Extract Mentions by Type
-	recentSessions.forEach((session) => {
-		const mentionsMap = new Map();
-
-		// Add direct session relationships
-		const directRels = sessionRelMap.get(session.id) || [];
-		directRels.forEach((target) => {
-			if (!target) return;
-			mentionsMap.set(target.id, {
-				id: target.id,
-				name: target.name,
-				type: target.type,
-			});
-		});
-
-		// Add event relationships
-		session.events.forEach((evt) => {
-			if (evt.relationships) {
-				evt.relationships.forEach((rel) => {
-					if (!rel.target) return;
-					mentionsMap.set(rel.target.id, {
-						id: rel.target.id,
-						name: rel.target.name,
-						type: rel.target.type,
-					});
-				});
-			}
-		});
-
-		// Group by type
-		const groups = {};
-		mentionsMap.forEach((item) => {
-			const type = item.type?.toLowerCase() || 'other';
-			if (!groups[type]) groups[type] = [];
-			groups[type].push(item);
-		});
-
-		// Sort each group alphabetically
-		Object.keys(groups).forEach((key) => {
-			groups[key].sort((a, b) => a.name.localeCompare(b.name));
-		});
-
-		session.mentions = groups;
-	});
-
-	// 8. **FIX: Fetch ALL quests with their attributes properly**
-	const { data: allQuestsRaw } = await supabase
-		.from('entities')
-		.select('id, name')
-		.eq('campaign_id', campaignId)
-		.eq('type', 'quest')
-		.order('name');
-
-	// Fetch attributes for all quests
-	let questAttributes = [];
-	if (allQuestsRaw && allQuestsRaw.length > 0) {
-		const questIds = allQuestsRaw.map((q) => q.id);
-		const { data: attrs } = await supabase
-			.from('attributes')
-			.select('entity_id, name, value')
-			.in('entity_id', questIds);
-		questAttributes = attrs || [];
-	}
-
-	// Map attributes to quests
-	const questAttrMap = new Map();
-	questAttributes.forEach((attr) => {
-		if (!questAttrMap.has(attr.entity_id)) questAttrMap.set(attr.entity_id, []);
-		questAttrMap.get(attr.entity_id).push(attr);
-	});
-
-	// Process quests with parsed attributes
-	const allQuests = (allQuestsRaw || []).map((q) => {
-		const rawAttrs = questAttrMap.get(q.id) || [];
-		const attrs = parseAttributes(rawAttrs); // Convert array to object
-		return {
-			...q,
-			attributes: attrs,
-			rawAttributes: rawAttrs, // Keep raw for potential debugging
-		};
-	});
-
-	// Fetch objectives for active quests (for display widget)
-	const activeQuests = allQuests.filter((q) => {
-		const status = getAttributeValue(q.attributes, ['status', 'Status', 'quest status', 'Quest Status']) || '';
-		const statusLower = status.toLowerCase();
-		return (
-			statusLower.includes('active') ||
-			statusLower.includes('in progress') ||
-			statusLower.includes('progress') ||
-			statusLower === '' ||
-			statusLower === 'pending'
-		);
-	});
-
-	// Fetch objectives for the active quests we'll display
-	const displayQuestIds = activeQuests.slice(0, 5).map((q) => q.id);
-	let questObjectives = [];
-	if (displayQuestIds.length > 0) {
-		const { data: objectives } = await supabase
-			.from('quest_objectives')
-			.select('*')
-			.in('quest_id', displayQuestIds)
-			.order('order_index', { ascending: true });
-		questObjectives = objectives || [];
-	}
-
-	// Attach objectives to quests
-	const displayedActiveQuests = activeQuests.slice(0, 5).map((q) => ({
-		...q,
-		objectives: questObjectives.filter((obj) => obj.quest_id === q.id),
-	}));
-
-	// **FIX: Count completed quests with proper attribute parsing**
-	const completedQuestsCount = allQuests.filter((q) => {
-		const status = getAttributeValue(q.attributes, ['status', 'Status', 'quest status', 'Quest Status']) || '';
-		const statusLower = status.toLowerCase();
-		return (
-			statusLower.includes('complete') ||
-			statusLower.includes('finish') ||
-			statusLower.includes('done') ||
-			statusLower.includes('success')
-		);
-	}).length;
-
-	// 9. Fetch Recent Encounters with Session Info
-	const { data: recentEncounters } = await supabase
-		.from('entities')
-		.select('id, name, created_at')
-		.eq('campaign_id', campaignId)
-		.eq('type', 'encounter')
-		.order('created_at', { ascending: false });
-	// .limit(5);
-
-	// Attach session info to encounters via relationships
-	if (recentEncounters && recentEncounters.length > 0) {
-		const encounterIds = recentEncounters.map((e) => e.id);
-
-		const { data: encounterRels } = await supabase
-			.from('entity_relationships')
-			.select(`from_entity_id, target:entities!to_entity_id ( id, name, type )`)
-			.in('from_entity_id', encounterIds)
-			.eq('entities.type', 'session');
-
-		const encounterSessionMap = new Map();
-		(encounterRels || []).forEach((rel) => {
-			if (rel.target && rel.target.type === 'session') {
-				encounterSessionMap.set(rel.from_entity_id, rel.target);
-			}
-		});
-
-		// Fetch session numbers for those sessions
-		const encounterSessionIds = Array.from(encounterSessionMap.values()).map((s) => s.id);
-		if (encounterSessionIds.length > 0) {
-			const { data: sessionAttrs } = await supabase
-				.from('attributes')
-				.select('entity_id, value')
-				.in('entity_id', encounterSessionIds)
-				.or('name.eq.session_number,name.eq.Session');
-
-			const sessionNumMap = new Map();
-			(sessionAttrs || []).forEach((a) => sessionNumMap.set(a.entity_id, a.value));
-
-			encounterSessionMap.forEach((session) => {
-				session.session_number = sessionNumMap.get(session.id);
+		if (!arcMap.has(session.arc_id)) {
+			arcMap.set(session.arc_id, {
+				id: session.arc_id,
+				title: session.arc_title,
+				description: session.arc_description,
+				order: session.arc_order,
+				attributes: session.arc_attributes,
+				sessions: [],
 			});
 		}
+		arcMap.get(session.arc_id).sessions.push(session);
+	});
 
-		// Attach to encounters
-		recentEncounters.forEach((enc) => {
-			enc.session = encounterSessionMap.get(enc.id) || null;
-		});
-	}
+	// 4. Format Arcs
+	const fullTimeline = Array.from(arcMap.values()).sort((a, b) => (b.order || 0) - (a.order || 0));
+	const currentArcData = fullTimeline.find((a) => a.id === currentArcId);
+	const otherArcs = fullTimeline.filter((a) => a.id !== currentArcId);
 
-	// 10. Calculate Stats
-	const stats = {
-		totalSessions: processedSessions.length,
-		totalEncounters: recentEncounters?.length || 0,
-		uniqueNPCs: 0,
-		uniqueLocations: 0,
-		completedQuests: completedQuestsCount,
-		activeQuests: activeQuests.length,
-		mostActiveSession: null,
-		topLocation: null,
-		topNPC: null,
+	const counts = {
+		sessions: allSessions.length,
+		arcs: fullTimeline.length,
+		quests: sortedThreads.length,
+		npcs: stats?.unique_npcs || 0,
+		locations: stats?.unique_locations || 0,
+		encounters: stats?.total_encounters || 0,
 	};
 
-	// Count unique entities across recent sessions
-	const npcSet = new Set();
-	const locationSet = new Set();
-	let maxEvents = 0;
-	let mostActiveSession = null;
-
-	recentSessions.forEach((session) => {
-		// Track most active session
-		if (session.events.length > maxEvents) {
-			maxEvents = session.events.length;
-			mostActiveSession = {
-				id: session.id,
-				title: session.title,
-				eventCount: session.events.length,
-			};
-		}
-
-		// Count unique entities
-		if (session.mentions) {
-			(session.mentions.npc || []).forEach((npc) => npcSet.add(npc.id));
-			(session.mentions.location || []).forEach((loc) => locationSet.add(loc.id));
-		}
-	});
-
-	stats.uniqueNPCs = npcSet.size;
-	stats.uniqueLocations = locationSet.size;
-	stats.mostActiveSession = mostActiveSession;
-
-	// Find most mentioned NPC/Location
-	const npcMentions = new Map();
-	const locationMentions = new Map();
-
-	recentSessions.forEach((session) => {
-		if (session.mentions) {
-			(session.mentions.npc || []).forEach((npc) => {
-				npcMentions.set(npc.id, {
-					name: npc.name,
-					count: (npcMentions.get(npc.id)?.count || 0) + 1,
-				});
-			});
-			(session.mentions.location || []).forEach((loc) => {
-				locationMentions.set(loc.id, {
-					name: loc.name,
-					count: (locationMentions.get(loc.id)?.count || 0) + 1,
-				});
-			});
-		}
-	});
-
-	// Get top NPC
-	let topNPC = { name: 'None', mentions: 0 };
-	npcMentions.forEach((data) => {
-		if (data.count > topNPC.mentions) {
-			topNPC = { name: data.name, mentions: data.count };
-		}
-	});
-	stats.topNPC = topNPC;
-
-	// Get top Location
-	let topLocation = { name: 'None', visits: 0 };
-	locationMentions.forEach((data) => {
-		if (data.count > topLocation.visits) {
-			topLocation = { name: data.name, visits: data.count };
-		}
-	});
-	stats.topLocation = topLocation;
-
-	// 11. Return Complete Dashboard Data
 	return {
 		campaign,
-		sessions: recentSessions,
 		stats,
-		activeQuests: displayedActiveQuests,
-		recentEncounters: recentEncounters.slice(0, 5) || [],
+		activeParty: activeParty || [],
+		activeThreads: sortedThreads, // Return the sorted list
+		currentArc: {
+			data: currentArcData,
+			latestSession,
+			sessions: currentArcData?.sessions || [],
+		},
+		otherArcs,
+		progression: allSessions,
+		counts,
 	};
 };
+
+// --- Helper: Sorting Logic ---
+function sortThreads(quests) {
+	// Lower number = Higher importance
+	const typeWeights = {
+		'main quest': 1,
+		'personal quest': 2,
+		'side quest': 3,
+	};
+
+	const priorityWeights = {
+		critical: 1,
+		high: 2,
+		medium: 3,
+		normal: 4,
+		low: 5,
+	};
+
+	return [...quests].sort((a, b) => {
+		const typeA = (a.attributes?.type || '').toLowerCase();
+		const typeB = (b.attributes?.type || '').toLowerCase();
+
+		// 1. Primary Sort: Type
+		// Default to 4 (bottom) if type is unknown
+		const wA = typeWeights[typeA] || 4;
+		const wB = typeWeights[typeB] || 4;
+
+		if (wA !== wB) return wA - wB;
+
+		// 2. Secondary Sort: Priority
+		const prioA = (a.attributes?.priority || '').toLowerCase();
+		const prioB = (b.attributes?.priority || '').toLowerCase();
+
+		const pA = priorityWeights[prioA] || 4; // Default to Normal
+		const pB = priorityWeights[prioB] || 4;
+
+		return pA - pB;
+	});
+}
 
 --- END OF features\dashboard\api\dashboardService.js ---
 
---- FILE: features\dashboard\components\ActiveQuestsWidget.jsx ---
-import { Link } from 'react-router-dom';
-import { Scroll, CheckCircle2, Circle } from 'lucide-react';
+--- FILE: features\dashboard\components\ActiveThreads.jsx ---
+import { useNavigate } from 'react-router-dom';
+import { Scroll } from 'lucide-react';
 import { clsx } from 'clsx';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
-export const ActiveQuestsWidget = ({ quests }) => {
+export const ActiveThreads = ({ quests }) => {
+	const navigate = useNavigate();
+	// Show more quests now that we have height
+	const displayQuests = quests?.slice(0, 12) || [];
+
+	const handleRowClick = (id, e) => {
+		// If the user clicked a link inside SmartMarkdown, don't trigger the row click
+		if (e.target.tagName === 'A' || e.target.closest('a')) {
+			return;
+		}
+		navigate(`/wiki/quest/${id}`);
+	};
+
 	return (
-		<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
-			<div className='px-4 py-3 bg-muted border-b border-border flex items-center justify-between'>
-				<h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
-					<Scroll size={14} className='text-blue-600' />
-					Active Quests
-				</h3>
-				<span className='text-xs font-bold text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border'>
-					{quests.length}
-				</span>
-			</div>
-			<div className='divide-y divide-border'>
-				{quests.map((quest) => {
-					const progress = quest.objectives
-						? {
-								completed: quest.objectives.filter((o) => o.status === 'completed').length,
-								total: quest.objectives.length,
-						  }
-						: null;
+		<div className='h-full flex flex-col'>
+			<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6 shrink-0'>
+				Active Threads
+			</h4>
+
+			<div className='space-y-3 overflow-y-auto custom-scrollbar flex-1 min-h-0 pr-2'>
+				{displayQuests.map((quest) => {
+					const priority = (quest.attributes?.priority || 'normal').toLowerCase();
+					const isMain = (quest.attributes?.type || '').toLowerCase() === 'main quest';
+
+					let prioColor = 'text-muted-foreground/50';
+					if (priority === 'critical') prioColor = 'text-red-500';
+					else if (priority === 'high') prioColor = 'text-orange-500';
+					else if (isMain) prioColor = 'text-amber-500';
 
 					return (
-						<Link
+						<div
 							key={quest.id}
-							to={`/wiki/quest/${quest.id}`}
-							className='block px-4 py-3 hover:bg-muted/50 transition-colors group'>
-							<div className='flex items-start gap-3'>
-								<Circle size={16} className='text-blue-500 shrink-0 mt-0.5' strokeWidth={2.5} />
-								<div className='flex-1 min-w-0'>
-									<p className='text-sm font-semibold text-foreground group-hover:text-primary transition-colors mb-1'>
-										{quest.name}
-									</p>
-									{progress && (
-										<div className='flex items-center gap-2'>
-											<div className='flex-1 h-1.5 bg-muted rounded-full overflow-hidden border border-border'>
-												<div
-													className='h-full bg-blue-500/100 transition-all'
-													style={{ width: `${(progress.completed / progress.total) * 100}%` }}
-												/>
-											</div>
-											<span className='text-xs font-medium text-muted-foreground whitespace-nowrap'>
-												{progress.completed}/{progress.total}
-											</span>
-										</div>
+							onClick={(e) => handleRowClick(quest.id, e)}
+							className='block group py-1 cursor-pointer relative'>
+							<div className='flex gap-1 min-w-0 justify-between'>
+								<div
+									className={clsx(
+										'text-sm font-serif font-medium leading-snug group-hover:text-primary transition-colors line-clamp-1 truncate',
+										isMain ? 'text-foreground font-bold' : 'text-foreground/80'
+									)}>
+									{/* Now safe to use because parent is a div, not an <a> */}
+									<SmartMarkdown>{quest.title || quest.name}</SmartMarkdown>
+								</div>
+
+								<div className='flex items-center justify-between'>
+									<span />
+									{priority !== 'normal' && priority !== 'low' && (
+										<span className={clsx('text-[9px] uppercase font-bold tracking-wider', prioColor)}>{priority}</span>
 									)}
 								</div>
 							</div>
-						</Link>
+						</div>
 					);
 				})}
-			</div>
-		</div>
-	);
-};
 
---- END OF features\dashboard\components\ActiveQuestsWidget.jsx ---
-
---- FILE: features\dashboard\components\CampaignHero.jsx ---
-import { Sparkles, Calendar, MapPin, Users, Swords } from 'lucide-react';
-import { clsx } from 'clsx';
-
-export const CampaignHero = ({ campaign, stats }) => {
-	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
-
-	return (
-		<div className='relative overflow-hidden border-b border-border bg-background'>
-			{/* Gradient Backdrop - Subtler in dark mode */}
-			<div className='absolute inset-0 bg-gradient-to-br from-amber-500/10 via-background to-background' />
-
-			{/* Background Pattern */}
-			<div
-				className='absolute inset-0 opacity-[0.05]'
-				style={{
-					backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-					backgroundSize: '40px 40px',
-				}}
-			/>
-
-			<div className='relative max-w-[1600px] mx-auto px-4 sm:px-6 py-12 md:py-16'>
-				<div className='flex flex-col md:flex-row md:items-center gap-8'>
-					{/* Logo */}
-					<div className='shrink-0'>
-						<img src={logoPath} alt='Campaign Logo' className='h-32 md:h-40 drop-shadow-2xl opacity-100' />
+				{quests?.length === 0 && (
+					<div className='text-center py-6 text-muted-foreground'>
+						<Scroll size={24} className='mx-auto mb-2 opacity-20' />
+						<p className='text-xs italic'>No active threads recorded.</p>
 					</div>
-
-					{/* Campaign Info */}
-					<div className='flex-1'>
-						<div className='flex items-center gap-3 mb-3'>
-							<Sparkles size={20} className='text-primary' />
-							<span className='text-xs font-bold uppercase tracking-widest text-primary'>Campaign Chronicle</span>
-						</div>
-						<h1 className='text-4xl md:text-5xl font-serif font-bold text-foreground mb-4 leading-tight'>
-							{campaign?.name || 'Your Campaign'}
-						</h1>
-						{campaign?.description && (
-							<p className='text-sm md:text-base text-muted-foreground leading-relaxed max-w-2xl'>
-								{campaign.description}
-							</p>
-						)}
-					</div>
-
-					{/* Stats Grid */}
-					<div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-2 gap-4 md:gap-6'>
-						<StatBadge icon={Calendar} label='Sessions' value={stats?.totalSessions || 0} />
-						<StatBadge icon={Swords} label='Encounters' value={stats?.totalEncounters || 0} />
-						<StatBadge icon={Users} label='NPCs Met' value={stats?.uniqueNPCs || 0} />
-						<StatBadge icon={MapPin} label='Locations' value={stats?.uniqueLocations || 0} />
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-};
-
-const StatBadge = ({ icon: Icon, label, value }) => (
-	<div className='bg-card/50 backdrop-blur-sm border border-border rounded-lg p-4 shadow-sm hover:border-accent/50 transition-colors'>
-		<div className='flex items-center gap-2 text-muted-foreground mb-1'>
-			<Icon size={14} strokeWidth={2.5} />
-			<span className='text-[10px] font-bold uppercase tracking-wider'>{label}</span>
-		</div>
-		<p className='text-3xl font-serif font-bold text-foreground'>{value}</p>
-	</div>
-);
-
---- END OF features\dashboard\components\CampaignHero.jsx ---
-
---- FILE: features\dashboard\components\LatestSessionCard.jsx ---
-import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight, Sparkles, MapPin, Users, Scroll, Swords } from 'lucide-react';
-import { clsx } from 'clsx';
-import { getEntityConfig } from '@/domain/entity/config/entityConfig';
-import { SectionDivider } from '@/shared/components/ui/SectionDivider';
-
-export const LatestSessionCard = ({ session }) => {
-	const keyEvents = session.events
-		?.filter((e) => {
-			const isImportant = [
-				'combat',
-				'quest_started',
-				'quest_progressed',
-				'npc_encountered',
-				'location_discovered',
-			].includes(e.event_type?.toLowerCase());
-			return isImportant || (e.relationships && e.relationships.length > 2);
-		})
-		.slice(0, 5);
-
-	const mentionsByType = session.mentions
-		? Object.entries(session.mentions)
-				.map(([type, items]) => ({ type, items: items.slice(0, 5), total: items.length }))
-				.filter((g) => g.total > 0)
-		: [];
-
-	return (
-		<div className='bg-background border-2 border-primary/20 rounded-2xl shadow-2xl overflow-hidden hover:border-primary/40 transition-all group'>
-			{/* Header Banner */}
-			<div className='bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/50'>
-				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-3'>
-						<div className='p-2 bg-primary/10 rounded-lg border border-primary/20'>
-							<Sparkles size={20} className='text-primary' />
-						</div>
-						<div>
-							<span className='text-xs font-bold uppercase tracking-widest text-primary block mb-0.5'>
-								Latest Session
-							</span>
-							<div className='flex items-center gap-2'>
-								<span className='text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
-									Session {session.session_number - 1}
-								</span>
-								{session.session_date && (
-									<span className='text-xs text-muted-foreground flex items-center gap-1'>
-										<Calendar size={11} strokeWidth={2.5} />
-										{session.session_date}
-									</span>
-								)}
-							</div>
-						</div>
-					</div>
-					<Link
-						to={`/wiki/session/${session.id}`}
-						className='flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-sm rounded-lg border border-primary/20 transition-all group-hover:translate-x-1'>
-						Full Details
-						<ArrowRight size={16} />
-					</Link>
-				</div>
-			</div>
-
-			{/* Content */}
-			<div className='p-6'>
-				{/* Title & Description */}
-				<h2 className='text-3xl font-serif font-bold text-foreground mb-3 leading-tight'>{session.name}</h2>
-				{session.description && (
-					<p className='text-sm text-muted-foreground leading-relaxed mb-6 max-w-3xl'>{session.description}</p>
 				)}
-
-				<SectionDivider />
-
-				{/* Two Column Layout */}
-				<div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6'>
-					{/* Left: Key Events */}
-					<div>
-						<h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2'>
-							<Swords size={14} className='text-primary' />
-							Key Moments
-						</h3>
-						{keyEvents && keyEvents.length > 0 ? (
-							<div className='space-y-3'>
-								{keyEvents.map((event) => (
-									<div key={event.id} className='flex items-start gap-3 group/item'>
-										<div className='shrink-0 w-2 h-2 rounded-full bg-primary/40 mt-2 group-hover/item:bg-primary transition-colors' />
-										<div className='flex-1 min-w-0'>
-											<p className='text-sm font-semibold text-foreground leading-snug mb-0.5'>{event.title}</p>
-											{event.description && (
-												<p className='text-xs text-muted-foreground line-clamp-2 leading-relaxed'>
-													{event.description}
-												</p>
-											)}
-										</div>
-									</div>
-								))}
-							</div>
-						) : (
-							<p className='text-xs text-muted-foreground italic'>No events recorded</p>
-						)}
-					</div>
-
-					{/* Right: Entity Mentions */}
-					<div>
-						<h3 className='text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2'>
-							<Users size={14} className='text-primary' />
-							Entities Encountered
-						</h3>
-						<div className='space-y-4'>
-							{mentionsByType.map(({ type, items, total }) => {
-								const config = getEntityConfig(type);
-								const Icon = config.icon;
-
-								return (
-									<div key={type}>
-										<div className='flex items-center gap-2 mb-2'>
-											<Icon size={12} className={clsx(config.tailwind.text, 'opacity-70')} strokeWidth={2.5} />
-											<span className='text-xs font-bold text-muted-foreground uppercase tracking-wider'>
-												{config.labelPlural}
-											</span>
-											<span className='text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border'>
-												{total}
-											</span>
-										</div>
-										<div className='flex flex-wrap gap-1.5 ml-5'>
-											{items.map((entity, idx) => (
-												<Link
-													key={`${entity.id}-${idx}`}
-													to={`/wiki/${type}/${entity.id}`}
-													className={clsx(
-														'text-xs font-semibold px-2 py-1 rounded border transition-all hover:shadow-sm',
-														config.tailwind.bg,
-														config.tailwind.text,
-														config.tailwind.border,
-														'hover:scale-105'
-													)}>
-													{entity.name}
-												</Link>
-											))}
-											{total > 5 && <span className='text-xs text-muted-foreground px-2 py-1'>+{total - 5} more</span>}
-										</div>
-									</div>
-								);
-							})}
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 	);
 };
 
---- END OF features\dashboard\components\LatestSessionCard.jsx ---
+--- END OF features\dashboard\components\ActiveThreads.jsx ---
 
---- FILE: features\dashboard\components\NpcsOfTheMoment.jsx ---
+--- FILE: features\dashboard\components\ArchiveTree.jsx ---
 import { Link } from 'react-router-dom';
-import { Users } from 'lucide-react';
-import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { ChevronRight, Folder } from 'lucide-react';
+import { useState } from 'react';
 
-export const NpcsOfTheMoment = ({ npcs }) => {
-	if (!npcs?.length) return null;
-	const config = getEntityConfig('npc');
+export const ArchiveTree = ({ arcs }) => {
+	return (
+		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col'>
+			<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2'>
+				<Folder size={12} /> Campaign Archive
+			</h4>
+
+			<div className='flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4'>
+				{arcs.map((arc) => (
+					<ArchiveArcItem key={arc.id} arc={arc} />
+				))}
+				{arcs.length === 0 && (
+					<div className='text-xs text-muted-foreground italic opacity-50 text-center py-8'>
+						No archived arcs found.
+					</div>
+				)}
+			</div>
+		</div>
+	);
+};
+
+const ArchiveArcItem = ({ arc }) => {
+	// MODIFICATION: Default to true
+	const [isOpen, setIsOpen] = useState(true);
 
 	return (
-		<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
-			<div className='px-4 py-3 bg-muted border-b border-border flex items-center justify-between'>
-				<h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
-					<Users size={14} className='text-primary' />
-					NPCs of the Moment
-				</h3>
+		<div>
+			<button
+				onClick={() => setIsOpen(!isOpen)}
+				className='w-full flex items-center justify-between text-left group mb-1 hover:bg-muted/50 p-1 rounded transition-colors'>
+				<div className='min-w-0'>
+					<div className='text-[10px] font-bold uppercase text-muted-foreground group-hover:text-primary'>
+						Arc {arc.order}
+					</div>
+					<div className='text-sm font-serif font-bold truncate text-foreground'>{arc.title}</div>
+				</div>
+				<ChevronRight size={14} className={`text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+			</button>
+
+			{isOpen && (
+				<div className='pl-3 ml-1 border-l border-border mt-1 space-y-1 mb-3 animate-in slide-in-from-top-1 duration-200'>
+					{arc.sessions.map((session) => (
+						<Link
+							key={session.id}
+							to={`/wiki/session/${session.id}`}
+							className='block text-xs py-1.5 px-2 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 truncate transition-colors'>
+							<span className='font-bold mr-2 opacity-50'>#{session.session_number}</span>
+							{session.title}
+						</Link>
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\dashboard\components\ArchiveTree.jsx ---
+
+--- FILE: features\dashboard\components\CampaignHeader.jsx ---
+import { Layers, Scroll, MapPin, Users, Swords, Crown, Box } from 'lucide-react';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { HighlightBadge } from '@/shared/components/ui/HighlightBadge';
+
+export const CampaignHeader = ({ campaign, counts }) => {
+	return (
+		<div className='flex flex-col gap-4 mb-12 items-center text-center max-w-4xl mx-auto'>
+			{/* 1. Meta Label */}
+			<div className='flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-primary/70'>
+				<Crown size={12} />
+				Campaign Chronicle
 			</div>
-			<div className='p-4 flex flex-wrap gap-3'>
-				{npcs.map((npc) => (
-					<Link key={npc.id} to={`/wiki/npc/${npc.id}`} className={`flex flex-col items-center gap-2 group w-20`}>
-						<div
-							className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-transform group-hover:scale-110 ${config.tailwind.bg} ${config.tailwind.border}`}>
-							<span className='text-lg font-bold'>{npc.name[0]}</span>
+
+			{/* 2. Title */}
+			<h1 className='text-5xl md:text-7xl font-serif font-bold text-foreground tracking-tight leading-none'>
+				{campaign?.name}
+			</h1>
+
+			{/* 3. Description (Limited width for readability) */}
+			<div className='max-w-2xl text-base text-muted-foreground leading-relaxed font-serif'>
+				<SmartMarkdown components={{ p: 'span' }}>{campaign?.description || 'No description available.'}</SmartMarkdown>
+			</div>
+
+			{/* 4. Stats Row (Using Swimlane Badge Style) */}
+			<div className='flex flex-wrap justify-center gap-6 mt-4'>
+				<HighlightBadge icon={Layers} count={counts?.sessions} label='Sessions' />
+				<HighlightBadge icon={Crown} count={counts?.arcs} label='Story Arcs' />
+				<HighlightBadge icon={Users} count={counts?.npcs} label='NPCs' />
+				<HighlightBadge icon={MapPin} count={counts?.locations} label='Locations' />
+				<HighlightBadge icon={Swords} count={counts?.encounters} label='Encounters' />
+				<HighlightBadge icon={Scroll} count={counts?.quests} label='Quests' />
+			</div>
+
+			<div className='w-24 h-px bg-border mt-6' />
+		</div>
+	);
+};
+
+--- END OF features\dashboard\components\CampaignHeader.jsx ---
+
+--- FILE: features\dashboard\components\CurrentArcMetadata.jsx ---
+import { Map, Crown } from 'lucide-react'; // Swapped icons
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+
+export const CurrentArcMetadata = ({ arc }) => {
+	return (
+		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col shadow-sm relative overflow-hidden group'>
+			{/* Subtle background decoration - Moved to bottom right and changed to Map for adventure feel */}
+			<div className='absolute -right-10 -bottom-10 text-muted-foreground/5 pointer-events-none group-hover:scale-110 transition-transform duration-1000'>
+				<Map size={180} />
+			</div>
+
+			{/* Metadata Header */}
+			<div className='relative z-10 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary mb-6'>
+				<span className='flex items-center gap-1.5'>
+					{/* Changed Hash to Layers for a "Story Layer" feel */}
+					{arc?.order ? `# Arc ${arc.order}` : 'Current Arc'}
+				</span>
+				<span className='text-muted-foreground/30'>|</span>
+				<span className='text-muted-foreground'>{arc?.attributes?.type || 'Major Arc'}</span>
+			</div>
+
+			{/* Title */}
+			<h2 className='relative z-10 text-4xl font-serif font-bold text-foreground mb-6 leading-tight'>
+				{arc?.title || 'Uncategorized Stories'}
+			</h2>
+
+			{/* Description */}
+			<div className='relative z-10 text-sm text-muted-foreground leading-relaxed font-serif prose prose-invert max-w-none'>
+				<SmartMarkdown components={{ p: 'span' }}>
+					{arc?.description || 'No description available for this narrative arc.'}
+				</SmartMarkdown>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\dashboard\components\CurrentArcMetadata.jsx ---
+
+--- FILE: features\dashboard\components\CurrentStoryStack.jsx ---
+import { Link } from 'react-router-dom';
+import { ArrowRight, Calendar, BookOpen, Clock, History } from 'lucide-react';
+import { formatDate } from '@/shared/utils/textUtils';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { clsx } from 'clsx';
+
+export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
+	if (!latestSession) return null;
+
+	const bgImage = latestSession.image;
+	// If no previous sessions, the list section is hidden and hero takes full height
+	const hasHistory = previousSessions && previousSessions.length > 0;
+
+	return (
+		<div className='flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden transition-all duration-500 group'>
+			{/* --- TOP SECTION: LATEST SESSION (HERO) --- */}
+			{/* flex-1 ensures it fills all available space not taken by the list */}
+			<div className='relative flex-1 min-h-[300px] flex flex-col overflow-hidden'>
+				{/* Background Image Layer */}
+				<div className='absolute inset-0 z-0'>
+					{bgImage ? (
+						<img
+							src={bgImage}
+							alt='Session Background'
+							className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-105'
+						/>
+					) : (
+						<div className='w-full h-full bg-muted/20 flex items-center justify-center'>
+							<BookOpen size={64} className='text-muted-foreground/10' />
 						</div>
-						<span className='text-[10px] font-bold text-center text-foreground group-hover:text-primary transition-colors line-clamp-2'>
-							{npc.name}
+					)}
+					{/* Gradient: Darkens text area, fades to transparent at top */}
+					<div className='absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent opacity-90' />
+				</div>
+
+				{/* Content Layer */}
+				<div className='relative z-10 p-8 flex flex-col h-full'>
+					{/* Badge */}
+					<div className='flex justify-between items-start mb-auto'>
+						<div className='bg-primary/90 text-primary-foreground backdrop-blur-md px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest hover:shadow-sm'>
+							Latest Session
+						</div>
+						{/* Date */}
+						<div className='text-[10px] font-bold text-muted-foreground bg-background/50 backdrop-blur px-2 py-1 rounded border border-white/10 flex items-center gap-1'>
+							<Calendar size={10} />
+							{formatDate(latestSession.session_date)}
+						</div>
+					</div>
+
+					{/* Text Content */}
+					<div className='mt-8'>
+						<span className='text-xs font-bold text-primary mb-1 block uppercase tracking-wider'>
+							Session {latestSession.session_number}
 						</span>
-					</Link>
+
+						<h3 className='text-3xl md:text-4xl font-serif font-bold text-foreground mb-4 leading-tight group-hover:text-primary transition-colors'>
+							{latestSession.title}
+						</h3>
+
+						<div className='text-sm text-muted-foreground line-clamp-6 mb-6 prose prose-invert max-w-none leading-relaxed'>
+							<SmartMarkdown components={{ p: 'span' }}>
+								{latestSession.narrative || 'No summary recorded.'}
+							</SmartMarkdown>
+						</div>
+
+						<Link
+							to={`/wiki/session/${latestSession.id}`}
+							className='inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20'>
+							Read Full Log <ArrowRight size={14} />
+						</Link>
+					</div>
+				</div>
+			</div>
+
+			{/* --- BOTTOM SECTION: PREVIOUS CHAPTERS (LIST) --- */}
+			{/* flex-none ensures it only takes the space it needs */}
+			{hasHistory && (
+				<div className='flex-none bg-muted/30 border-t border-border p-6'>
+					<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2'>
+						<History size={12} /> Previous Chapters
+					</h4>
+
+					<div className='space-y-1'>
+						{previousSessions.map((session) => (
+							<Link
+								key={session.id}
+								to={`/wiki/session/${session.id}`}
+								className='flex items-center gap-3 p-2 rounded hover:bg-background/80 hover:shadow-sm border border-transparent hover:border-border transition-all group/item'>
+								<span className='text-xs font-bold text-muted-foreground group-hover/item:text-primary w-8 text-center shrink-0 bg-background border border-border rounded px-1 py-0.5'>
+									#{session.session_number}
+								</span>
+								<span className='text-sm font-medium truncate text-foreground/80 group-hover/item:text-foreground flex-1'>
+									{session.title}
+								</span>
+								<span className='text-[10px] text-muted-foreground/50 whitespace-nowrap'>
+									{formatDate(session.session_date)}
+								</span>
+							</Link>
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\dashboard\components\CurrentStoryStack.jsx ---
+
+--- FILE: features\dashboard\components\InsightsGrid.jsx ---
+import { Trophy, Map, Users, Swords, Skull, Crown } from 'lucide-react';
+
+export const InsightsGrid = ({ stats, counts }) => {
+	// Helper to safely get data
+	const getVal = (obj, key) => obj?.[key];
+
+	const insights = [
+		{
+			label: 'Most Active Session',
+			value: getVal(stats?.most_active_session, 'title'),
+			sub: `${getVal(stats?.most_active_session, 'event_count') || 0} Events`,
+			icon: Trophy,
+			color: 'text-yellow-500',
+		},
+		{
+			label: 'Top Location',
+			value: getVal(stats?.top_location, 'name'),
+			sub: `${getVal(stats?.top_location, 'visits') || 0} Visits`,
+			icon: Map,
+			color: 'text-emerald-500',
+		},
+		{
+			label: 'Most Met NPC',
+			value: getVal(stats?.top_npc, 'name'),
+			sub: `${getVal(stats?.top_npc, 'mentions') || 0} Mentions`,
+			icon: Users,
+			color: 'text-blue-500',
+		},
+		{
+			label: 'Campaign Duration',
+			value: `${counts?.sessions || 0} Sessions`,
+			sub: 'Total Playtime',
+			icon: Crown,
+			color: 'text-purple-500',
+		},
+		{
+			label: 'Battles Fought',
+			value: stats?.total_encounters || 0,
+			sub: 'Total Encounters',
+			icon: Swords,
+			color: 'text-red-500',
+		},
+	];
+
+	return (
+		<div className='h-full'>
+			<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-6 flex items-center gap-2'>
+				Campaign Insights
+			</h4>
+			<div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-8'>
+				{insights.map((item, idx) => (
+					<div key={idx} className='flex items-start gap-4 group'>
+						<div className={`mt-1 p-2 rounded-lg bg-muted/30 group-hover:bg-muted/50 transition-colors ${item.color}`}>
+							<item.icon size={18} />
+						</div>
+						<div className='min-w-0 flex-1'>
+							<p className='text-xl font-serif font-bold text-foreground truncate leading-none mb-1'>
+								{item.value || 'N/A'}
+							</p>
+							<p className='text-[10px] font-bold uppercase text-muted-foreground/60'>{item.label}</p>
+						</div>
+					</div>
 				))}
 			</div>
 		</div>
 	);
 };
 
---- END OF features\dashboard\components\NpcsOfTheMoment.jsx ---
+--- END OF features\dashboard\components\InsightsGrid.jsx ---
+
+--- FILE: features\dashboard\components\PartyWidget.jsx ---
+import { useNavigate } from 'react-router-dom';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+export const PartyWidget = ({ party }) => {
+	const navigate = useNavigate();
+	if (!party || party.length === 0) return null;
+
+	const handleRowClick = (id, e) => {
+		// Integrity Check:
+		// If the user clicked an actual link inside the SmartMarkdown (e.g. the name),
+		// we stop the row click so we don't navigate twice or conflict.
+		if (e.target.closest('a')) return;
+
+		navigate(`/wiki/character/${id}`);
+	};
+
+	return (
+		<div className='h-full flex flex-col'>
+			<div className='flex items-center justify-between mb-6 shrink-0'>
+				<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>The Party</h4>
+			</div>
+
+			<div className='space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 pr-2'>
+				{party.map((char) => (
+					<div
+						key={char.id}
+						onClick={(e) => handleRowClick(char.id, e)}
+						className='flex items-center gap-3 group cursor-pointer'>
+						<div className='w-10 h-10 rounded-full bg-muted border border-border overflow-hidden shrink-0 group-hover:border-primary/50 transition-colors shadow-sm'>
+							{char.icon ? (
+								<img src={char.icon} alt={char.name} className='w-full h-full object-cover' />
+							) : (
+								<div className='w-full h-full flex items-center justify-center text-sm font-serif font-bold text-muted-foreground'>
+									{char.name[0]}
+								</div>
+							)}
+						</div>
+
+						<div className='min-w-0'>
+							<div className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
+								{/* SmartMarkdown is now safe here because parent is a div */}
+								<SmartMarkdown>{char.name}</SmartMarkdown>
+							</div>
+							<div className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground truncate opacity-60 group-hover:opacity-100 transition-opacity'>
+								{char.race} • {char.class} • Lvl {char.level}
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\dashboard\components\PartyWidget.jsx ---
 
 --- FILE: features\dashboard\components\QuickInsights.jsx ---
 import { TrendingUp, Trophy, Map, Users } from 'lucide-react';
@@ -9206,236 +9102,6 @@ export const QuickInsights = ({ stats, sessions }) => {
 };
 
 --- END OF features\dashboard\components\QuickInsights.jsx ---
-
---- FILE: features\dashboard\components\RecentEncountersWidget.jsx ---
-import { Link } from 'react-router-dom';
-import { Swords, Skull } from 'lucide-react';
-import { clsx } from 'clsx';
-
-export const RecentEncountersWidget = ({ encounters }) => {
-	return (
-		<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
-			<div className='px-4 py-3 bg-muted border-b border-border flex items-center justify-between'>
-				<h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
-					<Swords size={14} className='text-red-600' />
-					Recent Encounters
-				</h3>
-				<span className='text-xs font-bold text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border'>
-					{encounters.length}
-				</span>
-			</div>
-			<div className='divide-y divide-border'>
-				{encounters.map((encounter) => (
-					<Link
-						key={encounter.id}
-						to={`/wiki/encounter/${encounter.id}`}
-						className='block px-4 py-3 hover:bg-muted/50 transition-colors group'>
-						<div className='flex items-start gap-3'>
-							<Skull size={16} className='text-red-500 shrink-0 mt-0.5' strokeWidth={2.5} />
-							<div className='flex-1 min-w-0'>
-								<p className='text-sm font-semibold text-foreground group-hover:text-primary transition-colors mb-0.5'>
-									{encounter.name}
-								</p>
-								{encounter.session && (
-									<p className='text-xs text-muted-foreground'>Session {encounter.session.session_number - 1}</p>
-								)}
-							</div>
-						</div>
-					</Link>
-				))}
-			</div>
-		</div>
-	);
-};
-
---- END OF features\dashboard\components\RecentEncountersWidget.jsx ---
-
---- FILE: features\dashboard\components\RecentSessionsList.jsx ---
-import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight } from 'lucide-react';
-import { clsx } from 'clsx';
-
-export const RecentSessionsList = ({ sessions }) => {
-	return (
-		<div>
-			<h2 className='text-xl font-serif font-bold text-foreground mb-4'>Recent Sessions</h2>
-			<div className='space-y-3'>
-				{sessions.map((session) => (
-					<Link
-						key={session.id}
-						to={`/wiki/session/${session.id}`}
-						className='block bg-background border border-border rounded-lg p-4 hover:border-primary/30 hover:shadow-md transition-all group'>
-						<div className='flex items-start justify-between gap-4'>
-							<div className='flex-1 min-w-0'>
-								<div className='flex items-center gap-2 mb-1'>
-									<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
-										Session {session.session_number - 1}
-									</span>
-									{session.session_date && (
-										<span className='text-xs text-muted-foreground flex items-center gap-1'>
-											<Calendar size={10} />
-											{session.session_date}
-										</span>
-									)}
-								</div>
-								<h3 className='text-base font-serif font-bold text-foreground mb-1 group-hover:text-primary transition-colors'>
-									{session.name}
-								</h3>
-								{session.description && (
-									<p className='text-xs text-muted-foreground line-clamp-2 leading-relaxed'>{session.description}</p>
-								)}
-								{session.events && session.events.length > 0 && (
-									<div className='mt-2 flex items-center gap-2 text-xs text-muted-foreground'>
-										<span>{session.events.length} events</span>
-										{session.mentions && (
-											<>
-												<span>•</span>
-												<span>
-													{Object.values(session.mentions).reduce((sum, arr) => sum + arr.length, 0)} entities
-												</span>
-											</>
-										)}
-									</div>
-								)}
-							</div>
-							<ArrowRight
-								size={18}
-								className='shrink-0 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-1 transition-all'
-							/>
-						</div>
-					</Link>
-				))}
-			</div>
-		</div>
-	);
-};
-
---- END OF features\dashboard\components\RecentSessionsList.jsx ---
-
---- FILE: features\dashboard\components\SessionRecapCard.jsx ---
-import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight, Swords, Users, MapPin, Scroll } from 'lucide-react';
-import { clsx } from 'clsx';
-import EntityIcon from '@/domain/entity/components/EntityIcon';
-import { getEntityConfig } from '@/domain/entity/config/entityConfig';
-
-export const SessionRecapCard = ({ session, featured = false }) => {
-	// Extract highlights (events with most mentions or specific types)
-	const highlights = session.events
-		?.filter((e) => {
-			const hasMentions = e.relationships?.length > 0;
-			const isImportant = ['combat', 'quest_started', 'quest_progressed', 'npc_encountered'].includes(
-				e.event_type?.toLowerCase()
-			);
-			return hasMentions || isImportant;
-		})
-		.slice(0, 3);
-
-	// Count mentions by type
-	const mentionCounts = session.mentions
-		? Object.entries(session.mentions).reduce((acc, [type, items]) => {
-				if (items.length > 0) {
-					acc.push({ type, count: items.length, items: items.slice(0, 3) });
-				}
-				return acc;
-		  }, [])
-		: [];
-
-	return (
-		<Link
-			to={`/wiki/session/${session.id}`}
-			className={clsx(
-				'block group transition-all',
-				featured
-					? 'bg-background border-2 border-accent/30 rounded-xl p-6 shadow-lg hover:shadow-xl hover:border-accent/50'
-					: 'bg-background border border-border rounded-lg p-4 shadow-sm hover:shadow-md hover:border-accent/30'
-			)}>
-			{/* Header */}
-			<div className='flex items-start justify-between mb-4'>
-				<div className='flex-1 min-w-0'>
-					<div className='flex items-center gap-2 mb-1'>
-						<span
-							className={clsx(
-								'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded',
-								featured
-									? 'bg-accent/10 text-primary border border-accent/30'
-									: 'bg-muted text-muted-foreground border border-border'
-							)}>
-							Session {session.session_number - 1}
-						</span>
-						{session.session_date && (
-							<span className='text-xs text-muted-foreground flex items-center gap-1'>
-								<Calendar size={10} />
-								{session.session_date}
-							</span>
-						)}
-					</div>
-					<h3
-						className={clsx(
-							'font-serif font-bold group-hover:text-primary transition-colors',
-							featured ? 'text-2xl mb-2' : 'text-lg mb-1'
-						)}>
-						{session.name}
-					</h3>
-					{session.description && (
-						<p className={clsx('text-muted-foreground leading-relaxed', featured ? 'text-sm' : 'text-xs line-clamp-2')}>
-							{session.description}
-						</p>
-					)}
-				</div>
-				<ArrowRight
-					size={featured ? 20 : 16}
-					className='shrink-0 text-muted-foreground/70 group-hover:text-primary group-hover:translate-x-1 transition-all'
-				/>
-			</div>
-
-			{/* Highlights */}
-			{highlights && highlights.length > 0 && (
-				<div className='mb-4'>
-					<h4 className='text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1'>
-						<Swords size={10} /> Key Moments
-					</h4>
-					<div className='space-y-1.5'>
-						{highlights.map((event) => (
-							<div key={event.id} className='flex items-start gap-2 text-xs'>
-								<span className='text-primary mt-0.5'>•</span>
-								<span className='text-foreground leading-snug'>{event.title}</span>
-							</div>
-						))}
-					</div>
-				</div>
-			)}
-
-			{/* Mentions Summary */}
-			{mentionCounts.length > 0 && (
-				<div className='flex flex-wrap gap-3 pt-3 border-t border-border/50'>
-					{mentionCounts.map(({ type, count, items }) => {
-						const config = getEntityConfig(type);
-						const Icon = config.icon;
-
-						return (
-							<div key={type} className='flex items-center gap-2'>
-								<div
-									className={clsx(
-										'flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded border',
-										config.tailwind.bg,
-										config.tailwind.text,
-										config.tailwind.border
-									)}>
-									<Icon size={10} />
-									<span className='font-bold'>{count}</span>
-									<span className='opacity-70'>{config.labelPlural}</span>
-								</div>
-							</div>
-						);
-					})}
-				</div>
-			)}
-		</Link>
-	);
-};
-
---- END OF features\dashboard\components\SessionRecapCard.jsx ---
 
 --- FILE: features\graph\GraphPage.jsx ---
 import { useGraphViewModel } from './useGraphView';
@@ -10011,7 +9677,7 @@ export function useMainLayout() {
 	// -----------------------------------
 
 	const navStructure = useMemo(() => {
-		const hasMapData = !!currentCampaignData?.map_data;
+		const hasMapData = !!currentCampaignData?.attributes?.map_data;
 
 		return NAV_STRUCTURE.map((group) => ({
 			...group,
@@ -14286,20 +13952,8 @@ import { EntityGridCard } from './EntityGridCard';
 import { EntityPosterCard } from './EntityPosterCard';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
+import { HighlightBadge } from '@/shared/components/ui/HighlightBadge';
 import { clsx } from 'clsx';
-
-// --- SUB-COMPONENT: HIGHLIGHT BADGE ---
-const HighlightBadge = ({ icon: Icon, count, label }) => {
-	if (!count) return null;
-	return (
-		<div className='flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-muted-foreground'>
-			<Icon size={12} className='text-primary/70' />
-			<span>
-				{count} {label}
-			</span>
-		</div>
-	);
-};
 
 // --- SUB-COMPONENT: ARC HERO ---
 const ArcHero = ({ title, description, type, order, stats, isSessionGroup }) => {
@@ -15201,21 +14855,6 @@ export const useEntityContent = (entity, attributes, sections) => {
 		// 2. Construct URL if path exists
 		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
 
-		// Safe JSON Parse for Markers
-		const rawMarkers = getAttributeValue(attributes, 'map_markers');
-		let parsedMarkers = [];
-		if (rawMarkers) {
-			if (typeof rawMarkers === 'object') {
-				parsedMarkers = rawMarkers;
-			} else {
-				try {
-					parsedMarkers = JSON.parse(rawMarkers);
-				} catch (e) {
-					console.warn('Map markers parse error', e);
-				}
-			}
-		}
-
 		// Transform Events
 		const events = transformEvents(entity.events);
 
@@ -15246,7 +14885,7 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mentions,
 			levelUp,
 			mapImageUrl: finalMapUrl,
-			mapMarkers: parsedMarkers,
+			mapMarkers: attributes?.map_markers,
 		};
 	}, [entity, attributes, sections]);
 };
@@ -17274,6 +16913,21 @@ export default function EmptyState({ icon: Icon, title, description, action, cla
 
 --- END OF shared\components\ui\EmptyState.jsx ---
 
+--- FILE: shared\components\ui\HighlightBadge.jsx ---
+export const HighlightBadge = ({ icon: Icon, count, label }) => {
+	if (!count) return null;
+	return (
+		<div className='flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-muted-foreground'>
+			<Icon size={12} className='text-primary/70' />
+			<span>
+				{count} {label}
+			</span>
+		</div>
+	);
+};
+
+--- END OF shared\components\ui\HighlightBadge.jsx ---
+
 --- FILE: shared\components\ui\LoadingSpinner.jsx ---
 import { Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -17297,14 +16951,25 @@ export default function LoadingSpinner({ size = 'md', text = 'Loading...', class
 
 --- FILE: shared\components\ui\SectionDivider.jsx ---
 import { Diamond } from 'lucide-react';
+import { clsx } from 'clsx';
 
-export const SectionDivider = () => (
-	<div className='flex items-center gap-4 my-6 opacity-80 select-none'>
+export const SectionDivider = ({ className = 'my-6' }) => (
+	<div className={clsx('flex items-center gap-4 opacity-80 select-none', className)}>
 		<div className='h-px bg-border flex-1' />
 		<div className='flex-shrink-0 text-primary/40'>
 			<Diamond size={10} fill='currentColor' />
 		</div>
 		<div className='h-px bg-border flex-1' />
+	</div>
+);
+
+export const SectionDividerVertical = ({ className = 'mx-6 h-full min-h-[50px]' }) => (
+	<div className={clsx('flex flex-col items-center gap-4 opacity-80 select-none', className)}>
+		<div className='w-px bg-border flex-1' />
+		<div className='flex-shrink-0 text-primary/40'>
+			<Diamond size={10} fill='currentColor' />
+		</div>
+		<div className='w-px bg-border flex-1' />
 	</div>
 );
 
@@ -17836,6 +17501,19 @@ export const hasMarkdown = (text) => {
 	];
 
 	return markdownPatterns.some((pattern) => pattern.test(text));
+};
+
+/**
+ * Formats a YYYY-MM-DD string into a readable date (e.g., "Dec 06, 2025")
+ */
+export const formatDate = (dateString) => {
+	if (!dateString) return '';
+	const options = { year: 'numeric', month: 'short', day: '2-digit' };
+	try {
+		return new Date(dateString).toLocaleDateString('en-US', options);
+	} catch (e) {
+		return dateString;
+	}
 };
 
 --- END OF shared\utils\textUtils.js ---

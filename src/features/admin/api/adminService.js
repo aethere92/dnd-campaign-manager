@@ -3,15 +3,15 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 
 /**
  * Helper to determine which column stores JSON attributes.
- * Campaigns use 'metadata', others use 'attributes'.
+ * Now standardized: All entities use 'attributes'.
  */
-const getAttrColumn = (type) => (type === 'campaign' ? 'metadata' : 'attributes');
+const getAttrColumn = (type) => 'attributes';
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Prepare Core Payload
+	// 1. Prepare Core Payload (Columns that actually exist on the table)
 	const corePayload = {};
 
 	// Parent ID logic
@@ -37,15 +37,9 @@ export const createEntity = async (type, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// If the strategy says this attribute is actually a top-level column (like 'map_data'), extract it.
-		// Otherwise, put it in the JSON blob.
-		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
-
-		if (isSpecialColumn) {
-			corePayload[attr.name] = attr.value;
-		} else {
-			jsonStorage[attr.name] = attr.value;
-		}
+		// UNIFIED LOGIC: All attributes go to JSON storage.
+		// No more special handling for map_data or metadata columns.
+		jsonStorage[attr.name] = attr.value;
 	});
 
 	// Assign the JSON blob to the correct column
@@ -53,7 +47,7 @@ export const createEntity = async (type, data) => {
 
 	console.log('[Admin] Creating DB Optimized:', corePayload);
 
-	// 3. Insert Single Row (No secondary table inserts needed)
+	// 3. Insert Single Row
 	const { data: insertedRecord, error: insertError } = await supabase
 		.from(strategy.primaryTable)
 		.insert(corePayload)
@@ -84,13 +78,8 @@ export const updateEntity = async (type, id, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		const isSpecialColumn = strategy.defaultAttributes?.find((def) => def.key === attr.name && type === 'campaign');
-
-		if (isSpecialColumn) {
-			corePayload[attr.name] = attr.value;
-		} else {
-			jsonStorage[attr.name] = attr.value;
-		}
+		// UNIFIED LOGIC: All attributes go to JSON storage.
+		jsonStorage[attr.name] = attr.value;
 	});
 
 	// Overwrite the JSON column completely (Single Source of Truth)
@@ -127,7 +116,6 @@ export const fetchRawEntity = async (type, id) => {
 	}
 
 	// 3. Transform JSONB -> Attribute List Array
-	// This maintains compatibility with the Generic Admin Forms
 	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
@@ -136,10 +124,13 @@ export const fetchRawEntity = async (type, id) => {
 		attributesList.push({ name: key, value: value });
 	});
 
-	// B. Add "Pseudo-Attributes" (Columns that look like attributes in the UI)
+	// B. Add "Pseudo-Attributes" (Legacy/Fallback)
+	// This ensures that if you have other specific columns defined in strategies
+	// that AREN'T in the JSON, they still get picked up.
+	// Since we dropped 'map_data' column, this loop will naturally skip it,
+	// and step A will pick it up from JSON.
 	if (strategy.defaultAttributes) {
 		strategy.defaultAttributes.forEach((defAttr) => {
-			// If it's a real column on the table (not in JSON), add it to list
 			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
 				attributesList.push({
 					name: defAttr.key,
@@ -152,6 +143,7 @@ export const fetchRawEntity = async (type, id) => {
 	return { ...formData, attributesList };
 };
 
+// ... Rest of the file (Relationships, Child Rows, etc.) remains unchanged ...
 /**
  * Fetch all relationships for a specific entity
  */
@@ -220,9 +212,6 @@ export const upsertQuestObjective = async (objectiveData) => {
 
 export const deleteEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-	// No need to delete from 'attributes' table manually anymore.
-	// FK constraints or triggers should handle cleanup,
-	// but pure 'delete' is sufficient as attributes are now columns.
 	const { error: mainError } = await supabase.from(strategy.primaryTable).delete().eq('id', id);
 	if (mainError) throw mainError;
 	return true;
@@ -234,10 +223,6 @@ export const updateRelationship = async (relId, updates) => {
 	return true;
 };
 
-/**
- * REPLACED with Database RPC
- * Performs server-side search of entities and sessions.
- */
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
@@ -332,11 +317,6 @@ export const upsertEncounterAction = async (actionData) => {
 	return data;
 };
 
-/**
- * REPLACED with Database RPC
- * Scans the database for text matches using a server-side function.
- * Moves logic from O(N) JavaScript loop to O(1) DB Query.
- */
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
 	if (!findTerm.trim()) return [];
 
@@ -351,10 +331,6 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 	}
 
 	const regex = new RegExp(findTerm.trim(), 'gi');
-
-	// We still use JS for the "proposal" string generation because it's purely UI logic
-	// and doing Regex Replace in SQL can be brittle with flags.
-	// But the heavy lifting (filtering 10k rows) is now done by Postgres.
 	return data.map((row) => ({
 		table: row.table_name,
 		id: row.record_id,

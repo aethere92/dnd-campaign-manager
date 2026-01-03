@@ -40,7 +40,7 @@ export function useMainLayout() {
 	// -----------------------------------
 
 	const navStructure = useMemo(() => {
-		const hasMapData = !!currentCampaignData?.map_data;
+		const hasMapData = !!currentCampaignData?.attributes?.map_data;
 
 		return NAV_STRUCTURE.map((group) => ({
 			...group,

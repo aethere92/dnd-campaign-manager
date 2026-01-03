@@ -11,7 +11,7 @@ export const getCampaigns = async () => {
 			campaign_id,
             name, 
             description,
-			map_data,
+			attributes,
             characters:entity_complete_view(name)
         `
 		)
