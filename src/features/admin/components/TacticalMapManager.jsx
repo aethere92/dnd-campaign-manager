@@ -96,14 +96,15 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 					<MapContainer
 						crs={L.CRS.Simple}
 						bounds={dimensions}
-						zoom={0}
+						zoom={-2}
+						minZoom={-3}
 						attributionControl={false}
 						style={{ height: '100%', width: '100%', background: 'var(--background)' }}>
 						<MapController bounds={dimensions} />
 						<MapClickHandler onMapClick={handleMapClick} />
 						<ImageOverlay url={imageUrl} bounds={dimensions} />
 
-						{markers.map((m, i) => (
+						{markers?.map((m, i) => (
 							<Marker
 								key={i}
 								position={[m.lat, m.lng]}
