@@ -3,176 +3,176 @@
     "category": "Assets > Character_backgrounds > Campaign_002",
     "path": "images/assets/character_backgrounds/campaign_002/",
     "files": [
-      "bonnie_bg_horizontal.png",
-      "bonnie_bg_square.jpeg",
-      "kaedin_bg_horizontal.png",
-      "kaedin_bg_vertical.jpg",
-      "olek_bg_horizontal.png",
-      "olek_bg_square.jpg",
-      "soshi_bg_horizontal.png",
-      "soshi_bg_vertical.jpeg"
+      "bonnie_bg_horizontal.webp",
+      "bonnie_bg_square.webp",
+      "kaedin_bg_horizontal.webp",
+      "kaedin_bg_vertical.webp",
+      "olek_bg_horizontal.webp",
+      "olek_bg_square.webp",
+      "soshi_bg_horizontal.webp",
+      "soshi_bg_vertical.webp"
     ]
   },
   {
     "category": "Assets > Character_thumbnails > Campaign_001",
     "path": "images/assets/character_thumbnails/campaign_001/",
     "files": [
-      "aenwyn.jpeg",
-      "aethere.jpeg",
-      "alezander.jpeg",
-      "nora.png",
-      "samantha.jpeg",
-      "smasherina.jpg"
+      "aenwyn.webp",
+      "aethere.webp",
+      "alezander.webp",
+      "nora.webp",
+      "samantha.webp",
+      "smasherina.webp"
     ]
   },
   {
     "category": "Assets > Character_thumbnails > Campaign_002",
     "path": "images/assets/character_thumbnails/campaign_002/",
     "files": [
-      "bonnie.jpeg",
-      "kaedin.jpeg",
-      "norr.jpeg",
-      "olek.jpeg",
-      "soshi.jpeg"
+      "bonnie.webp",
+      "kaedin.webp",
+      "norr.webp",
+      "olek.webp",
+      "soshi.webp"
     ]
   },
   {
     "category": "Assets > Encounter_backgrounds > Campaign_002",
     "path": "images/assets/encounter_backgrounds/campaign_002/",
     "files": [
-      "demonic_ambush_bg.jpg",
-      "hydra_encounter_bg.jpg",
-      "thylacoleo_ambush_bg.jpg"
+      "demonic_ambush_bg.webp",
+      "hydra_encounter_bg.webp",
+      "thylacoleo_ambush_bg.webp"
     ]
   },
   {
     "category": "Assets > Location_backgrounds > Campaign_002",
     "path": "images/assets/location_backgrounds/campaign_002/",
     "files": [
-      "avarthel_grove_bg.jpg",
-      "drellin_ferry_bg.jpg",
-      "grackledorn_bg.jpg",
-      "neverwinter_bg.jpg",
-      "strategic_bridge.jpg",
-      "underground_temple_complex.jpg",
-      "wrath_keep_bg.jpg"
+      "avarthel_grove_bg.webp",
+      "drellin_ferry_bg.webp",
+      "grackledorn_bg.webp",
+      "neverwinter_bg.webp",
+      "strategic_bridge.webp",
+      "underground_temple_complex.webp",
+      "wrath_keep_bg.webp"
     ]
   },
   {
     "category": "Assets > Map_backgrounds",
     "path": "images/assets/map_backgrounds/",
     "files": [
-      "brindol_map.jpg",
-      "demonic_ambush_map.png",
-      "drellin_ferry_map.png",
-      "elsir_vale_map.png",
-      "strategic_bridge_map.png",
-      "vraath_courtyard_map.png",
-      "witchwood_map.jpg"
+      "brindol_map.webp",
+      "demonic_ambush_map.webp",
+      "drellin_ferry_map.webp",
+      "elsir_vale_map.webp",
+      "strategic_bridge_map.webp",
+      "vraath_courtyard_map.webp",
+      "witchwood_map.webp"
     ]
   },
   {
     "category": "Assets > Map_backgrounds > Backups",
     "path": "images/assets/map_backgrounds/backups/",
     "files": [
-      "drellin_ferry_map.jpg",
-      "elsir_vale_map.jpg"
+      "drellin_ferry_map.webp",
+      "elsir_vale_map.webp"
     ]
   },
   {
     "category": "Assets > Npc_backgrounds > Campaign_002",
     "path": "images/assets/npc_backgrounds/campaign_002/",
     "files": [
-      "avarthel_bg.jpg",
-      "soranna_bg.jpg",
-      "yoghurt_bg.jpg"
+      "avarthel_bg.webp",
+      "soranna_bg.webp",
+      "yoghurt_bg.webp"
     ]
   },
   {
     "category": "Assets > Session_backgrounds > Campaign_002",
     "path": "images/assets/session_backgrounds/campaign_002/",
     "files": [
-      "session_01_bg.png"
+      "session_01_bg.webp"
     ]
   },
   {
     "category": "General",
     "path": "images/",
     "files": [
-      "background_texture.png"
+      "background_texture.webp"
     ]
   },
   {
     "category": "Icons",
     "path": "images/icons/",
     "files": [
-      "avian.png",
-      "bonnie.png",
-      "deity.png",
-      "dwarf.png",
-      "earth_genasi.png",
-      "elemental.png",
-      "encounter.png",
-      "faction.png",
-      "feline.png",
-      "female.png",
-      "gnome.png",
-      "goblin.png",
-      "hobgoblin.png",
-      "kaedin.png",
-      "location.png",
-      "male.png",
-      "monster.png",
-      "norr.png",
-      "ogre.png",
-      "olek.png",
-      "other.png",
-      "party.png",
-      "phoenix.png",
-      "quest.png",
-      "quickling.png",
-      "rat.png",
-      "session.png",
-      "soshi.png",
-      "tabaxi.png",
-      "unknown.png"
+      "avian.webp",
+      "bonnie.webp",
+      "deity.webp",
+      "dwarf.webp",
+      "earth_genasi.webp",
+      "elemental.webp",
+      "encounter.webp",
+      "faction.webp",
+      "feline.webp",
+      "female.webp",
+      "gnome.webp",
+      "goblin.webp",
+      "hobgoblin.webp",
+      "kaedin.webp",
+      "location.webp",
+      "male.webp",
+      "monster.webp",
+      "norr.webp",
+      "ogre.webp",
+      "olek.webp",
+      "other.webp",
+      "party.webp",
+      "phoenix.webp",
+      "quest.webp",
+      "quickling.webp",
+      "rat.webp",
+      "session.webp",
+      "soshi.webp",
+      "tabaxi.webp",
+      "unknown.webp"
     ]
   },
   {
     "category": "Icons > Factions > Campaign_002",
     "path": "images/icons/factions/campaign_002/",
     "files": [
-      "arcane_brotherhood_icon.png",
-      "circle_of_the_land_icon.png",
-      "crazy_hogs_icon.jpg",
-      "kryn_dynasty_icon.png",
-      "red_hand_icon.png",
-      "red_wizards_of_thay_icon.jpg",
-      "thieves_guild.jpg"
+      "arcane_brotherhood_icon.webp",
+      "circle_of_the_land_icon.webp",
+      "crazy_hogs_icon.webp",
+      "kryn_dynasty_icon.webp",
+      "red_hand_icon.webp",
+      "red_wizards_of_thay_icon.webp",
+      "thieves_guild.webp"
     ]
   },
   {
     "category": "Icons > Weapons",
     "path": "images/icons/weapons/",
     "files": [
-      "boots_jungle_strider.png",
-      "bracers_spell_plague_icon.png",
-      "crocodile_tears_icon.jpg",
-      "gloves_brotherhood_icon.png",
-      "talisman_elemental_acuity_icon.jpg",
-      "veilbranch.png"
+      "boots_jungle_strider.webp",
+      "bracers_spell_plague_icon.webp",
+      "crocodile_tears_icon.webp",
+      "gloves_brotherhood_icon.webp",
+      "talisman_elemental_acuity_icon.webp",
+      "veilbranch.webp"
     ]
   },
   {
     "category": "Overlays > Korinis_island",
     "path": "images/overlays/korinis_island/",
     "files": [
-      "korinis_island_penal_colony_chapel.png",
-      "korinis_island_penal_colony_merchants_cave.png",
-      "korinis_island_penal_colony_mine_cave.png",
-      "korinis_island_penal_colony_mine_cave_v2.png",
-      "korinis_island_penal_colony_paladin_barracks.png",
-      "korinis_island_penal_colony_spider_cave.png"
+      "korinis_island_penal_colony_chapel.webp",
+      "korinis_island_penal_colony_merchants_cave.webp",
+      "korinis_island_penal_colony_mine_cave.webp",
+      "korinis_island_penal_colony_mine_cave_v2.webp",
+      "korinis_island_penal_colony_paladin_barracks.webp",
+      "korinis_island_penal_colony_spider_cave.webp"
     ]
   }
 ]

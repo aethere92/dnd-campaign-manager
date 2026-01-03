@@ -27,6 +27,7 @@
 		"react-leaflet": "^5.0.0",
 		"react-markdown": "^10.1.0",
 		"react-router-dom": "^7.10.1",
+		"sharp": "^0.34.5",
 		"tailwind-merge": "^3.4.0",
 		"tailwindcss": "^4.1.18",
 		"vaul": "^1.1.2"
