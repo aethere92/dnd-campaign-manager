@@ -1,0 +1,296 @@
+export const annotations = {
+	points_of_interest: {
+		name: 'Points of Interest',
+		items: [
+			{
+				label: 'Initial town',
+				lat: -159.25,
+				lng: 206.25,
+				type: 'place'
+			},
+			{
+				label: 'First unnamed island',
+				lat: -197.8125,
+				lng: 165.125,
+				type: 'place',
+				mapLink: 'unnamed_island_01'
+			},
+			{
+				label: 'Korinis',
+				lat: -214.5,
+				lng: 74.875,
+				type: 'place',
+				mapLink: 'korinis_island'
+			}
+		]
+	},
+	cities: {
+		name: 'Cities & Towns',
+		items: [
+			{
+				label: 'Ironmaster',
+				lat: -17.46875,
+				lng: 139.8125,
+				type: 'place'
+			},
+			{
+				label: 'Fireshear',
+				lat: -32.375,
+				lng: 143.78125,
+				type: 'place'
+			},
+			{
+				label: 'Luskan',
+				lat: -35.625,
+				lng: 154.21875,
+				type: 'place'
+			},
+			{
+				label: 'Blackford crossing',
+				lat: -33.5625,
+				lng: 157.5,
+				type: 'place'
+			},
+			{
+				label: 'Mirabar',
+				lat: -26.25,
+				lng: 175,
+				type: 'place'
+			},
+			{
+				label: 'Morgur\'s Mound',
+				lat: -37.59375,
+				lng: 173.625,
+				type: 'place'
+			},
+			{
+				label: 'Gauntlgrym',
+				lat: -44.5,
+				lng: 165.875,
+				type: 'place'
+			},
+			{
+				label: 'Mount Hotenow',
+				lat: -46.1875,
+				lng: 163.71875,
+				type: 'place'
+			},
+			{
+				label: 'Neverwinter',
+				lat: -52.28125,
+				lng: 159.3125,
+				type: 'place'
+			},
+			{
+				label: 'Helm\'s Hold',
+				lat: -55.53125,
+				lng: 164.25,
+				type: 'place'
+			},
+			{
+				label: 'Longsaddle',
+				lat: -45.65625,
+				lng: 182.75,
+				type: 'place'
+			},
+			{
+				label: 'Triboar',
+				lat: -58.03125,
+				lng: 189,
+				type: 'place'
+			},
+			{
+				label: 'Settlestone',
+				lat: -33.125,
+				lng: 211.40625,
+				type: 'place'
+			},
+			{
+				label: 'Mithral Hall',
+				lat: -31.40625,
+				lng: 212.75,
+				type: 'place'
+			},
+			{
+				label: 'Menzoberranzan',
+				lat: -32.21875,
+				lng: 215.53125,
+				type: 'place'
+			},
+			{
+				label: 'One Stone',
+				lat: -30.8125,
+				lng: 223.84375,
+				type: 'place'
+			},
+			{
+				label: 'Beorunna\'s Well',
+				lat: -21.21875,
+				lng: 226.75,
+				type: 'place'
+			},
+			{
+				label: 'Citadel Felbarr',
+				lat: -30.28125,
+				lng: 235.9375,
+				type: 'place'
+			},
+			{
+				label: 'Sundabar',
+				lat: -38.625,
+				lng: 239.71875,
+				type: 'place'
+			},
+			{
+				label: 'Stone Stand',
+				lat: -44.5625,
+				lng: 237.4375,
+				type: 'place'
+			},
+			{
+				label: 'Silverymoon',
+				lat: -39.8125,
+				lng: 223.0625,
+				type: 'place'
+			},
+			{
+				label: 'Flint Rock',
+				lat: -51.28125,
+				lng: 197.28125,
+				type: 'place'
+			},
+			{
+				label: 'Yartar',
+				lat: -58.6875,
+				lng: 196.40625,
+				type: 'place'
+			},
+			{
+				label: 'Grandfather Tree',
+				lat: -55.5,
+				lng: 225.3125,
+				type: 'place'
+			},
+			{
+				label: 'Karse',
+				lat: -66.46875,
+				lng: 232.25,
+				type: 'place'
+			},
+			{
+				label: 'Thornhold',
+				lat: -84.1875,
+				lng: 170.4375,
+				type: 'place'
+			},
+			{
+				label: 'Amphail',
+				lat: -88.375,
+				lng: 181.6875,
+				type: 'place'
+			},
+			{
+				label: 'Waterdeep',
+				lat: -96.625,
+				lng: 183.125,
+				type: 'place'
+			},
+			{
+				label: 'Daggerford',
+				lat: -103.03125,
+				lng: 191.3125,
+				type: 'place'
+			},
+			{
+				label: 'Secomber',
+				lat: -95.375,
+				lng: 211.59375,
+				type: 'place'
+			},
+			{
+				label: 'Orogoth',
+				lat: -109.40625,
+				lng: 233.71875,
+				type: 'place'
+			},
+			{
+				label: 'Warlock\'s Crypt',
+				lat: -133.40625,
+				lng: 199.9375,
+				type: 'place'
+			},
+			{
+				label: 'Dragonspear Castle',
+				lat: -129.65625,
+				lng: 214.96875,
+				type: 'place'
+			},
+			{
+				label: 'Ss\'thar\'tiss\'ssun',
+				lat: -127.84375,
+				lng: 253.4375,
+				type: 'place'
+			},
+			{
+				label: 'Boareskyr Bridge',
+				lat: -143.0625,
+				lng: 234.0625,
+				type: 'place'
+			},
+			{
+				label: 'Trollclaw Ford',
+				lat: -144.0625,
+				lng: 218.34375,
+				type: 'place'
+			},
+			{
+				label: 'Scornubel',
+				lat: -163.40625,
+				lng: 255.3125,
+				type: 'place'
+			},
+			{
+				label: 'Triel',
+				lat: -158.3125,
+				lng: 247.375,
+				type: 'place'
+			},
+			{
+				label: 'Elturel',
+				lat: -160.875,
+				lng: 229.6875,
+				type: 'place'
+			},
+			{
+				label: 'Fort Morninglord',
+				lat: -163.6875,
+				lng: 223.46875,
+				type: 'place'
+			},
+			{
+				label: 'Baldur\'s Gate',
+				lat: -167.34375,
+				lng: 210.40625,
+				type: 'place'
+			},
+			{
+				label: 'Candlekeep',
+				lat: -188.8125,
+				lng: 203.125,
+				type: 'place'
+			}
+		]
+	},
+	combat_encounters: {
+		name: 'Combat Encounters',
+		items: [
+			{
+				label: 'Bone wraiths encounter',
+				lat: -209.375,
+				lng: 116.875,
+				type: 'place',
+				mapLink: 'bone_wraiths_01'
+			}
+		]
+	}
+};

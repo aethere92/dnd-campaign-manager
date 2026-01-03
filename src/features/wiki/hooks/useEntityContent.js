@@ -24,21 +24,6 @@ export const useEntityContent = (entity, attributes, sections) => {
 		// 2. Construct URL if path exists
 		const finalMapUrl = specificMapPath ? `${import.meta.env.BASE_URL}${specificMapPath.replace(/^\//, '')}` : null;
 
-		// Safe JSON Parse for Markers
-		const rawMarkers = getAttributeValue(attributes, 'map_markers');
-		let parsedMarkers = [];
-		if (rawMarkers) {
-			if (typeof rawMarkers === 'object') {
-				parsedMarkers = rawMarkers;
-			} else {
-				try {
-					parsedMarkers = JSON.parse(rawMarkers);
-				} catch (e) {
-					console.warn('Map markers parse error', e);
-				}
-			}
-		}
-
 		// Transform Events
 		const events = transformEvents(entity.events);
 
@@ -69,7 +54,7 @@ export const useEntityContent = (entity, attributes, sections) => {
 			mentions,
 			levelUp,
 			mapImageUrl: finalMapUrl,
-			mapMarkers: parsedMarkers,
+			mapMarkers: attributes?.map_markers,
 		};
 	}, [entity, attributes, sections]);
 };

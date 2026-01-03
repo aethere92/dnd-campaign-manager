@@ -131,9 +131,6 @@ export const AtlasSidebar = ({ groups, visibility, onToggleLayer, onFlyTo }) => 
 							<PanelLeftClose size={20} />
 						</button>
 					</div>
-					<div className='flex-1 flex items-center justify-center writing-vertical-lr text-xs font-bold text-muted-foreground/50 uppercase tracking-widest py-8 select-none'>
-						Atlas Index
-					</div>
 				</div>
 			)}
 

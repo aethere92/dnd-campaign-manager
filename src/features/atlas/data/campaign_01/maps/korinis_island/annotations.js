@@ -1,0 +1,410 @@
+export const annotations = {
+	npcs: {
+		name: 'NPCs',
+		items: [
+			{
+				label: 'Darren (Fire mage)',
+				lat: -127.25,
+				lng: 511.125,
+				type: 'people'
+			},
+			{
+				label: 'Valros (Water mage)',
+				lat: -166.03125,
+				lng: 442.5,
+				type: 'people'
+			},
+			{
+				label: 'Erol (tablets)',
+				lat: -165.25,
+				lng: 621,
+				type: 'place'
+			},
+			{
+				label: 'Isgaroth (Fire mage)',
+				lat: -98.5,
+				lng: 652.1875,
+				type: 'people'
+			},
+			{
+				label: 'Thorben (Carpenter)',
+				lat: -162.5625,
+				lng: 425.1875,
+				type: 'people'
+			},
+			{
+				label: 'Constantine (Alchemist)',
+				lat: -155.3125,
+				lng: 428.03125,
+				type: 'people'
+			},
+			{
+				label: 'Thorek (Blacksmith)',
+				lat: -124.21875,
+				lng: 453.125,
+				type: 'people'
+			},
+			{
+				label: 'Lizardman',
+				lat: -98.25,
+				lng: 316.34375,
+				type: 'people'
+			},
+			{
+				label: 'Bridge Troll',
+				lat: -75.9375,
+				lng: 604.0625,
+				type: 'people'
+			},
+			{
+				label: 'Farm Blacksmith',
+				lat: -57.5,
+				lng: 911.96875,
+				type: 'people'
+			},
+			{
+				label: 'General Lee',
+				lat: -63.625,
+				lng: 888.75,
+				type: 'people'
+			},
+			{
+				label: 'Quixie & The Other Merchant',
+				lat: -82.9375,
+				lng: 893.375,
+				type: 'people'
+			},
+			{
+				label: 'Silvestro',
+				lat: -88.625,
+				lng: 897.375,
+				type: 'people'
+			},
+			{
+				label: 'Mercenary Guards',
+				lat: -159.75,
+				lng: 804.8125,
+				type: 'people'
+			},
+			{
+				label: 'Penal Colony Paladin Guards',
+				lat: -356.875,
+				lng: 698.75,
+				type: 'people'
+			},
+			{
+				label: 'Quickse and Zero',
+				lat: -423.25,
+				lng: 590.25,
+				type: 'people'
+			},
+			{
+				label: 'Salamander',
+				lat: -206.25,
+				lng: 401.8125,
+				type: 'people'
+			}
+		]
+	},
+	points_of_interest: {
+		name: 'Points of interest',
+		items: [
+			{
+				label: 'Landing zone',
+				lat: -274.375,
+				lng: 137.375,
+				type: 'place'
+			},
+			{
+				label: 'World Map',
+				lat: -277,
+				lng: 412,
+				type: 'text',
+				fontSize: 20,
+				mapLink: 'world_maps'
+			},
+			{
+				label: 'Lower City Inn',
+				lat: -148,
+				lng: 497.5,
+				type: 'place'
+			},
+			{
+				label: 'Inn',
+				lat: -173.3125,
+				lng: 676.1875,
+				type: 'place'
+			},
+			{
+				label: 'Harbour Inn',
+				lat: -96.25,
+				lng: 416.5625,
+				type: 'place'
+			},
+			{
+				label: 'Paladin Barracks',
+				lat: -116.5,
+				lng: 502.75,
+				type: 'place'
+			},
+			{
+				label: 'Paladin Hall',
+				lat: -220.5,
+				lng: 389.375,
+				type: 'place'
+			},
+			{
+				label: 'Fire Mages Monastery',
+				lat: -57.5,
+				lng: 670.3125,
+				type: 'place'
+			},
+			{
+				label: 'Pawn shop',
+				lat: -120.1875,
+				lng: 390.6875,
+				type: 'place'
+			},
+			{
+				label: 'Secob Farm',
+				lat: -138.34375,
+				lng: 565.78125,
+				type: 'place'
+			},
+			{
+				label: 'Lobart Farm',
+				lat: -145.375,
+				lng: 283.15625,
+				type: 'place',
+				description: 'The adventurers arrived at a farm on the outskirts of the city, seeking entry but lacking the necessary gold. Speaking with one of the farmers, they learned that the head farmer might offer them a way in. They approached him and were given a proposition: earn gold by helping with the crops and assisting the farmer\'s wife with her tasks.'
+			},
+			{
+				label: 'Unnamed farm',
+				lat: -290.75,
+				lng: 713.375,
+				type: 'people'
+			},
+			{
+				label: 'Caves (scales + blue blood)',
+				lat: -217.25,
+				lng: 585.5625,
+				type: 'place'
+			},
+			{
+				label: 'Paladin ship',
+				lat: -41,
+				lng: 378,
+				type: 'place'
+			},
+			{
+				label: 'Teleporter Exit B',
+				lat: -110.6875,
+				lng: 558.0625,
+				type: 'place'
+			},
+			{
+				label: 'Teleporter Exit C',
+				lat: -198.3125,
+				lng: 655.8125,
+				type: 'place',
+				mapLink: 'korinis_teleporter_c'
+			},
+			{
+				label: 'Water Mages Pyramid',
+				lat: -40.125,
+				lng: 580.125,
+				type: 'place',
+				mapLink: 'korinis_pyramid'
+			},
+			{
+				label: 'Erol\'s house',
+				lat: -179.9375,
+				lng: 803.5625,
+				type: 'people'
+			},
+			{
+				label: 'Farm Chapel',
+				lat: -88.5625,
+				lng: 858.34375,
+				type: 'people'
+			},
+			{
+				label: 'The Chocolate Contest Tavern',
+				lat: -77.6875,
+				lng: 863.5625,
+				type: 'people'
+			},
+			{
+				label: 'Tower',
+				lat: -41.25,
+				lng: 927.15625,
+				type: 'people'
+			},
+			{
+				label: 'Cave shortcut entrance',
+				lat: -384.9375,
+				lng: 708,
+				type: 'people',
+				mapLink: 'korinis_spider_cave'
+			},
+			{
+				label: 'Cave shortcut exit',
+				lat: -392.5,
+				lng: 714.6875,
+				type: 'people',
+				mapLink: 'korinis_spider_cave'
+			},
+			{
+				label: 'Mine entrance',
+				lat: -391.625,
+				lng: 686.1875,
+				type: 'people'
+			},
+			{
+				label: 'Mine shortcut exit',
+				lat: -418.3125,
+				lng: 646.9375,
+				type: 'people'
+			},
+			{
+				label: 'Diego\'s hideout',
+				lat: -414.125,
+				lng: 531.375,
+				type: 'people'
+			},
+			{
+				label: 'Paladin Citadel Barracks',
+				lat: -522.6875,
+				lng: 511.8125,
+				type: 'place'
+			},
+			{
+				label: 'Fire Mages Chapel',
+				lat: -534.78125,
+				lng: 533.5625,
+				type: 'place'
+			},
+			{
+				label: 'Lizardmen Harbour',
+				lat: -327.125,
+				lng: 519.625,
+				type: 'place'
+			},
+			{
+				label: 'Penal Colony Ore Encounter',
+				lat: -436.25,
+				lng: 453.125,
+				type: 'place'
+			}
+		]
+	},
+	combat_encounters: {
+		name: 'Combat encounters',
+		items: [
+			{
+				label: 'Wolves',
+				lat: -111.25,
+				lng: 349.25,
+				type: 'place'
+			},
+			{
+				label: 'Wolves',
+				lat: -200.1875,
+				lng: 564.34375,
+				type: 'place'
+			},
+			{
+				label: 'Bandits',
+				lat: -94.1875,
+				lng: 361.90625,
+				type: 'people',
+				mapLink: 'korinis_bandits_01'
+			},
+			{
+				label: 'Bandits',
+				lat: -125.9375,
+				lng: 605.5625,
+				type: 'people'
+			},
+			{
+				label: 'Goblin camp',
+				lat: -114.0625,
+				lng: 332.59375,
+				type: 'place',
+				description: 'The adventurers, hoping to make a new ally, approached the lizardman with friendly intentions. However, their efforts were met with hostility as the lizardman attacked them. The battle was intense, with the group struggling to subdue their reptilian foe. Just as they seemed to gain the upper hand, a group of goblins ambushed them from the shadows. The adventurers fought valiantly, managing to defeat the goblins, but in the chaos, one of the goblins used a spell to explode nearby corpses, which killed the lizardman, whom they had been trying to keep alive.'
+			},
+			{
+				label: 'Inactive Golem',
+				lat: -89.0625,
+				lng: 614.3125,
+				type: 'place'
+			},
+			{
+				label: 'Snapers',
+				lat: -46.9375,
+				lng: 594.1875,
+				type: 'place'
+			},
+			{
+				label: 'Wasps',
+				lat: -32.75,
+				lng: 609.9375,
+				type: 'place'
+			},
+			{
+				label: 'Ruined Tower Seekers',
+				lat: -238.9375,
+				lng: 683.5625,
+				type: 'people'
+			},
+			{
+				label: 'Bandits\' cave',
+				lat: -193.625,
+				lng: 200.625,
+				type: 'place'
+			},
+			{
+				label: 'Cave spiders encounter',
+				lat: -386.5,
+				lng: 716,
+				type: 'people'
+			},
+			{
+				label: 'Dinosaurs combat ambush',
+				lat: -445,
+				lng: 584.125,
+				type: 'people'
+			},
+			{
+				label: 'Seekers ambush',
+				lat: -428.6875,
+				lng: 552.9375,
+				type: 'place'
+			}
+		]
+	},
+	landmarks: {
+		name: 'Landmarks',
+		items: [
+			{
+				label: 'Main town of Korinis',
+				lat: -142.0625,
+				lng: 376.0625,
+				type: 'landmark',
+				description: 'The main town of Korinis is a captivating town of contrasts. Nestled between the open waters and rugged hills, its bustling harbour is alive with the scent of saltwater and the sounds of merchants peddling their wares amidst poverty and resourcefulness. The lower city, a maze of alleys and market squares, thrives with commerce and crafts, shadowed by the vigilant paladins who ensure safety at the cost of freedom. The upper city, dominated by the paladins\' formidable barracks, exudes grandeur and control, with wide streets and grand homes. In this town of Korinis, prosperity and poverty coexist, and every street tells a story.'
+			},
+			{
+				label: 'Paladin Citadel',
+				lat: -488.75,
+				lng: 539.6875,
+				type: 'landmark'
+			},
+			{
+				label: 'General Lee Encampment',
+				lat: -85.375,
+				lng: 882.25,
+				type: 'landmark'
+			}
+		]
+	}
+};

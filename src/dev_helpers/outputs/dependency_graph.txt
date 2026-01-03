@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-03 08:50:20
+Generated: 2026-01-03 11:06:02
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -284,6 +284,13 @@ features\atlas\components\useMapCanvasViewModel.js:
   → lucide-react
   → react
 
+features\atlas\data\modularize.js:
+  → fs
+  → path
+
+features\atlas\data\refactor.js:
+  → fs
+
 features\atlas\useMapData.js:
   → ./utils/mapNavigation
   → @/features/campaign/CampaignContext
@@ -291,7 +298,7 @@ features\atlas\useMapData.js:
   → react-router-dom
 
 features\atlas\utils\mapNavigation.js:
-  → @/features/atlas/data/campaign_01
+  → @/features/atlas/data/campaign_01/index
 
 features\atlas\utils\markerUtils.js:
   → leaflet
@@ -393,6 +400,7 @@ features\graph\api\graphService.js:
 
 features\graph\components\CytoscapeCanvas.jsx:
   → @/features/graph/config/graphStyles
+  → @/shared/hooks/useTheme
   → cytoscape
   → cytoscape-fcose
   → react

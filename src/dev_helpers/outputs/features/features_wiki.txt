@@ -77,6 +77,8 @@ PARTIAL BUNDLE: FEATURES WIKI
       config/
         mapConfig.js
       data/
+        modularize.js
+        refactor.js
       utils/
         mapNavigation.js
         markerUtils.js

@@ -7,11 +7,11 @@ export function useMapData() {
 	const { campaignData } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const currentMapKey = searchParams.get('map') || 'world_map';
+	const currentMapKey = searchParams.get('map') || 'world_maps'; // Default updated to match typical ID
 
 	const mapConfig = useMemo(() => {
-		const sourceData = campaignData?.map_data || null;
-		return getMapConfig(currentMapKey, sourceData);
+		// If campaignData comes from API/DB, ensure it matches the { maps: { ... } } structure
+		return getMapConfig(currentMapKey, campaignData);
 	}, [currentMapKey, campaignData]);
 
 	const viewData = useMemo(() => {
@@ -27,6 +27,7 @@ export function useMapData() {
 		];
 
 		// --- MARKER FLATTENING ---
+		// The modular structure still passes 'annotations' as an object with categories
 		const markers = [];
 		if (annotations) {
 			Object.entries(annotations).forEach(([categoryKey, category]) => {
@@ -43,7 +44,7 @@ export function useMapData() {
 			});
 		}
 
-		// 3. Process Areas
+		// Process Areas
 		const mapAreas = [];
 		if (areas) {
 			Object.values(areas).forEach((category) => {
@@ -57,7 +58,7 @@ export function useMapData() {
 		}
 
 		return {
-			config: metadata,
+			config: metadata, // mapConfig.metadata usually contains path, sizes, etc.
 			bounds,
 			markers,
 			sessions: paths || [],
@@ -74,6 +75,6 @@ export function useMapData() {
 		data: viewData,
 		currentMapKey,
 		navigateToMap,
-		isLoading: false, // FIX: Since we're using static data, never loading
+		isLoading: false,
 	};
 }

@@ -83,6 +83,8 @@ INSTRUCTIONS FOR AI:
       config/
         mapConfig.js
       data/
+        modularize.js
+        refactor.js
       utils/
         mapNavigation.js
         markerUtils.js
@@ -324,7 +326,7 @@ function AppContent() {
 
 	// 1. Set global texture
 	useEffect(() => {
-		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.png`;
+		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.webp`;
 		document.documentElement.style.setProperty('--bg-texture', `url('${texturePath}')`);
 	}, []);
 
@@ -818,22 +820,12 @@ export const RouteLoading = ({ text }) => (
 	color: var(--card-foreground) !important;
 	border-radius: 0.5rem !important; /* rounded-lg */
 	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; /* shadow-lg */
+	padding: 0 !important;
+	margin: 0 !important;
 }
 
 .leaflet-popup-tip {
 	background-color: var(--card) !important;
-}
-
-/* Custom Clean Popup - Removes padding so our internal card fits perfectly */
-.custom-popup-clean .leaflet-popup-content {
-	margin: 0 !important;
-	width: 260px !important;
-	line-height: 1.5 !important;
-}
-
-.custom-popup-clean .leaflet-popup-content-wrapper {
-	padding: 0 !important;
-	overflow: hidden;
 }
 
 /* Marker Popup Cards */
@@ -880,17 +872,24 @@ export const RouteLoading = ({ text }) => (
 	background: transparent !important; /* Let the card handle bg */
 	border: none !important;
 	box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+	margin: 0 !important;
 }
 
 .custom-popup-clean .leaflet-popup-content {
 	margin: 0 !important;
 	width: 300px !important; /* Fixed width for consistency */
 	line-height: 1.5 !important;
+	padding: 0 !important;
 }
 
 /* Ensure the tip matches the theme card color */
 .custom-popup-clean .leaflet-popup-tip {
 	background-color: var(--card) !important;
+}
+
+.leaflet-popup-content {
+	padding: 0 !important;
+	margin: 0 !important;
 }
 
 --- END OF app\styles\global.css ---
@@ -5541,6 +5540,7 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'hit points', label: 'Hit Points', type: 'text' },
 			{ key: 'armor class', label: 'Armor Class', type: 'text' },
 			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -5610,172 +5610,176 @@ export const IMAGE_LIBRARY = [
     "category": "Assets > Character_backgrounds > Campaign_002",
     "path": "images/assets/character_backgrounds/campaign_002/",
     "files": [
-      "bonnie_bg.jpeg",
-      "kaedin_bg.jpg",
-      "olek_bg.jpg",
-      "soshi_bg.jpeg"
+      "bonnie_bg_horizontal.webp",
+      "bonnie_bg_square.webp",
+      "kaedin_bg_horizontal.webp",
+      "kaedin_bg_vertical.webp",
+      "olek_bg_horizontal.webp",
+      "olek_bg_square.webp",
+      "soshi_bg_horizontal.webp",
+      "soshi_bg_vertical.webp"
     ]
   },
   {
     "category": "Assets > Character_thumbnails > Campaign_001",
     "path": "images/assets/character_thumbnails/campaign_001/",
     "files": [
-      "aenwyn.jpeg",
-      "aethere.jpeg",
-      "alezander.jpeg",
-      "nora.png",
-      "samantha.jpeg",
-      "smasherina.jpg"
+      "aenwyn.webp",
+      "aethere.webp",
+      "alezander.webp",
+      "nora.webp",
+      "samantha.webp",
+      "smasherina.webp"
     ]
   },
   {
     "category": "Assets > Character_thumbnails > Campaign_002",
     "path": "images/assets/character_thumbnails/campaign_002/",
     "files": [
-      "bonnie.jpeg",
-      "kaedin.jpeg",
-      "norr.jpeg",
-      "olek.jpeg",
-      "soshi.jpeg"
+      "bonnie.webp",
+      "kaedin.webp",
+      "norr.webp",
+      "olek.webp",
+      "soshi.webp"
     ]
   },
   {
     "category": "Assets > Encounter_backgrounds > Campaign_002",
     "path": "images/assets/encounter_backgrounds/campaign_002/",
     "files": [
-      "demonic_ambush_bg.jpg",
-      "hydra_encounter_bg.jpg",
-      "thylacoleo_ambush_bg.jpg"
+      "demonic_ambush_bg.webp",
+      "hydra_encounter_bg.webp",
+      "thylacoleo_ambush_bg.webp"
     ]
   },
   {
     "category": "Assets > Location_backgrounds > Campaign_002",
     "path": "images/assets/location_backgrounds/campaign_002/",
     "files": [
-      "avarthel_grove_bg.jpg",
-      "drellin_ferry_bg.jpg",
-      "grackledorn_bg.jpg",
-      "neverwinter_bg.jpg",
-      "strategic_bridge.jpg",
-      "underground_temple_complex.jpg",
-      "wrath_keep_bg.jpg"
+      "avarthel_grove_bg.webp",
+      "drellin_ferry_bg.webp",
+      "grackledorn_bg.webp",
+      "neverwinter_bg.webp",
+      "strategic_bridge.webp",
+      "underground_temple_complex.webp",
+      "wrath_keep_bg.webp"
     ]
   },
   {
     "category": "Assets > Map_backgrounds",
     "path": "images/assets/map_backgrounds/",
     "files": [
-      "brindol_map.jpg",
-      "demonic_ambush_map.png",
-      "drellin_ferry_map.png",
-      "elsir_vale_map.png",
-      "strategic_bridge_map.png",
-      "vraath_courtyard_map.png",
-      "witchwood_map.jpg"
+      "brindol_map.webp",
+      "demonic_ambush_map.webp",
+      "drellin_ferry_map.webp",
+      "elsir_vale_map.webp",
+      "strategic_bridge_map.webp",
+      "vraath_courtyard_map.webp",
+      "witchwood_map.webp"
     ]
   },
   {
     "category": "Assets > Map_backgrounds > Backups",
     "path": "images/assets/map_backgrounds/backups/",
     "files": [
-      "drellin_ferry_map.jpg",
-      "elsir_vale_map.jpg"
+      "drellin_ferry_map.webp",
+      "elsir_vale_map.webp"
     ]
   },
   {
     "category": "Assets > Npc_backgrounds > Campaign_002",
     "path": "images/assets/npc_backgrounds/campaign_002/",
     "files": [
-      "avarthel_bg.jpg",
-      "soranna_bg.jpg",
-      "yoghurt_bg.jpg"
+      "avarthel_bg.webp",
+      "soranna_bg.webp",
+      "yoghurt_bg.webp"
     ]
   },
   {
     "category": "Assets > Session_backgrounds > Campaign_002",
     "path": "images/assets/session_backgrounds/campaign_002/",
     "files": [
-      "session_01_bg.png"
+      "session_01_bg.webp"
     ]
   },
   {
     "category": "General",
     "path": "images/",
     "files": [
-      "background_texture.png"
+      "background_texture.webp"
     ]
   },
   {
     "category": "Icons",
     "path": "images/icons/",
     "files": [
-      "avian.png",
-      "bonnie.png",
-      "deity.png",
-      "dwarf.png",
-      "earth_genasi.png",
-      "elemental.png",
-      "encounter.png",
-      "faction.png",
-      "feline.png",
-      "female.png",
-      "gnome.png",
-      "goblin.png",
-      "hobgoblin.png",
-      "kaedin.png",
-      "location.png",
-      "male.png",
-      "monster.png",
-      "norr.png",
-      "ogre.png",
-      "olek.png",
-      "other.png",
-      "party.png",
-      "phoenix.png",
-      "quest.png",
-      "quickling.png",
-      "rat.png",
-      "session.png",
-      "soshi.png",
-      "tabaxi.png",
-      "unknown.png"
+      "avian.webp",
+      "bonnie.webp",
+      "deity.webp",
+      "dwarf.webp",
+      "earth_genasi.webp",
+      "elemental.webp",
+      "encounter.webp",
+      "faction.webp",
+      "feline.webp",
+      "female.webp",
+      "gnome.webp",
+      "goblin.webp",
+      "hobgoblin.webp",
+      "kaedin.webp",
+      "location.webp",
+      "male.webp",
+      "monster.webp",
+      "norr.webp",
+      "ogre.webp",
+      "olek.webp",
+      "other.webp",
+      "party.webp",
+      "phoenix.webp",
+      "quest.webp",
+      "quickling.webp",
+      "rat.webp",
+      "session.webp",
+      "soshi.webp",
+      "tabaxi.webp",
+      "unknown.webp"
     ]
   },
   {
     "category": "Icons > Factions > Campaign_002",
     "path": "images/icons/factions/campaign_002/",
     "files": [
-      "arcane_brotherhood_icon.png",
-      "circle_of_the_land_icon.png",
-      "crazy_hogs_icon.jpg",
-      "kryn_dynasty_icon.png",
-      "red_hand_icon.png",
-      "red_wizards_of_thay_icon.jpg",
-      "thieves_guild.jpg"
+      "arcane_brotherhood_icon.webp",
+      "circle_of_the_land_icon.webp",
+      "crazy_hogs_icon.webp",
+      "kryn_dynasty_icon.webp",
+      "red_hand_icon.webp",
+      "red_wizards_of_thay_icon.webp",
+      "thieves_guild.webp"
     ]
   },
   {
     "category": "Icons > Weapons",
     "path": "images/icons/weapons/",
     "files": [
-      "boots_jungle_strider.png",
-      "bracers_spell_plague_icon.png",
-      "crocodile_tears_icon.jpg",
-      "gloves_brotherhood_icon.png",
-      "talisman_elemental_acuity_icon.jpg",
-      "veilbranch.png"
+      "boots_jungle_strider.webp",
+      "bracers_spell_plague_icon.webp",
+      "crocodile_tears_icon.webp",
+      "gloves_brotherhood_icon.webp",
+      "talisman_elemental_acuity_icon.webp",
+      "veilbranch.webp"
     ]
   },
   {
     "category": "Overlays > Korinis_island",
     "path": "images/overlays/korinis_island/",
     "files": [
-      "korinis_island_penal_colony_chapel.png",
-      "korinis_island_penal_colony_merchants_cave.png",
-      "korinis_island_penal_colony_mine_cave.png",
-      "korinis_island_penal_colony_mine_cave_v2.png",
-      "korinis_island_penal_colony_paladin_barracks.png",
-      "korinis_island_penal_colony_spider_cave.png"
+      "korinis_island_penal_colony_chapel.webp",
+      "korinis_island_penal_colony_merchants_cave.webp",
+      "korinis_island_penal_colony_mine_cave.webp",
+      "korinis_island_penal_colony_mine_cave_v2.webp",
+      "korinis_island_penal_colony_paladin_barracks.webp",
+      "korinis_island_penal_colony_spider_cave.webp"
     ]
   }
 ]
@@ -6692,9 +6696,6 @@ export const AtlasSidebar = ({ groups, visibility, onToggleLayer, onFlyTo }) => 
 							<PanelLeftClose size={20} />
 						</button>
 					</div>
-					<div className='flex-1 flex items-center justify-center writing-vertical-lr text-xs font-bold text-muted-foreground/50 uppercase tracking-widest py-8 select-none'>
-						Atlas Index
-					</div>
 				</div>
 			)}
 
@@ -7494,15 +7495,15 @@ export const MapRecaps = ({ sessions }) => {
 								<Popup closeButton={false} className='leaflet-popup-clean'>
 									<div className='flex flex-col w-[200px] font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
 										{/* Header */}
-										<div className='px-3 py-2 bg-amber-500/10/80 border-b border-amber-100/50 flex items-center gap-2'>
-											<Calendar size={12} className='text-amber-700' />
-											<span className='text-[10px] font-bold uppercase tracking-wider text-amber-900'>
+										<div className='px-3 py-2 bg-amber-500/10/80 border-b border-primary/20 flex items-center gap-2'>
+											<Calendar size={12} className='text-primary' />
+											<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>
 												{session.name}
 											</span>
 										</div>
 
 										{/* Content */}
-										<div className='p-3 text-xs text-foreground/80 leading-snug'>{point.text}</div>
+										<div className='p-3 px-5 text-xs text-foreground/90 leading-snug'>{point.text}</div>
 									</div>
 								</Popup>
 							</Marker>
@@ -7516,62 +7517,448 @@ export const MapRecaps = ({ sessions }) => {
 --- END OF features\atlas\components\layers\MapRecaps.jsx ---
 
 --- FILE: features\atlas\config\mapConfig.js ---
-export const MAP_CONFIG = {
-	defaultCenter: [51.505, -0.09],
-	defaultZoom: 13,
-	tileLayer: {
-		// Dark Matter theme matches your D&D aesthetic
-		url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-		attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>',
-	},
-	style: {
-		height: '100%',
-		width: '100%',
-		background: '#111',
-	},
-};
 
 --- END OF features\atlas\config\mapConfig.js ---
 
+--- FILE: features\atlas\data\modularize.js ---
+import fs from 'fs';
+import path from 'path';
+
+// ==========================================
+// CONFIGURATION
+// ==========================================
+const INPUT_FILE = 'campaign_01.js';
+
+// We output deep into src so it's ready for Vite to pick up
+const OUTPUT_DIR = 'campaign_01';
+
+// ==========================================
+// 1. HELPER: JS Stringifier
+// ==========================================
+function toJsString(obj, indentLevel = 0) {
+	const indent = '\t'.repeat(indentLevel);
+	const nextIndent = '\t'.repeat(indentLevel + 1);
+
+	if (obj === null) return 'null';
+	if (typeof obj === 'undefined') return 'undefined';
+
+	// Force single quotes for strings
+	if (typeof obj === 'string') {
+		const escaped = obj.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+		return `'${escaped}'`;
+	}
+
+	if (typeof obj !== 'object') return String(obj);
+
+	if (Array.isArray(obj)) {
+		if (obj.length === 0) return '[]';
+		// Keep coordinates [x, y] on one line
+		if (obj.length === 2 && typeof obj[0] === 'number') {
+			return `[${obj.join(', ')}]`;
+		}
+		const items = obj.map((item) => toJsString(item, indentLevel + 1));
+		return `[\n${nextIndent}${items.join(`,\n${nextIndent}`)}\n${indent}]`;
+	}
+
+	const keys = Object.keys(obj);
+	if (keys.length === 0) return '{}';
+
+	const props = keys.map((key) => {
+		const value = toJsString(obj[key], indentLevel + 1);
+		// Don't quote simple keys
+		const cleanKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+		return `${cleanKey}: ${value}`;
+	});
+
+	return `{\n${nextIndent}${props.join(`,\n${nextIndent}`)}\n${indent}}`;
+}
+
+// ==========================================
+// 2. HELPER: Recursive Extractor
+// ==========================================
+function extractMapsRecursively(obj, parentId = null, collectedMaps = []) {
+	// If it has metadata, we treat it as a Map configuration
+	if (obj.metadata) {
+		const mapId = obj.metadata.mapId || 'unknown_map';
+
+		// Clone to avoid mutating the original deeply nested structure immediately
+		const mapData = { ...obj };
+
+		// Add explicit parent ID for navigation logic
+		if (parentId) {
+			mapData.parentId = parentId;
+		}
+
+		// Check for children (submaps)
+		if (obj.submaps) {
+			Object.keys(obj.submaps).forEach((category) => {
+				const categoryObj = obj.submaps[category];
+				Object.keys(categoryObj).forEach((submapKey) => {
+					// Recurse down
+					extractMapsRecursively(categoryObj[submapKey], mapId, collectedMaps);
+				});
+			});
+		}
+
+		// Clean up the object (we don't want the nested submaps in the flat config)
+		delete mapData.submaps;
+
+		collectedMaps.push({
+			id: mapId,
+			data: mapData,
+		});
+	} else {
+		// If it's the root container (CAMPAIGN_01)
+		Object.keys(obj).forEach((key) => {
+			if (obj[key] && typeof obj[key] === 'object') {
+				extractMapsRecursively(obj[key], null, collectedMaps);
+			}
+		});
+	}
+	return collectedMaps;
+}
+
+// ==========================================
+// 3. MAIN PROCESS
+// ==========================================
+try {
+	console.log(`📖 Reading ${INPUT_FILE}...`);
+	let fileContent = fs.readFileSync(INPUT_FILE, 'utf8');
+
+	// Remove "export" keywords so we can eval it locally
+	const cleanCode = fileContent.replace(/export const/g, 'const');
+
+	// Evaluate to get the object
+	const { CAMPAIGN_01 } = eval(`${cleanCode}; ({ CAMPAIGN_01 });`);
+
+	console.log(`🔨 Flattening map hierarchy...`);
+	const allMaps = extractMapsRecursively(CAMPAIGN_01);
+	console.log(`   Found ${allMaps.length} maps.`);
+
+	// Prepare Directories
+	if (fs.existsSync(OUTPUT_DIR)) {
+		fs.rmSync(OUTPUT_DIR, { recursive: true, force: true });
+	}
+	fs.mkdirSync(path.join(OUTPUT_DIR, 'maps'), { recursive: true });
+
+	const registryImports = [];
+	const registryExports = [];
+
+	// Process every map found
+	allMaps.forEach((map) => {
+		const mapId = map.id;
+		const mapData = map.data;
+		const mapDir = path.join(OUTPUT_DIR, 'maps', mapId);
+
+		fs.mkdirSync(mapDir, { recursive: true });
+
+		const localImports = [];
+
+		// -----------------------------------------------------
+		// FILE EXTRACTION LOGIC
+		// We replace data with strings like 'PLACEHOLDER_PATHS'
+		// and then regex replace them later.
+		// -----------------------------------------------------
+
+		// 1. Paths
+		if (mapData.paths && mapData.paths.length > 0) {
+			const content = `export const paths = ${toJsString(mapData.paths)};`;
+			fs.writeFileSync(path.join(mapDir, 'paths.js'), content);
+
+			localImports.push(`import { paths } from './paths.js';`);
+			mapData.paths = 'PLACEHOLDER_PATHS';
+		}
+
+		// 2. Annotations (POIs, NPCs, etc)
+		if (mapData.annotations && Object.keys(mapData.annotations).length > 0) {
+			const content = `export const annotations = ${toJsString(mapData.annotations)};`;
+			fs.writeFileSync(path.join(mapDir, 'annotations.js'), content);
+
+			localImports.push(`import { annotations } from './annotations.js';`);
+			mapData.annotations = 'PLACEHOLDER_ANNOTATIONS';
+		}
+
+		// 3. Areas (Polygons)
+		if (mapData.areas && Object.keys(mapData.areas).length > 0) {
+			const content = `export const areas = ${toJsString(mapData.areas)};`;
+			fs.writeFileSync(path.join(mapDir, 'areas.js'), content);
+
+			localImports.push(`import { areas } from './areas.js';`);
+			mapData.areas = 'PLACEHOLDER_AREAS';
+		}
+
+		// 4. Overlays
+		if (mapData.overlays && mapData.overlays.length > 0) {
+			const content = `export const overlays = ${toJsString(mapData.overlays)};`;
+			fs.writeFileSync(path.join(mapDir, 'overlays.js'), content);
+
+			localImports.push(`import { overlays } from './overlays.js';`);
+			mapData.overlays = 'PLACEHOLDER_OVERLAYS';
+		}
+
+		// Generate the Map Config String
+		let configStr = toJsString(mapData);
+
+		// Replace Placeholders with actual variables
+		// We match quotes around them because toJsString adds quotes to strings
+		configStr = configStr.replace(/['"]PLACEHOLDER_PATHS['"]/g, 'paths');
+		configStr = configStr.replace(/['"]PLACEHOLDER_ANNOTATIONS['"]/g, 'annotations');
+		configStr = configStr.replace(/['"]PLACEHOLDER_AREAS['"]/g, 'areas');
+		configStr = configStr.replace(/['"]PLACEHOLDER_OVERLAYS['"]/g, 'overlays');
+
+		const mapVarName = mapId.toUpperCase();
+
+		const indexContent = `
+${localImports.join('\n')}
+
+export const ${mapVarName} = ${configStr};
+`;
+		fs.writeFileSync(path.join(mapDir, 'index.js'), indexContent.trim());
+
+		// Prepare Registry
+		registryImports.push(`import { ${mapVarName} } from './maps/${mapId}/index.js';`);
+		registryExports.push(`    [${mapVarName}.metadata.mapId]: ${mapVarName}`);
+	});
+
+	// ==========================================
+	// 4. GENERATE REGISTRY
+	// ==========================================
+	const registryContent = `
+${registryImports.join('\n')}
+
+export const CAMPAIGN_01 = {
+    name: 'Campaign 01',
+    maps: {
+${registryExports.join(',\n')}
+    }
+};
+`;
+	fs.writeFileSync(path.join(OUTPUT_DIR, 'index.js'), registryContent.trim());
+
+	console.log(`✅ Done! Created modular React structure in:`);
+	console.log(`   📂 ${OUTPUT_DIR}/`);
+	console.log(`      📄 index.js (Import this in your App)`);
+	console.log(`      📂 maps/ (Individual map configs)`);
+} catch (err) {
+	console.error('❌ Error:', err.message);
+	console.error(err.stack);
+}
+
+--- END OF features\atlas\data\modularize.js ---
+
+--- FILE: features\atlas\data\refactor.js ---
+import fs from 'fs';
+
+// 1. CONFIGURATION
+const INPUT_FILE = 'campaign_01.js';
+const OUTPUT_FILE = 'campaign_01_cleaned.js';
+
+// Keys to completely remove
+const KEYS_TO_REMOVE = ['icon', 'iconType', 'animation', 'pointColor', 'pointWidth', 'filter', 'loot', 'image'];
+
+// Keys to force to the top of objects
+const KEY_ORDER = ['label', 'name', 'lat', 'lng', 'coordinates', 'text'];
+
+// 2. HELPERS
+
+/**
+ * Recursively cleans and reorders objects
+ */
+function cleanAndReorder(obj) {
+	if (!obj || typeof obj !== 'object') {
+		return obj;
+	}
+
+	if (Array.isArray(obj)) {
+		return obj.map(cleanAndReorder);
+	}
+
+	const newObj = {};
+
+	// 1. Add High Priority Keys first
+	KEY_ORDER.forEach((key) => {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+			newObj[key] = cleanAndReorder(obj[key]);
+		}
+	});
+
+	// 2. Add remaining keys (filtering out removed ones)
+	Object.keys(obj).forEach((key) => {
+		if (KEYS_TO_REMOVE.includes(key)) return;
+		if (KEY_ORDER.includes(key)) return;
+
+		newObj[key] = cleanAndReorder(obj[key]);
+	});
+
+	return newObj;
+}
+
+/**
+ * Converts object to formatted JS string using single quotes
+ */
+function toJsString(obj, indentLevel = 0) {
+	const indent = '\t'.repeat(indentLevel);
+	const nextIndent = '\t'.repeat(indentLevel + 1);
+
+	if (obj === null) return 'null';
+	if (typeof obj === 'undefined') return 'undefined';
+
+	// Force single quotes for strings
+	if (typeof obj === 'string') {
+		const escaped = obj.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+		return `'${escaped}'`;
+	}
+
+	if (typeof obj !== 'object') return String(obj);
+
+	if (Array.isArray(obj)) {
+		if (obj.length === 0) return '[]';
+
+		// Keep coordinate arrays [x, y] on one line
+		if (obj.length === 2 && typeof obj[0] === 'number') {
+			return `[${obj.join(', ')}]`;
+		}
+
+		const items = obj.map((item) => toJsString(item, indentLevel + 1));
+		return `[\n${nextIndent}${items.join(`,\n${nextIndent}`)}\n${indent}]`;
+	}
+
+	const keys = Object.keys(obj);
+	if (keys.length === 0) return '{}';
+
+	const props = keys.map((key) => {
+		const value = toJsString(obj[key], indentLevel + 1);
+		const cleanKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+		return `${cleanKey}: ${value}`;
+	});
+
+	return `{\n${nextIndent}${props.join(`,\n${nextIndent}`)}\n${indent}}`;
+}
+
+// 3. MAIN LOGIC
+try {
+	console.log(`Reading ${INPUT_FILE}...`);
+	let fileContent = fs.readFileSync(INPUT_FILE, 'utf8');
+
+	// Remove "export" keywords to allow local eval
+	const cleanCode = fileContent.replace(/export const/g, 'const');
+
+	// Evaluate code to get objects
+	const { CAMPAIGN_01, CAMPAIGN_01_ALIASES } = eval(`
+        ${cleanCode}
+        ;({ CAMPAIGN_01, CAMPAIGN_01_ALIASES });
+    `);
+
+	console.log('Cleaning and reordering data...');
+	const cleanedCampaign = cleanAndReorder(CAMPAIGN_01);
+	const cleanedAliases = cleanAndReorder(CAMPAIGN_01_ALIASES);
+
+	// 4. DATA EXTRACTION
+
+	// Extract Paths
+	let WORLD_MAP_PATHS = [];
+	if (cleanedCampaign.world_maps?.paths) {
+		WORLD_MAP_PATHS = cleanedCampaign.world_maps.paths;
+		// Set placeholder
+		cleanedCampaign.world_maps.paths = 'PLACEHOLDER_PATHS';
+	}
+
+	// Extract Korinis
+	let KORINIS_ISLAND = null;
+	if (cleanedCampaign.world_maps?.submaps?.islands?.korinis_island) {
+		KORINIS_ISLAND = cleanedCampaign.world_maps.submaps.islands.korinis_island;
+		cleanedCampaign.world_maps.submaps.islands.korinis_island = 'PLACEHOLDER_KORINIS';
+	}
+
+	// Extract Unnamed Island
+	let UNNAMED_ISLAND = null;
+	if (cleanedCampaign.world_maps?.submaps?.islands?.unnamed_island_01) {
+		UNNAMED_ISLAND = cleanedCampaign.world_maps.submaps.islands.unnamed_island_01;
+		cleanedCampaign.world_maps.submaps.islands.unnamed_island_01 = 'PLACEHOLDER_UNNAMED';
+	}
+
+	// 5. FILE GENERATION
+	console.log('Generating output string...');
+
+	let output = `// ==========================================
+// ALIASES
+// ==========================================
+export const CAMPAIGN_01_ALIASES = ${toJsString(cleanedAliases)};
+
+// ==========================================
+// EXTRACTED DATA
+// ==========================================
+
+// --- World Map Paths ---
+const WORLD_MAP_PATHS = ${toJsString(WORLD_MAP_PATHS)};
+
+`;
+
+	if (KORINIS_ISLAND) {
+		output += `// --- Submap: Korinis Island ---\nconst KORINIS_ISLAND = ${toJsString(KORINIS_ISLAND)};\n\n`;
+	}
+
+	if (UNNAMED_ISLAND) {
+		output += `// --- Submap: Unnamed Island ---\nconst UNNAMED_ISLAND = ${toJsString(UNNAMED_ISLAND)};\n\n`;
+	}
+
+	// Generate main string
+	let mainString = toJsString(cleanedCampaign);
+
+	// 6. REPLACE PLACEHOLDERS (Robust Regex)
+	// Matches 'PLACEHOLDER' or "PLACEHOLDER"
+	mainString = mainString.replace(/['"]PLACEHOLDER_PATHS['"]/g, 'WORLD_MAP_PATHS');
+	mainString = mainString.replace(/['"]PLACEHOLDER_KORINIS['"]/g, 'KORINIS_ISLAND');
+	mainString = mainString.replace(/['"]PLACEHOLDER_UNNAMED['"]/g, 'UNNAMED_ISLAND');
+
+	output += `// ==========================================
+// MAIN CAMPAIGN OBJECT
+// ==========================================
+export const CAMPAIGN_01 = ${mainString};
+`;
+
+	fs.writeFileSync(OUTPUT_FILE, output);
+	console.log(`\n✅ Success! File saved to: ${OUTPUT_FILE}`);
+} catch (err) {
+	console.error('❌ Error:', err.message);
+	console.error(err.stack);
+}
+
+--- END OF features\atlas\data\refactor.js ---
+
 --- FILE: features\atlas\utils\mapNavigation.js ---
-import { CAMPAIGN_01, CAMPAIGN_01_ALIASES } from '@/features/atlas/data/campaign_01';
+// 1. Update the import to point to your new generated folder
+// Ensure this path matches where your modularize.js script output the files
+import { CAMPAIGN_01 } from '@/features/atlas/data/campaign_01/index';
 
 /**
  * Resolves the configuration object for a specific map key.
- * Handles aliases (e.g. 'korinis_island' -> 'world_maps.submaps...')
+ *
+ * CHANGE: With the modular structure, all maps are now siblings
+ * in the .maps object, so deep traversal/aliases are no longer needed.
  */
 export const getMapConfig = (mapKey, campaignData) => {
-	// 1. If we have dynamic campaign data from Supabase/Context, use it.
-	// Otherwise fallback to the static file.
+	// 1. Use context data if provided, otherwise fallback to static generated file
 	const rootData = campaignData || CAMPAIGN_01;
 
-	// 2. Resolve Alias
-	const fullPath = CAMPAIGN_01_ALIASES[mapKey] || mapKey || 'world_map';
-	const pathParts = fullPath.split('.');
+	// 2. Determine ID (Default to 'world_maps' if undefined)
+	// Make sure 'world_maps' matches the mapId in your world map's metadata
+	const targetId = mapKey || 'world_maps';
 
-	// 3. Traverse
-	// Note: We skip 'submaps' keyword if it appears in the path to make traversal robust
-	// but based on your alias structure, we just follow the dots exactly.
-	try {
-		const config = pathParts.reduce((current, key) => {
-			return current && current[key] ? current[key] : null;
-		}, rootData);
-
-		return config;
-	} catch (e) {
-		console.error(`Failed to load map config for: ${mapKey}`, e);
-		return null;
+	// 3. Direct Lookup
+	// The new structure is simply { maps: { [id]: { ...config } } }
+	if (rootData.maps && rootData.maps[targetId]) {
+		return rootData.maps[targetId];
 	}
+
+	console.warn(`[getMapConfig] Map ID not found: ${targetId}`);
+	return null;
 };
 
 /**
  * Helper to calculate map bounds based on image size
  */
 export const calculateBounds = (imageWidth, imageHeight) => {
-	// In CRS.Simple, [0,0] is usually bottom-left.
-	// We map [0,0] to top-left for easier mental mapping if needed,
-	// but standard Leaflet CRS.Simple treats Y as going up.
-	// Typically: [[0,0], [height, width]]
 	return [
 		[-imageHeight, 0],
 		[0, imageWidth],
@@ -9132,11 +9519,12 @@ export const getGraphData = async (campaignId) => {
 --- END OF features\graph\api\graphService.js ---
 
 --- FILE: features\graph\components\CytoscapeCanvas.jsx ---
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import cytoscape from 'cytoscape';
-import fcose from 'cytoscape-fcose'; // IMPLEMENTATION: fCoSE
-import { CYTOSCAPE_STYLES, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
+import fcose from 'cytoscape-fcose';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { getGraphStyles, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
 
 // Register the layout extension
 cytoscape.use(fcose);
@@ -9146,6 +9534,22 @@ export const CytoscapeCanvas = ({ elements }) => {
 	const cyRef = useRef(null);
 	const navigate = useNavigate();
 
+	// 1. Get the theme from the hook
+	const { theme } = useTheme();
+
+	// 2. Memoize styles based on theme
+	const styles = useMemo(() => {
+		return getGraphStyles(theme);
+	}, [theme]);
+
+	// FIX: Live Style Update Effect
+	// This watches for changes to the 'styles' object and injects them into the active graph
+	useEffect(() => {
+		if (cyRef.current) {
+			cyRef.current.style().fromJson(styles).update();
+		}
+	}, [styles]);
+
 	useEffect(() => {
 		if (!containerRef.current) return;
 
@@ -9153,45 +9557,37 @@ export const CytoscapeCanvas = ({ elements }) => {
 		cyRef.current = cytoscape({
 			container: containerRef.current,
 			elements: [],
-			style: CYTOSCAPE_STYLES,
+			style: styles, // Initial styles
 			layout: LAYOUT_CONFIG,
 			wheelSensitivity: 3,
 			minZoom: 0.2,
 			maxZoom: 3,
-			autoungrabify: true, // CHANGED: Set to true to disable node dragging
+			autoungrabify: true,
 		});
 
 		const cy = cyRef.current;
 
 		// --- EVENT HANDLERS ---
 
-		// 1. Click Node: Highlight Connections
 		cy.on('tap', 'node', (evt) => {
 			const node = evt.target;
-
-			// Clear previous states
 			cy.elements().removeClass('highlighted dimmed');
-
 			const connectedEdges = node.connectedEdges();
 			const connectedNodes = connectedEdges.connectedNodes();
 
-			// Dim everything else
 			cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
 
-			// Highlight selection
 			node.addClass('highlighted');
 			connectedNodes.addClass('highlighted');
 			connectedEdges.addClass('highlighted');
 		});
 
-		// 2. Click Background: Reset
 		cy.on('tap', (evt) => {
 			if (evt.target === cy) {
 				cy.elements().removeClass('highlighted dimmed');
 			}
 		});
 
-		// 3. IMPLEMENTATION: Double Click to Navigate
 		cy.on('dblclick', 'node', (evt) => {
 			const node = evt.target;
 			const { id, type } = node.data();
@@ -9206,9 +9602,11 @@ export const CytoscapeCanvas = ({ elements }) => {
 				cyRef.current = null;
 			}
 		};
+		// We exclude 'styles' here because we handle style updates
+		// in the separate useEffect above to prevent destroying the whole graph.
 	}, [navigate]);
 
-	// 2. Handle Data Updates
+	// Handle Data Updates
 	useEffect(() => {
 		if (!cyRef.current || !elements) return;
 
@@ -9220,7 +9618,6 @@ export const CytoscapeCanvas = ({ elements }) => {
 		});
 
 		if (elements.length > 0) {
-			// Run fCoSE layout
 			cy.layout(LAYOUT_CONFIG).run();
 		}
 	}, [elements]);
@@ -9255,102 +9652,119 @@ export const GraphLegend = () => {
 --- END OF features\graph\components\GraphLegend.jsx ---
 
 --- FILE: features\graph\config\graphStyles.js ---
-export const CYTOSCAPE_STYLES = [
-	// --- MAJOR NODES (Hubs/VIPs) ---
-	{
-		selector: 'node',
-		style: {
-			label: 'data(label)',
-			'border-color': 'data(color)',
-			'background-image': 'data(image)',
-			'background-fit': 'cover',
-			'border-width': 2,
-			width: 'mapData(degree, 3, 20, 30, 50)',
-			height: 'mapData(degree, 3, 20, 30, 50)',
-			'font-family': 'Inter, sans-serif',
-			'font-size': '10pt',
-			'font-weight': '500',
-			'text-valign': 'bottom',
-			'text-margin-y': 6,
-			'letter-spacing': 0,
+export const getGraphStyles = (theme) => {
+	// Logic based on explicit App Theme
+	const isDark = theme === 'dark';
 
-			// FIX: Hardcode robust colors that work on both backgrounds
-			// Using a semi-transparent white background for text ensures readability
-			// on both the Dark Mode stars and the Parchment texture.
-			'text-background-color': '#ffffff',
-			'text-background-opacity': 0.7,
-			'text-background-padding': 2,
-			'text-background-shape': 'roundrectangle',
+	// Define dynamic colors
+	const colors = {
+		// Major Nodes
+		text: isDark ? '#F3F4F6' : '#000000', // White vs Black
+		textBg: isDark ? '#1F2937' : '#ffffff', // Dark Gray vs White
 
-			// Dark text is readable against the white text-background
-			color: '#000000',
+		// Minor Nodes
+		minorText: isDark ? '#D1D5DB' : '#374151', // Light Gray vs Dark Gray
+		textOutline: isDark ? '#000000' : '#ffffff', // Black halo vs White halo
+	};
 
-			'text-wrap': 'ellipsis',
-			'text-max-width': 100,
-			'transition-property': 'opacity, width, height',
-			'transition-duration': '0.3s',
-		},
-	},
-	// --- MINOR NODES (Dots) ---
-	{
-		selector: 'node.minor',
-		style: {
-			width: 20,
-			height: 20,
-			'background-color': 'data(color)',
-			'border-width': 1,
-			'border-color': 'data(color)',
-			'font-size': 10,
-			'text-margin-y': 4,
+	return [
+		// --- MAJOR NODES (Hubs/VIPs) ---
+		{
+			selector: 'node',
+			style: {
+				label: 'data(label)',
+				'border-color': 'data(color)',
+				'background-image': 'data(image)',
+				'background-fit': 'cover',
+				'border-width': 2,
+				width: 'mapData(degree, 3, 20, 30, 50)',
+				height: 'mapData(degree, 3, 20, 30, 50)',
+				'font-family': 'Inter, sans-serif',
+				'font-size': '10pt',
+				'font-weight': '500',
+				'text-valign': 'bottom',
+				'text-margin-y': 6,
+				'letter-spacing': 0,
 
-			// Minor nodes: clear text with white outline (halo)
-			// This is cleaner than a box for small items
-			'text-background-opacity': 0,
-			'text-outline-color': '#ffffff',
-			'text-outline-width': 2,
-			'text-outline-opacity': 0.8,
-			color: '#374151', // Gray-700
+				// DYNAMIC: Text Background
+				'text-background-color': colors.textBg,
+				'text-background-opacity': 0.7,
+				'text-background-padding': 2,
+				'text-background-shape': 'roundrectangle',
+
+				// DYNAMIC: Main Text Color
+				color: colors.text,
+
+				'text-wrap': 'ellipsis',
+				'text-max-width': 100,
+				'transition-property': 'opacity, width, height, color, text-background-color',
+				'transition-duration': '0.3s',
+			},
 		},
-	},
-	// --- EDGES ---
-	{
-		selector: 'edge',
-		style: {
-			'line-color': 'data(color)',
-			'target-arrow-color': 'data(color)',
-			'curve-style': 'bezier',
-			width: 1,
-			opacity: 0.3,
-			'arrow-scale': 0.6,
-			'target-arrow-shape': 'triangle',
-			events: 'no',
+		// --- MINOR NODES (Dots) ---
+		{
+			selector: 'node.minor',
+			style: {
+				width: 20,
+				height: 20,
+				'background-color': 'data(color)',
+				'border-width': 1,
+				'border-color': 'data(color)',
+				'font-size': 10,
+				'text-margin-y': 4,
+
+				// Minor nodes: No box, but use an outline (halo) to separate text from background
+				'text-background-opacity': 0,
+
+				// DYNAMIC: Halo color (Black in dark mode makes text pop)
+				'text-outline-color': colors.textOutline,
+				'text-outline-width': 2,
+				'text-outline-opacity': 0.8,
+
+				// DYNAMIC: Minor text color
+				color: colors.minorText,
+			},
 		},
-	},
-	// --- INTERACTION STATES ---
-	{
-		selector: '.dimmed',
-		style: {
-			opacity: 0.05,
-			'text-opacity': 0.1,
-			'border-opacity': 0.1,
-			'background-opacity': 0.1,
+		// --- EDGES ---
+		{
+			selector: 'edge',
+			style: {
+				'line-color': 'data(color)',
+				'target-arrow-color': 'data(color)',
+				'curve-style': 'bezier',
+				width: 1,
+				opacity: 0.3,
+				'arrow-scale': 0.6,
+				'target-arrow-shape': 'triangle',
+				events: 'no',
+			},
 		},
-	},
-	{
-		selector: '.highlighted',
-		style: {
-			'z-index': 9999,
-			'text-wrap': 'wrap',
+		// --- INTERACTION STATES ---
+		{
+			selector: '.dimmed',
+			style: {
+				opacity: 0.05,
+				'text-opacity': 0.1,
+				'border-opacity': 0.1,
+				'background-opacity': 0.1,
+			},
 		},
-	},
-	{
-		selector: 'edge.highlighted',
-		style: {
-			width: 2,
-			opacity: 1,
+		{
+			selector: '.highlighted',
+			style: {
+				'z-index': 9999,
+				'text-wrap': 'wrap',
+			},
 		},
-	},
-];
+		{
+			selector: 'edge.highlighted',
+			style: {
+				width: 2,
+				opacity: 1,
+			},
+		},
+	];
+};
 
 export const LAYOUT_CONFIG = {
 	name: 'fcose',
@@ -9461,7 +9875,7 @@ export const transformGraphData = (rawEntities) => {
 
 		// Use pre-fetched icon string via compatibility wrapper
 		const mockAttributes = { icon: entity.icon };
-		const finalIconUrl = resolveImageUrl(mockAttributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.png`;
+		const finalIconUrl = resolveImageUrl(mockAttributes, 'icon') || `${FALLBACK_ICON_PATH}/${entity.type}.webp`;
 
 		const isMinor = degree < 3;
 
@@ -9760,7 +10174,7 @@ import { clsx } from 'clsx';
 
 export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 	return (
-		<div className='flex-1 overflow-y-auto px-4 space-y-6'>
+		<div className='flex-1 overflow-y-auto px-4 space-y-6 custom-scrollbar'>
 			{structure.map((group) => (
 				<div key={group.title}>
 					<h3 className='px-3 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-2'>
