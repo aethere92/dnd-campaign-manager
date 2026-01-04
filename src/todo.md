@@ -3,3 +3,5 @@
 - [ ] Update the dashboard landing page to have a cards of the party
 - [ ] Integrate the story arcs into the timeline
 - [ ] Create icon for the story arcs
+- [ ] Update the campaign cards to use player portraits + background
+- [ ] Fix issue where the theme is light if it has been set to dark on the campaign page when first accessing
