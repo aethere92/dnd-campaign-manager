@@ -189,6 +189,10 @@ PARTIAL BUNDLE: SHARED
         QuestObjectives.jsx
         SessionMentions.jsx
         WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
         landing/
           EntityGridCard.jsx
           EntityPosterCard.jsx
@@ -215,6 +219,7 @@ PARTIAL BUNDLE: SHARED
         useEntityHeader.js
         useEntitySidebar.js
       layouts/
+        CharacterLayout.jsx
         SessionLayout.jsx
         StandardLayout.jsx
       pages/

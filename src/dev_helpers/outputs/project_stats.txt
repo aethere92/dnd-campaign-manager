@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-04 14:05:45
+Generated: 2026-01-04 22:39:31
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 183
-Total lines: 16,978
-Non-empty lines: 15,037
-Comment lines: 1,438
-Total size: 526,328 bytes (513.99 KB)
-Average lines per file: 92.8
+Total files: 187
+Total lines: 17,402
+Non-empty lines: 15,421
+Comment lines: 1,418
+Total size: 540,380 bytes (527.71 KB)
+Average lines per file: 93.1
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 92.8
 
 .js:
   Files: 65
-  Lines: 6,115
-  Size: 170,648 bytes (166.65 KB)
+  Lines: 6,102
+  Size: 170,235 bytes (166.25 KB)
 
 .json:
   Files: 1
@@ -31,14 +31,14 @@ Average lines per file: 92.8
   Size: 5,265 bytes (5.14 KB)
 
 .jsx:
-  Files: 115
-  Lines: 10,202
-  Size: 339,003 bytes (331.06 KB)
+  Files: 119
+  Lines: 10,637
+  Size: 353,289 bytes (345.01 KB)
 
 .md:
   Files: 1
-  Lines: 6
-  Size: 320 bytes (0.31 KB)
+  Lines: 8
+  Size: 499 bytes (0.49 KB)
 
 
 ### LARGEST FILES (by lines)
@@ -54,13 +54,13 @@ features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
+features\wiki\components\character\CharacterSidebar.jsx: 224 lines
 features\atlas\data\modularize.js: 223 lines
 features\atlas\components\AtlasSidebar.jsx: 215 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
 features\wiki\components\EncounterTimeline.jsx: 208 lines
 domain\entity\utils\attributeParser.js: 204 lines
 features\admin\config\imageManifest.json: 204 lines
-features\wiki\components\EntityHeader.jsx: 204 lines
 features\wiki\components\EntitySidebar.jsx: 201 lines
 features\smart-text\components\EntityEmbed.jsx: 200 lines
 
@@ -133,14 +133,14 @@ features_timeline:
   Size: 10,902 bytes (10.65 KB)
 
 features_wiki:
-  Files: 42
-  Lines: 4,058
-  Size: 131,003 bytes (127.93 KB)
+  Files: 46
+  Lines: 4,480
+  Size: 144,876 bytes (141.48 KB)
 
 root:
   Files: 2
-  Lines: 48
-  Size: 1,510 bytes (1.47 KB)
+  Lines: 50
+  Size: 1,689 bytes (1.65 KB)
 
 shared:
   Files: 23

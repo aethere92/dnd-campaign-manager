@@ -195,6 +195,10 @@ INSTRUCTIONS FOR AI:
         QuestObjectives.jsx
         SessionMentions.jsx
         WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
         landing/
           EntityGridCard.jsx
           EntityPosterCard.jsx
@@ -221,6 +225,7 @@ INSTRUCTIONS FOR AI:
         useEntityHeader.js
         useEntitySidebar.js
       layouts/
+        CharacterLayout.jsx
         SessionLayout.jsx
         StandardLayout.jsx
       pages/
@@ -320,6 +325,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 - [ ] Update the dashboard landing page to have a cards of the party
 - [ ] Integrate the story arcs into the timeline
 - [ ] Create icon for the story arcs
+- [ ] Update the campaign cards to use player portraits + background
+- [ ] Fix issue where the theme is light if it has been set to dark on the campaign page when first accessing
 
 --- END OF todo.md ---
 
@@ -11965,38 +11972,30 @@ export const getEventStyle = (eventType) => {
 
 --- FILE: features\wiki\useEntityView.js ---
 import { useMemo } from 'react';
-import { parseAttributes } from '@/shared/utils/imageUtils'; // Use the safe parser
+import { parseAttributes } from '@/shared/utils/imageUtils';
 import { transformAttributes } from '@/features/wiki/utils/attributeMapper';
 import { useEntityHeader } from './hooks/useEntityHeader';
 import { useEntityContent } from './hooks/useEntityContent';
 import { useEntitySidebar } from './hooks/useEntitySidebar';
 
 export function useEntityViewModel(entity) {
-	// 1. Prepare Attributes
-	// Optimization: parseAttributes now just returns the object if it's already an object.
-	// This allows this hook to work with both Raw Service data and Transformed View data.
 	const attributes = useMemo(() => {
 		return parseAttributes(entity?.attributes);
 	}, [entity]);
 
-	// 2. Transform attributes into traits and sections
 	const { traits, sections } = useMemo(() => {
 		if (!entity) return { traits: [], sections: [] };
-		// Pass description to avoid duplicating it in attributes list
 		return transformAttributes(attributes, entity.description);
 	}, [entity, attributes]);
 
-	// 3. Build sub-models
-	// We pass the full entity because it might contain pre-calculated props (like 'objectives' or 'events')
-	// from the transform layer that the sub-hooks need.
 	const header = useEntityHeader(entity, attributes);
 	const sidebar = useEntitySidebar(entity, traits);
 	const content = useEntityContent(entity, attributes, sections);
 
-	// 4. Determine layout mode
 	const layoutMode = useMemo(() => {
-		// Safe check for session type
-		return entity?.type === 'session' ? 'tabs' : 'standard';
+		if (entity?.type === 'session') return 'tabs';
+		if (entity?.type === 'character') return 'character';
+		return 'standard';
 	}, [entity]);
 
 	return useMemo(() => {
@@ -12007,8 +12006,9 @@ export function useEntityViewModel(entity) {
 			header,
 			sidebar,
 			content,
+			raw: { ...entity, attributes },
 		};
-	}, [entity, layoutMode, header, sidebar, content]);
+	}, [entity, layoutMode, header, sidebar, content, attributes]);
 }
 
 --- END OF features\wiki\useEntityView.js ---
@@ -12553,17 +12553,13 @@ export const EntityBody = ({
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useParams } from 'react-router-dom';
-import { Edit3, ZoomIn, X, Maximize2 } from 'lucide-react';
+import { Edit3, X, Maximize2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '@/domain/entity/components/EntityIcon';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
 import { getPriorityStyles } from '@/domain/entity/config/entityStyles';
 
-/**
- * Premium Fullscreen Image Viewer
- */
 const ImageLightbox = ({ src, alt, onClose }) => {
-	// Lock body scroll & Handle Escape Key
 	useEffect(() => {
 		document.body.style.overflow = 'hidden';
 		const handleEsc = (e) => {
@@ -12580,18 +12576,13 @@ const ImageLightbox = ({ src, alt, onClose }) => {
 		<div
 			className='fixed inset-0 z-[9999] flex items-center justify-center p-8 bg-background/30 backdrop-blur-md animate-in fade-in duration-200'
 			onClick={onClose}>
-			{/* Content Wrapper - Shrinks to fit image */}
 			<div
 				className='relative inline-block shadow-2xl rounded-lg overflow-hidden bg-black/5 ring-1 ring-black/10'
 				onClick={(e) => e.stopPropagation()}>
-				{/* Image */}
 				<img src={src} alt={alt} className='max-w-[85vw] max-h-[85vh] object-contain block select-none' />
-
-				{/* Close Button - Pinned to Image */}
 				<button
 					onClick={onClose}
-					className='absolute top-3 right-3 p-1.5 bg-black/50 hover:bg-black/70 text-white/90 hover:text-white rounded-full transition-all duration-200 backdrop-blur-sm shadow-sm'
-					title='Close (Esc)'>
+					className='absolute top-3 right-3 p-1.5 bg-black/50 hover:bg-black/70 text-white/90 hover:text-white rounded-full transition-all duration-200 backdrop-blur-sm shadow-sm'>
 					<X size={18} strokeWidth={2.5} />
 				</button>
 			</div>
@@ -12600,28 +12591,15 @@ const ImageLightbox = ({ src, alt, onClose }) => {
 	);
 };
 
-/**
- * EntityHeader Component
- */
 export const EntityHeader = ({ data }) => {
-	const { title, typeLabel, imageUrl, avatarUrl, status, priority, extraTags } = data;
+	const { title, subtitle, typeLabel, imageUrl, avatarUrl, status, priority, extraTags, type } = data;
 	const { entityId } = useParams();
 	const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-
-	// Only show edit controls in Dev mode
 	const isDev = import.meta.env.DEV;
 
-	// FIX: Improved "Spotlight" gradient for headers without images
-	// Creates a subtle light source from the top-center that fades into the page background
 	const noImageStyle = !imageUrl
 		? {
-				background: `
-            radial-gradient(
-                80% 100% at 50% -20%, 
-                var(--muted) 0%, 
-                var(--background) 100%
-            )
-        `,
+				background: `radial-gradient(80% 100% at 50% -20%, var(--muted) 0%, var(--background) 100%)`,
 		  }
 		: {};
 
@@ -12629,13 +12607,11 @@ export const EntityHeader = ({ data }) => {
 		<>
 			<div
 				className={clsx(
-					// HEIGHT ADJUSTMENT: Increased base height and md height
 					'h-48 md:h-64 relative group overflow-hidden select-none',
-					imageUrl ? 'cursor-pointer' : 'border-b border-border/40' // Add subtle border if no image
+					imageUrl ? 'cursor-pointer' : 'border-b border-border/40'
 				)}
 				style={noImageStyle}
 				onClick={() => imageUrl && setIsLightboxOpen(true)}>
-				{/* 1. BACKGROUND LAYER (Banner) */}
 				{imageUrl && (
 					<>
 						<img
@@ -12643,69 +12619,55 @@ export const EntityHeader = ({ data }) => {
 							alt={title}
 							className={clsx(
 								'absolute inset-0 w-full h-full object-cover transition-all duration-[2000ms] ease-in-out',
-								// Start position: Center-Top (Focuses on faces/landscapes usually in upper 3rd)
-								// Hover position: True Center (Slow pan effect)
 								'object-[center_30%] group-hover:object-[center_50%] group-hover:scale-105'
 							)}
 						/>
-
-						{/* Subtler Zoom Hint */}
 						<div className='absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10'>
 							<div className='bg-black/30 backdrop-blur-md p-2 rounded-full text-white/80 border border-white/10 shadow-lg'>
 								<Maximize2 size={16} />
 							</div>
 						</div>
-
-						{/* FIX: Smoother, Longer Gradient Overlay */}
-						{/* Uses a longer fade (via-30% to via-60%) to avoid the "harsh line" effect */}
 						<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] from-0% via-[var(--background)]/80 via-10% via-[var(--background)]/20 via-20% to-transparent pointer-events-none' />
 					</>
 				)}
 
-				{/* 2. DEVELOPER ACTION BAR */}
 				{isDev && entityId && (
 					<div
 						className='absolute top-4 right-4 z-30 animate-in fade-in slide-in-from-right-2 duration-500'
-						onClick={(e) => e.stopPropagation()} // Prevent lightbox trigger
-					>
+						onClick={(e) => e.stopPropagation()}>
 						<Link
 							to={`/dm/manage/${typeLabel.toLowerCase()}/${entityId}`}
-							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'
-							title='Edit in DM Console'>
+							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'>
 							<Edit3 size={14} className='group-hover/edit:scale-110 transition-transform' />
 							<span className='text-[10px] font-bold uppercase tracking-tight'>Quick Edit</span>
 						</Link>
 					</div>
 				)}
 
-				{/* 3. CONTENT LAYER */}
-				<div className='absolute bottom-0 left-0 w-full p-4 md:p-6 pointer-events-none'>
+				<div
+					className={clsx(
+						'absolute bottom-0 left-0 w-full pointer-events-none',
+						type === 'character' ? 'p-4 md:p-6 md:pb-0!' : 'p-4 md:p-6 '
+					)}>
 					<div className='max-w-6xl mx-auto flex items-end gap-5'>
-						{/* AVATAR - FIX: Size alignment and container logic */}
 						<div className='hidden md:flex md:items-end pointer-events-auto mb-1'>
 							<EntityIcon
 								type={typeLabel.toLowerCase()}
 								customIconUrl={avatarUrl}
-								// FIX: Passed larger size to component to fill container
 								size={64}
 								showBackground
-								// FIX: Adjusted width/height classes to be proportional (w-20/h-20 is 80px)
 								className='w-[84px] h-[84px] shadow-xl border-2 border-background/50 object-cover bg-background'
 							/>
 						</div>
 
-						{/* Title & Status Metadata */}
 						<div className='flex-1 pb-1 min-w-0'>
 							<div className='flex items-center flex-wrap gap-2 mb-2'>
-								{/* Type Badge */}
 								<EntityBadge
 									type={typeLabel.toLowerCase()}
 									size='sm'
 									variant='solid'
 									className='bg-background/80 backdrop-blur-sm border-border/50 text-foreground shadow-sm'
 								/>
-
-								{/* Status Badge */}
 								{status.hasStatus && (
 									<span
 										className={clsx(
@@ -12715,8 +12677,6 @@ export const EntityHeader = ({ data }) => {
 										{status.label}
 									</span>
 								)}
-
-								{/* Priority Badge (For Quests) */}
 								{priority && (
 									<span
 										className={clsx(
@@ -12726,8 +12686,6 @@ export const EntityHeader = ({ data }) => {
 										{priority} Priority
 									</span>
 								)}
-
-								{/* Extra Tags (Session Date, etc) */}
 								{extraTags &&
 									extraTags.map((tag, i) => (
 										<span
@@ -12741,12 +12699,15 @@ export const EntityHeader = ({ data }) => {
 							<h1 className='text-3xl md:text-5xl font-serif font-bold text-foreground leading-none drop-shadow-sm tracking-tight break-words'>
 								{title}
 							</h1>
+
+							{/* --- NEW: Subtitle (Race/Class/Level) --- */}
+							{subtitle && (
+								<div className='text-sm font-semibold text-muted-foreground opacity-90 drop-shadow-md'>{subtitle}</div>
+							)}
 						</div>
 					</div>
 				</div>
 			</div>
-
-			{/* Lightbox Portal */}
 			{isLightboxOpen && imageUrl && (
 				<ImageLightbox src={imageUrl} alt={title} onClose={() => setIsLightboxOpen(false)} />
 			)}
@@ -13412,43 +13373,45 @@ const MentionGroup = ({ type, items }) => {
 	const Icon = config.icon;
 
 	return (
-		<div className='border border-border rounded-lg overflow-hidden bg-muted/30/30 flex flex-col'>
+		<div className='break-inside-avoid mb-4 border border-border rounded-lg overflow-hidden bg-muted/30/30 flex flex-col'>
 			{/* Header */}
 			<div className='px-3 py-2 border-b border-border bg-muted/50 flex items-center justify-between shrink-0'>
 				<div className='flex items-center gap-2'>
 					<Icon size={12} className='text-muted-foreground' />
-					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest m-0'>{config.labelPlural}</h3>
+					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest m-0'>
+						{config.labelPlural}
+					</h3>
 				</div>
 				<span className='text-[9px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full'>
 					{items.length}
 				</span>
 			</div>
 
-			{/* List Container - Reverted to Vertical Column */}
+			{/* List Container */}
 			<div className='p-2'>
-				<div className='flex flex-col gap-1.5'>
+				<div className='flex flex-col gap-1'>
 					{items.map((item) => (
 						<EntityLink
 							key={item.id}
 							id={item.id}
 							type={item.type}
-							inline={true} // Use inline mode to get a cleaner DOM structure (A -> SPAN)
-							showIcon={false} // We provide our own icon in the children for custom styling
+							inline={true}
+							showIcon={false}
 							className={clsx(
-								// Override generic InlineLink styles to make it look like a card
-								'!block !w-full !no-underline !border',
-								'!bg-card/60 !border-border/80 !rounded-md',
-								'!px-2 !py-1.5',
-								// Colors
-								'!text-card-foreground hover:!text-foreground',
-								// Hover states
-								'hover:!bg-card hover:!border-amber-300 hover:!shadow-sm transition-all'
+								// Matches CharacterSidebar styling exactly
+								'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline',
+								'!border-border hover:!border-primary/40 hover:!shadow-sm hover:!bg-card group'
 							)}>
-							{/* Inner Layout Wrapper to handle Flex behavior correctly */}
-							<span className='flex items-center gap-2.5 min-w-0'>
-								<EntityIcon type={item.type} size={14} className='opacity-70 text-muted-foreground shrink-0' />
-								<span className='text-[13px] font-semibold truncate'>{item.name}</span>
-							</span>
+							<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+								<EntityIcon
+									type={item.type}
+									size={16}
+									className='opacity-80 group-hover:opacity-100 transition-opacity'
+								/>
+								<span className='text-xs font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
+									{item.name}
+								</span>
+							</div>
 						</EntityLink>
 					))}
 				</div>
@@ -13470,11 +13433,9 @@ export const SessionMentions = ({ mentions }) => {
 	const orderedKeys = order.filter((k) => mentions[k]).concat(Object.keys(mentions).filter((k) => !order.includes(k)));
 
 	return (
-		<div className='columns-1 md:columns-2 xl:columns-3 gap-4'>
+		<div className='columns-1 md:columns-2 xl:columns-3 gap-4 animate-in fade-in duration-500'>
 			{orderedKeys.map((key) => (
-				<div key={key} className='break-inside-avoid mb-4'>
-					<MentionGroup type={key} items={mentions[key]} />
-				</div>
+				<MentionGroup key={key} type={key} items={mentions[key]} />
 			))}
 		</div>
 	);
@@ -13483,37 +13444,416 @@ export const SessionMentions = ({ mentions }) => {
 --- END OF features\wiki\components\SessionMentions.jsx ---
 
 --- FILE: features\wiki\components\WikiEntryView.jsx ---
-// features/entity-view/WikiEntityView.jsx
 import { useEntityViewModel } from '@/features/wiki/useEntityView';
 import { EntityHeader } from '@/features/wiki/components/EntityHeader';
 import StandardLayout from '@/features/wiki/layouts/StandardLayout';
 import SessionLayout from '@/features/wiki/layouts/SessionLayout';
+import CharacterLayout from '@/features/wiki/layouts/CharacterLayout'; // Import New Layout
 
 export default function WikiEntityView({ entity }) {
 	const viewModel = useEntityViewModel(entity);
 
 	if (!viewModel) return null;
 
-	// Determine layout based on entity type
 	let LayoutComponent;
-	if (entity?.type === 'session') {
+	if (viewModel.layoutMode === 'tabs') {
 		LayoutComponent = SessionLayout;
+	} else if (viewModel.layoutMode === 'character') {
+		LayoutComponent = CharacterLayout;
 	} else {
 		LayoutComponent = StandardLayout;
 	}
 
 	return (
 		<div className='pb-16 animate-in fade-in duration-300 min-h-full'>
-			{/* Universal Header */}
 			<EntityHeader data={viewModel.header} />
-
-			{/* Dynamic Layout */}
 			<LayoutComponent viewModel={viewModel} />
 		</div>
 	);
 }
 
 --- END OF features\wiki\components\WikiEntryView.jsx ---
+
+--- FILE: features\wiki\components\character\CharacterSidebar.jsx ---
+import { Tag, Shield, Gem, Scroll, Save, Eye, Swords, Activity } from 'lucide-react';
+import EntityLink from '@/domain/entity/components/EntityLink';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { clsx } from 'clsx';
+
+// Helper: Split string by comma and trim
+const parseTags = (str) => {
+	if (!str) return [];
+	if (Array.isArray(str)) return str;
+	return String(str)
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean);
+};
+
+const SidebarHeader = ({ title, icon: Icon }) => (
+	<h4 className='flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-3 mt-5 border-b border-border/40 pb-1'>
+		{Icon && <Icon size={12} />} {title}
+	</h4>
+);
+
+const TagPill = ({ text }) => (
+	<span className='inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-muted/30 text-muted-foreground border border-border/50'>
+		{text}
+	</span>
+);
+
+const StatRowItem = ({ label, value }) => (
+	<div className='flex flex-col items-center justify-center p-2 bg-muted/20 rounded border border-border/30'>
+		<span className='text-[9px] font-bold uppercase text-muted-foreground/70 tracking-wider mb-0.5'>{label}</span>
+		<span className='text-sm font-bold text-foreground font-serif'>{value}</span>
+	</div>
+);
+
+const SkillItem = ({ text }) => {
+	// split "Acrobatics (+1)" into name and val
+	const match = text.match(/^(.*)\s(\([+-]?\d+\))$/);
+	const name = match ? match[1] : text;
+	const val = match ? match[2] : '';
+
+	return (
+		<div className='flex justify-between items-center text-[11px] py-0.5 px-1 border-b border-border/20 last:border-0'>
+			<span className='text-muted-foreground'>{name}</span>
+			<span className='font-mono text-foreground opacity-80 text-[10px]'>{val}</span>
+		</div>
+	);
+};
+
+const SidebarLink = ({ entity }) => (
+	<EntityLink
+		id={entity.entity_id}
+		type={entity.entity_type}
+		inline={true}
+		showIcon={false}
+		className={clsx(
+			'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline !mb-2',
+			'!border-border hover:!border-primary/40 hover:!shadow-sm hover:!bg-card'
+		)}>
+		<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+			<EntityIcon type={entity.entity_type} size={16} className='opacity-80 group-hover:opacity-100' />
+			<span className='text-xs font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
+				{entity.entity_name}
+			</span>
+		</div>
+	</EntityLink>
+);
+
+export const CharacterSidebar = ({ attributes, gear, quests }) => {
+	const proficiencies = parseTags(attributes.proficiencies || attributes.tools);
+	const languages = parseTags(attributes.languages);
+	const saves = attributes['saving throw'] || attributes['saves'] || [];
+	const saveList = Array.isArray(saves) ? saves : [];
+
+	// Extract special stats manually
+	const initiative = attributes.initiative;
+	const proficiencyBonus = attributes.proficiency || attributes.proficiency_bonus;
+	const skills = parseTags(attributes.skills);
+	const senses = parseTags(attributes['additional senses'] || attributes.senses);
+
+	// Filter keys that we handle explicitly
+	const ignoredKeys = new Set([
+		// Header
+		'class',
+		'race',
+		'level',
+		// Stats Bar
+		'ability score',
+		'stats',
+		'saving throw',
+		'saves',
+		'armor class',
+		'ac',
+		'hit points',
+		'hp',
+		'speed',
+		'passive_perception',
+		'passive',
+		// Explicit Sections
+		'languages',
+		'proficiencies',
+		'tools',
+		'skills',
+		'initiative',
+		'proficiency',
+		'proficiency_bonus',
+		'additional senses',
+		'senses',
+		// System
+		'icon',
+		'background_image',
+		'is_active',
+		'campaign_id',
+	]);
+
+	// Get any remaining attributes (Alignment, Faith, etc.)
+	const otherAttributes = Object.entries(attributes).filter(([key, val]) => {
+		const k = key.toLowerCase();
+		if (ignoredKeys.has(k)) return false;
+		if (!val || (typeof val === 'object' && !Array.isArray(val))) return false;
+		return true;
+	});
+
+	return (
+		<div className='font-sans'>
+			{/* 1. Combat Vitals Row (Initiative / Proficiency) */}
+			{(initiative || proficiencyBonus) && (
+				<div className='grid grid-cols-2 gap-2 mb-4'>
+					{initiative && <StatRowItem label='Initiative' value={initiative} />}
+					{proficiencyBonus && <StatRowItem label='Proficiency' value={proficiencyBonus} />}
+				</div>
+			)}
+
+			{/* 2. Saving Throws */}
+			{saveList.length > 0 && (
+				<div>
+					<SidebarHeader title='Saving Throws' icon={Save} />
+					<div className='flex flex-wrap gap-1.5'>
+						{saveList.map((save, i) => (
+							<TagPill key={i} text={save} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 3. Skills (Compact Grid) */}
+			{skills.length > 0 && (
+				<div>
+					<SidebarHeader title='Skills' icon={Activity} />
+					<div className='grid grid-cols-2 gap-x-4 gap-y-0.5'>
+						{skills.map((skill, i) => (
+							<SkillItem key={i} text={skill} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 4. Senses */}
+			{senses.length > 0 && (
+				<div>
+					<SidebarHeader title='Senses' icon={Eye} />
+					<div className='flex flex-col gap-1'>
+						{senses.map((sense, i) => (
+							<div key={i} className='text-xs text-muted-foreground border-l-2 border-border pl-2 py-0.5'>
+								{sense}
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 5. Languages */}
+			{languages.length > 0 && (
+				<div>
+					<SidebarHeader title='Languages' icon={Tag} />
+					<div className='flex flex-wrap gap-1.5'>
+						{languages.map((lang, i) => (
+							<TagPill key={i} text={lang} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 6. Dynamic Attributes */}
+			{otherAttributes.map(([key, val]) => {
+				const tags = parseTags(val);
+				return (
+					<div key={key}>
+						<SidebarHeader title={key.replace(/_/g, ' ')} icon={Swords} />
+						<div className='flex flex-wrap gap-1.5'>
+							{tags.map((t, i) => (
+								<TagPill key={i} text={t} />
+							))}
+						</div>
+					</div>
+				);
+			})}
+
+			{/* 7. Personal Quests */}
+			{quests && quests.length > 0 && (
+				<div>
+					<SidebarHeader title='Personal Quests' icon={Scroll} />
+					<div>
+						{quests.map((quest) => (
+							<SidebarLink key={quest.entity_id} entity={quest} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 8. Signature Gear */}
+			{gear && gear.length > 0 && (
+				<div>
+					<SidebarHeader title='Signature Gear' icon={Gem} />
+					<div>
+						{gear.map((item) => (
+							<SidebarLink key={item.entity_id} entity={item} />
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\character\CharacterSidebar.jsx ---
+
+--- FILE: features\wiki\components\character\CharacterStats.jsx ---
+import { Shield, Heart, Wind } from 'lucide-react';
+import { SectionDivider } from '@/shared/components/ui/SectionDivider';
+
+const parseStat = (str) => {
+	if (!str) return { label: '???', value: '-' };
+	const match = str.match(/^([A-Z]{3})\s+(.*)$/);
+	if (!match) return { label: str.substring(0, 3), value: str };
+	return { label: match[1], value: match[2] };
+};
+
+const StatPill = ({ raw }) => {
+	const { label, value } = parseStat(raw);
+	return (
+		<div className='flex flex-col items-center justify-center bg-muted/20 border border-border/50 rounded-md py-1.5 px-3 min-w-[70px]'>
+			<span className='text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5'>{label}</span>
+			<span className='text-sm font-bold text-foreground font-serif leading-none'>{value}</span>
+		</div>
+	);
+};
+
+const VitalPill = ({ label, value, icon: Icon, color }) => (
+	<div className='flex flex-col items-center justify-center bg-muted/20 border border-border/50 rounded-md py-1.5 px-4 min-w-[80px]'>
+		<div className='flex items-center gap-1.5 mb-0.5 opacity-80'>
+			<Icon size={10} className={color} />
+			<span className='text-[9px] font-bold uppercase text-muted-foreground tracking-wider'>{label}</span>
+		</div>
+		<span className='text-base font-serif font-bold text-foreground leading-none'>{value || '-'}</span>
+	</div>
+);
+
+export const CharacterStats = ({ attributes }) => {
+	const stats = attributes['ability score'] || attributes['stats'] || [];
+	const ac = attributes['armor class'] || attributes['ac'];
+	const hp = attributes['hit points'] || attributes['hp'];
+	const speed = attributes['speed'];
+
+	return (
+		<div>
+			<div className='flex flex-wrap items-center justify-center gap-6'>
+				{/* 1. Ability Scores */}
+				<div className='flex flex-wrap justify-center gap-2'>
+					{stats.map((s, i) => (
+						<StatPill key={i} raw={s} />
+					))}
+				</div>
+
+				{/* Vertical Divider (Hidden on small mobile) */}
+				<div className='hidden sm:block w-px h-8 bg-border/40' />
+
+				{/* 2. Vitals */}
+				<div className='flex flex-wrap justify-center gap-2'>
+					<VitalPill label='AC' value={ac} icon={Shield} color='text-emerald-500' />
+					<VitalPill label='HP' value={hp} icon={Heart} color='text-red-500' />
+					<VitalPill label='Speed' value={speed} icon={Wind} color='text-blue-500' />
+				</div>
+			</div>
+			<SectionDivider />
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\character\CharacterStats.jsx ---
+
+--- FILE: features\wiki\components\character\RelationshipNetwork.jsx ---
+import { clsx } from 'clsx';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import EntityLink from '@/domain/entity/components/EntityLink';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+
+const NetworkGroup = ({ type, items }) => {
+	if (!items || items.length === 0) return null;
+
+	const config = getEntityConfig(type);
+	const Icon = config.icon;
+
+	return (
+		<div className='break-inside-avoid mb-6 bg-card/40 border border-border/40 rounded-lg overflow-hidden'>
+			{/* Group Header */}
+			<div className='px-3 py-2 border-b border-border/40 bg-muted/30 flex items-center justify-between'>
+				<div
+					className={clsx('flex items-center gap-2 text-xs font-bold uppercase tracking-widest', config.tailwind.text)}>
+					<Icon size={14} /> {config.labelPlural}
+				</div>
+				<span className='text-[9px] font-bold bg-background border border-border/50 px-1.5 py-0.5 rounded text-muted-foreground'>
+					{items.length}
+				</span>
+			</div>
+
+			{/* List of Connections */}
+			<div className='p-2 space-y-1.5'>
+				{items.map((rel) => (
+					<EntityLink
+						key={rel.entity_id}
+						id={rel.entity_id}
+						type={rel.entity_type}
+						inline={true}
+						showIcon={false}
+						className={clsx(
+							'!flex !w-full !items-center !justify-between !p-2 !rounded-md !border !bg-card !transition-all !cursor-pointer !no-underline',
+							'!border-border hover:!border-primary/50 hover:!shadow-sm hover:!bg-muted/20 group'
+						)}>
+						{/* Left: Icon + Name */}
+						<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+							<EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' />
+							<span className='text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors'>
+								{rel.entity_name}
+							</span>
+						</div>
+
+						{/* Right: Relationship Label */}
+						<span className='shrink-0 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded ml-2 max-w-[40%] truncate'>
+							{rel.type ? rel.type.replace(/_/g, ' ') : 'Related'}
+						</span>
+					</EntityLink>
+				))}
+			</div>
+		</div>
+	);
+};
+
+export const RelationshipNetwork = ({ relationships }) => {
+	if (!relationships || relationships.length === 0) {
+		return (
+			<div className='p-8 text-center text-muted-foreground italic border border-dashed border-border rounded-lg bg-muted/20'>
+				No connections recorded.
+			</div>
+		);
+	}
+
+	// 1. Group by Entity Type
+	const groups = relationships.reduce((acc, rel) => {
+		const type = rel.entity_type || 'default';
+		if (!acc[type]) acc[type] = [];
+		acc[type].push(rel);
+		return acc;
+	}, {});
+
+	// 2. Define Display Order (Narrative Priority)
+	const order = ['character', 'npc', 'faction', 'location', 'quest', 'encounter', 'item'];
+	const orderedKeys = order.filter((k) => groups[k]).concat(Object.keys(groups).filter((k) => !order.includes(k)));
+
+	// 3. Render Masonry Layout
+	return (
+		<div className='columns-1 md:columns-2 xl:columns-3 gap-6 animate-in fade-in duration-500'>
+			{orderedKeys.map((type) => (
+				<NetworkGroup key={type} type={type} items={groups[type]} />
+			))}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\character\RelationshipNetwork.jsx ---
 
 --- FILE: features\wiki\components\landing\EntityGridCard.jsx ---
 import { Link } from 'react-router-dom';
@@ -15147,11 +15487,6 @@ export function useEntityGrouping(entities, type, searchQuery = '', context = {}
 --- END OF features\wiki\hooks\useEntityGrouping.js ---
 
 --- FILE: features\wiki\hooks\useEntityHeader.js ---
-/**
- * useEntityHeader Hook
- * Builds header view model from entity data
- */
-
 import { useMemo } from 'react';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
@@ -15159,49 +15494,48 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { extractHeaderTags } from '@/features/wiki/utils/attributeMapper';
 import { capitalize } from '@/shared/utils/textUtils';
 
-/**
- * Build header view model
- * @param {Object} entity - Raw entity data
- * @param {Object} attributes - Parsed attributes
- * @returns {Object} Header view model
- */
 export const useEntityHeader = (entity, attributes) => {
 	return useMemo(() => {
 		if (!entity) return null;
 
 		const config = getEntityConfig(entity.type);
-
-		// Resolve images
 		const headerBackgroundUrl = resolveImageUrl(attributes, 'background');
 		const avatarUrl = resolveImageUrl(attributes, 'icon');
 
-		// Resolve status
+		// Status
 		let statusRaw = entity.status || getAttributeValue(attributes, ['status']);
-		if (Array.isArray(statusRaw)) {
-			statusRaw = statusRaw.join(', ');
-		}
-		if (statusRaw && typeof statusRaw !== 'string') {
-			statusRaw = String(statusRaw);
-		}
+		if (Array.isArray(statusRaw)) statusRaw = statusRaw.join(', ');
 
-		// Resolve Priority (New)
+		// Priority
 		const priorityRaw = getAttributeValue(attributes, ['priority', 'Priority']);
 
-		// Extract extra tags (session-specific)
+		// Extra Tags
 		const extraTags = extractHeaderTags(attributes, entity.type);
+
+		// --- NEW: Character Subtitle Logic ---
+		let subtitle = null;
+		if (entity.type === 'character') {
+			const race = attributes.race || 'Unknown Race';
+			const cls = attributes.class || 'Unknown Class';
+			const level = attributes.level ? `Level ${attributes.level}` : '';
+			// Format: "Earth Genasi • Fighter Echo Knight • Level 8"
+			subtitle = [race, cls, level].filter(Boolean).join(' • ');
+		}
 
 		return {
 			title: entity.name,
+			subtitle, // Pass the new subtitle
 			typeLabel: entity.type?.toUpperCase(),
 			imageUrl: headerBackgroundUrl,
 			avatarUrl: avatarUrl,
 			status: {
 				hasStatus: !!statusRaw,
-				label: statusRaw ? capitalize(statusRaw) : '',
+				label: statusRaw ? capitalize(String(statusRaw)) : '',
 				isDead: statusRaw?.toLowerCase() === 'dead' || statusRaw?.toLowerCase() === 'failed',
 			},
 			priority: priorityRaw ? capitalize(priorityRaw) : null,
 			extraTags,
+			type: entity.type,
 			theme: {
 				...config.tailwind,
 				Icon: config.icon,
@@ -15241,6 +15575,113 @@ export const useEntitySidebar = (entity, traits) => {
 };
 
 --- END OF features\wiki\hooks\useEntitySidebar.js ---
+
+--- FILE: features\wiki\layouts\CharacterLayout.jsx ---
+import { useState, useMemo } from 'react';
+import { User, Network, History as HistoryIcon, BookOpen } from 'lucide-react';
+import TabContainer from '@/shared/components/layout/TabContainer';
+import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
+import { CharacterSidebar } from '@/features/wiki/components/character/CharacterSidebar';
+import { CharacterStats } from '@/features/wiki/components/character/CharacterStats';
+import { RelationshipNetwork } from '@/features/wiki/components/character/RelationshipNetwork';
+import { extractHeaders } from '@/shared/utils/markdownUtils';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+
+export default function CharacterLayout({ viewModel }) {
+	const { raw } = viewModel;
+	const [activeTab, setActiveTab] = useState('bio');
+
+	// Filter Relationships
+	const gear = useMemo(() => (raw.relationships || []).filter((r) => r.entity_type === 'item'), [raw.relationships]);
+	const personalQuests = useMemo(
+		() =>
+			(raw.relationships || []).filter(
+				(r) => r.entity_type === 'quest' && ['quest_giver', 'quest_participant'].includes(r.type)
+			),
+		[raw.relationships]
+	);
+
+	// TOC for Bio
+	const tocItems = useMemo(() => {
+		if (activeTab === 'bio' && viewModel.content.summary) {
+			return extractHeaders(viewModel.content.summary);
+		}
+		return [];
+	}, [activeTab, viewModel.content.summary]);
+
+	// --- TAB 1: BIOGRAPHY ---
+	const renderBio = () => (
+		<div className='w-full px-4 sm:px-6 py-8'>
+			<div className='max-w-6xl mx-auto'>
+				{/* 1. HERO STATS (Bio Exclusive) */}
+				<CharacterStats attributes={raw.attributes} />
+
+				{/* 2. SPLIT LAYOUT */}
+				<div className='grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 xl:gap-12'>
+					{/* Sidebar: Identity, Saves, Gear, Quests */}
+					<div className='hidden lg:block lg:order-first min-w-0'>
+						<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
+					</div>
+
+					{/* Mobile Sidebar */}
+					<div className='lg:hidden items-center'>
+						<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
+					</div>
+
+					{/* Content */}
+					<div className='min-w-0 flex gap-8'>
+						<div className='flex-1 min-w-0'>
+							<EntityBody summary={viewModel.content.summary} sections={viewModel.content.sections} history={null} />
+						</div>
+						{tocItems.length > 0 && (
+							<div className='hidden xl:block w-56 shrink-0 sticky top-4 border-l border-border pl-4 h-fit'>
+								<TableOfContents items={tocItems} />
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+
+	// --- TAB 2: NETWORK ---
+	const renderNetwork = () => (
+		<div className='w-full px-4 sm:px-6 py-8'>
+			<div className='max-w-6xl mx-auto'>
+				<RelationshipNetwork relationships={raw.relationships} />
+			</div>
+		</div>
+	);
+
+	// --- TAB 3: CHRONICLE ---
+	const renderChronicle = () => (
+		<div className='w-full px-4 sm:px-6 py-8'>
+			<div className='max-w-4xl mx-auto space-y-10'>
+				{/* Removed Personal Quests from here as they are now in Sidebar */}
+				<div>
+					<EntityHistory events={viewModel.content.history} fullHeight />
+				</div>
+			</div>
+		</div>
+	);
+
+	// --- ROOT RENDER ---
+	return (
+		<div className='w-full bg-background min-h-screen'>
+			<TabContainer
+				tabs={[
+					{ id: 'bio', label: 'Biography', icon: User, content: renderBio() },
+					{ id: 'mentions', label: 'Mentions', icon: Network, content: renderNetwork() },
+					{ id: 'timeline', label: 'Timeline', icon: HistoryIcon, content: renderChronicle() },
+				]}
+				defaultTab={activeTab}
+				onChange={setActiveTab}
+			/>
+		</div>
+	);
+}
+
+--- END OF features\wiki\layouts\CharacterLayout.jsx ---
 
 --- FILE: features\wiki\layouts\SessionLayout.jsx ---
 import { useMemo } from 'react';

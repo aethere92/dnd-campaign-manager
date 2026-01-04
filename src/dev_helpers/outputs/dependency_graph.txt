@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-04 14:05:45
+Generated: 2026-01-04 22:39:31
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -687,9 +687,26 @@ features\wiki\components\SessionMentions.jsx:
 
 features\wiki\components\WikiEntryView.jsx:
   → @/features/wiki/components/EntityHeader
+  → @/features/wiki/layouts/CharacterLayout
   → @/features/wiki/layouts/SessionLayout
   → @/features/wiki/layouts/StandardLayout
   → @/features/wiki/useEntityView
+
+features\wiki\components\character\CharacterSidebar.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/components/EntityLink
+  → clsx
+  → lucide-react
+
+features\wiki\components\character\CharacterStats.jsx:
+  → @/shared/components/ui/SectionDivider
+  → lucide-react
+
+features\wiki\components\character\RelationshipNetwork.jsx:
+  → @/domain/entity/components/EntityIcon
+  → @/domain/entity/components/EntityLink
+  → @/domain/entity/config/entityConfig
+  → clsx
 
 features\wiki\components\landing\EntityGridCard.jsx:
   → @/domain/entity/utils/statusUtils
@@ -811,6 +828,17 @@ features\wiki\hooks\useEntityHeader.js:
 
 features\wiki\hooks\useEntitySidebar.js:
   → @/features/wiki/utils/relationshipMapper
+  → react
+
+features\wiki\layouts\CharacterLayout.jsx:
+  → @/features/table-of-contents/TableOfContents
+  → @/features/wiki/components/EntityBody
+  → @/features/wiki/components/character/CharacterSidebar
+  → @/features/wiki/components/character/CharacterStats
+  → @/features/wiki/components/character/RelationshipNetwork
+  → @/shared/components/layout/TabContainer
+  → @/shared/utils/markdownUtils
+  → lucide-react
   → react
 
 features\wiki\layouts\SessionLayout.jsx:
@@ -999,6 +1027,7 @@ Files with most outgoing dependencies:
   features\admin\pages\SplitPaneManager.jsx: 9 imports
   features\atlas\components\layers\MapMarkers.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports
+  features\wiki\layouts\CharacterLayout.jsx: 9 imports
   features\wiki\layouts\SessionLayout.jsx: 9 imports
   features\admin\components\MarkdownEditorImpl.jsx: 8 imports
   features\navigation\MainLayout.jsx: 8 imports
@@ -1008,4 +1037,3 @@ Files with most outgoing dependencies:
   features\wiki\components\EntityHeader.jsx: 8 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 8 imports
   features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports
-  features\admin\components\TacticalMapManager.jsx: 7 imports

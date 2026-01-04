@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/4/2026, 2:05:38 PM
+   Generated: 1/4/2026, 10:39:29 PM
 =========================================
 
 -----------------------------------------
@@ -89,28 +89,11 @@ TABLE: characters [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Loraine",
-    "created_at": "2025-12-07T20:22:47.251Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
-    "description": "Work in progress, will be available later.",
-    "attributes": {
-      "race": "Vampire",
-      "class": "Fighter Battlemaster",
-      "level": "8",
-      "speed": "30ft.",
-      "is_active": "true",
-      "hit points": "N/A",
-      "armor class": "N/A"
-    }
-  },
-  {
     "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Olek",
     "created_at": "2025-11-21T11:18:32.073Z",
-    "updated_at": "2026-01-03T07:54:02.501Z",
+    "updated_at": "2026-01-04T20:30:17.478Z",
     "description": "He is devotion given form - an angelic soul clad in armor, kind and just, friendly and ever ready for conversation. Olek is honorable to his very core, though humble in his ways, never one to boast or seek glory. His story is unlike any other. As a child, he and his sibling were raised not by kin of their own kind, but by wolves, deep within the forest. How they came to be there, he cannot say. The memory is lost to time or fate. But the pack was family, and he knew love in fur and fang. Then... [TRUNCATED AT 100 WORDS]",
     "attributes": {
       "icon": "images/assets/character_thumbnails/campaign_002/olek.webp",
@@ -122,58 +105,39 @@ TABLE: characters [⚠️ RLS DISABLED]
       "hit points": "59",
       "armor class": "19",
       "saving throw": [
-        {
-          "value": "STR +6",
-          "is_private": false
-        },
-        {
-          "value": "DEX +3",
-          "is_private": false
-        },
-        {
-          "value": "CON +6",
-          "is_private": false
-        },
-        {
-          "value": "INT +4",
-          "is_private": false
-        },
-        {
-          "value": "WIS +8",
-          "is_private": false
-        },
-        {
-          "value": "CHA +11",
-          "is_private": false
-        }
+        "STR +6",
+        "DEX +3",
+        "CON +6",
+        "INT +4",
+        "WIS +8",
+        "CHA +11"
       ],
       "ability score": [
-        {
-          "value": "STR 14 (+2)",
-          "is_private": false
-        },
-        {
-          "value": "DEX 8 (-1)",
-          "is_private": false
-        },
-        {
-          "value": "CON 14 (+2)",
-          "is_private": false
-        },
-        {
-          "value": "INT 10 (+0)",
-          "is_private": false
-        },
-        {
-          "value": "WIS 12 (+1)",
-          "is_private": false
-        },
-        {
-          "value": "CHA 18 (+4)",
-          "is_private": false
-        }
+        "STR 14 (+2)",
+        "DEX 8 (-1)",
+        "CON 14 (+2)",
+        "INT 10 (+0)",
+        "WIS 12 (+1)",
+        "CHA 18 (+4)"
       ],
       "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg_horizontal.webp"
+    }
+  },
+  {
+    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Loraine",
+    "created_at": "2025-12-07T20:22:47.251Z",
+    "updated_at": "2026-01-04T20:32:47.354Z",
+    "description": "Work in progress, will be available later.",
+    "attributes": {
+      "race": "Vampire",
+      "class": "Fighter Battlemaster",
+      "level": "8",
+      "speed": "30ft.",
+      "is_active": "true",
+      "hit points": "N/A",
+      "armor class": "N/A"
     }
   }
 ]
