@@ -84,7 +84,7 @@ export default function EntitySearch({ onSelect }) {
 						if (!isOpen) setIsOpen(true);
 					}}
 					placeholder='Search by name...'
-					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm transition-shadow'
+					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-shadow'
 				/>
 				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={14} />
 
@@ -113,10 +113,10 @@ export default function EntitySearch({ onSelect }) {
 								key={item.id}
 								type='button'
 								onClick={() => handleSelect(item)}
-								className='w-full text-left px-3 py-2 hover:bg-amber-500/10 border-b border-border/50 last:border-0 transition-colors group'>
-								<div className='font-bold text-sm text-foreground group-hover:text-amber-800 truncate'>{item.name}</div>
+								className='w-full text-left px-3 py-2 hover:bg-primary/5 border-b border-border/50 last:border-0 transition-colors group'>
+								<div className='font-bold text-sm text-foreground group-hover:text-primary truncate'>{item.name}</div>
 								<div className='flex items-center gap-2'>
-									<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded group-hover:bg-amber-100/50'>
+									<span className='text-[10px] font-bold uppercase tracking-wider text-foreground bg-muted px-1.5 rounded group-hover:bg-primary/50'>
 										{item.type}
 									</span>
 									{/* Description Snippet */}

@@ -159,6 +159,21 @@ export const ADMIN_STRATEGIES = {
 		],
 	},
 
+	// 9. Narrative Arc
+
+	narrative_arc: {
+		label: 'Narrative Arc',
+		type: 'narrative_arc',
+		primaryTable: 'narrative_arcs',
+		colMapping: { name: 'title', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'order', label: 'Sort Order', type: 'number' },
+			{ key: 'type', label: 'Arc Type', type: 'select', options: ['Primary', 'Secondary', 'Character Arc'] },
+			{ key: 'background_image', label: 'Cover Image', type: 'image' },
+		],
+	},
+
 	default: {
 		label: 'Entity',
 		primaryTable: 'entities',

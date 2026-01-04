@@ -5,7 +5,7 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
@@ -20,10 +20,6 @@ import RelationshipManager from '@/features/admin/components/RelationshipManager
 import EncounterActionManager from './EncounterManager';
 import TacticalMapManager from './TacticalMapManager';
 
-/**
- * Helper: Smart Textarea that grows with content
- * Useful for editing JSON arrays without feeling like a "code editor"
- */
 const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
 	const { ref, ...rest } = register(path);
 	const textareaRef = useRef(null);
@@ -31,8 +27,8 @@ const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
 	const adjustHeight = () => {
 		const el = textareaRef.current;
 		if (el) {
-			el.style.height = 'auto'; // Reset
-			el.style.height = el.scrollHeight + 2 + 'px'; // Grow
+			el.style.height = 'auto';
+			el.style.height = el.scrollHeight + 2 + 'px';
 		}
 	};
 
@@ -47,7 +43,7 @@ const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
 			onInput={adjustHeight}
 			placeholder={placeholder}
 			className={`${className} min-h-[42px] py-2 resize-none overflow-hidden font-mono text-sm`}
-			onFocus={adjustHeight} // Ensure it expands if loaded with data
+			onFocus={adjustHeight}
 		/>
 	);
 };
@@ -94,18 +90,21 @@ export default function AdminForm({ type, id }) {
 				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
 					let value = attr.value;
+					let dataType = 'string';
 
-					// FIX: Detect Object/Array and Stringify it for the Form
+					// FIX: Detect Object/Array explicitly
 					if (typeof value === 'object' && value !== null) {
-						// null, 2 spacing makes it readable (multi-line) instead of a blob
 						value = JSON.stringify(value, null, 2);
+						dataType = 'json';
+					} else if (typeof value === 'number') {
+						dataType = 'number';
 					}
 
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
-						else customAttrs.push({ key, value });
+						// For standard attrs, we don't push to custom array
 					} else {
-						customAttrs.push({ key, value });
+						customAttrs.push({ key, value, type: dataType });
 					}
 				});
 
@@ -127,7 +126,7 @@ export default function AdminForm({ type, id }) {
 	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
-			alert('No Campaign Selected! Select one from the home screen first.');
+			alert('No Campaign Selected!');
 			return;
 		}
 
@@ -140,20 +139,21 @@ export default function AdminForm({ type, id }) {
 			}
 		});
 
-		// Process Custom Attributes (With JSON Auto-Parse)
+		// Process Custom Attributes with Explicit Types
 		data.customAttributes.forEach((item) => {
 			if (item.key && item.key.trim() !== '') {
 				let finalValue = item.value;
 
-				// FIX: Try to parse JSON strings back into Objects
-				// This allows "['a','b']" string to be saved as ["a","b"] array
-				try {
-					const trimmed = String(item.value).trim();
-					if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-						finalValue = JSON.parse(trimmed);
+				// Explicit Type Casting
+				if (item.type === 'number') {
+					finalValue = Number(item.value);
+				} else if (item.type === 'json') {
+					try {
+						finalValue = JSON.parse(item.value);
+					} catch (e) {
+						// Fallback: save as string if invalid JSON, but warn user ideally
+						console.warn(`Failed to parse JSON for ${item.key}, saving as string.`);
 					}
-				} catch (e) {
-					// If parse fails, it's just a normal string. Ignore error.
 				}
 
 				attributesList.push({ name: item.key, value: finalValue });
@@ -176,12 +176,7 @@ export default function AdminForm({ type, id }) {
 				if (!id) reset();
 			}
 
-			queryClient.invalidateQueries({
-				predicate: (query) => {
-					const key = query.queryKey[0];
-					return ['entities', 'entry', 'dashboard', 'graph', 'timeline', 'globalSearch', 'admin-list'].includes(key);
-				},
-			});
+			queryClient.invalidateQueries();
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		} finally {
@@ -189,9 +184,21 @@ export default function AdminForm({ type, id }) {
 		}
 	};
 
+	const handleFormatJSON = (index) => {
+		const currentVal = watch(`customAttributes.${index}.value`);
+		try {
+			const parsed = JSON.parse(currentVal);
+			setValue(`customAttributes.${index}.value`, JSON.stringify(parsed, null, 2));
+		} catch (e) {
+			alert('Invalid JSON: ' + e.message);
+		}
+	};
+
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
+
+	// Helper to sync Tactical Map to Custom Attrs
 	const customAttrs = watch('customAttributes') || [];
 	const standardMarkers = watch('attributes.map_markers');
 	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
@@ -201,6 +208,7 @@ export default function AdminForm({ type, id }) {
 		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
 		if (customIdx >= 0) {
 			setValue(`customAttributes.${customIdx}.value`, jsonValue);
+			setValue(`customAttributes.${customIdx}.type`, 'json'); // Ensure it's marked as JSON
 		} else {
 			setValue('attributes.map_markers', jsonValue);
 		}
@@ -221,7 +229,7 @@ export default function AdminForm({ type, id }) {
 						<Link
 							to={`/wiki/${type}/${id}`}
 							target='_blank'
-							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-500/10 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors'>
+							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-card hover:border-primary border border-border rounded-md transition-colors'>
 							<ExternalLink size={14} /> View Live
 						</Link>
 					)}
@@ -307,7 +315,7 @@ export default function AdminForm({ type, id }) {
 					<span>Custom Attributes</span>
 					<Button
 						type='button'
-						onClick={() => append({ key: '', value: '' })}
+						onClick={() => append({ key: '', value: '', type: 'string' })}
 						size='sm'
 						variant='secondary'
 						icon={Plus}>
@@ -315,40 +323,72 @@ export default function AdminForm({ type, id }) {
 					</Button>
 				</div>
 
-				<div className='space-y-2'>
-					{fields.map((field, index) => (
-						<div key={field.id} className='flex gap-3 items-start animate-in fade-in group'>
-							<div className='w-1/3 pt-1'>
-								<input
-									type='text'
-									{...register(`customAttributes.${index}.key`)}
-									placeholder='Key'
-									className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
-								/>
-							</div>
+				<div className='space-y-3'>
+					{fields.map((field, index) => {
+						const attrType = watch(`customAttributes.${index}.type`);
+						return (
+							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
+								{/* Key Input */}
+								<div className='w-1/4 pt-1'>
+									<input
+										type='text'
+										{...register(`customAttributes.${index}.key`)}
+										placeholder='Key'
+										className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
+									/>
+								</div>
 
-							{/* FIX: Smart Textarea for Value */}
-							<div className='flex-1 relative'>
-								<AutoSizeTextarea
-									register={register}
-									path={`customAttributes.${index}.value`}
-									placeholder='Value (Text or JSON)'
-									className={ADMIN_INPUT_CLASS}
-								/>
-								{/* Optional: Tiny indicator if it detects JSON */}
-								{watch(`customAttributes.${index}.value`)?.toString().trim().startsWith('{') && (
-									<Code size={12} className='absolute right-2 top-3 text-amber-500 opacity-50 pointer-events-none' />
-								)}
-							</div>
+								{/* Type Selector */}
+								<div className='w-24 pt-1'>
+									<div className='relative'>
+										<select
+											{...register(`customAttributes.${index}.type`)}
+											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
+											<option value='string'>Text</option>
+											<option value='number'>Number</option>
+											<option value='json'>JSON</option>
+										</select>
+										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
+											{attrType === 'json' ? (
+												<Braces size={12} />
+											) : attrType === 'number' ? (
+												<Hash size={12} />
+											) : (
+												<AlignLeft size={12} />
+											)}
+										</div>
+									</div>
+								</div>
 
-							<button
-								type='button'
-								onClick={() => remove(index)}
-								className='mt-2 p-1.5 text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors'>
-								<Trash2 size={16} />
-							</button>
-						</div>
-					))}
+								{/* Value Input */}
+								<div className='flex-1 relative'>
+									<AutoSizeTextarea
+										register={register}
+										path={`customAttributes.${index}.value`}
+										placeholder='Value'
+										className={ADMIN_INPUT_CLASS}
+									/>
+
+									{/* JSON Format Button */}
+									{attrType === 'json' && (
+										<button
+											type='button'
+											onClick={() => handleFormatJSON(index)}
+											className='absolute right-2 top-2 text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border hover:border-primary transition-colors'>
+											Format
+										</button>
+									)}
+								</div>
+
+								<button
+									type='button'
+									onClick={() => remove(index)}
+									className='mt-2 p-1.5 text-muted-foreground/40 hover:text-primary hover:bg-red-500/10 rounded transition-colors'>
+									<Trash2 size={16} />
+								</button>
+							</div>
+						);
+					})}
 					{fields.length === 0 && (
 						<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
 					)}

@@ -3,33 +3,42 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 
 /**
  * Helper to determine which column stores JSON attributes.
- * Now standardized: All entities use 'attributes'.
  */
 const getAttrColumn = (type) => 'attributes';
+
+/**
+ * Escape Regex characters for JS processing
+ */
+function escapeRegExp(string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Escape SQL Like wildcards (% and _) for RPC calls
+ */
+function escapeSqlLike(string) {
+	return string.replace(/[%_]/g, '\\$&');
+}
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Prepare Core Payload (Columns that actually exist on the table)
+	// 1. Prepare Core Payload
 	const corePayload = {};
 
-	// Parent ID logic
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
-	// Name/Desc Mapping
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
 	}
 
-	// Entity Type Discriminator
 	if (strategy.primaryTable === 'entities') corePayload.type = type;
 
 	// 2. Process Attributes -> JSONB
-	// We merge explicit form attributes with the 'attributesList' array from the UI
 	const rawAttributes =
 		data.attributesList ||
 		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
@@ -37,15 +46,10 @@ export const createEntity = async (type, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// UNIFIED LOGIC: All attributes go to JSON storage.
-		// No more special handling for map_data or metadata columns.
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// Assign the JSON blob to the correct column
 	corePayload[attrCol] = jsonStorage;
-
-	console.log('[Admin] Creating DB Optimized:', corePayload);
 
 	// 3. Insert Single Row
 	const { data: insertedRecord, error: insertError } = await supabase
@@ -63,14 +67,12 @@ export const updateEntity = async (type, id, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Prepare Core Payload
 	const corePayload = {};
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
 	}
 
-	// 2. Process Attributes -> JSONB
 	const rawAttributes =
 		data.attributesList ||
 		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
@@ -78,14 +80,11 @@ export const updateEntity = async (type, id, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// UNIFIED LOGIC: All attributes go to JSON storage.
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// Overwrite the JSON column completely (Single Source of Truth)
 	corePayload[attrCol] = jsonStorage;
 
-	// 3. Update Row
 	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
 
 	if (updateError) throw updateError;
@@ -96,7 +95,6 @@ export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Fetch Core Data AND the JSON column in one shot
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
 		.select('*')
@@ -105,7 +103,6 @@ export const fetchRawEntity = async (type, id) => {
 
 	if (coreError) throw coreError;
 
-	// 2. Transform DB Columns to Form Data
 	const formData = { ...coreData };
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
@@ -115,20 +112,13 @@ export const fetchRawEntity = async (type, id) => {
 		});
 	}
 
-	// 3. Transform JSONB -> Attribute List Array
 	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
-	// A. Add JSON attributes
 	Object.entries(jsonSource).forEach(([key, value]) => {
 		attributesList.push({ name: key, value: value });
 	});
 
-	// B. Add "Pseudo-Attributes" (Legacy/Fallback)
-	// This ensures that if you have other specific columns defined in strategies
-	// that AREN'T in the JSON, they still get picked up.
-	// Since we dropped 'map_data' column, this loop will naturally skip it,
-	// and step A will pick it up from JSON.
 	if (strategy.defaultAttributes) {
 		strategy.defaultAttributes.forEach((defAttr) => {
 			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
@@ -143,10 +133,6 @@ export const fetchRawEntity = async (type, id) => {
 	return { ...formData, attributesList };
 };
 
-// ... Rest of the file (Relationships, Child Rows, etc.) remains unchanged ...
-/**
- * Fetch all relationships for a specific entity
- */
 export const fetchRelationships = async (id) => {
 	const { data, error } = await supabase
 		.from('entity_relationships')
@@ -226,9 +212,12 @@ export const updateRelationship = async (relId, updates) => {
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
+	// FIX: Escape SQL wildcards to prevent search abuse
+	const cleanQuery = escapeSqlLike(query);
+
 	const { data, error } = await supabase.rpc('api_search_entities', {
 		p_campaign_id: campaignId,
-		p_search_term: query,
+		p_search_term: cleanQuery,
 	});
 
 	if (error) {
@@ -318,7 +307,10 @@ export const upsertEncounterAction = async (actionData) => {
 };
 
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
-	if (!findTerm.trim()) return [];
+	if (!findTerm || !findTerm.trim()) return [];
+
+	// Ensure safe string
+	const safeReplace = replaceTerm === undefined || replaceTerm === null ? '' : replaceTerm;
 
 	const { data, error } = await supabase.rpc('api_scan_campaign_text', {
 		p_campaign_id: campaignId,
@@ -330,14 +322,17 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 		throw error;
 	}
 
-	const regex = new RegExp(findTerm.trim(), 'gi');
+	// FIX: Regex Escape the search term so literal characters like '?' are found correctly
+	const escapedTerm = escapeRegExp(findTerm.trim());
+	const regex = new RegExp(escapedTerm, 'gi');
+
 	return data.map((row) => ({
 		table: row.table_name,
 		id: row.record_id,
 		field: row.field_name,
 		context: row.context,
 		original: row.current_value,
-		proposal: row.current_value.replace(regex, replaceTerm),
+		proposal: row.current_value.replace(regex, safeReplace),
 	}));
 };
 

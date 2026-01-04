@@ -20,7 +20,7 @@ export const SidebarFooter = ({ onSwitch }) => {
 			case THEMES.DARK:
 				return 'Dark Mode';
 			case THEMES.DND:
-				return 'D&D PHB';
+				return 'D&D';
 			default:
 				return 'Light Mode';
 		}
