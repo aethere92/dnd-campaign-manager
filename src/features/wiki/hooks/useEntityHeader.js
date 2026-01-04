@@ -1,8 +1,3 @@
-/**
- * useEntityHeader Hook
- * Builds header view model from entity data
- */
-
 import { useMemo } from 'react';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
@@ -10,49 +5,48 @@ import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { extractHeaderTags } from '@/features/wiki/utils/attributeMapper';
 import { capitalize } from '@/shared/utils/textUtils';
 
-/**
- * Build header view model
- * @param {Object} entity - Raw entity data
- * @param {Object} attributes - Parsed attributes
- * @returns {Object} Header view model
- */
 export const useEntityHeader = (entity, attributes) => {
 	return useMemo(() => {
 		if (!entity) return null;
 
 		const config = getEntityConfig(entity.type);
-
-		// Resolve images
 		const headerBackgroundUrl = resolveImageUrl(attributes, 'background');
 		const avatarUrl = resolveImageUrl(attributes, 'icon');
 
-		// Resolve status
+		// Status
 		let statusRaw = entity.status || getAttributeValue(attributes, ['status']);
-		if (Array.isArray(statusRaw)) {
-			statusRaw = statusRaw.join(', ');
-		}
-		if (statusRaw && typeof statusRaw !== 'string') {
-			statusRaw = String(statusRaw);
-		}
+		if (Array.isArray(statusRaw)) statusRaw = statusRaw.join(', ');
 
-		// Resolve Priority (New)
+		// Priority
 		const priorityRaw = getAttributeValue(attributes, ['priority', 'Priority']);
 
-		// Extract extra tags (session-specific)
+		// Extra Tags
 		const extraTags = extractHeaderTags(attributes, entity.type);
+
+		// --- NEW: Character Subtitle Logic ---
+		let subtitle = null;
+		if (entity.type === 'character') {
+			const race = attributes.race || 'Unknown Race';
+			const cls = attributes.class || 'Unknown Class';
+			const level = attributes.level ? `Level ${attributes.level}` : '';
+			// Format: "Earth Genasi • Fighter Echo Knight • Level 8"
+			subtitle = [race, cls, level].filter(Boolean).join(' • ');
+		}
 
 		return {
 			title: entity.name,
+			subtitle, // Pass the new subtitle
 			typeLabel: entity.type?.toUpperCase(),
 			imageUrl: headerBackgroundUrl,
 			avatarUrl: avatarUrl,
 			status: {
 				hasStatus: !!statusRaw,
-				label: statusRaw ? capitalize(statusRaw) : '',
+				label: statusRaw ? capitalize(String(statusRaw)) : '',
 				isDead: statusRaw?.toLowerCase() === 'dead' || statusRaw?.toLowerCase() === 'failed',
 			},
 			priority: priorityRaw ? capitalize(priorityRaw) : null,
 			extraTags,
+			type: entity.type,
 			theme: {
 				...config.tailwind,
 				Icon: config.icon,

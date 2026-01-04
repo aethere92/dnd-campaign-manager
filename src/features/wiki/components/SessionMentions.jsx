@@ -8,43 +8,45 @@ const MentionGroup = ({ type, items }) => {
 	const Icon = config.icon;
 
 	return (
-		<div className='border border-border rounded-lg overflow-hidden bg-muted/30/30 flex flex-col'>
+		<div className='break-inside-avoid mb-4 border border-border rounded-lg overflow-hidden bg-muted/30/30 flex flex-col'>
 			{/* Header */}
 			<div className='px-3 py-2 border-b border-border bg-muted/50 flex items-center justify-between shrink-0'>
 				<div className='flex items-center gap-2'>
 					<Icon size={12} className='text-muted-foreground' />
-					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest m-0'>{config.labelPlural}</h3>
+					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-widest m-0'>
+						{config.labelPlural}
+					</h3>
 				</div>
 				<span className='text-[9px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full'>
 					{items.length}
 				</span>
 			</div>
 
-			{/* List Container - Reverted to Vertical Column */}
+			{/* List Container */}
 			<div className='p-2'>
-				<div className='flex flex-col gap-1.5'>
+				<div className='flex flex-col gap-1'>
 					{items.map((item) => (
 						<EntityLink
 							key={item.id}
 							id={item.id}
 							type={item.type}
-							inline={true} // Use inline mode to get a cleaner DOM structure (A -> SPAN)
-							showIcon={false} // We provide our own icon in the children for custom styling
+							inline={true}
+							showIcon={false}
 							className={clsx(
-								// Override generic InlineLink styles to make it look like a card
-								'!block !w-full !no-underline !border',
-								'!bg-card/60 !border-border/80 !rounded-md',
-								'!px-2 !py-1.5',
-								// Colors
-								'!text-card-foreground hover:!text-foreground',
-								// Hover states
-								'hover:!bg-card hover:!border-amber-300 hover:!shadow-sm transition-all'
+								// Matches CharacterSidebar styling exactly
+								'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline',
+								'!border-border hover:!border-primary/40 hover:!shadow-sm hover:!bg-card group'
 							)}>
-							{/* Inner Layout Wrapper to handle Flex behavior correctly */}
-							<span className='flex items-center gap-2.5 min-w-0'>
-								<EntityIcon type={item.type} size={14} className='opacity-70 text-muted-foreground shrink-0' />
-								<span className='text-[13px] font-semibold truncate'>{item.name}</span>
-							</span>
+							<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+								<EntityIcon
+									type={item.type}
+									size={16}
+									className='opacity-80 group-hover:opacity-100 transition-opacity'
+								/>
+								<span className='text-xs font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
+									{item.name}
+								</span>
+							</div>
 						</EntityLink>
 					))}
 				</div>
@@ -66,11 +68,9 @@ export const SessionMentions = ({ mentions }) => {
 	const orderedKeys = order.filter((k) => mentions[k]).concat(Object.keys(mentions).filter((k) => !order.includes(k)));
 
 	return (
-		<div className='columns-1 md:columns-2 xl:columns-3 gap-4'>
+		<div className='columns-1 md:columns-2 xl:columns-3 gap-4 animate-in fade-in duration-500'>
 			{orderedKeys.map((key) => (
-				<div key={key} className='break-inside-avoid mb-4'>
-					<MentionGroup type={key} items={mentions[key]} />
-				</div>
+				<MentionGroup key={key} type={key} items={mentions[key]} />
 			))}
 		</div>
 	);
