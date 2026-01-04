@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-04 22:39:31
+Generated: 2026-01-04 23:35:53
 ================================================================
 
 ### OVERALL STATISTICS
 
 Total files: 187
-Total lines: 17,402
-Non-empty lines: 15,421
-Comment lines: 1,418
-Total size: 540,380 bytes (527.71 KB)
-Average lines per file: 93.1
+Total lines: 17,469
+Non-empty lines: 15,476
+Comment lines: 1,397
+Total size: 542,025 bytes (529.32 KB)
+Average lines per file: 93.4
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 93.1
 
 .js:
   Files: 65
-  Lines: 6,102
-  Size: 170,235 bytes (166.25 KB)
+  Lines: 6,112
+  Size: 170,066 bytes (166.08 KB)
 
 .json:
   Files: 1
@@ -32,8 +32,8 @@ Average lines per file: 93.1
 
 .jsx:
   Files: 119
-  Lines: 10,637
-  Size: 353,289 bytes (345.01 KB)
+  Lines: 10,694
+  Size: 355,103 bytes (346.78 KB)
 
 .md:
   Files: 1
@@ -45,9 +45,9 @@ Average lines per file: 93.1
 
 app\styles\global.css: 451 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
-features\admin\components\AdminForm.jsx: 366 lines
-features\admin\api\adminService.js: 355 lines
+features\admin\components\AdminForm.jsx: 406 lines
 features\admin\components\EncounterManager.jsx: 354 lines
+features\admin\api\adminService.js: 350 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
 domain\entity\api\entityService.js: 273 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
@@ -79,8 +79,8 @@ domain_entity:
 
 features_admin:
   Files: 22
-  Lines: 4,002
-  Size: 132,004 bytes (128.91 KB)
+  Lines: 4,069
+  Size: 133,653 bytes (130.52 KB)
 
 features_atlas:
   Files: 16
@@ -105,7 +105,7 @@ features_graph:
 features_navigation:
   Files: 7
   Lines: 322
-  Size: 10,194 bytes (9.96 KB)
+  Size: 10,190 bytes (9.95 KB)
 
 features_search:
   Files: 10

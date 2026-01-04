@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-04 22:39:31
+Generated: 2026-01-04 23:35:53
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -185,6 +185,7 @@ features\admin\components\TacticalMapManager.jsx:
 
 features\admin\layouts\AdminLayout.jsx:
   → @/features/campaign/CampaignContext
+  → @/shared/hooks/useTheme
   → clsx
   → react
   → react-router-dom

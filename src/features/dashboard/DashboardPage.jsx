@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getDashboardData } from '@/features/dashboard/api/dashboardService';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
-import { SectionDivider, SectionDividerVertical } from '@/shared/components/ui/SectionDivider';
+import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 
 import { CampaignHeader } from './components/CampaignHeader';
 import { CurrentArcMetadata } from './components/CurrentArcMetadata';
@@ -57,28 +57,30 @@ export default function DashboardView() {
 						</div>
 					</div>
 
-					<SectionDivider className='my-6 mb-12' />
+					<SectionDivider className='my-6' />
 
-					{/* ROW 3: Status Panel */}
-					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[500px]'>
+					{/* ROW 3: Active Party */}
+					<div>
+						<PartyWidget party={activeParty} />
+					</div>
+
+					<SectionDivider className='my-6' />
+
+					{/* ROW 4: Status Panel (Insights & Threads) */}
+					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[400px]'>
 						<div
 							className='absolute inset-0 opacity-[0.03] pointer-events-none'
 							style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
 						/>
 
 						<div className='grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10 h-full'>
-							{/* Insights */}
-							<div className='lg:col-span-5 h-full'>
+							{/* Insights - Expanded to 8 columns */}
+							<div className='lg:col-span-8 h-full'>
 								<InsightsGrid stats={stats} counts={counts} />
 							</div>
 
-							{/* Party */}
-							<div className='lg:col-span-4 h-full'>
-								<PartyWidget party={activeParty} />
-							</div>
-
-							{/* Threads (Simple List) */}
-							<div className='lg:col-span-3 h-full'>
+							{/* Threads - 4 columns */}
+							<div className='lg:col-span-4 h-full border-l border-border/50 pl-8'>
 								<ActiveThreads quests={activeThreads} />
 							</div>
 						</div>

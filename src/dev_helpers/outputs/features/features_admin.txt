@@ -274,33 +274,42 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 
 /**
  * Helper to determine which column stores JSON attributes.
- * Now standardized: All entities use 'attributes'.
  */
 const getAttrColumn = (type) => 'attributes';
+
+/**
+ * Escape Regex characters for JS processing
+ */
+function escapeRegExp(string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Escape SQL Like wildcards (% and _) for RPC calls
+ */
+function escapeSqlLike(string) {
+	return string.replace(/[%_]/g, '\\$&');
+}
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Prepare Core Payload (Columns that actually exist on the table)
+	// 1. Prepare Core Payload
 	const corePayload = {};
 
-	// Parent ID logic
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
-	// Name/Desc Mapping
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
 	}
 
-	// Entity Type Discriminator
 	if (strategy.primaryTable === 'entities') corePayload.type = type;
 
 	// 2. Process Attributes -> JSONB
-	// We merge explicit form attributes with the 'attributesList' array from the UI
 	const rawAttributes =
 		data.attributesList ||
 		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
@@ -308,15 +317,10 @@ export const createEntity = async (type, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// UNIFIED LOGIC: All attributes go to JSON storage.
-		// No more special handling for map_data or metadata columns.
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// Assign the JSON blob to the correct column
 	corePayload[attrCol] = jsonStorage;
-
-	console.log('[Admin] Creating DB Optimized:', corePayload);
 
 	// 3. Insert Single Row
 	const { data: insertedRecord, error: insertError } = await supabase
@@ -334,14 +338,12 @@ export const updateEntity = async (type, id, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Prepare Core Payload
 	const corePayload = {};
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
 	}
 
-	// 2. Process Attributes -> JSONB
 	const rawAttributes =
 		data.attributesList ||
 		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
@@ -349,14 +351,11 @@ export const updateEntity = async (type, id, data) => {
 	const jsonStorage = {};
 
 	rawAttributes.forEach((attr) => {
-		// UNIFIED LOGIC: All attributes go to JSON storage.
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// Overwrite the JSON column completely (Single Source of Truth)
 	corePayload[attrCol] = jsonStorage;
 
-	// 3. Update Row
 	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
 
 	if (updateError) throw updateError;
@@ -367,7 +366,6 @@ export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
 
-	// 1. Fetch Core Data AND the JSON column in one shot
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
 		.select('*')
@@ -376,7 +374,6 @@ export const fetchRawEntity = async (type, id) => {
 
 	if (coreError) throw coreError;
 
-	// 2. Transform DB Columns to Form Data
 	const formData = { ...coreData };
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
@@ -386,20 +383,13 @@ export const fetchRawEntity = async (type, id) => {
 		});
 	}
 
-	// 3. Transform JSONB -> Attribute List Array
 	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
-	// A. Add JSON attributes
 	Object.entries(jsonSource).forEach(([key, value]) => {
 		attributesList.push({ name: key, value: value });
 	});
 
-	// B. Add "Pseudo-Attributes" (Legacy/Fallback)
-	// This ensures that if you have other specific columns defined in strategies
-	// that AREN'T in the JSON, they still get picked up.
-	// Since we dropped 'map_data' column, this loop will naturally skip it,
-	// and step A will pick it up from JSON.
 	if (strategy.defaultAttributes) {
 		strategy.defaultAttributes.forEach((defAttr) => {
 			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
@@ -414,10 +404,6 @@ export const fetchRawEntity = async (type, id) => {
 	return { ...formData, attributesList };
 };
 
-// ... Rest of the file (Relationships, Child Rows, etc.) remains unchanged ...
-/**
- * Fetch all relationships for a specific entity
- */
 export const fetchRelationships = async (id) => {
 	const { data, error } = await supabase
 		.from('entity_relationships')
@@ -497,9 +483,12 @@ export const updateRelationship = async (relId, updates) => {
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
+	// FIX: Escape SQL wildcards to prevent search abuse
+	const cleanQuery = escapeSqlLike(query);
+
 	const { data, error } = await supabase.rpc('api_search_entities', {
 		p_campaign_id: campaignId,
-		p_search_term: query,
+		p_search_term: cleanQuery,
 	});
 
 	if (error) {
@@ -589,7 +578,10 @@ export const upsertEncounterAction = async (actionData) => {
 };
 
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
-	if (!findTerm.trim()) return [];
+	if (!findTerm || !findTerm.trim()) return [];
+
+	// Ensure safe string
+	const safeReplace = replaceTerm === undefined || replaceTerm === null ? '' : replaceTerm;
 
 	const { data, error } = await supabase.rpc('api_scan_campaign_text', {
 		p_campaign_id: campaignId,
@@ -601,14 +593,17 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 		throw error;
 	}
 
-	const regex = new RegExp(findTerm.trim(), 'gi');
+	// FIX: Regex Escape the search term so literal characters like '?' are found correctly
+	const escapedTerm = escapeRegExp(findTerm.trim());
+	const regex = new RegExp(escapedTerm, 'gi');
+
 	return data.map((row) => ({
 		table: row.table_name,
 		id: row.record_id,
 		field: row.field_name,
 		context: row.context,
 		original: row.current_value,
-		proposal: row.current_value.replace(regex, replaceTerm),
+		proposal: row.current_value.replace(regex, safeReplace),
 	}));
 };
 
@@ -634,7 +629,7 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
@@ -649,10 +644,6 @@ import RelationshipManager from '@/features/admin/components/RelationshipManager
 import EncounterActionManager from './EncounterManager';
 import TacticalMapManager from './TacticalMapManager';
 
-/**
- * Helper: Smart Textarea that grows with content
- * Useful for editing JSON arrays without feeling like a "code editor"
- */
 const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
 	const { ref, ...rest } = register(path);
 	const textareaRef = useRef(null);
@@ -660,8 +651,8 @@ const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
 	const adjustHeight = () => {
 		const el = textareaRef.current;
 		if (el) {
-			el.style.height = 'auto'; // Reset
-			el.style.height = el.scrollHeight + 2 + 'px'; // Grow
+			el.style.height = 'auto';
+			el.style.height = el.scrollHeight + 2 + 'px';
 		}
 	};
 
@@ -676,7 +667,7 @@ const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
 			onInput={adjustHeight}
 			placeholder={placeholder}
 			className={`${className} min-h-[42px] py-2 resize-none overflow-hidden font-mono text-sm`}
-			onFocus={adjustHeight} // Ensure it expands if loaded with data
+			onFocus={adjustHeight}
 		/>
 	);
 };
@@ -723,18 +714,21 @@ export default function AdminForm({ type, id }) {
 				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
 					let value = attr.value;
+					let dataType = 'string';
 
-					// FIX: Detect Object/Array and Stringify it for the Form
+					// FIX: Detect Object/Array explicitly
 					if (typeof value === 'object' && value !== null) {
-						// null, 2 spacing makes it readable (multi-line) instead of a blob
 						value = JSON.stringify(value, null, 2);
+						dataType = 'json';
+					} else if (typeof value === 'number') {
+						dataType = 'number';
 					}
 
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
-						else customAttrs.push({ key, value });
+						// For standard attrs, we don't push to custom array
 					} else {
-						customAttrs.push({ key, value });
+						customAttrs.push({ key, value, type: dataType });
 					}
 				});
 
@@ -756,7 +750,7 @@ export default function AdminForm({ type, id }) {
 	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
-			alert('No Campaign Selected! Select one from the home screen first.');
+			alert('No Campaign Selected!');
 			return;
 		}
 
@@ -769,20 +763,21 @@ export default function AdminForm({ type, id }) {
 			}
 		});
 
-		// Process Custom Attributes (With JSON Auto-Parse)
+		// Process Custom Attributes with Explicit Types
 		data.customAttributes.forEach((item) => {
 			if (item.key && item.key.trim() !== '') {
 				let finalValue = item.value;
 
-				// FIX: Try to parse JSON strings back into Objects
-				// This allows "['a','b']" string to be saved as ["a","b"] array
-				try {
-					const trimmed = String(item.value).trim();
-					if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-						finalValue = JSON.parse(trimmed);
+				// Explicit Type Casting
+				if (item.type === 'number') {
+					finalValue = Number(item.value);
+				} else if (item.type === 'json') {
+					try {
+						finalValue = JSON.parse(item.value);
+					} catch (e) {
+						// Fallback: save as string if invalid JSON, but warn user ideally
+						console.warn(`Failed to parse JSON for ${item.key}, saving as string.`);
 					}
-				} catch (e) {
-					// If parse fails, it's just a normal string. Ignore error.
 				}
 
 				attributesList.push({ name: item.key, value: finalValue });
@@ -805,12 +800,7 @@ export default function AdminForm({ type, id }) {
 				if (!id) reset();
 			}
 
-			queryClient.invalidateQueries({
-				predicate: (query) => {
-					const key = query.queryKey[0];
-					return ['entities', 'entry', 'dashboard', 'graph', 'timeline', 'globalSearch', 'admin-list'].includes(key);
-				},
-			});
+			queryClient.invalidateQueries();
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		} finally {
@@ -818,9 +808,21 @@ export default function AdminForm({ type, id }) {
 		}
 	};
 
+	const handleFormatJSON = (index) => {
+		const currentVal = watch(`customAttributes.${index}.value`);
+		try {
+			const parsed = JSON.parse(currentVal);
+			setValue(`customAttributes.${index}.value`, JSON.stringify(parsed, null, 2));
+		} catch (e) {
+			alert('Invalid JSON: ' + e.message);
+		}
+	};
+
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
+
+	// Helper to sync Tactical Map to Custom Attrs
 	const customAttrs = watch('customAttributes') || [];
 	const standardMarkers = watch('attributes.map_markers');
 	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
@@ -830,6 +832,7 @@ export default function AdminForm({ type, id }) {
 		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
 		if (customIdx >= 0) {
 			setValue(`customAttributes.${customIdx}.value`, jsonValue);
+			setValue(`customAttributes.${customIdx}.type`, 'json'); // Ensure it's marked as JSON
 		} else {
 			setValue('attributes.map_markers', jsonValue);
 		}
@@ -850,7 +853,7 @@ export default function AdminForm({ type, id }) {
 						<Link
 							to={`/wiki/${type}/${id}`}
 							target='_blank'
-							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-500/10 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors'>
+							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-card hover:border-primary border border-border rounded-md transition-colors'>
 							<ExternalLink size={14} /> View Live
 						</Link>
 					)}
@@ -936,7 +939,7 @@ export default function AdminForm({ type, id }) {
 					<span>Custom Attributes</span>
 					<Button
 						type='button'
-						onClick={() => append({ key: '', value: '' })}
+						onClick={() => append({ key: '', value: '', type: 'string' })}
 						size='sm'
 						variant='secondary'
 						icon={Plus}>
@@ -944,40 +947,72 @@ export default function AdminForm({ type, id }) {
 					</Button>
 				</div>
 
-				<div className='space-y-2'>
-					{fields.map((field, index) => (
-						<div key={field.id} className='flex gap-3 items-start animate-in fade-in group'>
-							<div className='w-1/3 pt-1'>
-								<input
-									type='text'
-									{...register(`customAttributes.${index}.key`)}
-									placeholder='Key'
-									className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
-								/>
-							</div>
+				<div className='space-y-3'>
+					{fields.map((field, index) => {
+						const attrType = watch(`customAttributes.${index}.type`);
+						return (
+							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
+								{/* Key Input */}
+								<div className='w-1/4 pt-1'>
+									<input
+										type='text'
+										{...register(`customAttributes.${index}.key`)}
+										placeholder='Key'
+										className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
+									/>
+								</div>
 
-							{/* FIX: Smart Textarea for Value */}
-							<div className='flex-1 relative'>
-								<AutoSizeTextarea
-									register={register}
-									path={`customAttributes.${index}.value`}
-									placeholder='Value (Text or JSON)'
-									className={ADMIN_INPUT_CLASS}
-								/>
-								{/* Optional: Tiny indicator if it detects JSON */}
-								{watch(`customAttributes.${index}.value`)?.toString().trim().startsWith('{') && (
-									<Code size={12} className='absolute right-2 top-3 text-amber-500 opacity-50 pointer-events-none' />
-								)}
-							</div>
+								{/* Type Selector */}
+								<div className='w-24 pt-1'>
+									<div className='relative'>
+										<select
+											{...register(`customAttributes.${index}.type`)}
+											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
+											<option value='string'>Text</option>
+											<option value='number'>Number</option>
+											<option value='json'>JSON</option>
+										</select>
+										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
+											{attrType === 'json' ? (
+												<Braces size={12} />
+											) : attrType === 'number' ? (
+												<Hash size={12} />
+											) : (
+												<AlignLeft size={12} />
+											)}
+										</div>
+									</div>
+								</div>
 
-							<button
-								type='button'
-								onClick={() => remove(index)}
-								className='mt-2 p-1.5 text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors'>
-								<Trash2 size={16} />
-							</button>
-						</div>
-					))}
+								{/* Value Input */}
+								<div className='flex-1 relative'>
+									<AutoSizeTextarea
+										register={register}
+										path={`customAttributes.${index}.value`}
+										placeholder='Value'
+										className={ADMIN_INPUT_CLASS}
+									/>
+
+									{/* JSON Format Button */}
+									{attrType === 'json' && (
+										<button
+											type='button'
+											onClick={() => handleFormatJSON(index)}
+											className='absolute right-2 top-2 text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border hover:border-primary transition-colors'>
+											Format
+										</button>
+									)}
+								</div>
+
+								<button
+									type='button'
+									onClick={() => remove(index)}
+									className='mt-2 p-1.5 text-muted-foreground/40 hover:text-primary hover:bg-red-500/10 rounded transition-colors'>
+									<Trash2 size={16} />
+								</button>
+							</div>
+						);
+					})}
 					{fields.length === 0 && (
 						<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
 					)}
@@ -997,12 +1032,12 @@ export default function AdminForm({ type, id }) {
 
 --- FILE: features\admin\components\AdminFormStyles.js ---
 export const ADMIN_INPUT_CLASS =
-	'w-full px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-muted-foreground/40 transition-all shadow-sm';
+	'w-full px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/40 transition-all shadow-sm';
 
 export const ADMIN_LABEL_CLASS =
 	'block text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] mb-1.5 ml-0.5';
 
-export const ADMIN_SECTION_CLASS = 'bg-background border border-border rounded-xl p-5 shadow-sm space-y-4 relative';
+export const ADMIN_SECTION_CLASS = 'bg-card border border-border rounded-xl p-5 shadow-sm space-y-4 relative';
 
 export const ADMIN_HEADER_CLASS =
 	'text-base font-serif font-bold text-foreground border-b border-border/60 pb-2 mb-4 flex items-center justify-between tracking-tight';
@@ -1453,7 +1488,7 @@ export default function EntitySearch({ onSelect }) {
 						if (!isOpen) setIsOpen(true);
 					}}
 					placeholder='Search by name...'
-					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm transition-shadow'
+					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-shadow'
 				/>
 				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={14} />
 
@@ -1482,10 +1517,10 @@ export default function EntitySearch({ onSelect }) {
 								key={item.id}
 								type='button'
 								onClick={() => handleSelect(item)}
-								className='w-full text-left px-3 py-2 hover:bg-amber-500/10 border-b border-border/50 last:border-0 transition-colors group'>
-								<div className='font-bold text-sm text-foreground group-hover:text-amber-800 truncate'>{item.name}</div>
+								className='w-full text-left px-3 py-2 hover:bg-primary/5 border-b border-border/50 last:border-0 transition-colors group'>
+								<div className='font-bold text-sm text-foreground group-hover:text-primary truncate'>{item.name}</div>
 								<div className='flex items-center gap-2'>
-									<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-1.5 rounded group-hover:bg-amber-100/50'>
+									<span className='text-[10px] font-bold uppercase tracking-wider text-foreground bg-muted px-1.5 rounded group-hover:bg-primary/50'>
 										{item.type}
 									</span>
 									{/* Description Snippet */}
@@ -3415,6 +3450,21 @@ export const ADMIN_STRATEGIES = {
 		],
 	},
 
+	// 9. Narrative Arc
+
+	narrative_arc: {
+		label: 'Narrative Arc',
+		type: 'narrative_arc',
+		primaryTable: 'narrative_arcs',
+		colMapping: { name: 'title', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'order', label: 'Sort Order', type: 'number' },
+			{ key: 'type', label: 'Arc Type', type: 'select', options: ['Primary', 'Secondary', 'Character Arc'] },
+			{ key: 'background_image', label: 'Cover Image', type: 'image' },
+		],
+	},
+
 	default: {
 		label: 'Entity',
 		primaryTable: 'entities',
@@ -3680,11 +3730,15 @@ import {
 	Play,
 	Sword,
 	Replace,
+	Drama,
+	Sun,
+	Moon,
+	Dice5, // Icon for D&D mode
 } from 'lucide-react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
+import { useTheme, THEMES } from '@/shared/hooks/useTheme'; // Import constant too
 
 const NavItem = ({ to, icon: Icon, label }) => {
-	// ... (existing code) ...
 	const location = useLocation();
 	const isActive = location.pathname.includes(to);
 
@@ -3694,10 +3748,10 @@ const NavItem = ({ to, icon: Icon, label }) => {
 			className={clsx(
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
-					? 'bg-amber-100 text-amber-900 shadow-sm ring-1 ring-amber-200'
+					? 'bg-primary text-amber-900 shadow-sm ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:ring-amber-800'
 					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 			)}>
-			<Icon size={15} className={isActive ? 'text-amber-700' : 'opacity-70'} />
+			<Icon size={15} className={isActive ? 'text-primary dark:text-amber-400' : 'opacity-70'} />
 			{label}
 		</Link>
 	);
@@ -3705,9 +3759,9 @@ const NavItem = ({ to, icon: Icon, label }) => {
 
 export default function AdminLayout() {
 	const { campaignId, setCampaignId } = useCampaign();
+	const { theme, cycleTheme } = useTheme(); // Use cycleTheme
 	const navigate = useNavigate();
 
-	// ... (existing handleSwitch logic) ...
 	const handleSwitch = () => {
 		if (confirm('Go to Campaign Selection screen?')) {
 			setCampaignId(null);
@@ -3715,22 +3769,35 @@ export default function AdminLayout() {
 		}
 	};
 
+	// Helper to render current theme icon
+	const ThemeIcon = () => {
+		if (theme === THEMES.DARK) return <Moon size={16} />;
+		if (theme === THEMES.DND) return <Dice5 size={16} />;
+		return <Sun size={16} />;
+	};
+
 	return (
-		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans'>
+		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans '>
 			{/* Sidebar */}
 			<aside className='w-56 bg-background border-r border-border flex flex-col shrink-0'>
-				{/* ... (existing sidebar content) ... */}
-				<div className='p-4 border-b border-border bg-muted/20'>
-					<div className='flex items-center gap-2 text-amber-700'>
-						<div className='p-1.5 bg-amber-100 rounded-md'>
+				<div className='p-4 border-b border-border bg-muted/20 flex items-center justify-between'>
+					<div className='flex items-center gap-2 text-primary'>
+						<div className='p-1.5 bg-primary  rounded-md'>
 							<Database size={18} />
 						</div>
 						<h2 className='font-serif font-bold text-lg leading-none'>DM Console</h2>
 					</div>
+
+					{/* THEME TOGGLE BUTTON */}
+					<button
+						onClick={cycleTheme}
+						className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors hover:text-foreground'
+						title={`Current Theme: ${theme}`}>
+						<ThemeIcon />
+					</button>
 				</div>
 
 				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
-					{/* ... (existing nav items) ... */}
 					<div className='px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						System
 					</div>
@@ -3751,15 +3818,15 @@ export default function AdminLayout() {
 						Campaign
 					</div>
 					<NavItem to='/dm/manage/session' icon={BookOpen} label='Chronicles' />
+					<NavItem to='/dm/manage/narrative_arc' icon={Drama} label='Narrative Arcs' />
 					<NavItem to='/dm/manage/quest' icon={Scroll} label='Quests' />
 				</nav>
 
 				<div className='p-3 border-t border-border space-y-1'>
-					{/* ... (existing footer buttons) ... */}
 					{campaignId && (
 						<Link
 							to='/'
-							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/10 rounded-md transition-colors'
+							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/10 rounded-md transition-colors dark:text-emerald-400 dark:hover:bg-emerald-900/20'
 							title={`Return to Campaign ID: ${campaignId}`}>
 							<Play size={14} /> Enter Campaign
 						</Link>
@@ -3767,14 +3834,14 @@ export default function AdminLayout() {
 
 					<button
 						onClick={handleSwitch}
-						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors text-left'>
+						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors text-left dark:hover:text-red-400 dark:hover:bg-red-900/20'>
 						<LogOut size={14} /> Campaign Select
 					</button>
 				</div>
 			</aside>
 
 			{/* Main Content */}
-			<main className='flex-1 h-full overflow-y-auto bg-muted/10 custom-scrollbar'>
+			<main className='flex-1 h-full overflow-y-auto custom-scrollba'>
 				<div className='mx-auto'>
 					<Outlet />
 				</div>

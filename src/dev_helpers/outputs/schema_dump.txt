@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/4/2026, 10:39:29 PM
+   Generated: 1/4/2026, 11:35:50 PM
 =========================================
 
 -----------------------------------------
@@ -89,11 +89,28 @@ TABLE: characters [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
+    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Loraine",
+    "created_at": "2025-12-07T20:22:47.251Z",
+    "updated_at": "2026-01-04T20:32:47.354Z",
+    "description": "Work in progress, will be available later.",
+    "attributes": {
+      "race": "Vampire",
+      "class": "Fighter Battlemaster",
+      "level": "8",
+      "speed": "30ft.",
+      "is_active": "true",
+      "hit points": "N/A",
+      "armor class": "N/A"
+    }
+  },
+  {
     "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Olek",
     "created_at": "2025-11-21T11:18:32.073Z",
-    "updated_at": "2026-01-04T20:30:17.478Z",
+    "updated_at": "2026-01-04T21:14:33.263Z",
     "description": "He is devotion given form - an angelic soul clad in armor, kind and just, friendly and ever ready for conversation. Olek is honorable to his very core, though humble in his ways, never one to boast or seek glory. His story is unlike any other. As a child, he and his sibling were raised not by kin of their own kind, but by wolves, deep within the forest. How they came to be there, he cannot say. The memory is lost to time or fate. But the pack was family, and he knew love in fur and fang. Then... [TRUNCATED AT 100 WORDS]",
     "attributes": {
       "icon": "images/assets/character_thumbnails/campaign_002/olek.webp",
@@ -101,9 +118,32 @@ TABLE: characters [⚠️ RLS DISABLED]
       "class": "Paladin / Warlock",
       "level": "8",
       "speed": "40ft.",
+      "skills": [
+        "Acrobatics (-1)",
+        "Animal Handling (+4)",
+        "Arcana (+0)",
+        "Athletics (+5)",
+        "Deception (+4)",
+        "History (+0)",
+        "Insight (+4)",
+        "Intimidation (+4)",
+        "Investigation (+0)",
+        "Medicine (+1)",
+        "Nature (+0)",
+        "Perception (+4)",
+        "Performance (+4)",
+        "Persuasion (+7)",
+        "Religion (+0)",
+        "Sleight of Hand (-1)",
+        "Stealth (-1)",
+        "Survival (+1)"
+      ],
       "is_active": "true",
-      "hit points": "59",
+      "languages": "Common, Common Sign Language, Goblin",
+      "hit points": "67",
+      "initiative": "+2",
       "armor class": "19",
+      "proficiency": "+3",
       "saving throw": [
         "STR +6",
         "DEX +3",
@@ -120,24 +160,12 @@ TABLE: characters [⚠️ RLS DISABLED]
         "WIS 12 (+1)",
         "CHA 18 (+4)"
       ],
-      "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg_horizontal.webp"
-    }
-  },
-  {
-    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Loraine",
-    "created_at": "2025-12-07T20:22:47.251Z",
-    "updated_at": "2026-01-04T20:32:47.354Z",
-    "description": "Work in progress, will be available later.",
-    "attributes": {
-      "race": "Vampire",
-      "class": "Fighter Battlemaster",
-      "level": "8",
-      "speed": "30ft.",
-      "is_active": "true",
-      "hit points": "N/A",
-      "armor class": "N/A"
+      "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg_horizontal.webp",
+      "additional senses": [
+        "Passive Perception 14",
+        "Passive Investigation 10",
+        "Passive Insight 14"
+      ]
     }
   }
 ]
