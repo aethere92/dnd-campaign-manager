@@ -26,7 +26,7 @@ export default function WikiLandingPage() {
 	const groups = useEntityGrouping(entities, normalizedType, search, context);
 	const swimlanes = useMemo(() => getSwimlanes(groups, normalizedType), [groups, normalizedType]);
 
-	if (isLoading) return <LoadingSpinner text={`Loading ${config.labelPlural}...`} />;
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text={`Loading ${config.labelPlural}...`} />;
 
 	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
 

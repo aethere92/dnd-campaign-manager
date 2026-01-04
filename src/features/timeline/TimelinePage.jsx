@@ -1,11 +1,12 @@
 import { useTimelineViewModel } from './useTimelineView';
 import { TimelineSession } from './components/TimelineSession';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
 export default function TimelineView() {
 	const { sessions, isLoading } = useTimelineViewModel();
 
-	if (isLoading) return <div className='p-8 text-center text-muted-foreground/70'>Loading timeline...</div>;
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
 
 	// Construct ToC items manually for the timeline sessions
 	const tocItems = sessions.map((s) => ({
