@@ -80,7 +80,7 @@ export default function DashboardView() {
 							</div>
 
 							{/* Threads - 4 columns */}
-							<div className='lg:col-span-4 h-full border-l border-border/50 pl-8'>
+							<div className='lg:col-span-4 h-full sm:border-l sm:border-border/50 sm:pl-8'>
 								<ActiveThreads quests={activeThreads} />
 							</div>
 						</div>
