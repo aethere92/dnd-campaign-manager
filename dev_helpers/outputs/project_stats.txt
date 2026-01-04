@@ -1,0 +1,104 @@
+================================================================
+PROJECT STATISTICS
+Generated: 2026-01-04 09:07:13
+================================================================
+
+### OVERALL STATISTICS
+
+Total files: 195
+Total lines: 17,729
+Non-empty lines: 15,683
+Comment lines: 1,467
+Total size: 551,689 bytes (538.76 KB)
+Average lines per file: 90.9
+
+
+### STATISTICS BY FILE TYPE
+
+.css:
+  Files: 1
+  Lines: 451
+  Size: 11,092 bytes (10.83 KB)
+
+.html:
+  Files: 1
+  Lines: 14
+  Size: 353 bytes (0.34 KB)
+
+.js:
+  Files: 68
+  Lines: 6,306
+  Size: 176,060 bytes (171.93 KB)
+
+.json:
+  Files: 3
+  Lines: 265
+  Size: 6,739 bytes (6.58 KB)
+
+.jsx:
+  Files: 115
+  Lines: 10,202
+  Size: 339,003 bytes (331.06 KB)
+
+.md:
+  Files: 1
+  Lines: 98
+  Size: 3,307 bytes (3.23 KB)
+
+.py:
+  Files: 1
+  Lines: 145
+  Size: 5,354 bytes (5.23 KB)
+
+.svg:
+  Files: 1
+  Lines: 1
+  Size: 1,497 bytes (1.46 KB)
+
+.txt:
+  Files: 1
+  Lines: 162
+  Size: 6,450 bytes (6.30 KB)
+
+.yml:
+  Files: 1
+  Lines: 57
+  Size: 1,188 bytes (1.16 KB)
+
+no_extension:
+  Files: 2
+  Lines: 28
+  Size: 646 bytes (0.63 KB)
+
+
+### LARGEST FILES (by lines)
+
+src\app\styles\global.css: 451 lines
+src\features\admin\components\RelationshipManager.jsx: 420 lines
+src\features\admin\components\AdminForm.jsx: 366 lines
+src\features\admin\api\adminService.js: 355 lines
+src\features\admin\components\EncounterManager.jsx: 354 lines
+src\features\admin\components\MarkdownEditorImpl.jsx: 350 lines
+src\domain\entity\api\entityService.js: 273 lines
+src\features\admin\components\QuestObjectiveManager.jsx: 269 lines
+src\features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
+src\features\wiki\components\EntityMiniMap.jsx: 248 lines
+src\features\admin\components\SessionEventManager.jsx: 224 lines
+src\features\atlas\data\modularize.js: 223 lines
+src\features\atlas\components\AtlasSidebar.jsx: 215 lines
+src\features\admin\pages\SplitPaneManager.jsx: 211 lines
+src\features\wiki\components\EncounterTimeline.jsx: 208 lines
+src\domain\entity\utils\attributeParser.js: 204 lines
+src\features\wiki\components\EntityHeader.jsx: 204 lines
+src\features\admin\config\imageManifest.json: 203 lines
+src\features\wiki\components\EntitySidebar.jsx: 201 lines
+src\features\smart-text\components\EntityEmbed.jsx: 200 lines
+
+
+### STATISTICS BY CATEGORY
+
+root:
+  Files: 195
+  Lines: 17,729
+  Size: 551,689 bytes (538.76 KB)
+
