@@ -5,6 +5,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  todo.md
   app/
     App.jsx
     AppRoutes.jsx
@@ -3462,6 +3463,7 @@ export const IMAGE_LIBRARY = [
       "kaedin_bg_vertical.webp",
       "olek_bg_horizontal.webp",
       "olek_bg_square.webp",
+      "party_bg_horizontal.webp",
       "soshi_bg_horizontal.webp",
       "soshi_bg_vertical.webp"
     ]
@@ -3486,6 +3488,7 @@ export const IMAGE_LIBRARY = [
       "kaedin.webp",
       "norr.webp",
       "olek.webp",
+      "party.webp",
       "soshi.webp"
     ]
   },

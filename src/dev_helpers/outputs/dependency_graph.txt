@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-03 17:25:51
+Generated: 2026-01-04 14:05:45
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -583,6 +583,7 @@ features\timeline\TimelinePage.jsx:
   → ./components/TimelineSession
   → ./useTimelineView
   → @/features/table-of-contents/TableOfContents
+  → @/shared/components/ui/LoadingSpinner
 
 features\timeline\api\timelineService.js:
   → @/shared/api/supabaseClient

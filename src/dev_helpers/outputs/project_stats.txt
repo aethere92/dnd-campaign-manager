@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-03 17:25:51
+Generated: 2026-01-04 14:05:45
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 182
-Total lines: 16,968
-Non-empty lines: 15,028
+Total files: 183
+Total lines: 16,978
+Non-empty lines: 15,037
 Comment lines: 1,438
-Total size: 525,765 bytes (513.44 KB)
-Average lines per file: 93.2
+Total size: 526,328 bytes (513.99 KB)
+Average lines per file: 92.8
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,18 +22,23 @@ Average lines per file: 93.2
 
 .js:
   Files: 65
-  Lines: 6,114
-  Size: 170,606 bytes (166.61 KB)
+  Lines: 6,115
+  Size: 170,648 bytes (166.65 KB)
 
 .json:
   Files: 1
-  Lines: 202
-  Size: 5,211 bytes (5.09 KB)
+  Lines: 204
+  Size: 5,265 bytes (5.14 KB)
 
 .jsx:
   Files: 115
-  Lines: 10,201
-  Size: 338,856 bytes (330.91 KB)
+  Lines: 10,202
+  Size: 339,003 bytes (331.06 KB)
+
+.md:
+  Files: 1
+  Lines: 6
+  Size: 320 bytes (0.31 KB)
 
 
 ### LARGEST FILES (by lines)
@@ -44,7 +49,7 @@ features\admin\components\AdminForm.jsx: 366 lines
 features\admin\api\adminService.js: 355 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
-domain\entity\api\entityService.js: 272 lines
+domain\entity\api\entityService.js: 273 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
@@ -54,8 +59,8 @@ features\atlas\components\AtlasSidebar.jsx: 215 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
 features\wiki\components\EncounterTimeline.jsx: 208 lines
 domain\entity\utils\attributeParser.js: 204 lines
+features\admin\config\imageManifest.json: 204 lines
 features\wiki\components\EntityHeader.jsx: 204 lines
-features\admin\config\imageManifest.json: 202 lines
 features\wiki\components\EntitySidebar.jsx: 201 lines
 features\smart-text\components\EntityEmbed.jsx: 200 lines
 
@@ -69,13 +74,13 @@ app:
 
 domain_entity:
   Files: 13
-  Lines: 1,462
-  Size: 39,595 bytes (38.67 KB)
+  Lines: 1,463
+  Size: 39,637 bytes (38.71 KB)
 
 features_admin:
   Files: 22
-  Lines: 4,000
-  Size: 131,950 bytes (128.86 KB)
+  Lines: 4,002
+  Size: 132,004 bytes (128.91 KB)
 
 features_atlas:
   Files: 16
@@ -90,7 +95,7 @@ features_campaign:
 features_dashboard:
   Files: 10
   Lines: 710
-  Size: 25,080 bytes (24.49 KB)
+  Size: 25,114 bytes (24.53 KB)
 
 features_graph:
   Files: 7
@@ -110,7 +115,7 @@ features_search:
 features_smart-text:
   Files: 5
   Lines: 437
-  Size: 12,468 bytes (12.18 KB)
+  Size: 12,474 bytes (12.18 KB)
 
 features_smart-tooltip:
   Files: 5
@@ -124,21 +129,21 @@ features_table-of-contents:
 
 features_timeline:
   Files: 6
-  Lines: 360
-  Size: 10,827 bytes (10.57 KB)
+  Lines: 361
+  Size: 10,902 bytes (10.65 KB)
 
 features_wiki:
   Files: 42
   Lines: 4,058
-  Size: 130,969 bytes (127.90 KB)
+  Size: 131,003 bytes (127.93 KB)
 
 root:
-  Files: 1
-  Lines: 42
-  Size: 1,190 bytes (1.16 KB)
+  Files: 2
+  Lines: 48
+  Size: 1,510 bytes (1.47 KB)
 
 shared:
   Files: 23
   Lines: 1,580
-  Size: 43,117 bytes (42.11 KB)
+  Size: 43,115 bytes (42.10 KB)
 

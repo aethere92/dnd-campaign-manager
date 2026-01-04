@@ -5,6 +5,7 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  todo.md
   app/
     App.jsx
     AppRoutes.jsx

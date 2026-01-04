@@ -5,6 +5,7 @@ PARTIAL BUNDLE: FEATURES SEARCH
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  todo.md
   app/
     App.jsx
     AppRoutes.jsx

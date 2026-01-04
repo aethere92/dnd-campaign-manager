@@ -5,6 +5,7 @@ PARTIAL BUNDLE: ROOT
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  todo.md
   app/
     App.jsx
     AppRoutes.jsx
@@ -306,4 +307,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 
 --- END OF main.jsx ---
+
+--- FILE: todo.md ---
+- [ ] Convert the mentions tab from the sessions to use the same badges as the connections from entities
+- [ ] Convert the character page to be more D&D reminiscent
+- [ ] Update the dashboard landing page to have a cards of the party
+- [ ] Integrate the story arcs into the timeline
+- [ ] Create icon for the story arcs
+
+--- END OF todo.md ---
 

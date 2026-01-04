@@ -11,6 +11,7 @@ INSTRUCTIONS FOR AI:
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  todo.md
   app/
     App.jsx
     AppRoutes.jsx
@@ -312,6 +313,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 
 --- END OF main.jsx ---
+
+--- FILE: todo.md ---
+- [ ] Convert the mentions tab from the sessions to use the same badges as the connections from entities
+- [ ] Convert the character page to be more D&D reminiscent
+- [ ] Update the dashboard landing page to have a cards of the party
+- [ ] Integrate the story arcs into the timeline
+- [ ] Create icon for the story arcs
+
+--- END OF todo.md ---
 
 --- FILE: app\App.jsx ---
 import { useEffect } from 'react';
@@ -1006,6 +1016,7 @@ export const getEntityIndex = async (campaignId) => {
 				icon: e.icon_url,
 				status: e.status,
 				affinity: e.affinity,
+				background_image: e.background_image,
 			},
 		}))
 		.sort((a, b) => b.name.length - a.name.length);
@@ -5600,6 +5611,7 @@ export const IMAGE_LIBRARY = [
       "kaedin_bg_vertical.webp",
       "olek_bg_horizontal.webp",
       "olek_bg_square.webp",
+      "party_bg_horizontal.webp",
       "soshi_bg_horizontal.webp",
       "soshi_bg_vertical.webp"
     ]
@@ -5624,6 +5636,7 @@ export const IMAGE_LIBRARY = [
       "kaedin.webp",
       "norr.webp",
       "olek.webp",
+      "party.webp",
       "soshi.webp"
     ]
   },
@@ -8388,7 +8401,7 @@ export default function DashboardView() {
 		staleTime: 1000 * 60 * 5,
 	});
 
-	if (isLoading) return <LoadingSpinner text='Opening chronicle...' fullScreen />;
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Opening chronicle...' fullScreen />;
 
 	const { campaign, counts, currentArc, otherArcs, activeParty, activeThreads, stats } = data || {};
 
@@ -10782,7 +10795,7 @@ export const EntityEmbed = ({ id, type, label }) => {
 	// Resolve Images
 	const attributes = parseAttributes(entity?.attributes);
 	const customIcon = entity?.iconUrl || resolveImageUrl(attributes, 'icon');
-	const bgImage = resolveImageUrl(attributes, 'background');
+	const bgImage = resolveImageUrl(attributes, 'background_image');
 
 	// State for brightness detection
 	const [isDarkBackground, setIsDarkBackground] = useState(false);
@@ -11575,11 +11588,12 @@ export function useTocScroll(callback) {
 import { useTimelineViewModel } from './useTimelineView';
 import { TimelineSession } from './components/TimelineSession';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
 export default function TimelineView() {
 	const { sessions, isLoading } = useTimelineViewModel();
 
-	if (isLoading) return <div className='p-8 text-center text-muted-foreground/70'>Loading timeline...</div>;
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
 
 	// Construct ToC items manually for the timeline sessions
 	const tocItems = sessions.map((s) => ({
@@ -15478,7 +15492,7 @@ export default function WikiLandingPage() {
 	const groups = useEntityGrouping(entities, normalizedType, search, context);
 	const swimlanes = useMemo(() => getSwimlanes(groups, normalizedType), [groups, normalizedType]);
 
-	if (isLoading) return <LoadingSpinner text={`Loading ${config.labelPlural}...`} />;
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text={`Loading ${config.labelPlural}...`} />;
 
 	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
 
@@ -16941,7 +16955,7 @@ export default function LoadingSpinner({ size = 'md', text = 'Loading...', class
 
 	return (
 		<div className={clsx('flex flex-col items-center justify-center gap-3', className)}>
-			<Loader2 className={clsx(sizes[size], 'animate-spin text-amber-600')} />
+			<Loader2 className={clsx(sizes[size], 'animate-spin text-primary')} />
 			{text && <p className='text-sm text-muted-foreground font-medium'>{text}</p>}
 		</div>
 	);
