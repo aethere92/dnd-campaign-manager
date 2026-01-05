@@ -1,6 +1,9 @@
 import { clsx } from 'clsx';
 
 export const TocItem = ({ item, isActive, onClick }) => {
+	// Calculate indent based on depth (Depth 1 = 0px, Depth 2 = 12px, etc.)
+	const indentClass = item.depth > 1 ? (item.depth === 2 ? 'ml-3' : 'ml-6') : '';
+
 	return (
 		<button
 			onClick={() => onClick(item.id)}
@@ -10,7 +13,15 @@ export const TocItem = ({ item, isActive, onClick }) => {
 					? 'border-amber-600 text-amber-700 font-bold bg-amber-500/10/50'
 					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
 			)}>
-			<span className={clsx('text-[13px] leading-snug', item.depth === 3 && 'ml-3 opacity-90 text-[12px]')}>
+			<span
+				className={clsx(
+					'text-[13px] leading-snug transition-opacity',
+					indentClass,
+					// Fade sub-items slightly for hierarchy
+					item.depth > 1 && 'opacity-90',
+					// Bold top-level items for emphasis
+					item.depth === 1 && 'font-medium uppercase tracking-tight text-foreground/80'
+				)}>
 				{item.text}
 			</span>
 		</button>

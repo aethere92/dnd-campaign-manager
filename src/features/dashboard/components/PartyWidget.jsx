@@ -86,7 +86,7 @@ const PartyCard = ({ char, onClick }) => {
 						<SmartMarkdown>{name}</SmartMarkdown>
 					</h3>
 					<p className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 truncate'>
-						{race} <span className='opacity-30 mx-1'>|</span> {charClass}
+						{race} • {charClass}
 					</p>
 				</div>
 

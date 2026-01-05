@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-04 23:35:53
+Generated: 2026-01-05 08:22:21
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -381,6 +381,8 @@ features\dashboard\components\InsightsGrid.jsx:
 
 features\dashboard\components\PartyWidget.jsx:
   → @/features/smart-text/SmartMarkdown
+  → clsx
+  → lucide-react
   → react-router-dom
 
 features\dashboard\components\QuickInsights.jsx:
@@ -581,6 +583,7 @@ features\table-of-contents\hooks\useTocScroll.js:
   → react
 
 features\timeline\TimelinePage.jsx:
+  → ./components/TimelineArcHeader
   → ./components/TimelineSession
   → ./useTimelineView
   → @/features/table-of-contents/TableOfContents
@@ -588,6 +591,10 @@ features\timeline\TimelinePage.jsx:
 
 features\timeline\api\timelineService.js:
   → @/shared/api/supabaseClient
+
+features\timeline\components\TimelineArcHeader.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → lucide-react
 
 features\timeline\components\TimelineEvent.jsx:
   → @/domain/entity/config/entityConfig
@@ -601,7 +608,6 @@ features\timeline\components\TimelineSession.jsx:
   → lucide-react
 
 features\timeline\useTimelineView.js:
-  → ./types
   → ./utils/eventStyles
   → @/features/campaign/CampaignContext
   → @/features/timeline/api/timelineService
@@ -841,6 +847,7 @@ features\wiki\layouts\CharacterLayout.jsx:
   → @/shared/utils/markdownUtils
   → lucide-react
   → react
+  → vaul
 
 features\wiki\layouts\SessionLayout.jsx:
   → @/features/table-of-contents/TableOfContents
@@ -1024,11 +1031,11 @@ Files with most outgoing dependencies:
   features\wiki\components\EntityMiniMap.jsx: 12 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
+  features\wiki\layouts\CharacterLayout.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
   features\admin\pages\SplitPaneManager.jsx: 9 imports
   features\atlas\components\layers\MapMarkers.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports
-  features\wiki\layouts\CharacterLayout.jsx: 9 imports
   features\wiki\layouts\SessionLayout.jsx: 9 imports
   features\admin\components\MarkdownEditorImpl.jsx: 8 imports
   features\navigation\MainLayout.jsx: 8 imports

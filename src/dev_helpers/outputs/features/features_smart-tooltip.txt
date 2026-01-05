@@ -169,6 +169,7 @@ PARTIAL BUNDLE: FEATURES SMART-TOOLTIP
       api/
         timelineService.js
       components/
+        TimelineArcHeader.jsx
         TimelineEvent.jsx
         TimelineSession.jsx
       utils/

@@ -169,6 +169,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
       api/
         timelineService.js
       components/
+        TimelineArcHeader.jsx
         TimelineEvent.jsx
         TimelineSession.jsx
       utils/

@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/4/2026, 11:35:50 PM
+   Generated: 1/5/2026, 8:18:06 AM
 =========================================
 
 -----------------------------------------
@@ -89,82 +89,126 @@ TABLE: characters [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Loraine",
-    "created_at": "2025-12-07T20:22:47.251Z",
-    "updated_at": "2026-01-04T20:32:47.354Z",
-    "description": "Work in progress, will be available later.",
+    "id": "d891ffb1-89ef-46a1-a0db-4538423b3c60",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "name": "Aenwyn",
+    "created_at": "2025-12-10T17:18:35.168Z",
+    "updated_at": "2026-01-05T05:42:36.103Z",
+    "description": null,
     "attributes": {
-      "race": "Vampire",
-      "class": "Fighter Battlemaster",
+      "icon": "../../images/assets/character_thumbnails/campaign_001/aenwyn.webp",
+      "race": "Half-Elf",
+      "class": "Sorcerer",
       "level": "8",
-      "speed": "30ft.",
+      "speed": "35ft.",
+      "skills": [
+        "Acrobatics (+0)",
+        "Animal Handling (+2)",
+        "Arcana (+4)",
+        "Athletics (+0)",
+        "Deception (+3)",
+        "History (+4)",
+        "Insight (+5)",
+        "Intimidation (+3)",
+        "Investigation (+4)",
+        "Medicine (+2)",
+        "Nature (+1)",
+        "Perception (+5)",
+        "Performance (+3)",
+        "Persuasion (+3)",
+        "Religion (+1)",
+        "Sleight of Hand (+0)",
+        "Stealth (+0)",
+        "Survival (+2)"
+      ],
       "is_active": "true",
-      "hit points": "N/A",
-      "armor class": "N/A"
+      "languages": "Celestial, Common, Draconic, Dwarvish, Elvish",
+      "hit points": "58",
+      "initiative": "+0",
+      "armor class": "13",
+      "proficiency": "+3",
+      "saving throw": [
+        "STR +0",
+        "DEX +0",
+        "CON +5",
+        "INT +1",
+        "WIS +2",
+        "CHA +6"
+      ],
+      "ability score": [
+        "STR 10 (+0)",
+        "DEX 10 (+0)",
+        "CON 14 (+2)",
+        "INT 12 (+1)",
+        "WIS 14 (+2)",
+        "CHA 17 (+3)"
+      ],
+      "additional senses": [
+        "Passive Perception 15",
+        "Passive Investigation 14",
+        "Passive Insight 15"
+      ]
     }
   },
   {
-    "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Olek",
-    "created_at": "2025-11-21T11:18:32.073Z",
-    "updated_at": "2026-01-04T21:14:33.263Z",
-    "description": "He is devotion given form - an angelic soul clad in armor, kind and just, friendly and ever ready for conversation. Olek is honorable to his very core, though humble in his ways, never one to boast or seek glory. His story is unlike any other. As a child, he and his sibling were raised not by kin of their own kind, but by wolves, deep within the forest. How they came to be there, he cannot say. The memory is lost to time or fate. But the pack was family, and he knew love in fur and fang. Then... [TRUNCATED AT 100 WORDS]",
+    "id": "cb68cdac-4ff3-41a2-a793-b83a303bd431",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "name": "Aethere",
+    "created_at": "2025-12-10T17:18:35.168Z",
+    "updated_at": "2026-01-05T05:42:40.899Z",
+    "description": null,
     "attributes": {
-      "icon": "images/assets/character_thumbnails/campaign_002/olek.webp",
-      "race": "Aasimar",
-      "class": "Paladin / Warlock",
+      "icon": "../../images/assets/character_thumbnails/campaign_001/aethere.webp",
+      "race": "Half-Elf",
+      "class": "Bard",
       "level": "8",
-      "speed": "40ft.",
+      "speed": "30ft.",
       "skills": [
-        "Acrobatics (-1)",
-        "Animal Handling (+4)",
-        "Arcana (+0)",
-        "Athletics (+5)",
-        "Deception (+4)",
-        "History (+0)",
-        "Insight (+4)",
-        "Intimidation (+4)",
-        "Investigation (+0)",
-        "Medicine (+1)",
-        "Nature (+0)",
-        "Perception (+4)",
-        "Performance (+4)",
-        "Persuasion (+7)",
-        "Religion (+0)",
-        "Sleight of Hand (-1)",
-        "Stealth (-1)",
-        "Survival (+1)"
+        "Acrobatics (+5)",
+        "Animal Handling (+5)",
+        "Arcana (+3)",
+        "Athletics (+2)",
+        "Deception (+5)",
+        "History (+3)",
+        "Insight (+5)",
+        "Intimidation (+5)",
+        "Investigation (+5)",
+        "Medicine (+3)",
+        "Nature (+5)",
+        "Perception (+8)",
+        "Performance (+7)",
+        "Persuasion (+10)",
+        "Religion (+3)",
+        "Sleight of Hand (+3)",
+        "Stealth (+3)",
+        "Survival (+5)"
       ],
       "is_active": "true",
-      "languages": "Common, Common Sign Language, Goblin",
-      "hit points": "67",
-      "initiative": "+2",
-      "armor class": "19",
+      "languages": "Common, Elvish, Gnomish",
+      "hit points": "43",
+      "initiative": "+3",
+      "armor class": "14",
       "proficiency": "+3",
       "saving throw": [
-        "STR +6",
-        "DEX +3",
-        "CON +6",
-        "INT +4",
-        "WIS +8",
-        "CHA +11"
+        "STR -1",
+        "DEX +5",
+        "CON +0",
+        "INT +2",
+        "WIS +2",
+        "CHA +7"
       ],
       "ability score": [
-        "STR 14 (+2)",
-        "DEX 8 (-1)",
-        "CON 14 (+2)",
-        "INT 10 (+0)",
-        "WIS 12 (+1)",
+        "STR 8 (-1)",
+        "DEX 14 (+2)",
+        "CON 10 (+0)",
+        "INT 14 (+2)",
+        "WIS 14 (+2)",
         "CHA 18 (+4)"
       ],
-      "background_image": "images/assets/character_backgrounds/campaign_002/olek_bg_horizontal.webp",
       "additional senses": [
-        "Passive Perception 14",
-        "Passive Investigation 10",
-        "Passive Insight 14"
+        "Passive Perception 18",
+        "Passive Investigation 15",
+        "Passive Insight 15"
       ]
     }
   }
@@ -840,6 +884,20 @@ VIEW: view_campaign_graph
   LEFT JOIN view_entity_attributes_source attr ON ((e.id = attr.id)))
   WHERE (e.type <> ALL (ARRAY['event'::text, 'session_event'::text]));
 
+VIEW: view_active_party
+-----------------------------------------
+ SELECT id,
+  campaign_id,
+  name,
+  description,
+  (attributes ->> 'race'::text) AS race,
+  (attributes ->> 'class'::text) AS class,
+  (attributes ->> 'icon'::text) AS icon,
+  (attributes ->> 'level'::text) AS level,
+  attributes
+  FROM characters c
+  WHERE ((((attributes ->> 'is_active'::text))::boolean = true) OR ((attributes ->> 'is_active'::text) = 'true'::text));
+
 VIEW: view_encounter_actions_hydrated
 -----------------------------------------
  SELECT ea.id,
@@ -857,6 +915,31 @@ VIEW: view_encounter_actions_hydrated
   LEFT JOIN view_entity_attributes_source attr_actor ON ((ea.actor_entity_id = attr_actor.id)))
   LEFT JOIN entities e_target ON ((ea.target_entity_id = e_target.id)))
   LEFT JOIN view_entity_attributes_source attr_target ON ((ea.target_entity_id = attr_target.id)));
+
+VIEW: view_campaign_timeline
+-----------------------------------------
+ SELECT s.id AS session_id,
+  s.campaign_id,
+  s.title AS session_title,
+  s.narrative AS session_narrative,
+  s.created_at,
+  ((s.attributes ->> 'session_number'::text))::integer AS session_number,
+  (s.attributes ->> 'session_date'::text) AS session_date,
+  s.attributes,
+  na.id AS arc_id,
+  na.title AS arc_title,
+  na.description AS arc_description,
+  COALESCE(events_data.event_list, '[]'::jsonb) AS events
+  FROM (((sessions s
+  LEFT JOIN entity_relationships er_arc ON (((s.id = er_arc.from_entity_id) AND (er_arc.relationship_type = 'part_of'::text))))
+  LEFT JOIN narrative_arcs na ON ((er_arc.to_entity_id = na.id)))
+  LEFT JOIN LATERAL ( SELECT jsonb_agg(jsonb_build_object('id', se.id, 'title', se.title, 'description', se.description, 'type', se.event_type, 'order', se.event_order, 'tags', COALESCE(tags_data.tag_list, '[]'::jsonb)) ORDER BY se.event_order) AS event_list
+  FROM (session_events se
+  LEFT JOIN LATERAL ( SELECT jsonb_agg(jsonb_build_object('name', e.name, 'type', e.type, 'entity_id', e.id)) AS tag_list
+  FROM (entity_relationships er
+  JOIN entities e ON ((er.to_entity_id = e.id)))
+  WHERE (er.from_entity_id = se.id)) tags_data ON (true))
+  WHERE (se.session_id = s.id)) events_data ON (true));
 
 VIEW: view_entity_attributes_source
 -----------------------------------------
@@ -891,18 +974,6 @@ UNION ALL
   SELECT sessions.id,
   sessions.attributes
   FROM sessions;
-
-VIEW: view_active_party
------------------------------------------
- SELECT id,
-  campaign_id,
-  name,
-  (attributes ->> 'race'::text) AS race,
-  (attributes ->> 'class'::text) AS class,
-  (attributes ->> 'icon'::text) AS icon,
-  (attributes ->> 'level'::text) AS level
-  FROM characters c
-  WHERE ((((attributes ->> 'is_active'::text))::boolean = true) OR ((attributes ->> 'is_active'::text) = 'true'::text));
 
 VIEW: entity_complete_view
 -----------------------------------------
@@ -973,26 +1044,6 @@ VIEW: view_session_arcs
   FROM ((sessions s
   LEFT JOIN entity_relationships er ON (((er.from_entity_id = s.id) AND (er.relationship_type = 'part_of'::text))))
   LEFT JOIN narrative_arcs na ON ((er.to_entity_id = na.id)));
-
-VIEW: view_campaign_timeline
------------------------------------------
- SELECT s.id AS session_id,
-  s.campaign_id,
-  s.title AS session_title,
-  s.narrative AS session_narrative,
-  s.created_at,
-  ((s.attributes ->> 'session_number'::text))::integer AS session_number,
-  (s.attributes ->> 'session_date'::text) AS session_date,
-  s.attributes,
-  COALESCE(events_data.event_list, '[]'::jsonb) AS events
-  FROM (sessions s
-  LEFT JOIN LATERAL ( SELECT jsonb_agg(jsonb_build_object('id', se.id, 'title', se.title, 'description', se.description, 'type', se.event_type, 'order', se.event_order, 'tags', COALESCE(tags_data.tag_list, '[]'::jsonb)) ORDER BY se.event_order) AS event_list
-  FROM (session_events se
-  LEFT JOIN LATERAL ( SELECT jsonb_agg(jsonb_build_object('name', e.name, 'type', e.type, 'entity_id', e.id)) AS tag_list
-  FROM (entity_relationships er
-  JOIN entities e ON ((er.to_entity_id = e.id)))
-  WHERE (er.from_entity_id = se.id)) tags_data ON (true))
-  WHERE (se.session_id = s.id)) events_data ON (true));
 
 VIEW: view_recent_sessions
 -----------------------------------------

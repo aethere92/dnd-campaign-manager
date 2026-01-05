@@ -175,6 +175,7 @@ INSTRUCTIONS FOR AI:
       api/
         timelineService.js
       components/
+        TimelineArcHeader.jsx
         TimelineEvent.jsx
         TimelineSession.jsx
       utils/
@@ -320,10 +321,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 --- END OF main.jsx ---
 
 --- FILE: todo.md ---
-- [ ] Convert the mentions tab from the sessions to use the same badges as the connections from entities
-- [ ] Convert the character page to be more D&D reminiscent
-- [ ] Update the dashboard landing page to have a cards of the party
-- [ ] Integrate the story arcs into the timeline
+### 2025-01-04
+
+- [x] Convert the mentions tab from the sessions to use the same badges as the connections from entities
+- [x] Convert the character page to be more D&D reminiscent
+- [x] Update the dashboard landing page to have a cards of the party
+- [x] Integrate the story arcs into the timeline
 - [ ] Create icon for the story arcs
 - [ ] Update the campaign cards to use player portraits + background
 - [ ] Fix issue where the theme is light if it has been set to dark on the campaign page when first accessing
@@ -5666,6 +5669,7 @@ export const IMAGE_LIBRARY = [
       "bonnie_bg_square.webp",
       "kaedin_bg_horizontal.webp",
       "kaedin_bg_vertical.webp",
+      "norr_bg_horizontal.webp",
       "olek_bg_horizontal.webp",
       "olek_bg_square.webp",
       "party_bg_horizontal.webp",
@@ -8455,7 +8459,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getDashboardData } from '@/features/dashboard/api/dashboardService';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
-import { SectionDivider, SectionDividerVertical } from '@/shared/components/ui/SectionDivider';
+import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 
 import { CampaignHeader } from './components/CampaignHeader';
 import { CurrentArcMetadata } from './components/CurrentArcMetadata';
@@ -8510,28 +8514,30 @@ export default function DashboardView() {
 						</div>
 					</div>
 
-					<SectionDivider className='my-6 mb-12' />
+					<SectionDivider className='my-6' />
 
-					{/* ROW 3: Status Panel */}
-					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[500px]'>
+					{/* ROW 3: Active Party */}
+					<div>
+						<PartyWidget party={activeParty} />
+					</div>
+
+					<SectionDivider className='my-6' />
+
+					{/* ROW 4: Status Panel (Insights & Threads) */}
+					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[400px]'>
 						<div
 							className='absolute inset-0 opacity-[0.03] pointer-events-none'
 							style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
 						/>
 
 						<div className='grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10 h-full'>
-							{/* Insights */}
-							<div className='lg:col-span-5 h-full'>
+							{/* Insights - Expanded to 8 columns */}
+							<div className='lg:col-span-8 h-full'>
 								<InsightsGrid stats={stats} counts={counts} />
 							</div>
 
-							{/* Party */}
-							<div className='lg:col-span-4 h-full'>
-								<PartyWidget party={activeParty} />
-							</div>
-
-							{/* Threads (Simple List) */}
-							<div className='lg:col-span-3 h-full'>
+							{/* Threads - 4 columns */}
+							<div className='lg:col-span-4 h-full sm:border-l sm:border-border/50 sm:pl-8'>
 								<ActiveThreads quests={activeThreads} />
 							</div>
 						</div>
@@ -9060,57 +9066,124 @@ export const InsightsGrid = ({ stats, counts }) => {
 
 --- FILE: features\dashboard\components\PartyWidget.jsx ---
 import { useNavigate } from 'react-router-dom';
+import { Shield, Heart, Footprints, User } from 'lucide-react';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { clsx } from 'clsx';
+
 export const PartyWidget = ({ party }) => {
 	const navigate = useNavigate();
+
 	if (!party || party.length === 0) return null;
 
-	const handleRowClick = (id, e) => {
-		// Integrity Check:
-		// If the user clicked an actual link inside the SmartMarkdown (e.g. the name),
-		// we stop the row click so we don't navigate twice or conflict.
+	const handleCardClick = (id, e) => {
 		if (e.target.closest('a')) return;
-
 		navigate(`/wiki/character/${id}`);
 	};
 
 	return (
-		<div className='h-full flex flex-col'>
-			<div className='flex items-center justify-between mb-6 shrink-0'>
+		<div className='w-full'>
+			<div className='flex items-center justify-between mb-4'>
 				<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>The Party</h4>
 			</div>
 
-			<div className='space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0 pr-2'>
+			{/* CHANGED: xl:grid-cols-6 to fit 6 cards in a row */}
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4'>
 				{party.map((char) => (
-					<div
-						key={char.id}
-						onClick={(e) => handleRowClick(char.id, e)}
-						className='flex items-center gap-3 group cursor-pointer'>
-						<div className='w-10 h-10 rounded-full bg-muted border border-border overflow-hidden shrink-0 group-hover:border-primary/50 transition-colors shadow-sm'>
-							{char.icon ? (
-								<img src={char.icon} alt={char.name} className='w-full h-full object-cover' />
-							) : (
-								<div className='w-full h-full flex items-center justify-center text-sm font-serif font-bold text-muted-foreground'>
-									{char.name[0]}
-								</div>
-							)}
-						</div>
-
-						<div className='min-w-0'>
-							<div className='font-serif font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate'>
-								{/* SmartMarkdown is now safe here because parent is a div */}
-								<SmartMarkdown>{char.name}</SmartMarkdown>
-							</div>
-							<div className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground truncate opacity-60 group-hover:opacity-100 transition-opacity'>
-								{char.race} • {char.class} • Lvl {char.level}
-							</div>
-						</div>
-					</div>
+					<PartyCard key={char.id} char={char} onClick={(e) => handleCardClick(char.id, e)} />
 				))}
 			</div>
 		</div>
 	);
 };
+
+const PartyCard = ({ char, onClick }) => {
+	const { attributes, name, race, level, icon, description } = char;
+
+	const hp = attributes?.['hit points'] || '—';
+	const ac = attributes?.['armor class'] || '—';
+
+	// CHANGED: Extract Speed instead of Passive Perception
+	// Usually stored as "30ft." or just "30"
+	const speed = attributes?.speed || '—';
+
+	const charClass = char.class || attributes?.class || 'Unknown Class';
+	const bgImage = attributes?.background_image || attributes?.header_image;
+
+	return (
+		<div
+			onClick={onClick}
+			className='group relative bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
+			{/* --- Header Banner --- */}
+			<div className='h-24 bg-muted relative overflow-hidden'>
+				{bgImage ? (
+					<img
+						src={bgImage}
+						alt='Background'
+						className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80'
+					/>
+				) : (
+					<div className='w-full h-full bg-gradient-to-br from-primary/5 to-muted' />
+				)}
+				<div className='absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent' />
+			</div>
+
+			{/* --- Body Content --- */}
+			<div className='relative px-5 pb-4 pt-0 flex-1 flex flex-col'>
+				<div className='flex justify-between items-end -mt-10 mb-3'>
+					{/* Avatar */}
+					<div className='w-16 h-16 rounded-xl border-4 border-card bg-muted shadow-sm overflow-hidden shrink-0 z-10 group-hover:scale-105 transition-transform'>
+						{icon ? (
+							<img src={icon} alt={name} className='w-full h-full object-cover' />
+						) : (
+							<div className='w-full h-full flex items-center justify-center bg-primary/10 text-primary'>
+								<User size={24} />
+							</div>
+						)}
+					</div>
+
+					{/* Level Badge */}
+					<div className='mb-1 bg-background/80 backdrop-blur border border-border px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-muted-foreground shadow-sm'>
+						LVL {level || '?'}
+					</div>
+				</div>
+
+				{/* Identity */}
+				<div className='mb-3'>
+					<h3 className='font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-1'>
+						<SmartMarkdown>{name}</SmartMarkdown>
+					</h3>
+					<p className='text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 truncate'>
+						{race} • {charClass}
+					</p>
+				</div>
+
+				{/* Description (Trimmed) */}
+				{/* CHANGED: Increased height (h-20) and line-clamp (4) for taller cards */}
+				<div className='text-xs text-muted-foreground line-clamp-4 mb-4 h-20 leading-relaxed'>
+					<SmartMarkdown components={{ p: 'span' }}>{description || 'No description available.'}</SmartMarkdown>
+				</div>
+
+				{/* Combat Strip */}
+				{/* CHANGED: Swapped Eye (PP) for Footprints (Speed) */}
+				<div className='mt-auto pt-3 border-t border-border/50 grid grid-cols-3 gap-2'>
+					<StatItem icon={Heart} label='HP' value={hp} color='text-red-500' />
+					<StatItem icon={Shield} label='AC' value={ac} color='text-amber-500' />
+					<StatItem icon={Footprints} label='SPD' value={speed} color='text-emerald-500' />
+				</div>
+			</div>
+		</div>
+	);
+};
+
+const StatItem = ({ icon: Icon, label, value, color }) => (
+	<div className='flex flex-col items-center justify-center p-1.5 rounded bg-muted/30 group-hover:bg-muted/50 transition-colors'>
+		<div className='flex items-center gap-1.5 text-muted-foreground mb-0.5'>
+			<Icon size={10} className={clsx('opacity-70', color)} />
+			<span className='text-[9px] font-bold uppercase tracking-wider'>{label}</span>
+		</div>
+		<span className='text-sm font-bold font-mono text-foreground'>{value}</span>
+	</div>
+);
 
 --- END OF features\dashboard\components\PartyWidget.jsx ---
 
@@ -11523,6 +11596,9 @@ export const TableOfContents = ({
 import { clsx } from 'clsx';
 
 export const TocItem = ({ item, isActive, onClick }) => {
+	// Calculate indent based on depth (Depth 1 = 0px, Depth 2 = 12px, etc.)
+	const indentClass = item.depth > 1 ? (item.depth === 2 ? 'ml-3' : 'ml-6') : '';
+
 	return (
 		<button
 			onClick={() => onClick(item.id)}
@@ -11532,7 +11608,15 @@ export const TocItem = ({ item, isActive, onClick }) => {
 					? 'border-amber-600 text-amber-700 font-bold bg-amber-500/10/50'
 					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
 			)}>
-			<span className={clsx('text-[13px] leading-snug', item.depth === 3 && 'ml-3 opacity-90 text-[12px]')}>
+			<span
+				className={clsx(
+					'text-[13px] leading-snug transition-opacity',
+					indentClass,
+					// Fade sub-items slightly for hierarchy
+					item.depth > 1 && 'opacity-90',
+					// Bold top-level items for emphasis
+					item.depth === 1 && 'font-medium uppercase tracking-tight text-foreground/80'
+				)}>
 				{item.text}
 			</span>
 		</button>
@@ -11661,40 +11745,60 @@ export function useTocScroll(callback) {
 --- FILE: features\timeline\TimelinePage.jsx ---
 import { useTimelineViewModel } from './useTimelineView';
 import { TimelineSession } from './components/TimelineSession';
+import { TimelineArcHeader } from './components/TimelineArcHeader';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
 export default function TimelineView() {
-	const { sessions, isLoading } = useTimelineViewModel();
+	const { timelineItems, isLoading } = useTimelineViewModel();
 
 	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
 
-	// Construct ToC items manually for the timeline sessions
-	const tocItems = sessions.map((s) => ({
-		id: `session-marker-${s.number}`,
-		text: `${s.title}`,
-		depth: 1,
-	}));
+	// Hierarchical ToC
+	const tocItems = timelineItems.map((item) => {
+		if (item.type === 'arc_header') {
+			return {
+				id: `arc-marker-${item.id}`,
+				text: item.title,
+				depth: 1,
+			};
+		}
+		return {
+			id: `session-marker-${item.number}`,
+			text: item.title,
+			depth: 2,
+		};
+	});
 
 	return (
 		<div className='h-full overflow-hidden flex flex-col'>
 			<div className='flex-1 overflow-y-auto bg-background custom-scrollbar'>
-				{/* OPTIMIZATION: Reduced padding on mobile (p-4 vs p-12) */}
 				<div className='max-w-7xl mx-auto p-4 md:p-12'>
 					<h1 className='text-3xl font-serif font-bold text-foreground mb-10'>Campaign History</h1>
 
 					<div className='grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-12 relative'>
-						{/* Column 1: Timeline Content */}
-						{/* OPTIMIZATION: Reduced margin-left (ml-3) for more width */}
-						<div className='relative border-l-2 border-border ml-3 md:ml-4 space-y-16 pb-20'>
-							{sessions.map((session) => (
-								<div key={session.id} id={`session-marker-${session.number}`} className='scroll-mt-24'>
-									<TimelineSession session={session} />
-								</div>
-							))}
+						{/* 
+                           KEEPING THE BORDER: 
+                           The border-l-2 creates the "timeline". 
+                           Both Sessions and Arc Headers sit inside this, putting markers on the line.
+                        */}
+						<div className='relative border-l-2 border-border ml-3 md:ml-4 space-y-8 pb-20'>
+							{timelineItems.map((item) => {
+								if (item.type === 'arc_header') {
+									return (
+										<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
+											<TimelineArcHeader arc={item} />
+										</div>
+									);
+								}
+								return (
+									<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
+										<TimelineSession session={item} />
+									</div>
+								);
+							})}
 						</div>
 
-						{/* Column 2: ToC */}
 						<TableOfContents items={tocItems} visibilityClass='hidden xl:block' mobileToggleClass='xl:hidden' />
 					</div>
 				</div>
@@ -11712,9 +11816,6 @@ import { getTimeline } from '@/features/timeline/api/timelineService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getEventStyle } from './utils/eventStyles';
 
-/**
- * @returns {{ sessions: import('./types').TimelineSessionModel[], isLoading: boolean }}
- */
 export function useTimelineViewModel() {
 	const { campaignId } = useCampaign();
 
@@ -11724,32 +11825,53 @@ export function useTimelineViewModel() {
 		enabled: !!campaignId,
 	});
 
-	const sessions = useMemo(() => {
-		return (data || []).map((session) => {
-			// Events are already sorted by the SQL View
-			const events = (session.events || []).map((event) => {
-				return {
-					id: event.id,
-					title: event.title,
-					typeLabel: event.type?.replace(/_/g, ' ') || 'Event',
-					description: event.description,
-					// View returns 'tags' directly with { name, type }
-					tags: event.tags || [],
-					style: getEventStyle(event.type),
-				};
-			});
+	const timelineItems = useMemo(() => {
+		if (!data) return [];
 
-			return {
+		const items = [];
+		let currentArcId = null;
+
+		data.forEach((session) => {
+			// 1. Detect Arc Change
+			// Use strict comparison to detect switching from one arc to another
+			if (session.arc_id && session.arc_id !== currentArcId) {
+				items.push({
+					type: 'arc_header',
+					id: `arc-${session.arc_id}`,
+					title: session.arc_title,
+					description: session.arc_description,
+					color: session.arc_attributes?.color || 'amber', // Future proofing
+				});
+				currentArcId = session.arc_id;
+			} else if (!session.arc_id && currentArcId !== null) {
+				// Optional: We dropped out of an arc into "uncategorized"
+				currentArcId = null;
+			}
+
+			// 2. Process Session (Existing Logic)
+			const events = (session.events || []).map((event) => ({
+				id: event.id,
+				title: event.title,
+				typeLabel: event.type?.replace(/_/g, ' ') || 'Event',
+				description: event.description,
+				tags: event.tags || [],
+				style: getEventStyle(event.type),
+			}));
+
+			items.push({
+				type: 'session',
 				id: session.session_id,
 				number: session.session_number ?? 999,
 				dateLabel: session.session_date || 'Unknown Date',
 				title: session.session_title,
 				events,
-			};
+			});
 		});
+
+		return items;
 	}, [data]);
 
-	return { sessions, isLoading };
+	return { timelineItems, isLoading };
 }
 
 --- END OF features\timeline\useTimelineView.js ---
@@ -11770,6 +11892,42 @@ export const getTimeline = async (campaignId) => {
 };
 
 --- END OF features\timeline\api\timelineService.js ---
+
+--- FILE: features\timeline\components\TimelineArcHeader.jsx ---
+import { BookOpen } from 'lucide-react';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+
+export const TimelineArcHeader = ({ arc }) => {
+	return (
+		// Container sits inside the border-l-2 parent.
+		// pt-10: Space from previous session.
+		// pb-1: Reduced space to the next session (tight coupling).
+		<div className='relative pl-8 md:pl-12 pt-10 pb-1'>
+			{/* "Chapter Marker" - Placed on the vertical line
+			    -left-[19px] centers the 40px icon on the ~2px border line. */}
+			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-amber-100 shadow-sm z-10 text-amber-600'>
+				<BookOpen size={20} strokeWidth={2.5} />
+			</div>
+
+			{/* Content */}
+			<div className='mb-2'>
+				<span className='inline-block text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-2 border-b-2 border-amber-100 pb-1'>
+					Narrative Arc
+				</span>
+
+				<h2 className='text-3xl md:text-4xl font-serif font-bold text-foreground mb-3'>{arc.title}</h2>
+
+				{arc.description && (
+					<div className='text-muted-foreground prose prose-sm prose-p:my-1 max-w-none text-pretty'>
+						<SmartMarkdown>{arc.description}</SmartMarkdown>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\timeline\components\TimelineArcHeader.jsx ---
 
 --- FILE: features\timeline\components\TimelineEvent.jsx ---
 import { useMemo } from 'react';
@@ -15645,7 +15803,8 @@ export const useEntitySidebar = (entity, traits) => {
 
 --- FILE: features\wiki\layouts\CharacterLayout.jsx ---
 import { useState, useMemo } from 'react';
-import { User, Network, History as HistoryIcon, BookOpen } from 'lucide-react';
+import { User, Network, History as HistoryIcon, BookOpen, Info, X } from 'lucide-react';
+import { Drawer } from 'vaul';
 import TabContainer from '@/shared/components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
 import { CharacterSidebar } from '@/features/wiki/components/character/CharacterSidebar';
@@ -15658,7 +15817,6 @@ export default function CharacterLayout({ viewModel }) {
 	const { raw } = viewModel;
 	const [activeTab, setActiveTab] = useState('bio');
 
-	// Filter Relationships
 	const gear = useMemo(() => (raw.relationships || []).filter((r) => r.entity_type === 'item'), [raw.relationships]);
 	const personalQuests = useMemo(
 		() =>
@@ -15685,13 +15843,8 @@ export default function CharacterLayout({ viewModel }) {
 
 				{/* 2. SPLIT LAYOUT */}
 				<div className='grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 xl:gap-12'>
-					{/* Sidebar: Identity, Saves, Gear, Quests */}
+					{/* Desktop Sidebar (Hidden on Mobile) */}
 					<div className='hidden lg:block lg:order-first min-w-0'>
-						<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
-					</div>
-
-					{/* Mobile Sidebar */}
-					<div className='lg:hidden items-center'>
 						<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
 					</div>
 
@@ -15723,9 +15876,30 @@ export default function CharacterLayout({ viewModel }) {
 	// --- TAB 3: CHRONICLE ---
 	const renderChronicle = () => (
 		<div className='w-full px-4 sm:px-6 py-8'>
-			<div className='max-w-4xl mx-auto space-y-10'>
-				{/* Removed Personal Quests from here as they are now in Sidebar */}
+			<div className='max-w-6xl mx-auto space-y-10'>
+				{personalQuests.length > 0 && (
+					<div>
+						<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>
+							<BookOpen size={14} /> Personal Quests
+						</h3>
+						<div className='grid gap-2'>
+							{personalQuests.map((q) => (
+								<div
+									key={q.entity_id}
+									className='p-3 border border-border rounded bg-card flex justify-between items-center'>
+									<span className='font-bold text-sm text-foreground'>{q.entity_name}</span>
+									<span className='text-[10px] uppercase font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded'>
+										{q.type.replace(/_/g, ' ')}
+									</span>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
 				<div>
+					<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>
+						<HistoryIcon size={14} /> Timeline
+					</h3>
 					<EntityHistory events={viewModel.content.history} fullHeight />
 				</div>
 			</div>
@@ -15734,16 +15908,51 @@ export default function CharacterLayout({ viewModel }) {
 
 	// --- ROOT RENDER ---
 	return (
-		<div className='w-full bg-background min-h-screen'>
+		<div className='w-full bg-background min-h-screen relative'>
 			<TabContainer
 				tabs={[
 					{ id: 'bio', label: 'Biography', icon: User, content: renderBio() },
-					{ id: 'mentions', label: 'Mentions', icon: Network, content: renderNetwork() },
-					{ id: 'timeline', label: 'Timeline', icon: HistoryIcon, content: renderChronicle() },
+					{ id: 'network', label: 'Network', icon: Network, content: renderNetwork() },
+					{ id: 'chronicle', label: 'Chronicle', icon: HistoryIcon, content: renderChronicle() },
 				]}
 				defaultTab={activeTab}
 				onChange={setActiveTab}
 			/>
+
+			{/* MOBILE INFO DRAWER */}
+			<div className='lg:hidden'>
+				<Drawer.Root shouldScaleBackground>
+					<Drawer.Trigger asChild>
+						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform hover:border-primary/50'>
+							<Info size={18} />
+							<span>Info</span>
+						</button>
+					</Drawer.Trigger>
+
+					<Drawer.Portal>
+						<Drawer.Overlay className='fixed inset-0 bg-black/60 z-[60] backdrop-blur-[2px]' />
+						<Drawer.Content className='bg-background flex flex-col rounded-t-[10px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-[60] focus:outline-none border-t border-border'>
+							{/* Drag Handle & Header */}
+							<div className='p-4 bg-muted/30 rounded-t-[10px] flex-shrink-0 border-b border-border'>
+								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mb-4' />
+								<div className='flex justify-between items-center'>
+									<Drawer.Title className='font-serif font-bold text-xl text-foreground'>
+										Character Details
+									</Drawer.Title>
+									<Drawer.Close className='p-2 bg-muted/50 hover:bg-muted rounded-full text-muted-foreground transition-colors'>
+										<X size={18} />
+									</Drawer.Close>
+								</div>
+							</div>
+
+							{/* Content */}
+							<div className='p-4 overflow-y-auto custom-scrollbar flex-1'>
+								<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
+							</div>
+						</Drawer.Content>
+					</Drawer.Portal>
+				</Drawer.Root>
+			</div>
 		</div>
 	);
 }
@@ -17319,7 +17528,7 @@ export default function DevAdminButton() {
 	return (
 		<Link
 			to='/dm'
-			className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-1 bg-muted  rounded-full shadow-xl hover:bg-background hover:scale-105 transition-all border border-stone-300'
+			className='fixed bottom-6 left-6 lg:left-[unset] lg:right-6 z-50 flex items-center gap-2 px-4 py-1 bg-muted  rounded-full shadow-xl hover:bg-background hover:scale-105 transition-all border border-stone-300'
 			title='Open DM Console (Dev Mode Only)'>
 			<Wrench size={14} />
 			<span className='hidden md:inline'>Dev</span>

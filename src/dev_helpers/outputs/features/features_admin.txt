@@ -169,6 +169,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
       api/
         timelineService.js
       components/
+        TimelineArcHeader.jsx
         TimelineEvent.jsx
         TimelineSession.jsx
       utils/
@@ -3516,6 +3517,7 @@ export const IMAGE_LIBRARY = [
       "bonnie_bg_square.webp",
       "kaedin_bg_horizontal.webp",
       "kaedin_bg_vertical.webp",
+      "norr_bg_horizontal.webp",
       "olek_bg_horizontal.webp",
       "olek_bg_square.webp",
       "party_bg_horizontal.webp",
