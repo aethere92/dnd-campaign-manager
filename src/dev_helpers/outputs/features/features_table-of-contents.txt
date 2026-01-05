@@ -271,72 +271,202 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
 ================================================================
 
 --- FILE: features\table-of-contents\TableOfContents.jsx ---
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { clsx } from 'clsx';
-import { List, AlignLeft } from 'lucide-react';
+import { List, ChevronRight, ChevronDown } from 'lucide-react';
 import { useTocObserver } from './hooks/useTocObserver';
 import { useTocScroll } from './hooks/useTocScroll';
-import { TocItem } from './components/TocItem';
 import { TocMobileDrawer } from './components/TocMobileDrawer';
 
 export const TableOfContents = ({
 	items,
 	className,
-	visibilityClass = 'hidden 2xl:block',
-	mobileToggleClass = '2xl:hidden',
+	visibilityClass = 'hidden xl:block',
+	mobileToggleClass = 'xl:hidden',
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [expandedIds, setExpandedIds] = useState(new Set());
 
-	// Hooks
-	const activeId = useTocObserver(items.map((i) => i.id));
-	const { scrollToId } = useTocScroll(() => setIsOpen(false));
+	// NAV LOCK
+	const isNavigating = useRef(false);
+	const scrollTimeout = useRef(null);
+
+	const itemIds = useMemo(() => items?.map((i) => i.id) || [], [items]);
+	const activeId = useTocObserver(itemIds);
+	const { scrollToId: originalScrollTo } = useTocScroll(() => setIsOpen(false));
+
+	// 1. Parent Map
+	const parents = useMemo(() => {
+		const parentMap = new Map();
+		for (let i = 0; i < items.length - 1; i++) {
+			const current = items[i];
+			const next = items[i + 1];
+			if (current.depth === 2 && next.depth === 3) {
+				const children = [];
+				for (let j = i + 1; j < items.length; j++) {
+					if (items[j].depth <= current.depth) break;
+					children.push(items[j].id);
+				}
+				parentMap.set(current.id, children);
+			}
+		}
+		return parentMap;
+	}, [items]);
+
+	// 2. Scroll Handler
+	const handleScrollTo = (id) => {
+		isNavigating.current = true;
+		if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+
+		let targetParentId = null;
+		if (parents.has(id)) targetParentId = id;
+		else {
+			for (const [pId, children] of parents.entries()) {
+				if (children.includes(id)) {
+					targetParentId = pId;
+					break;
+				}
+			}
+		}
+
+		if (targetParentId) setExpandedIds(new Set([targetParentId]));
+		originalScrollTo(id);
+
+		scrollTimeout.current = setTimeout(() => {
+			isNavigating.current = false;
+		}, 1000);
+	};
+
+	// 3. Auto-Expand
+	useEffect(() => {
+		if (isNavigating.current || !activeId) return;
+
+		let activeParentId = null;
+		if (parents.has(activeId)) activeParentId = activeId;
+		else {
+			for (const [pId, children] of parents.entries()) {
+				if (children.includes(activeId)) {
+					activeParentId = pId;
+					break;
+				}
+			}
+		}
+
+		setExpandedIds((prev) => {
+			if (activeParentId) {
+				if (prev.size === 1 && prev.has(activeParentId)) return prev;
+				return new Set([activeParentId]);
+			}
+			if (prev.size === 0) return prev;
+			return new Set();
+		});
+	}, [activeId, parents]);
+
+	// Toggle Handler
+	const toggleExpand = (e, id) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setExpandedIds((prev) => {
+			const newSet = new Set(prev);
+			if (newSet.has(id)) newSet.delete(id);
+			else newSet.add(id);
+			return newSet;
+		});
+	};
 
 	if (!items || items.length === 0) return null;
 
-	const renderList = () => (
-		<div className='flex flex-col space-y-0.5'>
-			{items.map((item) => (
-				<TocItem key={item.id} item={item} isActive={activeId === item.id} onClick={scrollToId} />
-			))}
-		</div>
-	);
-
 	return (
 		<>
-			{/* --- DESKTOP VIEW --- */}
-			{/* 
-				Sticky Positioning Logic:
-				- top-40 (160px): Increased from top-32 to ensure no overlap with sticky TabContainers or Headers.
-				- self-start: Critical for CSS Grid contexts (like Timeline) to prevent the item from stretching 
-				  to full height, which breaks sticky behavior.
-			*/}
-			<div className={clsx(visibilityClass, 'sticky top-90 w-64 shrink-0 self-start', className)}>
-				<div className='max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pb-10 pr-2'>
-					<div className='flex items-center gap-2 mb-4 px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground/70'>
-						<AlignLeft size={12} />
-						<span>On this Page</span>
-					</div>
-					<nav>{renderList()}</nav>
-				</div>
-			</div>
+			{/* --- DESKTOP RAIL --- */}
+			<aside
+				className={clsx(
+					visibilityClass,
+					'sticky top-24 max-h-[calc(100vh-6rem)] w-64 shrink-0 self-start overflow-y-auto custom-scrollbar py-4 pr-2',
+					className
+				)}>
+				<div className='flex flex-col'>
+					<nav className='relative ml-4 flex flex-col border-l border-border/60'>
+						<div className='mb-2 pl-4 text-sm font-semibold tracking-tight text-foreground/90'>On this page</div>
+						{items.map((item) => {
+							const hasChildren = parents.has(item.id);
+							const isExpanded = expandedIds.has(item.id);
 
-			{/* --- MOBILE/TABLET TOGGLE --- */}
+							let isHidden = false;
+							if (item.depth === 3) {
+								const parentIndex = items.slice(0, items.indexOf(item)).findLastIndex((i) => i.depth === 2);
+								if (parentIndex !== -1) {
+									const parent = items[parentIndex];
+									if (parents.has(parent.id) && !expandedIds.has(parent.id)) isHidden = true;
+								}
+							}
+
+							if (isHidden) return null;
+
+							return (
+								<div
+									key={item.id}
+									className={clsx('relative flex items-center', item.depth === 1 ? 'mb-1 mt-3' : 'mt-0')}>
+									<div
+										className={clsx(
+											'absolute left-0 -ml-[1px] h-full w-[2px] transition-colors duration-200',
+											activeId === item.id ? 'bg-primary' : 'bg-transparent'
+										)}
+									/>
+									<div className='group flex w-full items-center justify-between'>
+										<a
+											href={`#${item.id}`}
+											onClick={(e) => {
+												e.preventDefault();
+												handleScrollTo(item.id);
+											}}
+											className={clsx(
+												'block w-full truncate py-1 pr-2 transition-colors',
+												'text-[13px] leading-snug',
+												activeId === item.id
+													? 'font-medium text-primary'
+													: 'text-muted-foreground hover:text-foreground',
+												item.depth === 1 && 'pl-4 text-xs font-bold uppercase tracking-wider text-foreground/80',
+												item.depth === 2 && 'pl-4',
+												item.depth === 3 && 'pl-8 text-muted-foreground/80'
+											)}>
+											{item.text}
+										</a>
+										{hasChildren && (
+											<button
+												onClick={(e) => toggleExpand(e, item.id)}
+												className='mr-1 shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground'
+												aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+												{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+											</button>
+										)}
+									</div>
+								</div>
+							);
+						})}
+					</nav>
+				</div>
+			</aside>
+
+			{/* --- MOBILE TOGGLE --- */}
 			<div className={clsx('fixed bottom-6 right-6 z-40', mobileToggleClass)}>
 				<button
 					onClick={() => setIsOpen(true)}
-					className='h-12 w-12 bg-background border border-border shadow-lg rounded-full flex items-center justify-center text-foreground hover:bg-amber-500/10 hover:border-amber-300 hover:text-amber-700 transition-all active:scale-95'
-					aria-label='Open Table of Contents'>
+					className='flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:bg-primary/90 active:scale-95'>
 					<List size={20} />
 				</button>
 			</div>
 
-			{/* --- MOBILE DRAWER --- */}
+			{/* --- MOBILE DRAWER (Now receiving state) --- */}
 			<TocMobileDrawer
 				isOpen={isOpen}
 				items={items}
 				activeId={activeId}
+				parents={parents}
+				expandedIds={expandedIds}
+				toggleExpand={toggleExpand}
 				onClose={() => setIsOpen(false)}
-				onScrollTo={scrollToId}
+				onScrollTo={handleScrollTo}
 			/>
 		</>
 	);
@@ -348,30 +478,29 @@ export const TableOfContents = ({
 import { clsx } from 'clsx';
 
 export const TocItem = ({ item, isActive, onClick }) => {
-	// Calculate indent based on depth (Depth 1 = 0px, Depth 2 = 12px, etc.)
-	const indentClass = item.depth > 1 ? (item.depth === 2 ? 'ml-3' : 'ml-6') : '';
-
 	return (
-		<button
-			onClick={() => onClick(item.id)}
+		<a
+			href={`#${item.id}`}
+			onClick={(e) => {
+				e.preventDefault();
+				onClick(item.id);
+			}}
 			className={clsx(
-				'group flex items-start text-left w-full py-1.5 transition-all duration-200 border-l-[3px] px-4',
+				'group flex w-full items-center py-2 transition-all duration-200',
+				// THE LUCIDE TRICK:
+				// 1. -ml-px pulls this item 1px to the left, exactly on top of the parent's border.
+				// 2. border-l-2 gives us the colored bar.
+				'-ml-px border-l-2 pl-4',
+
+				// Depth Indentation (Lucide flattens depth usually, but we keep indentation)
+				item.depth === 2 ? 'pl-4' : item.depth === 3 ? 'pl-8' : '',
+
 				isActive
-					? 'border-primary text-primary font-bold bg-primary/10'
-					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+					? 'border-primary text-primary font-medium'
+					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
 			)}>
-			<span
-				className={clsx(
-					'text-[13px] leading-snug transition-opacity',
-					indentClass,
-					// Fade sub-items slightly for hierarchy
-					item.depth > 1 && 'opacity-90',
-					// Bold top-level items for emphasis
-					item.depth === 1 && 'font-medium uppercase tracking-tight text-foreground/80'
-				)}>
-				{item.text}
-			</span>
-		</button>
+			<span className='text-sm truncate'>{item.text}</span>
+		</a>
 	);
 };
 
@@ -379,15 +508,86 @@ export const TocItem = ({ item, isActive, onClick }) => {
 
 --- FILE: features\table-of-contents\components\TocMobileDrawer.jsx ---
 import { Drawer } from '@/shared/components/ui/Drawer';
-import { TocItem } from './TocItem';
+import { clsx } from 'clsx';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 
-export const TocMobileDrawer = ({ isOpen, items, activeId, onClose, onScrollTo }) => {
+export const TocMobileDrawer = ({
+	isOpen,
+	items,
+	activeId,
+	parents, // passed from parent
+	expandedIds, // passed from parent
+	toggleExpand, // passed from parent
+	onClose,
+	onScrollTo,
+}) => {
 	return (
 		<Drawer isOpen={isOpen} onClose={onClose} title='Table of Contents' position='right'>
-			<div className='py-4 flex flex-col space-y-0.5'>
-				{items.map((item) => (
-					<TocItem key={item.id} item={item} isActive={activeId === item.id} onClick={onScrollTo} />
-				))}
+			<div className='flex flex-col py-4'>
+				<nav className='relative flex flex-col'>
+					{items.map((item) => {
+						const hasChildren = parents.has(item.id);
+						const isExpanded = expandedIds.has(item.id);
+
+						// Hiding Logic (Same as Desktop)
+						let isHidden = false;
+						if (item.depth === 3) {
+							const parentIndex = items.slice(0, items.indexOf(item)).findLastIndex((i) => i.depth === 2);
+							if (parentIndex !== -1) {
+								const parent = items[parentIndex];
+								if (parents.has(parent.id) && !expandedIds.has(parent.id)) {
+									isHidden = true;
+								}
+							}
+						}
+
+						if (isHidden) return null;
+
+						return (
+							<div
+								key={item.id}
+								className={clsx('relative flex items-center', item.depth === 1 ? 'mb-2 mt-4' : 'mt-0')}>
+								{/* Active Indicator Line (Thicker for Mobile) */}
+								<div
+									className={clsx(
+										'absolute left-0 -ml-[2px] h-full w-[4px] rounded-r-sm transition-colors duration-200',
+										activeId === item.id ? 'bg-primary' : 'bg-transparent'
+									)}
+								/>
+
+								<div className='flex w-full items-center justify-between'>
+									<button
+										onClick={() => {
+											onScrollTo(item.id);
+											onClose(); // Close drawer on selection
+										}}
+										className={clsx(
+											'flex h-full w-full items-center py-2 pr-4 text-left transition-colors',
+											'text-[13px] leading-snug', // Slightly larger font than desktop
+											activeId === item.id
+												? 'text-[14px] text-primary'
+												: 'text-muted-foreground active:text-foreground',
+											item.depth === 1 && 'pl-5 text-xs font-bold uppercase tracking-wider text-foreground/80',
+											item.depth === 2 && 'pl-5',
+											item.depth === 3 && 'pl-9 text-muted-foreground/80'
+										)}>
+										{item.text}
+									</button>
+
+									{/* Toggle Button for Parents */}
+									{hasChildren && (
+										<button
+											onClick={(e) => toggleExpand(e, item.id)}
+											className='mr-2 flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground active:bg-accent active:text-foreground'
+											aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+											{isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+										</button>
+									)}
+								</div>
+							</div>
+						);
+					})}
+				</nav>
 			</div>
 		</Drawer>
 	);
@@ -396,70 +596,52 @@ export const TocMobileDrawer = ({ isOpen, items, activeId, onClose, onScrollTo }
 --- END OF features\table-of-contents\components\TocMobileDrawer.jsx ---
 
 --- FILE: features\table-of-contents\hooks\useTocObserver.js ---
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 export function useTocObserver(itemIds) {
-	const [activeId, setActiveId] = useState('');
-	const observer = useRef(null);
-	const headingsMap = useRef(new Map());
+	const [activeId, setActiveId] = useState(null);
 
 	useEffect(() => {
-		// 1. Safety Check
-		if (!itemIds || itemIds.length === 0) return;
+		if (!itemIds?.length) return;
 
-		// 2. The Callback
-		const handleObserver = (entries) => {
-			entries.forEach((entry) => {
-				// Store all intersecting states in a map
-				headingsMap.current.set(entry.target.id, entry);
-			});
+		const handleScroll = () => {
+			// The "reading line" is 100px down from the top of the viewport.
+			// We want to highlight the last header that is ABOVE this line.
+			const offset = 120;
 
-			// 3. Determine the "Winner"
-			// We find the first visible heading from the top
-			const visibleHeadings = [];
+			let newActiveId = null;
 
-			headingsMap.current.forEach((entry) => {
-				if (entry.isIntersecting) {
-					visibleHeadings.push(entry);
-				}
-			});
+			// We iterate in REVERSE order.
+			// The first header we encounter that is "above the line" (rect.top < offset)
+			// is effectively the section we are currently reading.
+			for (let i = itemIds.length - 1; i >= 0; i--) {
+				const id = itemIds[i];
+				const element = document.getElementById(id);
 
-			if (visibleHeadings.length > 0) {
-				// Sort by their position relative to the top of the viewport
-				// The one closest to 0 (top) without being way off-screen is the winner
-				visibleHeadings.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+				if (element) {
+					const rect = element.getBoundingClientRect();
 
-				// Pick the top-most visible one
-				setActiveId(visibleHeadings[0].target.id);
-			} else {
-				// Edge case: User scrolled past a section but next one hasn't entered.
-				// We keep the last active ID or check if we are at the very top.
-				const scrollY = window.scrollY;
-				if (scrollY < 100 && itemIds.length > 0) {
-					setActiveId(itemIds[0]);
+					// if rect.top is less than 120px, the header has scrolled up past our "eye level"
+					if (rect.top < offset) {
+						newActiveId = id;
+						break; // Stop looking, we found the deepest active header
+					}
 				}
 			}
+
+			setActiveId(newActiveId);
 		};
 
-		// 4. Initialize Observer
-		// rootMargin: '-10% 0px -80% 0px' creates a "reading line" at the top of the screen.
-		// An element must cross this top zone to trigger the update.
-		observer.current = new IntersectionObserver(handleObserver, {
-			rootMargin: '-80px 0px -80% 0px',
-			threshold: [0, 1],
-		});
+		// 'capture: true' is CRITICAL here.
+		// It allows us to detect scroll events on nested divs (like <main>)
+		// that don't bubble up to window normally.
+		window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
 
-		// 5. Observe elements
-		itemIds.forEach((id) => {
-			const el = document.getElementById(id);
-			if (el) {
-				observer.current.observe(el);
-			}
-		});
+		// Run once on mount to set initial state
+		handleScroll();
 
 		return () => {
-			if (observer.current) observer.current.disconnect();
-			headingsMap.current.clear();
+			window.removeEventListener('scroll', handleScroll, { capture: true });
 		};
 	}, [itemIds]);
 

@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-05 13:18:01
+Generated: 2026-01-05 16:20:03
 ================================================================
 
 ### OVERALL STATISTICS
 
 Total files: 189
-Total lines: 18,064
-Non-empty lines: 16,014
-Comment lines: 1,419
-Total size: 561,416 bytes (548.26 KB)
-Average lines per file: 95.6
+Total lines: 18,357
+Non-empty lines: 16,272
+Comment lines: 1,442
+Total size: 570,885 bytes (557.50 KB)
+Average lines per file: 97.1
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 95.6
 
 .js:
   Files: 65
-  Lines: 6,161
-  Size: 171,533 bytes (167.51 KB)
+  Lines: 6,162
+  Size: 171,839 bytes (167.81 KB)
 
 .json:
   Files: 1
@@ -32,8 +32,8 @@ Average lines per file: 95.6
 
 .jsx:
   Files: 121
-  Lines: 11,237
-  Size: 372,978 bytes (364.24 KB)
+  Lines: 11,529
+  Size: 382,141 bytes (373.18 KB)
 
 .md:
   Files: 1
@@ -49,11 +49,11 @@ features\admin\components\AdminForm.jsx: 406 lines
 features\admin\api\adminService.js: 362 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
+features\wiki\components\EntityLocalGraph.jsx: 301 lines
 domain\entity\api\entityService.js: 273 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
-features\wiki\components\EntityLocalGraph.jsx: 232 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\wiki\components\character\CharacterSidebar.jsx: 224 lines
 features\atlas\data\modularize.js: 223 lines
@@ -124,18 +124,18 @@ features_smart-tooltip:
 
 features_table-of-contents:
   Files: 5
-  Lines: 209
-  Size: 6,375 bytes (6.23 KB)
+  Lines: 391
+  Size: 11,823 bytes (11.55 KB)
 
 features_timeline:
   Files: 7
-  Lines: 432
-  Size: 13,165 bytes (12.86 KB)
+  Lines: 455
+  Size: 13,834 bytes (13.51 KB)
 
 features_wiki:
   Files: 47
-  Lines: 4,807
-  Size: 154,569 bytes (150.95 KB)
+  Lines: 4,876
+  Size: 157,098 bytes (153.42 KB)
 
 root:
   Files: 2
@@ -144,6 +144,6 @@ root:
 
 shared:
   Files: 23
-  Lines: 1,580
-  Size: 43,137 bytes (42.13 KB)
+  Lines: 1,599
+  Size: 43,960 bytes (42.93 KB)
 

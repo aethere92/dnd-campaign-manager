@@ -1,29 +1,28 @@
 import { clsx } from 'clsx';
 
 export const TocItem = ({ item, isActive, onClick }) => {
-	// Calculate indent based on depth (Depth 1 = 0px, Depth 2 = 12px, etc.)
-	const indentClass = item.depth > 1 ? (item.depth === 2 ? 'ml-3' : 'ml-6') : '';
-
 	return (
-		<button
-			onClick={() => onClick(item.id)}
+		<a
+			href={`#${item.id}`}
+			onClick={(e) => {
+				e.preventDefault();
+				onClick(item.id);
+			}}
 			className={clsx(
-				'group flex items-start text-left w-full py-1.5 transition-all duration-200 border-l-[3px] px-4',
+				'group flex w-full items-center py-2 transition-all duration-200',
+				// THE LUCIDE TRICK:
+				// 1. -ml-px pulls this item 1px to the left, exactly on top of the parent's border.
+				// 2. border-l-2 gives us the colored bar.
+				'-ml-px border-l-2 pl-4',
+
+				// Depth Indentation (Lucide flattens depth usually, but we keep indentation)
+				item.depth === 2 ? 'pl-4' : item.depth === 3 ? 'pl-8' : '',
+
 				isActive
-					? 'border-primary text-primary font-bold bg-primary/10'
-					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+					? 'border-primary text-primary font-medium'
+					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
 			)}>
-			<span
-				className={clsx(
-					'text-[13px] leading-snug transition-opacity',
-					indentClass,
-					// Fade sub-items slightly for hierarchy
-					item.depth > 1 && 'opacity-90',
-					// Bold top-level items for emphasis
-					item.depth === 1 && 'font-medium uppercase tracking-tight text-foreground/80'
-				)}>
-				{item.text}
-			</span>
-		</button>
+			<span className='text-sm truncate'>{item.text}</span>
+		</a>
 	);
 };

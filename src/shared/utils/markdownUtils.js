@@ -6,26 +6,45 @@
 import { generateId } from '@/shared/utils/textUtils';
 
 /**
- * Extract headers from markdown text
+ * Extract headers from markdown text and normalize their depth.
+ * Finds the shallowest header level (e.g., h3) and resets it to a baseline (Depth 2),
+ * ensuring the ToC hierarchy always starts at a readable level.
+ *
  * @param {string} markdown - Markdown text
  * @returns {Array<{depth: number, text: string, id: string}>}
  */
 export const extractHeaders = (markdown) => {
 	if (!markdown) return [];
 
-	const regex = /^(#{1,3})\s+(.+)$/gm;
-	const headers = [];
+	const regex = /^(#{1,4})\s+(.+)$/gm;
+	const rawHeaders = [];
 	let match;
 
+	// 1. First Pass: Capture all headers and their raw Markdown depth (1-6)
 	while ((match = regex.exec(markdown)) !== null) {
-		headers.push({
-			depth: match[1].length, // 1, 2, or 3
+		rawHeaders.push({
+			rawDepth: match[1].length,
 			text: match[2].trim(),
 			id: generateId(match[2]),
 		});
 	}
 
-	return headers;
+	if (rawHeaders.length === 0) return [];
+
+	// 2. Find the minimum depth used in this specific document
+	//    (e.g., if the user only used ### and ####, min is 3)
+	const minDepth = Math.min(...rawHeaders.map((h) => h.rawDepth));
+
+	// 3. Normalization Constant
+	//    We map minDepth to this value.
+	//    Depth 2 = Standard ToC Link (No chevron, standard padding).
+	const TARGET_BASE_DEPTH = 2;
+
+	return rawHeaders.map((header) => ({
+		...header,
+		// Example: If raw is 3 and min is 3, result is 2. If raw is 4, result is 3.
+		depth: header.rawDepth - minDepth + TARGET_BASE_DEPTH,
+	}));
 };
 
 /**

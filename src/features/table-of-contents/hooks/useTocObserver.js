@@ -1,67 +1,49 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 export function useTocObserver(itemIds) {
-	const [activeId, setActiveId] = useState('');
-	const observer = useRef(null);
-	const headingsMap = useRef(new Map());
+	const [activeId, setActiveId] = useState(null);
 
 	useEffect(() => {
-		// 1. Safety Check
-		if (!itemIds || itemIds.length === 0) return;
+		if (!itemIds?.length) return;
 
-		// 2. The Callback
-		const handleObserver = (entries) => {
-			entries.forEach((entry) => {
-				// Store all intersecting states in a map
-				headingsMap.current.set(entry.target.id, entry);
-			});
+		const handleScroll = () => {
+			// The "reading line" is 100px down from the top of the viewport.
+			// We want to highlight the last header that is ABOVE this line.
+			const offset = 120;
 
-			// 3. Determine the "Winner"
-			// We find the first visible heading from the top
-			const visibleHeadings = [];
+			let newActiveId = null;
 
-			headingsMap.current.forEach((entry) => {
-				if (entry.isIntersecting) {
-					visibleHeadings.push(entry);
-				}
-			});
+			// We iterate in REVERSE order.
+			// The first header we encounter that is "above the line" (rect.top < offset)
+			// is effectively the section we are currently reading.
+			for (let i = itemIds.length - 1; i >= 0; i--) {
+				const id = itemIds[i];
+				const element = document.getElementById(id);
 
-			if (visibleHeadings.length > 0) {
-				// Sort by their position relative to the top of the viewport
-				// The one closest to 0 (top) without being way off-screen is the winner
-				visibleHeadings.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+				if (element) {
+					const rect = element.getBoundingClientRect();
 
-				// Pick the top-most visible one
-				setActiveId(visibleHeadings[0].target.id);
-			} else {
-				// Edge case: User scrolled past a section but next one hasn't entered.
-				// We keep the last active ID or check if we are at the very top.
-				const scrollY = window.scrollY;
-				if (scrollY < 100 && itemIds.length > 0) {
-					setActiveId(itemIds[0]);
+					// if rect.top is less than 120px, the header has scrolled up past our "eye level"
+					if (rect.top < offset) {
+						newActiveId = id;
+						break; // Stop looking, we found the deepest active header
+					}
 				}
 			}
+
+			setActiveId(newActiveId);
 		};
 
-		// 4. Initialize Observer
-		// rootMargin: '-10% 0px -80% 0px' creates a "reading line" at the top of the screen.
-		// An element must cross this top zone to trigger the update.
-		observer.current = new IntersectionObserver(handleObserver, {
-			rootMargin: '-80px 0px -80% 0px',
-			threshold: [0, 1],
-		});
+		// 'capture: true' is CRITICAL here.
+		// It allows us to detect scroll events on nested divs (like <main>)
+		// that don't bubble up to window normally.
+		window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
 
-		// 5. Observe elements
-		itemIds.forEach((id) => {
-			const el = document.getElementById(id);
-			if (el) {
-				observer.current.observe(el);
-			}
-		});
+		// Run once on mount to set initial state
+		handleScroll();
 
 		return () => {
-			if (observer.current) observer.current.disconnect();
-			headingsMap.current.clear();
+			window.removeEventListener('scroll', handleScroll, { capture: true });
 		};
 	}, [itemIds]);
 

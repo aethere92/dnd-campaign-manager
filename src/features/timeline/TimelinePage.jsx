@@ -2,28 +2,51 @@ import { useTimelineViewModel } from './useTimelineView';
 import { TimelineSession } from './components/TimelineSession';
 import { TimelineArcHeader } from './components/TimelineArcHeader';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import { useMemo } from 'react';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
 export default function TimelineView() {
 	const { timelineItems, isLoading } = useTimelineViewModel();
 
-	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
+	const tocItems = useMemo(() => {
+		if (!timelineItems) return [];
 
-	// Hierarchical ToC
-	const tocItems = timelineItems.map((item) => {
-		if (item.type === 'arc_header') {
-			return {
-				id: `arc-marker-${item.id}`,
-				text: item.title,
-				depth: 1,
-			};
-		}
-		return {
-			id: `session-marker-${item.number}`,
-			text: item.title,
-			depth: 2,
-		};
-	});
+		// Flatten the hierarchy into a linear list
+		return timelineItems.flatMap((item) => {
+			// LEVEL 1: Arc Header
+			if (item.type === 'arc_header') {
+				return [
+					{
+						id: `arc-marker-${item.id}`,
+						text: item.title,
+						depth: 1,
+					},
+				];
+			}
+
+			// LEVEL 2: Session
+			if (item.type === 'session') {
+				const sessionNode = {
+					id: `session-marker-${item.number}`, // Ensure this ID exists in DOM
+					text: item.title,
+					depth: 2,
+				};
+
+				// LEVEL 3: Events (if they exist)
+				const eventNodes = (item.events || []).map((event) => ({
+					id: event.id, // The DOM element ID for the event card
+					text: event.title,
+					depth: 3,
+				}));
+
+				return [sessionNode, ...eventNodes];
+			}
+
+			return [];
+		});
+	}, [timelineItems]);
+
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
 
 	return (
 		<div className='h-full overflow-hidden flex flex-col'>
@@ -42,13 +65,13 @@ export default function TimelineView() {
 								if (item.type === 'arc_header') {
 									return (
 										<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
-											<TimelineArcHeader arc={item} />
+											<TimelineArcHeader arc={item} id={`arc-${item.id}`} />
 										</div>
 									);
 								}
 								return (
 									<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
-										<TimelineSession session={item} />
+										<TimelineSession session={item} id={`session-${item.number}`} />
 									</div>
 								);
 							})}

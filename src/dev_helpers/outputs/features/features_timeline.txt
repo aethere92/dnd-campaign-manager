@@ -275,28 +275,51 @@ import { useTimelineViewModel } from './useTimelineView';
 import { TimelineSession } from './components/TimelineSession';
 import { TimelineArcHeader } from './components/TimelineArcHeader';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import { useMemo } from 'react';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
 export default function TimelineView() {
 	const { timelineItems, isLoading } = useTimelineViewModel();
 
-	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
+	const tocItems = useMemo(() => {
+		if (!timelineItems) return [];
 
-	// Hierarchical ToC
-	const tocItems = timelineItems.map((item) => {
-		if (item.type === 'arc_header') {
-			return {
-				id: `arc-marker-${item.id}`,
-				text: item.title,
-				depth: 1,
-			};
-		}
-		return {
-			id: `session-marker-${item.number}`,
-			text: item.title,
-			depth: 2,
-		};
-	});
+		// Flatten the hierarchy into a linear list
+		return timelineItems.flatMap((item) => {
+			// LEVEL 1: Arc Header
+			if (item.type === 'arc_header') {
+				return [
+					{
+						id: `arc-marker-${item.id}`,
+						text: item.title,
+						depth: 1,
+					},
+				];
+			}
+
+			// LEVEL 2: Session
+			if (item.type === 'session') {
+				const sessionNode = {
+					id: `session-marker-${item.number}`, // Ensure this ID exists in DOM
+					text: item.title,
+					depth: 2,
+				};
+
+				// LEVEL 3: Events (if they exist)
+				const eventNodes = (item.events || []).map((event) => ({
+					id: event.id, // The DOM element ID for the event card
+					text: event.title,
+					depth: 3,
+				}));
+
+				return [sessionNode, ...eventNodes];
+			}
+
+			return [];
+		});
+	}, [timelineItems]);
+
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Loading Timeline...' fullScreen />;
 
 	return (
 		<div className='h-full overflow-hidden flex flex-col'>
@@ -315,13 +338,13 @@ export default function TimelineView() {
 								if (item.type === 'arc_header') {
 									return (
 										<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
-											<TimelineArcHeader arc={item} />
+											<TimelineArcHeader arc={item} id={`arc-${item.id}`} />
 										</div>
 									);
 								}
 								return (
 									<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
-										<TimelineSession session={item} />
+										<TimelineSession session={item} id={`session-${item.number}`} />
 									</div>
 								);
 							})}
@@ -464,7 +487,7 @@ import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { Diamond } from 'lucide-react';
 
-export const TimelineEvent = ({ event }) => {
+export const TimelineEvent = ({ event, id }) => {
 	const { Icon, container } = event.style;
 
 	// Group tags by entity type
@@ -496,7 +519,7 @@ export const TimelineEvent = ({ event }) => {
 			</div>
 
 			{/* Content */}
-			<div className='flex-1 -mt-1 pb-2 min-w-0'>
+			<div id={id} className='flex-1 -mt-1 pb-2 min-w-0'>
 				{/* FIX: Title color muted to text-foreground/80 */}
 				<h4 className='text-sm font-bold text-foreground/80 mb-1 flex flex-wrap items-center gap-2'>
 					<span className='mr-auto'>{event.title}</span>
@@ -558,10 +581,10 @@ export const TimelineEvent = ({ event }) => {
 import { Calendar } from 'lucide-react';
 import { TimelineEvent } from './TimelineEvent';
 
-export const TimelineSession = ({ session }) => {
+export const TimelineSession = ({ session, id }) => {
 	return (
 		// OPTIMIZATION: Reduced padding (pl-4) on mobile to maximize text width
-		<div className='relative pl-4 md:pl-12'>
+		<div id={id} className='relative pl-4 md:pl-12'>
 			{/* Session Marker (Circle on the main line) */}
 			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
 				<div className='w-2 h-2 rounded-full bg-gray-400' />
@@ -588,7 +611,7 @@ export const TimelineSession = ({ session }) => {
 				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-muted -z-10' />
 
 				{session.events.map((event) => (
-					<TimelineEvent key={event.id} event={event} />
+					<TimelineEvent key={event.id} event={event} id={event.id} />
 				))}
 			</div>
 		</div>

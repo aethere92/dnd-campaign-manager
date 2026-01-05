@@ -23,14 +23,14 @@ export default function SessionLayout({ viewModel }) {
 		);
 	};
 
-	if (!viewModel) return null;
-
 	const tocItems = useMemo(() => {
 		if (viewModel.content.narrative) {
 			return extractHeaders(viewModel.content.narrative);
 		}
 		return [];
 	}, [viewModel.content.narrative]);
+
+	if (!viewModel) return null;
 
 	const renderNarrative = () => (
 		<ThreeColumnLayout

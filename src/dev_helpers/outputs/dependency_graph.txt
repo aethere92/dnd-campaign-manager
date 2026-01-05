@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-05 13:18:01
+Generated: 2026-01-05 16:20:03
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -564,7 +564,6 @@ features\smart-tooltip\useTooltipState.js:
   → react
 
 features\table-of-contents\TableOfContents.jsx:
-  → ./components/TocItem
   → ./components/TocMobileDrawer
   → ./hooks/useTocObserver
   → ./hooks/useTocScroll
@@ -576,8 +575,9 @@ features\table-of-contents\components\TocItem.jsx:
   → clsx
 
 features\table-of-contents\components\TocMobileDrawer.jsx:
-  → ./TocItem
   → @/shared/components/ui/Drawer
+  → clsx
+  → lucide-react
 
 features\table-of-contents\hooks\useTocObserver.js:
   → react
@@ -591,6 +591,7 @@ features\timeline\TimelinePage.jsx:
   → ./useTimelineView
   → @/features/table-of-contents/TableOfContents
   → @/shared/components/ui/LoadingSpinner
+  → react
 
 features\timeline\api\timelineService.js:
   → @/shared/api/supabaseClient

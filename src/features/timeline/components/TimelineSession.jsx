@@ -1,10 +1,10 @@
 import { Calendar } from 'lucide-react';
 import { TimelineEvent } from './TimelineEvent';
 
-export const TimelineSession = ({ session }) => {
+export const TimelineSession = ({ session, id }) => {
 	return (
 		// OPTIMIZATION: Reduced padding (pl-4) on mobile to maximize text width
-		<div className='relative pl-4 md:pl-12'>
+		<div id={id} className='relative pl-4 md:pl-12'>
 			{/* Session Marker (Circle on the main line) */}
 			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
 				<div className='w-2 h-2 rounded-full bg-gray-400' />
@@ -31,7 +31,7 @@ export const TimelineSession = ({ session }) => {
 				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-muted -z-10' />
 
 				{session.events.map((event) => (
-					<TimelineEvent key={event.id} event={event} />
+					<TimelineEvent key={event.id} event={event} id={event.id} />
 				))}
 			</div>
 		</div>

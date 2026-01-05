@@ -4,7 +4,7 @@ import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { Diamond } from 'lucide-react';
 
-export const TimelineEvent = ({ event }) => {
+export const TimelineEvent = ({ event, id }) => {
 	const { Icon, container } = event.style;
 
 	// Group tags by entity type
@@ -36,7 +36,7 @@ export const TimelineEvent = ({ event }) => {
 			</div>
 
 			{/* Content */}
-			<div className='flex-1 -mt-1 pb-2 min-w-0'>
+			<div id={id} className='flex-1 -mt-1 pb-2 min-w-0'>
 				{/* FIX: Title color muted to text-foreground/80 */}
 				<h4 className='text-sm font-bold text-foreground/80 mb-1 flex flex-wrap items-center gap-2'>
 					<span className='mr-auto'>{event.title}</span>

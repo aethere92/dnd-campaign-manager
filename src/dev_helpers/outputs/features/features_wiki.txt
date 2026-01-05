@@ -1070,9 +1070,9 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 --- END OF features\wiki\components\EntityHistory.jsx ---
 
 --- FILE: features\wiki\components\EntityLocalGraph.jsx ---
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Network } from 'lucide-react';
+import { Network, Maximize, Minimize } from 'lucide-react';
 import { clsx } from 'clsx';
 import { CytoscapeCanvas } from '@/features/graph/components/CytoscapeCanvas';
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
@@ -1090,7 +1090,6 @@ const LOCAL_LAYOUT = {
 	fit: true,
 	padding: 30,
 	nodeDimensionsIncludeLabels: true,
-
 	nodeRepulsion: 8000,
 	idealEdgeLength: 80,
 	edgeElasticity: 0.45,
@@ -1171,14 +1170,59 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 	const { map: entityIndex } = useEntityIndex();
 	const isDark = theme === 'dark';
 
+	// FULLSCREEN STATE
+	const containerRef = useRef(null);
+	const [isFullscreen, setIsFullscreen] = useState(false);
+	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+
+	// Combine native and pseudo states
+	const activeFullscreen = isFullscreen || isPseudoFullscreen;
+
+	// Handle Native Fullscreen Changes
+	useEffect(() => {
+		const handler = () => setIsFullscreen(!!document.fullscreenElement);
+		document.addEventListener('fullscreenchange', handler);
+		return () => document.removeEventListener('fullscreenchange', handler);
+	}, []);
+
+	// Handle Escape Key for Pseudo Fullscreen
+	useEffect(() => {
+		const handleEsc = (e) => {
+			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
+		};
+		window.addEventListener('keydown', handleEsc);
+		return () => window.removeEventListener('keydown', handleEsc);
+	}, [isPseudoFullscreen]);
+
+	// Toggle Function
+	const toggleFullscreen = useCallback(
+		(e) => {
+			e.stopPropagation();
+			if (!containerRef.current) return;
+
+			const supportsNative = document.fullscreenEnabled || containerRef.current.requestFullscreen;
+
+			// Prefer native, fallback to pseudo (iOS)
+			if (supportsNative) {
+				if (!document.fullscreenElement) {
+					containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
+				} else {
+					document.exitFullscreen();
+				}
+			} else {
+				setIsPseudoFullscreen(!isPseudoFullscreen);
+			}
+		},
+		[isPseudoFullscreen]
+	);
+
+	// --- DATA TRANSFORMATION ---
 	const elements = useMemo(() => {
 		if (!entity) return [];
-
 		const nodes = [];
 		const edges = [];
 		const addedIds = new Set();
 		const typeGroups = {};
-
 		const FALLBACK_ICON_ROOT = 'images/icons';
 
 		const resolveNodeIcon = (type, attributes, id) => {
@@ -1206,7 +1250,7 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 			const config = getEntityConfig(type);
 			const finalImage = resolveNodeIcon(type, attributes, id);
 
-			// FIX: Always use config color if available, regardless of image source
+			// Apply Colors
 			const borderColor = config.color || (isDark ? '#404040' : '#d4d4d4');
 			const nodeBgColor = config.color || (isDark ? '#262626' : '#f5f5f5');
 
@@ -1249,13 +1293,9 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 			const groupIds = typeGroups[type];
 			if (groupIds.length > 1 && groupIds.length < 15) {
 				for (let i = 0; i < groupIds.length; i++) {
-					const current = groupIds[i];
-					const next = groupIds[i + 1];
-					if (next) {
-						edges.push({
-							data: { source: current, target: next, type: 'virtual' },
-						});
-					}
+					edges.push({
+						data: { source: groupIds[i], target: groupIds[(i + 1) % groupIds.length], type: 'virtual' },
+					});
 				}
 			}
 		});
@@ -1265,23 +1305,36 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 
 	const handleNodeClick = useCallback(
 		(data) => {
+			if (activeFullscreen && document.fullscreenElement) {
+				document.exitFullscreen();
+			}
+			if (isPseudoFullscreen) setIsPseudoFullscreen(false);
+
 			if (data.id && data.type && data.id !== entity.id) {
 				navigate(`/wiki/${data.type}/${data.id}`);
 			}
 		},
-		[navigate, entity.id]
+		[navigate, entity.id, activeFullscreen, isPseudoFullscreen]
 	);
 
 	if (elements.length <= 1) return null;
 
 	return (
 		<div className={clsx('w-full flex flex-col', className)}>
-			{headerShown && (
+			{!activeFullscreen && headerShown && (
 				<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
 					<Network size={10} /> Local Graph
 				</h3>
 			)}
-			<div className={clsx('w-full relative bg-muted/20 border border-border/50 rounded-lg overflow-hidden', height)}>
+
+			<div
+				ref={containerRef}
+				className={clsx(
+					'w-full relative bg-muted/20 border border-border rounded-lg overflow-hidden group transition-all duration-300',
+					// Fullscreen Styles
+					activeFullscreen ? 'fixed inset-0 z-[9999] h-screen w-screen m-0 rounded-none bg-background' : height
+				)}>
+				{/* Graph Background */}
 				<div
 					className='absolute inset-0 z-0 opacity-50'
 					style={{
@@ -1290,6 +1343,22 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 						backgroundPosition: '10px 10px',
 					}}
 				/>
+
+				{/* Fullscreen Toggle Button */}
+				<button
+					onClick={toggleFullscreen}
+					className={clsx(
+						'absolute z-50 p-2 rounded-full border border-border shadow-sm transition-all active:scale-95',
+						'bg-background/90 backdrop-blur text-muted-foreground hover:text-primary hover:bg-background',
+						// Positioning Logic
+						activeFullscreen
+							? 'top-1/2 right-4 -translate-y-1/2 lg:top-6 lg:right-6 lg:translate-y-0' // Middle-Right Mobile, Top-Right Desktop
+							: 'top-2 right-2' // Normal State
+					)}
+					title={activeFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}>
+					{activeFullscreen ? <Minimize size={18} /> : <Maximize size={16} />}
+				</button>
+
 				<CytoscapeCanvas
 					elements={elements}
 					layoutConfig={LOCAL_LAYOUT}
@@ -4310,14 +4379,14 @@ export default function SessionLayout({ viewModel }) {
 		);
 	};
 
-	if (!viewModel) return null;
-
 	const tocItems = useMemo(() => {
 		if (viewModel.content.narrative) {
 			return extractHeaders(viewModel.content.narrative);
 		}
 		return [];
 	}, [viewModel.content.narrative]);
+
+	if (!viewModel) return null;
 
 	const renderNarrative = () => (
 		<ThreeColumnLayout
