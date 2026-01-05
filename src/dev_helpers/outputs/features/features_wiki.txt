@@ -185,6 +185,7 @@ PARTIAL BUNDLE: FEATURES WIKI
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityLocalGraph.jsx
         EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx
@@ -1068,6 +1069,241 @@ export const EntityHistory = ({ events, showSession = true, fullHeight = true })
 
 --- END OF features\wiki\components\EntityHistory.jsx ---
 
+--- FILE: features\wiki\components\EntityLocalGraph.jsx ---
+import React, { useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Network } from 'lucide-react';
+import { clsx } from 'clsx';
+import { CytoscapeCanvas } from '@/features/graph/components/CytoscapeCanvas';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+
+// --- LOCAL GRAPH CONFIGURATION ---
+const LOCAL_LAYOUT = {
+	name: 'fcose',
+	quality: 'default',
+	randomize: true,
+	animate: true,
+	animationDuration: 800,
+	fit: true,
+	padding: 30,
+	nodeDimensionsIncludeLabels: true,
+
+	nodeRepulsion: 8000,
+	idealEdgeLength: 80,
+	edgeElasticity: 0.45,
+	gravity: 0.3,
+	numIter: 2500,
+	tilingPaddingVertical: 10,
+	tilingPaddingHorizontal: 10,
+	initialEnergyOnIncremental: 0.3,
+};
+
+const getLocalStyles = (isDark) => {
+	const colors = {
+		text: isDark ? '#e5e5e5' : '#171717',
+		border: isDark ? '#404040' : '#d4d4d4',
+		halo: isDark ? '#000000' : '#ffffff',
+		edge: isDark ? '#525252' : '#a3a3a3',
+	};
+
+	return [
+		{
+			selector: 'node',
+			style: {
+				width: 16,
+				height: 16,
+				label: 'data(label)',
+				'background-image': 'data(image)',
+				'background-fit': 'cover',
+				'border-width': 1,
+				'border-color': 'data(borderColor)',
+				'background-color': 'data(bgColor)',
+				'font-family': 'Inter, sans-serif',
+				'font-size': '8px',
+				'font-weight': '600',
+				'text-valign': 'bottom',
+				'text-margin-y': 4,
+				'text-outline-color': colors.halo,
+				'text-outline-width': 2,
+				color: colors.text,
+				'transition-property': 'width, height, border-width',
+				'transition-duration': '0.2s',
+			},
+		},
+		{
+			selector: 'node[?isCenter]',
+			style: {
+				width: 28,
+				height: 28,
+				'border-width': 2,
+				'font-size': '10px',
+				'z-index': 10,
+			},
+		},
+		{
+			selector: 'edge[type != "virtual"]',
+			style: {
+				width: 1,
+				'curve-style': 'bezier',
+				'line-color': colors.edge,
+				'target-arrow-shape': 'none',
+				opacity: 0.5,
+			},
+		},
+		{
+			selector: 'edge[type = "virtual"]',
+			style: {
+				width: 0,
+				opacity: 0,
+				'curve-style': 'straight',
+				events: 'no',
+			},
+		},
+	];
+};
+
+export const EntityLocalGraph = ({ entity, relationships, className, height = 'h-64', headerShown = true }) => {
+	const navigate = useNavigate();
+	const { theme } = useTheme();
+	const { map: entityIndex } = useEntityIndex();
+	const isDark = theme === 'dark';
+
+	const elements = useMemo(() => {
+		if (!entity) return [];
+
+		const nodes = [];
+		const edges = [];
+		const addedIds = new Set();
+		const typeGroups = {};
+
+		const FALLBACK_ICON_ROOT = 'images/icons';
+
+		const resolveNodeIcon = (type, attributes, id) => {
+			let url = resolveImageUrl(attributes, 'icon');
+			if (!url && id && entityIndex.has(id)) {
+				const cached = entityIndex.get(id);
+				if (cached.iconUrl) url = cached.iconUrl;
+			}
+			if (!url) {
+				const safeType = (type || 'default').toLowerCase().replace(/\s+/g, '_');
+				url = `${FALLBACK_ICON_ROOT}/${safeType}.webp`;
+			}
+			return url;
+		};
+
+		const addNode = (id, name, type, attributes = {}, isCenter = false) => {
+			if (!id || addedIds.has(id)) return;
+			addedIds.add(id);
+
+			if (!isCenter) {
+				if (!typeGroups[type]) typeGroups[type] = [];
+				typeGroups[type].push(id);
+			}
+
+			const config = getEntityConfig(type);
+			const finalImage = resolveNodeIcon(type, attributes, id);
+
+			// FIX: Always use config color if available, regardless of image source
+			const borderColor = config.color || (isDark ? '#404040' : '#d4d4d4');
+			const nodeBgColor = config.color || (isDark ? '#262626' : '#f5f5f5');
+
+			nodes.push({
+				data: {
+					id,
+					label: name,
+					image: finalImage,
+					type,
+					bgColor: nodeBgColor,
+					borderColor,
+					isCenter,
+				},
+				classes: isCenter ? 'center' : '',
+			});
+		};
+
+		addNode(entity.id, entity.name, entity.type, entity.attributes, true);
+
+		if (relationships) {
+			relationships.forEach((rel) => {
+				const targetId = rel.id || rel.entity_id || rel.target;
+				const targetName = rel.name || rel.entity_name;
+				const targetType = rel.typeLabel || rel.entity_type || rel.type || 'default';
+
+				if (targetId) {
+					addNode(targetId, targetName, targetType, {});
+					edges.push({
+						data: {
+							source: entity.id,
+							target: targetId,
+							type: 'standard',
+						},
+					});
+				}
+			});
+		}
+
+		Object.keys(typeGroups).forEach((type) => {
+			const groupIds = typeGroups[type];
+			if (groupIds.length > 1 && groupIds.length < 15) {
+				for (let i = 0; i < groupIds.length; i++) {
+					const current = groupIds[i];
+					const next = groupIds[i + 1];
+					if (next) {
+						edges.push({
+							data: { source: current, target: next, type: 'virtual' },
+						});
+					}
+				}
+			}
+		});
+
+		return [...nodes, ...edges];
+	}, [entity, relationships, isDark, entityIndex]);
+
+	const handleNodeClick = useCallback(
+		(data) => {
+			if (data.id && data.type && data.id !== entity.id) {
+				navigate(`/wiki/${data.type}/${data.id}`);
+			}
+		},
+		[navigate, entity.id]
+	);
+
+	if (elements.length <= 1) return null;
+
+	return (
+		<div className={clsx('w-full flex flex-col', className)}>
+			{headerShown && (
+				<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
+					<Network size={10} /> Local Graph
+				</h3>
+			)}
+			<div className={clsx('w-full relative bg-muted/20 border border-border/50 rounded-lg overflow-hidden', height)}>
+				<div
+					className='absolute inset-0 z-0 opacity-50'
+					style={{
+						backgroundImage: 'radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+						backgroundSize: '20px 20px',
+						backgroundPosition: '10px 10px',
+					}}
+				/>
+				<CytoscapeCanvas
+					elements={elements}
+					layoutConfig={LOCAL_LAYOUT}
+					stylesheet={getLocalStyles(isDark)}
+					onNodeClick={handleNodeClick}
+					interactive={true}
+				/>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\EntityLocalGraph.jsx ---
+
 --- FILE: features\wiki\components\EntityMiniMap.jsx ---
 import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, ImageOverlay, Marker, Popup, useMap } from 'react-leaflet';
@@ -1326,6 +1562,7 @@ import { clsx } from 'clsx';
 import EntityIcon from '@/domain/entity/components/EntityIcon';
 import EntityLink from '@/domain/entity/components/EntityLink';
 import { capitalize, toTitleCase } from '@/shared/utils/textUtils';
+import { EntityLocalGraph } from './EntityLocalGraph'; // Import new component
 
 // --- SUB-COMPONENTS ---
 const AbilityGrid = ({ stats }) => (
@@ -1387,7 +1624,7 @@ const TypeDivider = ({ label }) => (
 );
 
 // --- MAIN COMPONENT ---
-export const EntitySidebar = ({ traits, connections }) => {
+export const EntitySidebar = ({ entity, traits, connections }) => {
 	const textTraits = traits.filter((t) => t.displayType === 'text');
 	const specialTraits = traits.filter((t) => t.displayType !== 'text');
 
@@ -1477,6 +1714,13 @@ export const EntitySidebar = ({ traits, connections }) => {
 					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
 						<Network size={10} /> Connections
 					</h3>
+
+					{/* 4. Local Graph (NEW) */}
+					{connections && connections.length > 0 && entity && (
+						<div className='pt-4 border-t border-border/50'>
+							<EntityLocalGraph entity={entity} relationships={connections} height='h-70' headerShown={false} />
+						</div>
+					)}
 
 					<div className='space-y-1'>
 						{groupedConnections.map((group, gIdx) => (
@@ -3886,6 +4130,7 @@ import { CharacterStats } from '@/features/wiki/components/character/CharacterSt
 import { RelationshipNetwork } from '@/features/wiki/components/character/RelationshipNetwork';
 import { extractHeaders } from '@/shared/utils/markdownUtils';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import { EntityLocalGraph } from '@/features/wiki/components/EntityLocalGraph'; // Import
 
 export default function CharacterLayout({ viewModel }) {
 	const { raw } = viewModel;
@@ -3942,6 +4187,12 @@ export default function CharacterLayout({ viewModel }) {
 	const renderNetwork = () => (
 		<div className='w-full px-4 sm:px-6 py-8'>
 			<div className='max-w-6xl mx-auto'>
+				{/* NEW: Graph Section */}
+				{raw.relationships && raw.relationships.length > 0 && (
+					<div className='mb-10'>
+						<EntityLocalGraph entity={raw} relationships={raw.relationships} height='h-[400px]' className='mb-8' />
+					</div>
+				)}
 				<RelationshipNetwork relationships={raw.relationships} />
 			</div>
 		</div>
@@ -4035,7 +4286,7 @@ export default function CharacterLayout({ viewModel }) {
 
 --- FILE: features\wiki\layouts\SessionLayout.jsx ---
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom'; // CHANGED: Replaces useState
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, History, Network } from 'lucide-react';
 import TabContainer from '@/shared/components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
@@ -4043,9 +4294,9 @@ import { SessionMentions } from '@/features/wiki/components/SessionMentions';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import { extractHeaders } from '@/shared/utils/markdownUtils';
 import { ThreeColumnLayout } from '@/shared/components/layout/SplitView';
+import { EntityLocalGraph } from '@/features/wiki/components/EntityLocalGraph'; // Import
 
 export default function SessionLayout({ viewModel }) {
-	// CHANGED: Use URL params for state
 	const [searchParams, setSearchParams] = useSearchParams();
 	const activeTab = searchParams.get('tab') || 'narrative';
 
@@ -4056,7 +4307,7 @@ export default function SessionLayout({ viewModel }) {
 				return prev;
 			},
 			{ replace: true }
-		); // replace prevents cluttering history stack
+		);
 	};
 
 	if (!viewModel) return null;
@@ -4095,7 +4346,13 @@ export default function SessionLayout({ viewModel }) {
 	);
 
 	const renderMentions = () => (
-		<div className='max-w-7xl mx-auto px-4 sm:px-6 py-10'>
+		<div className='max-w-6xl mx-auto px-4 sm:px-6 py-10'>
+			{/* NEW: Graph Section */}
+			{viewModel.raw.relationships && viewModel.raw.relationships.length > 0 && (
+				<div className='mb-10 max-w-6xl mx-auto'>
+					<EntityLocalGraph entity={viewModel.raw} relationships={viewModel.raw.relationships} height='h-[350px]' />
+				</div>
+			)}
 			<SessionMentions mentions={viewModel.content.mentions} />
 		</div>
 	);
@@ -4129,9 +4386,9 @@ export default function SessionLayout({ viewModel }) {
 						content: renderTimeline(),
 					},
 				]}
-				defaultTab={activeTab} // CHANGED
+				defaultTab={activeTab}
 				sticky
-				onChange={setActiveTab} // CHANGED
+				onChange={setActiveTab}
 			/>
 
 			{tocItems.length > 0 && activeTab === 'narrative' && (
@@ -4160,7 +4417,11 @@ export default function StandardLayout({ viewModel }) {
 				<div className='grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 xl:gap-8'>
 					{/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
 					<div className='hidden lg:block lg:order-first min-w-0'>
-						<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+						<EntitySidebar
+							entity={viewModel.raw}
+							traits={viewModel.sidebar.traits}
+							connections={viewModel.sidebar.connections}
+						/>
 					</div>
 
 					{/* --- MAIN CONTENT --- */}
@@ -4195,7 +4456,6 @@ export default function StandardLayout({ viewModel }) {
 							<div className='p-4 bg-muted/50 rounded-t-[10px] flex-shrink-0'>
 								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-4' />
 								<div className='flex justify-between items-center'>
-									{/* CHANGED: Used Drawer.Title instead of h2 for accessibility */}
 									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
 									<Drawer.Close className='p-2 bg-muted rounded-full text-muted-foreground'>
 										<X size={16} />
@@ -4205,7 +4465,11 @@ export default function StandardLayout({ viewModel }) {
 
 							{/* Content */}
 							<div className='p-4 bg-background flex-1 overflow-y-auto custom-scrollbar'>
-								<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+								<EntitySidebar
+									entity={viewModel.raw}
+									traits={viewModel.sidebar.traits}
+									connections={viewModel.sidebar.connections}
+								/>
 							</div>
 						</Drawer.Content>
 					</Drawer.Portal>
@@ -4704,21 +4968,42 @@ import { resolveImageUrl } from '@/shared/utils/imageUtils';
 export const transformWikiEntry = (data, type, additionalData = {}) => {
 	// --- SESSION ---
 	if (type === 'session') {
-		// Data comes from view_campaign_timeline, so structure is cleaner
+		// Data comes from view_campaign_timeline
 		const sortedEvents = (data.events || []).sort((a, b) => (a.order || 0) - (b.order || 0));
 
 		const eventRelMap = additionalData.eventRelMap || new Map();
+
+		// 1. Attach tags to specific events
 		sortedEvents.forEach((evt) => {
 			evt.relationships = eventRelMap.get(evt.id) || [];
 		});
 
+		// 2. Aggregate ALL unique entities from events to show in the Session Graph
+		const allRelationships = [...(additionalData.sessionRelationships || [])];
+		const seenIds = new Set(allRelationships.map((r) => r.entity_id));
+
+		// Iterate all events and their tags
+		eventRelMap.forEach((tags) => {
+			tags.forEach((tag) => {
+				if (!seenIds.has(tag.entity_id)) {
+					seenIds.add(tag.entity_id);
+					allRelationships.push({
+						entity_id: tag.entity_id,
+						entity_name: tag.entity_name,
+						entity_type: tag.entity_type,
+						type: 'mention', // Label for the edge
+					});
+				}
+			});
+		});
+
 		return {
 			id: data.id,
-			name: data.name || data.title, // Handle both View (title) and potential Table (name) keys
+			name: data.name || data.title,
 			type: 'session',
 			description: data.description || data.narrative,
 			attributes: data.attributes || {},
-			relationships: additionalData.sessionRelationships || [],
+			relationships: allRelationships, // Now includes event mentions
 			events: sortedEvents,
 		};
 	}
@@ -4729,7 +5014,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 	// Quest Objectives
 	if (type === 'quest' && additionalData.objectives) {
 		entity.objectives = additionalData.objectives.map((obj) => {
-			// Handle JSONB session attributes
 			const sessionAttrs = obj.session?.attributes || {};
 			return {
 				...obj,
@@ -4742,9 +5026,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 	// Encounter Actions
 	if (type === 'encounter' && additionalData.encounterActions) {
 		const actions = additionalData.encounterActions.map((action) => {
-			// Data comes from view_encounter_actions_hydrated
-			// actor and target are JSON objects with { id, name, type, attributes }
-
 			const actorAttrs = action.actor?.attributes || {};
 			const targetAttrs = action.target?.attributes || {};
 
@@ -4753,7 +5034,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 				round: action.round_number,
 				order: action.action_order,
 				type: action.action_type,
-				isFriendly: action.result === 'SUCCESS', // Fallback logic if is_friendly missing from view
+				isFriendly: action.result === 'SUCCESS',
 				description: action.action_description,
 				result: action.result,
 				effect: action.effect,
@@ -4774,7 +5055,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 			};
 		});
 
-		// Group by Round
 		const rounds = {};
 		actions.forEach((action) => {
 			if (!rounds[action.round]) rounds[action.round] = [];
@@ -4795,7 +5075,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 			...event,
 			session_number:
 				event.session_id && additionalData.sessionMap.has(event.session_id)
-					? additionalData.sessionMap.get(event.session_id) - 1 // 0-based index for calendar
+					? additionalData.sessionMap.get(event.session_id) - 1
 					: null,
 		}));
 

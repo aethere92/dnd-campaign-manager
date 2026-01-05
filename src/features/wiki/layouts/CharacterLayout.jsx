@@ -8,6 +8,7 @@ import { CharacterStats } from '@/features/wiki/components/character/CharacterSt
 import { RelationshipNetwork } from '@/features/wiki/components/character/RelationshipNetwork';
 import { extractHeaders } from '@/shared/utils/markdownUtils';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import { EntityLocalGraph } from '@/features/wiki/components/EntityLocalGraph'; // Import
 
 export default function CharacterLayout({ viewModel }) {
 	const { raw } = viewModel;
@@ -64,6 +65,12 @@ export default function CharacterLayout({ viewModel }) {
 	const renderNetwork = () => (
 		<div className='w-full px-4 sm:px-6 py-8'>
 			<div className='max-w-6xl mx-auto'>
+				{/* NEW: Graph Section */}
+				{raw.relationships && raw.relationships.length > 0 && (
+					<div className='mb-10'>
+						<EntityLocalGraph entity={raw} relationships={raw.relationships} height='h-[400px]' className='mb-8' />
+					</div>
+				)}
 				<RelationshipNetwork relationships={raw.relationships} />
 			</div>
 		</div>

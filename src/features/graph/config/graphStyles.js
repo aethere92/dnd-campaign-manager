@@ -115,7 +115,7 @@ export const getGraphStyles = (theme) => {
 export const LAYOUT_CONFIG = {
 	name: 'fcose',
 	quality: 'default',
-	randomize: false,
+	randomize: true,
 	animate: false,
 	animationDuration: 1000,
 	fit: true,

@@ -4,6 +4,7 @@ import { clsx } from 'clsx';
 import EntityIcon from '@/domain/entity/components/EntityIcon';
 import EntityLink from '@/domain/entity/components/EntityLink';
 import { capitalize, toTitleCase } from '@/shared/utils/textUtils';
+import { EntityLocalGraph } from './EntityLocalGraph'; // Import new component
 
 // --- SUB-COMPONENTS ---
 const AbilityGrid = ({ stats }) => (
@@ -65,7 +66,7 @@ const TypeDivider = ({ label }) => (
 );
 
 // --- MAIN COMPONENT ---
-export const EntitySidebar = ({ traits, connections }) => {
+export const EntitySidebar = ({ entity, traits, connections }) => {
 	const textTraits = traits.filter((t) => t.displayType === 'text');
 	const specialTraits = traits.filter((t) => t.displayType !== 'text');
 
@@ -155,6 +156,13 @@ export const EntitySidebar = ({ traits, connections }) => {
 					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-1'>
 						<Network size={10} /> Connections
 					</h3>
+
+					{/* 4. Local Graph (NEW) */}
+					{connections && connections.length > 0 && entity && (
+						<div className='pt-4 border-t border-border/50'>
+							<EntityLocalGraph entity={entity} relationships={connections} height='h-70' headerShown={false} />
+						</div>
+					)}
 
 					<div className='space-y-1'>
 						{groupedConnections.map((group, gIdx) => (

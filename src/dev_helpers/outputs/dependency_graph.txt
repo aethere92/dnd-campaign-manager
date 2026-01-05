@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-05 10:34:32
+Generated: 2026-01-05 13:18:01
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -661,6 +661,17 @@ features\wiki\components\EntityHistory.jsx:
   → clsx
   → lucide-react
 
+features\wiki\components\EntityLocalGraph.jsx:
+  → @/domain/entity/config/entityConfig
+  → @/features/graph/components/CytoscapeCanvas
+  → @/features/smart-text/useEntityIndex
+  → @/shared/hooks/useTheme
+  → @/shared/utils/imageUtils
+  → clsx
+  → lucide-react
+  → react
+  → react-router-dom
+
 features\wiki\components\EntityMiniMap.jsx:
   → @/domain/entity/config/entityConfig
   → @/domain/entity/utils/attributeParser
@@ -676,6 +687,7 @@ features\wiki\components\EntityMiniMap.jsx:
   → react-router-dom
 
 features\wiki\components\EntitySidebar.jsx:
+  → ./EntityLocalGraph
   → @/domain/entity/components/EntityIcon
   → @/domain/entity/components/EntityLink
   → @/shared/utils/textUtils
@@ -843,6 +855,7 @@ features\wiki\hooks\useEntitySidebar.js:
 features\wiki\layouts\CharacterLayout.jsx:
   → @/features/table-of-contents/TableOfContents
   → @/features/wiki/components/EntityBody
+  → @/features/wiki/components/EntityLocalGraph
   → @/features/wiki/components/character/CharacterSidebar
   → @/features/wiki/components/character/CharacterStats
   → @/features/wiki/components/character/RelationshipNetwork
@@ -855,6 +868,7 @@ features\wiki\layouts\CharacterLayout.jsx:
 features\wiki\layouts\SessionLayout.jsx:
   → @/features/table-of-contents/TableOfContents
   → @/features/wiki/components/EntityBody
+  → @/features/wiki/components/EntityLocalGraph
   → @/features/wiki/components/SessionMentions
   → @/shared/components/layout/SplitView
   → @/shared/components/layout/TabContainer
@@ -1032,14 +1046,15 @@ Files with most outgoing dependencies:
   app\AppRoutes.jsx: 16 imports
   features\dashboard\DashboardPage.jsx: 12 imports
   features\wiki\components\EntityMiniMap.jsx: 12 imports
+  features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
-  features\wiki\layouts\CharacterLayout.jsx: 10 imports
+  features\wiki\layouts\SessionLayout.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
   features\admin\pages\SplitPaneManager.jsx: 9 imports
   features\atlas\components\layers\MapMarkers.jsx: 9 imports
+  features\wiki\components\EntityLocalGraph.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports
-  features\wiki\layouts\SessionLayout.jsx: 9 imports
   features\admin\components\MarkdownEditorImpl.jsx: 8 imports
   features\navigation\MainLayout.jsx: 8 imports
   features\search\useGlobalSearch.js: 8 imports
@@ -1047,4 +1062,3 @@ Files with most outgoing dependencies:
   features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 8 imports
-  features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx: 8 imports

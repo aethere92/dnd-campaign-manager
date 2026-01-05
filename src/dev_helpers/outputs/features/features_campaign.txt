@@ -185,6 +185,7 @@ PARTIAL BUNDLE: FEATURES CAMPAIGN
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityLocalGraph.jsx
         EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx

@@ -185,6 +185,7 @@ PARTIAL BUNDLE: FEATURES SMART-TOOLTIP
         EntityBody.jsx
         EntityHeader.jsx
         EntityHistory.jsx
+        EntityLocalGraph.jsx
         EntityMiniMap.jsx
         EntitySidebar.jsx
         QuestObjectives.jsx

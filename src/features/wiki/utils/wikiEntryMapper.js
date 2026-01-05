@@ -4,21 +4,42 @@ import { resolveImageUrl } from '@/shared/utils/imageUtils';
 export const transformWikiEntry = (data, type, additionalData = {}) => {
 	// --- SESSION ---
 	if (type === 'session') {
-		// Data comes from view_campaign_timeline, so structure is cleaner
+		// Data comes from view_campaign_timeline
 		const sortedEvents = (data.events || []).sort((a, b) => (a.order || 0) - (b.order || 0));
 
 		const eventRelMap = additionalData.eventRelMap || new Map();
+
+		// 1. Attach tags to specific events
 		sortedEvents.forEach((evt) => {
 			evt.relationships = eventRelMap.get(evt.id) || [];
 		});
 
+		// 2. Aggregate ALL unique entities from events to show in the Session Graph
+		const allRelationships = [...(additionalData.sessionRelationships || [])];
+		const seenIds = new Set(allRelationships.map((r) => r.entity_id));
+
+		// Iterate all events and their tags
+		eventRelMap.forEach((tags) => {
+			tags.forEach((tag) => {
+				if (!seenIds.has(tag.entity_id)) {
+					seenIds.add(tag.entity_id);
+					allRelationships.push({
+						entity_id: tag.entity_id,
+						entity_name: tag.entity_name,
+						entity_type: tag.entity_type,
+						type: 'mention', // Label for the edge
+					});
+				}
+			});
+		});
+
 		return {
 			id: data.id,
-			name: data.name || data.title, // Handle both View (title) and potential Table (name) keys
+			name: data.name || data.title,
 			type: 'session',
 			description: data.description || data.narrative,
 			attributes: data.attributes || {},
-			relationships: additionalData.sessionRelationships || [],
+			relationships: allRelationships, // Now includes event mentions
 			events: sortedEvents,
 		};
 	}
@@ -29,7 +50,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 	// Quest Objectives
 	if (type === 'quest' && additionalData.objectives) {
 		entity.objectives = additionalData.objectives.map((obj) => {
-			// Handle JSONB session attributes
 			const sessionAttrs = obj.session?.attributes || {};
 			return {
 				...obj,
@@ -42,9 +62,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 	// Encounter Actions
 	if (type === 'encounter' && additionalData.encounterActions) {
 		const actions = additionalData.encounterActions.map((action) => {
-			// Data comes from view_encounter_actions_hydrated
-			// actor and target are JSON objects with { id, name, type, attributes }
-
 			const actorAttrs = action.actor?.attributes || {};
 			const targetAttrs = action.target?.attributes || {};
 
@@ -53,7 +70,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 				round: action.round_number,
 				order: action.action_order,
 				type: action.action_type,
-				isFriendly: action.result === 'SUCCESS', // Fallback logic if is_friendly missing from view
+				isFriendly: action.result === 'SUCCESS',
 				description: action.action_description,
 				result: action.result,
 				effect: action.effect,
@@ -74,7 +91,6 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 			};
 		});
 
-		// Group by Round
 		const rounds = {};
 		actions.forEach((action) => {
 			if (!rounds[action.round]) rounds[action.round] = [];
@@ -95,7 +111,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 			...event,
 			session_number:
 				event.session_id && additionalData.sessionMap.has(event.session_id)
-					? additionalData.sessionMap.get(event.session_id) - 1 // 0-based index for calendar
+					? additionalData.sessionMap.get(event.session_id) - 1
 					: null,
 		}));
 

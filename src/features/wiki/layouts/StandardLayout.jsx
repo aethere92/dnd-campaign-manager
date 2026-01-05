@@ -12,7 +12,11 @@ export default function StandardLayout({ viewModel }) {
 				<div className='grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 xl:gap-8'>
 					{/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
 					<div className='hidden lg:block lg:order-first min-w-0'>
-						<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+						<EntitySidebar
+							entity={viewModel.raw}
+							traits={viewModel.sidebar.traits}
+							connections={viewModel.sidebar.connections}
+						/>
 					</div>
 
 					{/* --- MAIN CONTENT --- */}
@@ -47,7 +51,6 @@ export default function StandardLayout({ viewModel }) {
 							<div className='p-4 bg-muted/50 rounded-t-[10px] flex-shrink-0'>
 								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-4' />
 								<div className='flex justify-between items-center'>
-									{/* CHANGED: Used Drawer.Title instead of h2 for accessibility */}
 									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
 									<Drawer.Close className='p-2 bg-muted rounded-full text-muted-foreground'>
 										<X size={16} />
@@ -57,7 +60,11 @@ export default function StandardLayout({ viewModel }) {
 
 							{/* Content */}
 							<div className='p-4 bg-background flex-1 overflow-y-auto custom-scrollbar'>
-								<EntitySidebar traits={viewModel.sidebar.traits} connections={viewModel.sidebar.connections} />
+								<EntitySidebar
+									entity={viewModel.raw}
+									traits={viewModel.sidebar.traits}
+									connections={viewModel.sidebar.connections}
+								/>
 							</div>
 						</Drawer.Content>
 					</Drawer.Portal>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom'; // CHANGED: Replaces useState
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, History, Network } from 'lucide-react';
 import TabContainer from '@/shared/components/layout/TabContainer';
 import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
@@ -7,9 +7,9 @@ import { SessionMentions } from '@/features/wiki/components/SessionMentions';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import { extractHeaders } from '@/shared/utils/markdownUtils';
 import { ThreeColumnLayout } from '@/shared/components/layout/SplitView';
+import { EntityLocalGraph } from '@/features/wiki/components/EntityLocalGraph'; // Import
 
 export default function SessionLayout({ viewModel }) {
-	// CHANGED: Use URL params for state
 	const [searchParams, setSearchParams] = useSearchParams();
 	const activeTab = searchParams.get('tab') || 'narrative';
 
@@ -20,7 +20,7 @@ export default function SessionLayout({ viewModel }) {
 				return prev;
 			},
 			{ replace: true }
-		); // replace prevents cluttering history stack
+		);
 	};
 
 	if (!viewModel) return null;
@@ -59,7 +59,13 @@ export default function SessionLayout({ viewModel }) {
 	);
 
 	const renderMentions = () => (
-		<div className='max-w-7xl mx-auto px-4 sm:px-6 py-10'>
+		<div className='max-w-6xl mx-auto px-4 sm:px-6 py-10'>
+			{/* NEW: Graph Section */}
+			{viewModel.raw.relationships && viewModel.raw.relationships.length > 0 && (
+				<div className='mb-10 max-w-6xl mx-auto'>
+					<EntityLocalGraph entity={viewModel.raw} relationships={viewModel.raw.relationships} height='h-[350px]' />
+				</div>
+			)}
 			<SessionMentions mentions={viewModel.content.mentions} />
 		</div>
 	);
@@ -93,9 +99,9 @@ export default function SessionLayout({ viewModel }) {
 						content: renderTimeline(),
 					},
 				]}
-				defaultTab={activeTab} // CHANGED
+				defaultTab={activeTab}
 				sticky
-				onChange={setActiveTab} // CHANGED
+				onChange={setActiveTab}
 			/>
 
 			{tocItems.length > 0 && activeTab === 'narrative' && (
