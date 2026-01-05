@@ -565,7 +565,7 @@ export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 											? 'bg-background shadow-sm ring-1 ring-border'
 											: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 									)}>
-									<Icon size={16} className={clsx('mr-2', active ? 'text-amber-600' : 'text-muted-foreground/70')} />
+									<Icon size={16} className={clsx('mr-2', active ? 'text-primary' : 'text-muted-foreground/70')} />
 									{item.label}
 								</button>
 							);

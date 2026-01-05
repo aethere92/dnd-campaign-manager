@@ -432,13 +432,13 @@ export const TimelineArcHeader = ({ arc }) => {
 		<div className='relative pl-8 md:pl-12 pt-10 pb-1'>
 			{/* "Chapter Marker" - Placed on the vertical line
 			    -left-[19px] centers the 40px icon on the ~2px border line. */}
-			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-amber-100 shadow-sm z-10 text-amber-600'>
+			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-primary/10 shadow-sm z-10 text-primary'>
 				<BookOpen size={20} strokeWidth={2.5} />
 			</div>
 
 			{/* Content */}
 			<div className='mb-2'>
-				<span className='inline-block text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-2 border-b-2 border-amber-100 pb-1'>
+				<span className='inline-block text-[10px] font-bold uppercase tracking-widest text-primary mb-2 border-b-2 border-primary/50 pb-1'>
 					Narrative Arc
 				</span>
 

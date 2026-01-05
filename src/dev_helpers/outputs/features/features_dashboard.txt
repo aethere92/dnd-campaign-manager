@@ -332,11 +332,9 @@ export default function DashboardView() {
 					<SectionDivider className='my-6' />
 
 					{/* ROW 3: Active Party */}
-					<div>
-						<PartyWidget party={activeParty} />
-					</div>
+					<PartyWidget party={activeParty} />
 
-					<SectionDivider className='my-6' />
+					<SectionDivider className='my-6 mb-12' />
 
 					{/* ROW 4: Status Panel (Insights & Threads) */}
 					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[400px]'>
@@ -563,7 +561,7 @@ import { useState } from 'react';
 
 export const ArchiveTree = ({ arcs }) => {
 	return (
-		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col'>
+		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col hover:shadow-sm transition-all duration-300'>
 			<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2'>
 				<Folder size={12} /> Campaign Archive
 			</h4>
@@ -666,7 +664,7 @@ import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const CurrentArcMetadata = ({ arc }) => {
 	return (
-		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col shadow-sm relative overflow-hidden group'>
+		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col hover:shadow-sm relative overflow-hidden group'>
 			{/* Subtle background decoration - Moved to bottom right and changed to Map for adventure feel */}
 			<div className='absolute -right-10 -bottom-10 text-muted-foreground/5 pointer-events-none group-hover:scale-110 transition-transform duration-1000'>
 				<Map size={180} />
@@ -714,7 +712,7 @@ export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
 	const hasHistory = previousSessions && previousSessions.length > 0;
 
 	return (
-		<div className='flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden transition-all duration-500 group'>
+		<div className='flex flex-col h-full bg-card border border-border rounded-xl hover:shadow-md overflow-hidden transition-all duration-500 group'>
 			{/* --- TOP SECTION: LATEST SESSION (HERO) --- */}
 			{/* flex-1 ensures it fills all available space not taken by the list */}
 			<div className='relative flex-1 min-h-[300px] flex flex-col overflow-hidden'>
@@ -927,7 +925,7 @@ const PartyCard = ({ char, onClick }) => {
 	return (
 		<div
 			onClick={onClick}
-			className='group relative bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
+			className='group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
 			{/* --- Header Banner --- */}
 			<div className='h-24 bg-muted relative overflow-hidden'>
 				{bgImage ? (

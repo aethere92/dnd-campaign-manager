@@ -45,7 +45,7 @@ const PartyCard = ({ char, onClick }) => {
 	return (
 		<div
 			onClick={onClick}
-			className='group relative bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
+			className='group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
 			{/* --- Header Banner --- */}
 			<div className='h-24 bg-muted relative overflow-hidden'>
 				{bgImage ? (

@@ -12,7 +12,7 @@ export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
 	const hasHistory = previousSessions && previousSessions.length > 0;
 
 	return (
-		<div className='flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden transition-all duration-500 group'>
+		<div className='flex flex-col h-full bg-card border border-border rounded-xl hover:shadow-md overflow-hidden transition-all duration-500 group'>
 			{/* --- TOP SECTION: LATEST SESSION (HERO) --- */}
 			{/* flex-1 ensures it fills all available space not taken by the list */}
 			<div className='relative flex-1 min-h-[300px] flex flex-col overflow-hidden'>

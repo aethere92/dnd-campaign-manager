@@ -72,7 +72,7 @@ export default function CharacterLayout({ viewModel }) {
 	// --- TAB 3: CHRONICLE ---
 	const renderChronicle = () => (
 		<div className='w-full px-4 sm:px-6 py-8'>
-			<div className='max-w-6xl mx-auto space-y-10'>
+			<div className='max-w-4xl mx-auto space-y-10'>
 				{personalQuests.length > 0 && (
 					<div>
 						<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>

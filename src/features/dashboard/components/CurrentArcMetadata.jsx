@@ -3,7 +3,7 @@ import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const CurrentArcMetadata = ({ arc }) => {
 	return (
-		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col shadow-sm relative overflow-hidden group'>
+		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col hover:shadow-sm relative overflow-hidden group'>
 			{/* Subtle background decoration - Moved to bottom right and changed to Map for adventure feel */}
 			<div className='absolute -right-10 -bottom-10 text-muted-foreground/5 pointer-events-none group-hover:scale-110 transition-transform duration-1000'>
 				<Map size={180} />

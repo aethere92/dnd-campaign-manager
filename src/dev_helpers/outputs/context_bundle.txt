@@ -2451,10 +2451,12 @@ export const createEntity = async (type, data) => {
 	// 1. Prepare Core Payload
 	const corePayload = {};
 
+	// Standard campaign_id link for non-campaign entities
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
+	// Map generic name/description to specific table columns
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
@@ -2472,6 +2474,13 @@ export const createEntity = async (type, data) => {
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
+
+	// --- FIX START: Extract campaign_id from attributes for the Campaign table itself ---
+	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
+		// The 'campaigns' table requires an integer 'campaign_id' column
+		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
+	}
+	// --- FIX END ---
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -2506,6 +2515,12 @@ export const updateEntity = async (type, id, data) => {
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
+
+	// --- FIX START: Sync campaign_id column on update for Campaigns ---
+	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
+		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
+	}
+	// --- FIX END ---
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -2636,7 +2651,6 @@ export const updateRelationship = async (relId, updates) => {
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
-	// FIX: Escape SQL wildcards to prevent search abuse
 	const cleanQuery = escapeSqlLike(query);
 
 	const { data, error } = await supabase.rpc('api_search_entities', {
@@ -2733,7 +2747,6 @@ export const upsertEncounterAction = async (actionData) => {
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
 	if (!findTerm || !findTerm.trim()) return [];
 
-	// Ensure safe string
 	const safeReplace = replaceTerm === undefined || replaceTerm === null ? '' : replaceTerm;
 
 	const { data, error } = await supabase.rpc('api_scan_campaign_text', {
@@ -2746,7 +2759,6 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 		throw error;
 	}
 
-	// FIX: Regex Escape the search term so literal characters like '?' are found correctly
 	const escapedTerm = escapeRegExp(findTerm.trim());
 	const regex = new RegExp(escapedTerm, 'gi');
 
@@ -3828,7 +3840,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 					{filteredLibrary.map((group) => (
 						<div key={group.category} className='space-y-3 animate-in fade-in slide-in-from-bottom-1 duration-300'>
 							<h3 className='text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2'>
-								<FolderOpen size={10} className='text-amber-600' />
+								<FolderOpen size={10} className='text-primary' />
 								{group.category}
 								<span className='text-[8px] font-normal lowercase tracking-normal bg-muted px-1.5 rounded-full'>
 									{group.files.length} images
@@ -3950,7 +3962,7 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 			title={title}
 			className={clsx(
 				'p-1.5 rounded transition-colors flex items-center justify-center h-7 w-7',
-				isActive ? 'bg-amber-500/20 text-amber-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+				isActive ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
 				disabled && 'opacity-30 cursor-not-allowed'
 			)}>
 			<Icon size={14} strokeWidth={2.5} />
@@ -4034,8 +4046,8 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 				type='button'
 				onClick={onMentionClick}
 				className={clsx(
-					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-amber-500/10 transition-colors',
-					'text-amber-600/80 hover:text-amber-600'
+					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-primary/10 transition-colors',
+					'text-primary'
 				)}
 				title='Mention Entity (@)'>
 				<AtSign size={13} />
@@ -4237,11 +4249,11 @@ export default function MarkdownEditorImpl({ label, value, onChange, placeholder
 			{/* Mention Popup */}
 			{mentionPos && (
 				<div
-					className='fixed z-[9999] w-72 bg-background border border-amber-500/50 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+					className='fixed z-[9999] w-72 bg-background border border-primary/30 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
 					style={{ top: mentionPos.top, left: mentionPos.left }}
 					onClick={(e) => e.stopPropagation()}>
 					<div className='flex justify-between items-center p-2 border-b border-border bg-muted/50'>
-						<span className='text-[10px] font-bold uppercase text-amber-600 tracking-widest flex items-center gap-1'>
+						<span className='text-[10px] font-bold uppercase text-primary tracking-widest flex items-center gap-1'>
 							<Wand2 size={10} /> Link Entity
 						</span>
 						<button
@@ -5060,7 +5072,7 @@ export default function SessionEventManager({ sessionId }) {
 		<div className={ADMIN_SECTION_CLASS}>
 			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
 				<span className='flex items-center gap-2'>
-					<Calendar size={18} className='text-amber-600' /> Session Timeline
+					<Calendar size={18} className='text-primary' /> Session Timeline
 				</span>
 				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
 					Add Event
@@ -5072,7 +5084,7 @@ export default function SessionEventManager({ sessionId }) {
 					<div key={evt.id} className='group'>
 						{editingId === evt.id ? (
 							/* --- EDIT MODE --- */
-							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+							<div className='bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-4 animate-in fade-in'>
 								<div className='flex gap-3'>
 									<div className='w-16'>
 										<label className={ADMIN_LABEL_CLASS}>Order</label>
@@ -5902,10 +5914,10 @@ const NavItem = ({ to, icon: Icon, label }) => {
 			className={clsx(
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
-					? 'bg-primary text-amber-900 shadow-sm ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:ring-amber-800'
+					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
 					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 			)}>
-			<Icon size={15} className={isActive ? 'text-primary dark:text-amber-400' : 'opacity-70'} />
+			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
 			{label}
 		</Link>
 	);
@@ -6488,14 +6500,14 @@ export default function SplitPaneManager() {
 										}`}>
 										{/* Active Marker Strip */}
 										<div
-											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500/100' : 'bg-transparent'}`}
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-primary' : 'bg-transparent'}`}
 										/>
 
 										{/* Main Content Area */}
 										<div className='flex-1 py-3 pl-4 pr-2 min-w-0'>
 											<div
 												className={`font-bold text-sm truncate mb-0.5 ${
-													isActive ? 'text-amber-900' : 'text-foreground'
+													isActive ? 'text-primary' : 'text-foreground'
 												}`}>
 												{item.name || item.title}
 											</div>
@@ -7241,7 +7253,7 @@ const Group = ({ label, icon: Icon, children, defaultOpen = true }) => {
 					e.stopPropagation();
 					setIsOpen(!isOpen);
 				}}
-				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
+				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mb-1 select-none font-sans'>
 				<span className='mr-1 opacity-70'>{isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}</span>
 				<span className='flex items-center gap-1.5'>
 					{Icon && <Icon size={12} />}
@@ -8316,82 +8328,120 @@ export function useCampaignSelection() {
 import { supabase } from '@/shared/api/supabaseClient';
 
 export const getCampaigns = async () => {
-	// We fetch campaigns and use a subquery to get names of entities with type 'character'
-	// ARCHITECTURAL UPDATE: Added 'map_data' to check if Atlas should be enabled
-	const { data, error } = await supabase
-		.from('campaigns')
-		.select(
-			`
+	/**
+	 * OPTIMIZATION:
+	 * Instead of fetching all entities and filtering in JS or via multiple query params,
+	 * we join 'view_active_party'. This SQL view already filters for:
+	 * (attributes->>'is_active')::boolean = true
+	 */
+	const { data, error } = await supabase.from('campaigns').select(`
             id,
-			campaign_id,
+            campaign_id,
             name, 
             description,
-			attributes,
-            characters:entity_complete_view(name)
-        `
-		)
-		.eq('entity_complete_view.type', 'character');
+            attributes,
+            active_characters:view_active_party(name)
+        `);
 
-	if (error) throw error;
+	if (error) {
+		console.error('[campaignService] Error fetching campaigns:', error);
+		throw error;
+	}
 
-	// Clean up the nested character structure
+	// Clean up the nested structure
 	return data.map((campaign) => ({
 		...campaign,
-		characterNames: campaign.characters?.map((c) => c.name) || [],
+		// Map the view results to the characterNames array used by the UI
+		characterNames: campaign.active_characters?.map((c) => c.name) || [],
 	}));
 };
 
 --- END OF features\campaign\api\campaignService.js ---
 
 --- FILE: features\campaign\components\CampaignCard.jsx ---
-import { BookOpen, ArrowRight, Users } from 'lucide-react';
+import { ArrowRight, Users, Map, BookOpen } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
+import { clsx } from 'clsx';
 
 export const CampaignCard = ({ campaign, onSelect }) => {
 	const initial = (campaign.name?.[0] || 'C').toUpperCase();
+	const bgImage = campaign.attributes?.background_image;
+	const campaignIcon = campaign.attributes?.icon; // Check for icon in attributes
+	const mapData = campaign.attributes?.map_data ? 'Atlas active' : 'No Atlas';
+
+	// Fallback pattern if no image is provided
+	const hasBg = !!bgImage;
 
 	return (
-		<div className='bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all p-6 flex flex-col h-full border-t-4 border-t-primary'>
-			{/* ID Badge */}
-			<div className='mb-4 flex justify-between items-start'>
-				<div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-serif font-bold text-xl border border-primary/20'>
-					{initial}
-				</div>
-				<span className='text-[10px] font-mono text-muted-foreground/70 bg-muted px-2 py-1 rounded'>
-					ID: {campaign.id.slice(0, 8)}...
-				</span>
-			</div>
-
-			<div className='flex-1 mb-6'>
-				<h3 className='text-xl font-bold text-foreground font-serif mb-2'>{campaign.name}</h3>
-				<p className='text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed italic'>
-					{campaign.description || 'A journey into the unknown.'}
-				</p>
-
-				{/* Characters Section */}
-				{campaign.characterNames?.length > 0 && (
-					<div className='pt-4 border-t border-border/50'>
-						<div className='flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider mb-2'>
-							<Users size={12} />
-							Party Members
-						</div>
-						<div className='flex flex-wrap gap-1'>
-							{campaign.characterNames
-								.filter((name) => name !== 'Party')
-								.map((name, i) => (
-									<span
-										key={i}
-										className='text-[11px] px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20'>
-										{name}
-									</span>
-								))}
-						</div>
-					</div>
+		<div className='group relative flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden'>
+			{/* Banner / Header Image */}
+			<div className={clsx('relative h-32 w-full shrink-0 overflow-hidden', !hasBg && 'bg-muted')}>
+				{hasBg ? (
+					<img
+						src={bgImage}
+						alt='Campaign Cover'
+						className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-105'
+					/>
+				) : (
+					<div
+						className='absolute inset-0 opacity-10'
+						style={{
+							backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+							backgroundSize: '16px 16px',
+						}}
+					/>
 				)}
+
+				{/* Gradient Overlay for Text Readability/Transition */}
+				<div className='absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent' />
 			</div>
 
-			<div className='mt-auto'>
-				<Button onClick={() => onSelect(campaign.id)} fullWidth variant='primary' icon={ArrowRight}>
+			{/* Card Content */}
+			<div className='flex flex-col flex-1 px-6 pb-6 relative'>
+				{/* Avatar Badge (Icon or Initial) */}
+				<div className='-mt-12 mb-6'>
+					<div className='w-20 h-20 border-border rounded-xl bg-background border hover:shadow-md flex items-center justify-center overflow-hidden transition-colors'>
+						{campaignIcon ? (
+							<img src={campaignIcon} alt={`${campaign.name} icon`} className='w-full h-full object-cover' />
+						) : (
+							<span className='text-4xl font-serif font-bold text-primary/80 group-hover:text-primary'>{initial}</span>
+						)}
+					</div>
+				</div>
+
+				{/* Title & Description */}
+				<div className='mb-6'>
+					<h3 className='text-[clamp(1rem,5vw,1.2rem)] font-bold font-serif text-foreground leading-tight mb-2 group-hover:text-primary transition-colors'>
+						{campaign.name}
+					</h3>
+					<p className='text-sm text-muted-foreground line-clamp-5 leading-relaxed'>
+						{campaign.description || 'A journey into the unknown.'}
+					</p>
+				</div>
+
+				{/* Metadata / Stats Row */}
+				<div className='mt-auto pt-4 border-t border-border/50 grid grid-cols-2 gap-4 mb-6'>
+					<div className='flex flex-col'>
+						<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1.5'>
+							<Users size={10} /> Party Size
+						</span>
+						<span className='text-sm font-medium text-foreground'>{campaign.characterNames?.length || 0} Heroes</span>
+					</div>
+					<div className='flex flex-col'>
+						<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1.5'>
+							<Map size={10} /> Setting
+						</span>
+						<span className='text-sm font-medium text-foreground'>{mapData}</span>
+					</div>
+				</div>
+
+				{/* Action Button */}
+				<Button
+					onClick={() => onSelect(campaign.id)}
+					fullWidth
+					variant='outline'
+					className='group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors'
+					icon={ArrowRight}>
 					Enter Campaign
 				</Button>
 			</div>
@@ -8405,10 +8455,32 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 import { useCampaignSelection } from '@/features/campaign/useCampaignSelection';
 import { CampaignCard } from './CampaignCard';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { useMemo } from 'react';
 
 export default function CampaignSelect() {
+	// 1. Initialize Theme to ensure dark mode works on full-page reload
+	const { theme } = useTheme();
+	const isDark = theme === 'dark';
+
 	const { campaigns, isLoading, selectCampaign } = useCampaignSelection();
 	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
+
+	const backgroundStyle = useMemo(() => {
+		if (isDark) {
+			return {
+				backgroundImage:
+					'radial-gradient(circle at center, rgba(255,255,255,0.05) 1px, transparent 1px), radial-gradient(circle at center, rgba(255,255,255,0.03) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+				backgroundColor: 'var(--background)',
+			};
+		}
+		return {
+			backgroundColor: 'var(--background)',
+			opacity: 0.9,
+		};
+	}, [isDark]);
 
 	if (isLoading) {
 		return (
@@ -8419,10 +8491,11 @@ export default function CampaignSelect() {
 	}
 
 	return (
-		// FIX: Removed inline style that forced texture. Added bg-background.
-		<div className='h-full w-full overflow-y-auto custom-scrollbar font-sans bg-background'>
+		<div
+			className='h-full w-full overflow-y-auto custom-scrollbar font-sans bg-background text-foreground'
+			style={backgroundStyle}>
 			<div className='min-h-full w-full flex items-center justify-center p-6 md:p-12'>
-				<div className='max-w-5xl w-full mx-auto'>
+				<div className='max-w-6xl w-full mx-auto'>
 					{/* Header Section */}
 					<div className='text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
 						<img src={logoPath} alt='Logo' className='h-32 md:h-40 mx-auto mb-8 drop-shadow-2xl' />
@@ -8432,7 +8505,7 @@ export default function CampaignSelect() {
 						</p>
 					</div>
 
-					{/* Grid Section - Centered */}
+					{/* Grid Section */}
 					<div className='flex flex-wrap justify-center gap-8 pb-8'>
 						{campaigns.map((campaign) => (
 							<div key={campaign.id} className='w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.33%-1.5rem)] max-w-sm'>
@@ -8441,7 +8514,7 @@ export default function CampaignSelect() {
 						))}
 
 						{campaigns.length === 0 && (
-							<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-background/50 backdrop-blur-sm'>
+							<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-card/50 backdrop-blur-sm shadow-sm'>
 								<p className='text-muted-foreground/70 font-serif text-xl'>No campaigns found in the library.</p>
 							</div>
 						)}
@@ -8517,11 +8590,9 @@ export default function DashboardView() {
 					<SectionDivider className='my-6' />
 
 					{/* ROW 3: Active Party */}
-					<div>
-						<PartyWidget party={activeParty} />
-					</div>
+					<PartyWidget party={activeParty} />
 
-					<SectionDivider className='my-6' />
+					<SectionDivider className='my-6 mb-12' />
 
 					{/* ROW 4: Status Panel (Insights & Threads) */}
 					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[400px]'>
@@ -8748,7 +8819,7 @@ import { useState } from 'react';
 
 export const ArchiveTree = ({ arcs }) => {
 	return (
-		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col'>
+		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col hover:shadow-sm transition-all duration-300'>
 			<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2'>
 				<Folder size={12} /> Campaign Archive
 			</h4>
@@ -8851,7 +8922,7 @@ import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const CurrentArcMetadata = ({ arc }) => {
 	return (
-		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col shadow-sm relative overflow-hidden group'>
+		<div className='bg-card border border-border rounded-xl p-8 h-full flex flex-col hover:shadow-sm relative overflow-hidden group'>
 			{/* Subtle background decoration - Moved to bottom right and changed to Map for adventure feel */}
 			<div className='absolute -right-10 -bottom-10 text-muted-foreground/5 pointer-events-none group-hover:scale-110 transition-transform duration-1000'>
 				<Map size={180} />
@@ -8899,7 +8970,7 @@ export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
 	const hasHistory = previousSessions && previousSessions.length > 0;
 
 	return (
-		<div className='flex flex-col h-full bg-card border border-border rounded-xl overflow-hidden transition-all duration-500 group'>
+		<div className='flex flex-col h-full bg-card border border-border rounded-xl hover:shadow-md overflow-hidden transition-all duration-500 group'>
 			{/* --- TOP SECTION: LATEST SESSION (HERO) --- */}
 			{/* flex-1 ensures it fills all available space not taken by the list */}
 			<div className='relative flex-1 min-h-[300px] flex flex-col overflow-hidden'>
@@ -9112,7 +9183,7 @@ const PartyCard = ({ char, onClick }) => {
 	return (
 		<div
 			onClick={onClick}
-			className='group relative bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
+			className='group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
 			{/* --- Header Banner --- */}
 			<div className='h-24 bg-muted relative overflow-hidden'>
 				{bgImage ? (
@@ -10021,7 +10092,7 @@ export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 											? 'bg-background shadow-sm ring-1 ring-border'
 											: 'text-muted-foreground hover:bg-muted hover:text-foreground'
 									)}>
-									<Icon size={16} className={clsx('mr-2', active ? 'text-amber-600' : 'text-muted-foreground/70')} />
+									<Icon size={16} className={clsx('mr-2', active ? 'text-primary' : 'text-muted-foreground/70')} />
 									{item.label}
 								</button>
 							);
@@ -11605,7 +11676,7 @@ export const TocItem = ({ item, isActive, onClick }) => {
 			className={clsx(
 				'group flex items-start text-left w-full py-1.5 transition-all duration-200 border-l-[3px] px-4',
 				isActive
-					? 'border-amber-600 text-amber-700 font-bold bg-amber-500/10/50'
+					? 'border-primary text-primary font-bold bg-primary/10'
 					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
 			)}>
 			<span
@@ -11905,13 +11976,13 @@ export const TimelineArcHeader = ({ arc }) => {
 		<div className='relative pl-8 md:pl-12 pt-10 pb-1'>
 			{/* "Chapter Marker" - Placed on the vertical line
 			    -left-[19px] centers the 40px icon on the ~2px border line. */}
-			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-amber-100 shadow-sm z-10 text-amber-600'>
+			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-primary/10 shadow-sm z-10 text-primary'>
 				<BookOpen size={20} strokeWidth={2.5} />
 			</div>
 
 			{/* Content */}
 			<div className='mb-2'>
-				<span className='inline-block text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-2 border-b-2 border-amber-100 pb-1'>
+				<span className='inline-block text-[10px] font-bold uppercase tracking-widest text-primary mb-2 border-b-2 border-primary/50 pb-1'>
 					Narrative Arc
 				</span>
 
@@ -12663,7 +12734,7 @@ const LevelUpBanner = ({ level }) => {
 	return (
 		<div className='mt-4 mb-6 w-full'>
 			{/* Full Width, Fixed Height (~64px) Banner */}
-			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-amber-700/80 rounded-lg shadow-sm w-full overflow-hidden'>
+			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-primary rounded-lg shadow-sm w-full overflow-hidden'>
 				{/* Logo Section - Vertical Center */}
 				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10/50 border-r border-border/40'>
 					<img src={logoPath} alt='Campaign Logo' className='h-12 w-auto object-contain opacity-80 drop-shadow-sm' />
@@ -12671,7 +12742,7 @@ const LevelUpBanner = ({ level }) => {
 
 				{/* Text Content */}
 				<div className='flex-1 flex flex-col justify-center px-4'>
-					<h3 className='text-xs font-serif font-bold text-amber-900 uppercase tracking-[0.15em] leading-none m-0! p-0!'>
+					<h3 className='text-xs font-serif font-bold text-primary uppercase tracking-[0.15em] leading-none m-0! p-0!'>
 						Level Up
 					</h3>
 					<p className='font-serif text-sm text-card-foreground leading-none p-0! m-0!'>
@@ -12694,7 +12765,7 @@ export const EntityBody = ({
 	mapMarkers,
 }) => {
 	return (
-		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
+		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
 				<div className='mb-4'>
 					<SmartMarkdown>{summary}</SmartMarkdown>
@@ -12763,7 +12834,7 @@ export const EntityBody = ({
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
 						<History size={16} className='text-amber-900/70 dark:text-muted-foreground' /> Events
 					</h3>
-					<EntityHistory events={history} />
+					<EntityHistory events={history} fullHeight />
 				</div>
 			)}
 			{/* Level Up Banner */}
@@ -12862,7 +12933,7 @@ export const EntityHeader = ({ data }) => {
 						onClick={(e) => e.stopPropagation()}>
 						<Link
 							to={`/dm/manage/${typeLabel.toLowerCase()}/${entityId}`}
-							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'>
+							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-primary hover:border-primary transition-all group/edit'>
 							<Edit3 size={14} className='group-hover/edit:scale-110 transition-transform' />
 							<span className='text-[10px] font-bold uppercase tracking-tight'>Quick Edit</span>
 						</Link>
@@ -15876,7 +15947,7 @@ export default function CharacterLayout({ viewModel }) {
 	// --- TAB 3: CHRONICLE ---
 	const renderChronicle = () => (
 		<div className='w-full px-4 sm:px-6 py-8'>
-			<div className='max-w-6xl mx-auto space-y-10'>
+			<div className='max-w-4xl mx-auto space-y-10'>
 				{personalQuests.length > 0 && (
 					<div>
 						<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>
@@ -17120,7 +17191,7 @@ function TabButton({ active, label, onClick, icon: Icon }) {
 			className={clsx(
 				'px-4 py-2 text-sm font-medium transition-all border-b-2 cursor-pointer',
 				active
-					? 'border-amber-600 text-amber-600 bg-amber-500/10/30'
+					? 'border-primary text-primary bg-amber-500/10/30'
 					: 'border-transparent text-muted-foreground hover:text-foreground/80 hover:bg-muted/30'
 			)}>
 			<span className='flex items-center gap-2'>

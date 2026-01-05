@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-05 08:22:21
+Generated: 2026-01-05 10:34:32
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -316,12 +316,15 @@ features\campaign\api\campaignService.js:
 
 features\campaign\components\CampaignCard.jsx:
   → @/shared/components/ui/Button
+  → clsx
   → lucide-react
 
 features\campaign\components\CampaignSelect.jsx:
   → ./CampaignCard
   → @/features/campaign/useCampaignSelection
   → @/shared/components/ui/LoadingSpinner
+  → @/shared/hooks/useTheme
+  → react
 
 features\campaign\useCampaignPersistence.js:
   → react

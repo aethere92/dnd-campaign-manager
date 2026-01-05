@@ -299,10 +299,12 @@ export const createEntity = async (type, data) => {
 	// 1. Prepare Core Payload
 	const corePayload = {};
 
+	// Standard campaign_id link for non-campaign entities
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
+	// Map generic name/description to specific table columns
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
@@ -320,6 +322,13 @@ export const createEntity = async (type, data) => {
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
+
+	// --- FIX START: Extract campaign_id from attributes for the Campaign table itself ---
+	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
+		// The 'campaigns' table requires an integer 'campaign_id' column
+		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
+	}
+	// --- FIX END ---
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -354,6 +363,12 @@ export const updateEntity = async (type, id, data) => {
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
+
+	// --- FIX START: Sync campaign_id column on update for Campaigns ---
+	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
+		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
+	}
+	// --- FIX END ---
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -484,7 +499,6 @@ export const updateRelationship = async (relId, updates) => {
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
-	// FIX: Escape SQL wildcards to prevent search abuse
 	const cleanQuery = escapeSqlLike(query);
 
 	const { data, error } = await supabase.rpc('api_search_entities', {
@@ -581,7 +595,6 @@ export const upsertEncounterAction = async (actionData) => {
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
 	if (!findTerm || !findTerm.trim()) return [];
 
-	// Ensure safe string
 	const safeReplace = replaceTerm === undefined || replaceTerm === null ? '' : replaceTerm;
 
 	const { data, error } = await supabase.rpc('api_scan_campaign_text', {
@@ -594,7 +607,6 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 		throw error;
 	}
 
-	// FIX: Regex Escape the search term so literal characters like '?' are found correctly
 	const escapedTerm = escapeRegExp(findTerm.trim());
 	const regex = new RegExp(escapedTerm, 'gi');
 
@@ -1676,7 +1688,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 					{filteredLibrary.map((group) => (
 						<div key={group.category} className='space-y-3 animate-in fade-in slide-in-from-bottom-1 duration-300'>
 							<h3 className='text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2'>
-								<FolderOpen size={10} className='text-amber-600' />
+								<FolderOpen size={10} className='text-primary' />
 								{group.category}
 								<span className='text-[8px] font-normal lowercase tracking-normal bg-muted px-1.5 rounded-full'>
 									{group.files.length} images
@@ -1798,7 +1810,7 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 			title={title}
 			className={clsx(
 				'p-1.5 rounded transition-colors flex items-center justify-center h-7 w-7',
-				isActive ? 'bg-amber-500/20 text-amber-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+				isActive ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
 				disabled && 'opacity-30 cursor-not-allowed'
 			)}>
 			<Icon size={14} strokeWidth={2.5} />
@@ -1882,8 +1894,8 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 				type='button'
 				onClick={onMentionClick}
 				className={clsx(
-					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-amber-500/10 transition-colors',
-					'text-amber-600/80 hover:text-amber-600'
+					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-primary/10 transition-colors',
+					'text-primary'
 				)}
 				title='Mention Entity (@)'>
 				<AtSign size={13} />
@@ -2085,11 +2097,11 @@ export default function MarkdownEditorImpl({ label, value, onChange, placeholder
 			{/* Mention Popup */}
 			{mentionPos && (
 				<div
-					className='fixed z-[9999] w-72 bg-background border border-amber-500/50 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+					className='fixed z-[9999] w-72 bg-background border border-primary/30 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
 					style={{ top: mentionPos.top, left: mentionPos.left }}
 					onClick={(e) => e.stopPropagation()}>
 					<div className='flex justify-between items-center p-2 border-b border-border bg-muted/50'>
-						<span className='text-[10px] font-bold uppercase text-amber-600 tracking-widest flex items-center gap-1'>
+						<span className='text-[10px] font-bold uppercase text-primary tracking-widest flex items-center gap-1'>
 							<Wand2 size={10} /> Link Entity
 						</span>
 						<button
@@ -2908,7 +2920,7 @@ export default function SessionEventManager({ sessionId }) {
 		<div className={ADMIN_SECTION_CLASS}>
 			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
 				<span className='flex items-center gap-2'>
-					<Calendar size={18} className='text-amber-600' /> Session Timeline
+					<Calendar size={18} className='text-primary' /> Session Timeline
 				</span>
 				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
 					Add Event
@@ -2920,7 +2932,7 @@ export default function SessionEventManager({ sessionId }) {
 					<div key={evt.id} className='group'>
 						{editingId === evt.id ? (
 							/* --- EDIT MODE --- */
-							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+							<div className='bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-4 animate-in fade-in'>
 								<div className='flex gap-3'>
 									<div className='w-16'>
 										<label className={ADMIN_LABEL_CLASS}>Order</label>
@@ -3750,10 +3762,10 @@ const NavItem = ({ to, icon: Icon, label }) => {
 			className={clsx(
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
-					? 'bg-primary text-amber-900 shadow-sm ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:ring-amber-800'
+					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
 					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 			)}>
-			<Icon size={15} className={isActive ? 'text-primary dark:text-amber-400' : 'opacity-70'} />
+			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
 			{label}
 		</Link>
 	);
@@ -4336,14 +4348,14 @@ export default function SplitPaneManager() {
 										}`}>
 										{/* Active Marker Strip */}
 										<div
-											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500/100' : 'bg-transparent'}`}
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-primary' : 'bg-transparent'}`}
 										/>
 
 										{/* Main Content Area */}
 										<div className='flex-1 py-3 pl-4 pr-2 min-w-0'>
 											<div
 												className={`font-bold text-sm truncate mb-0.5 ${
-													isActive ? 'text-amber-900' : 'text-foreground'
+													isActive ? 'text-primary' : 'text-foreground'
 												}`}>
 												{item.name || item.title}
 											</div>

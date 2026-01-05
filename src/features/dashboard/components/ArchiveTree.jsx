@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export const ArchiveTree = ({ arcs }) => {
 	return (
-		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col'>
+		<div className='bg-card border border-border rounded-xl p-6 h-full overflow-hidden flex flex-col hover:shadow-sm transition-all duration-300'>
 			<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2'>
 				<Folder size={12} /> Campaign Archive
 			</h4>

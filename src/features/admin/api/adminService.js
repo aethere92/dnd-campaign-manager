@@ -27,10 +27,12 @@ export const createEntity = async (type, data) => {
 	// 1. Prepare Core Payload
 	const corePayload = {};
 
+	// Standard campaign_id link for non-campaign entities
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
+	// Map generic name/description to specific table columns
 	if (strategy.colMapping) {
 		if (data.name) corePayload[strategy.colMapping.name] = data.name;
 		if (data.description) corePayload[strategy.colMapping.description] = data.description;
@@ -48,6 +50,13 @@ export const createEntity = async (type, data) => {
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
+
+	// --- FIX START: Extract campaign_id from attributes for the Campaign table itself ---
+	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
+		// The 'campaigns' table requires an integer 'campaign_id' column
+		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
+	}
+	// --- FIX END ---
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -82,6 +91,12 @@ export const updateEntity = async (type, id, data) => {
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
+
+	// --- FIX START: Sync campaign_id column on update for Campaigns ---
+	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
+		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
+	}
+	// --- FIX END ---
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -212,7 +227,6 @@ export const updateRelationship = async (relId, updates) => {
 export const searchEntitiesByName = async (campaignId, query) => {
 	if (!query) return [];
 
-	// FIX: Escape SQL wildcards to prevent search abuse
 	const cleanQuery = escapeSqlLike(query);
 
 	const { data, error } = await supabase.rpc('api_search_entities', {
@@ -309,7 +323,6 @@ export const upsertEncounterAction = async (actionData) => {
 export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) => {
 	if (!findTerm || !findTerm.trim()) return [];
 
-	// Ensure safe string
 	const safeReplace = replaceTerm === undefined || replaceTerm === null ? '' : replaceTerm;
 
 	const { data, error } = await supabase.rpc('api_scan_campaign_text', {
@@ -322,7 +335,6 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 		throw error;
 	}
 
-	// FIX: Regex Escape the search term so literal characters like '?' are found correctly
 	const escapedTerm = escapeRegExp(findTerm.trim());
 	const regex = new RegExp(escapedTerm, 'gi');
 

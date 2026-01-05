@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-05 08:22:21
+Generated: 2026-01-05 10:34:32
 ================================================================
 
 ### OVERALL STATISTICS
 
 Total files: 188
-Total lines: 17,674
-Non-empty lines: 15,656
-Comment lines: 1,401
-Total size: 549,887 bytes (537.00 KB)
-Average lines per file: 94.0
+Total lines: 17,745
+Non-empty lines: 15,720
+Comment lines: 1,411
+Total size: 552,689 bytes (539.74 KB)
+Average lines per file: 94.4
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 94.0
 
 .js:
   Files: 65
-  Lines: 6,130
-  Size: 170,574 bytes (166.58 KB)
+  Lines: 6,145
+  Size: 171,238 bytes (167.22 KB)
 
 .json:
   Files: 1
@@ -32,8 +32,8 @@ Average lines per file: 94.0
 
 .jsx:
   Files: 120
-  Lines: 10,878
-  Size: 362,408 bytes (353.91 KB)
+  Lines: 10,934
+  Size: 364,546 bytes (356.00 KB)
 
 .md:
   Files: 1
@@ -46,8 +46,8 @@ Average lines per file: 94.0
 app\styles\global.css: 451 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
 features\admin\components\AdminForm.jsx: 406 lines
+features\admin\api\adminService.js: 362 lines
 features\admin\components\EncounterManager.jsx: 354 lines
-features\admin\api\adminService.js: 350 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
 domain\entity\api\entityService.js: 273 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
@@ -79,23 +79,23 @@ domain_entity:
 
 features_admin:
   Files: 22
-  Lines: 4,070
-  Size: 133,686 bytes (130.55 KB)
+  Lines: 4,082
+  Size: 134,046 bytes (130.90 KB)
 
 features_atlas:
   Files: 16
   Lines: 1,602
-  Size: 50,257 bytes (49.08 KB)
+  Size: 50,255 bytes (49.08 KB)
 
 features_campaign:
   Files: 6
-  Lines: 229
-  Size: 7,124 bytes (6.96 KB)
+  Lines: 290
+  Size: 9,574 bytes (9.35 KB)
 
 features_dashboard:
   Files: 10
-  Lines: 779
-  Size: 27,839 bytes (27.19 KB)
+  Lines: 777
+  Size: 27,877 bytes (27.22 KB)
 
 features_graph:
   Files: 7
@@ -105,7 +105,7 @@ features_graph:
 features_navigation:
   Files: 7
   Lines: 322
-  Size: 10,190 bytes (9.95 KB)
+  Size: 10,188 bytes (9.95 KB)
 
 features_search:
   Files: 10
@@ -125,17 +125,17 @@ features_smart-tooltip:
 features_table-of-contents:
   Files: 5
   Lines: 209
-  Size: 6,384 bytes (6.23 KB)
+  Size: 6,375 bytes (6.23 KB)
 
 features_timeline:
   Files: 7
   Lines: 432
-  Size: 13,167 bytes (12.86 KB)
+  Size: 13,165 bytes (12.86 KB)
 
 features_wiki:
   Files: 46
   Lines: 4,531
-  Size: 147,307 bytes (143.85 KB)
+  Size: 147,280 bytes (143.83 KB)
 
 root:
   Files: 2
@@ -145,5 +145,5 @@ root:
 shared:
   Files: 23
   Lines: 1,580
-  Size: 43,141 bytes (42.13 KB)
+  Size: 43,137 bytes (42.13 KB)
 

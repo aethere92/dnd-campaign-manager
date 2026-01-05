@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/5/2026, 8:18:06 AM
+   Generated: 1/5/2026, 10:34:35 AM
 =========================================
 
 -----------------------------------------
@@ -50,28 +50,30 @@ TABLE: campaigns [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "campaign_id": 1,
-    "name": "A quest, a questin' we shall go",
-    "attributes": {
-      "map_data": "CAMPAIGN_01",
-      "defaultMap": "korinis_island"
-    },
-    "created_at": "2025-12-01T12:40:52.720Z",
-    "updated_at": "2025-12-01T12:40:52.720Z",
-    "description": "Six adventurers receive mysterious invitations to a strange, distant land. Teaming up with pirates, they battle monsters and navigate treacherous seas toward the enigmatic island of Korinis."
-  },
-  {
     "id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "campaign_id": 2,
     "name": "Red Hand of Doom",
     "attributes": {
+      "icon": "images/icons/factions/campaign_002/red_hand_icon.webp",
       "campaign_id": 2,
       "background_image": "images/assets/character_backgrounds/campaign_002/party_bg_horizontal.webp"
     },
     "created_at": "2025-11-19T18:55:54.343Z",
     "updated_at": "2025-11-19T18:55:54.343Z",
     "description": "Five unlikely heroes journey through lush subtropical forests. Bound by shared purpose or hidden motives, their story begins on a wild path where camaraderie grows with each step.\n"
+  },
+  {
+    "id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "campaign_id": 1,
+    "name": "A questin' we shall go",
+    "attributes": {
+      "map_data": "CAMPAIGN_01",
+      "defaultMap": "korinis_island",
+      "campaign_id": 1
+    },
+    "created_at": "2025-12-01T12:40:52.720Z",
+    "updated_at": "2025-12-01T12:40:52.720Z",
+    "description": "Six adventurers receive mysterious invitations to a strange, distant land. Teaming up with pirates, they battle monsters and navigate treacherous seas toward the enigmatic island of Korinis."
   }
 ]
 
@@ -89,76 +91,14 @@ TABLE: characters [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "d891ffb1-89ef-46a1-a0db-4538423b3c60",
-    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "name": "Aenwyn",
-    "created_at": "2025-12-10T17:18:35.168Z",
-    "updated_at": "2026-01-05T05:42:36.103Z",
-    "description": null,
-    "attributes": {
-      "icon": "../../images/assets/character_thumbnails/campaign_001/aenwyn.webp",
-      "race": "Half-Elf",
-      "class": "Sorcerer",
-      "level": "8",
-      "speed": "35ft.",
-      "skills": [
-        "Acrobatics (+0)",
-        "Animal Handling (+2)",
-        "Arcana (+4)",
-        "Athletics (+0)",
-        "Deception (+3)",
-        "History (+4)",
-        "Insight (+5)",
-        "Intimidation (+3)",
-        "Investigation (+4)",
-        "Medicine (+2)",
-        "Nature (+1)",
-        "Perception (+5)",
-        "Performance (+3)",
-        "Persuasion (+3)",
-        "Religion (+1)",
-        "Sleight of Hand (+0)",
-        "Stealth (+0)",
-        "Survival (+2)"
-      ],
-      "is_active": "true",
-      "languages": "Celestial, Common, Draconic, Dwarvish, Elvish",
-      "hit points": "58",
-      "initiative": "+0",
-      "armor class": "13",
-      "proficiency": "+3",
-      "saving throw": [
-        "STR +0",
-        "DEX +0",
-        "CON +5",
-        "INT +1",
-        "WIS +2",
-        "CHA +6"
-      ],
-      "ability score": [
-        "STR 10 (+0)",
-        "DEX 10 (+0)",
-        "CON 14 (+2)",
-        "INT 12 (+1)",
-        "WIS 14 (+2)",
-        "CHA 17 (+3)"
-      ],
-      "additional senses": [
-        "Passive Perception 15",
-        "Passive Investigation 14",
-        "Passive Insight 15"
-      ]
-    }
-  },
-  {
     "id": "cb68cdac-4ff3-41a2-a793-b83a303bd431",
     "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
     "name": "Aethere",
     "created_at": "2025-12-10T17:18:35.168Z",
-    "updated_at": "2026-01-05T05:42:40.899Z",
+    "updated_at": "2026-01-05T06:33:00.830Z",
     "description": null,
     "attributes": {
-      "icon": "../../images/assets/character_thumbnails/campaign_001/aethere.webp",
+      "icon": "images/assets/character_thumbnails/campaign_001/aethere.webp",
       "race": "Half-Elf",
       "class": "Bard",
       "level": "8",
@@ -210,6 +150,21 @@ TABLE: characters [⚠️ RLS DISABLED]
         "Passive Investigation 15",
         "Passive Insight 15"
       ]
+    }
+  },
+  {
+    "id": "837bbf03-cf95-46f8-8668-396ee0663039",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "name": "Alezander",
+    "created_at": "2025-12-10T17:18:35.168Z",
+    "updated_at": "2026-01-05T06:33:06.009Z",
+    "description": null,
+    "attributes": {
+      "icon": "images/assets/character_thumbnails/campaign_001/alezander.webp",
+      "race": "Half-Orc",
+      "class": "Barbarian",
+      "level": "8",
+      "is_active": "true"
     }
   }
 ]

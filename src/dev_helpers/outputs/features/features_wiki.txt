@@ -737,7 +737,7 @@ const LevelUpBanner = ({ level }) => {
 	return (
 		<div className='mt-4 mb-6 w-full'>
 			{/* Full Width, Fixed Height (~64px) Banner */}
-			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-amber-700/80 rounded-lg shadow-sm w-full overflow-hidden'>
+			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-primary rounded-lg shadow-sm w-full overflow-hidden'>
 				{/* Logo Section - Vertical Center */}
 				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10/50 border-r border-border/40'>
 					<img src={logoPath} alt='Campaign Logo' className='h-12 w-auto object-contain opacity-80 drop-shadow-sm' />
@@ -745,7 +745,7 @@ const LevelUpBanner = ({ level }) => {
 
 				{/* Text Content */}
 				<div className='flex-1 flex flex-col justify-center px-4'>
-					<h3 className='text-xs font-serif font-bold text-amber-900 uppercase tracking-[0.15em] leading-none m-0! p-0!'>
+					<h3 className='text-xs font-serif font-bold text-primary uppercase tracking-[0.15em] leading-none m-0! p-0!'>
 						Level Up
 					</h3>
 					<p className='font-serif text-sm text-card-foreground leading-none p-0! m-0!'>
@@ -768,7 +768,7 @@ export const EntityBody = ({
 	mapMarkers,
 }) => {
 	return (
-		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
+		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
 				<div className='mb-4'>
 					<SmartMarkdown>{summary}</SmartMarkdown>
@@ -837,7 +837,7 @@ export const EntityBody = ({
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
 						<History size={16} className='text-amber-900/70 dark:text-muted-foreground' /> Events
 					</h3>
-					<EntityHistory events={history} />
+					<EntityHistory events={history} fullHeight />
 				</div>
 			)}
 			{/* Level Up Banner */}
@@ -936,7 +936,7 @@ export const EntityHeader = ({ data }) => {
 						onClick={(e) => e.stopPropagation()}>
 						<Link
 							to={`/dm/manage/${typeLabel.toLowerCase()}/${entityId}`}
-							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'>
+							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-primary hover:border-primary transition-all group/edit'>
 							<Edit3 size={14} className='group-hover/edit:scale-110 transition-transform' />
 							<span className='text-[10px] font-bold uppercase tracking-tight'>Quick Edit</span>
 						</Link>
@@ -3950,7 +3950,7 @@ export default function CharacterLayout({ viewModel }) {
 	// --- TAB 3: CHRONICLE ---
 	const renderChronicle = () => (
 		<div className='w-full px-4 sm:px-6 py-8'>
-			<div className='max-w-6xl mx-auto space-y-10'>
+			<div className='max-w-4xl mx-auto space-y-10'>
 				{personalQuests.length > 0 && (
 					<div>
 						<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>

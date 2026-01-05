@@ -47,7 +47,7 @@ export const EntityBody = ({
 	mapMarkers,
 }) => {
 	return (
-		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
+		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
 				<div className='mb-4'>
 					<SmartMarkdown>{summary}</SmartMarkdown>
@@ -116,7 +116,7 @@ export const EntityBody = ({
 					<h3 className='font-serif text-lg mt-0 font-bold text-foreground mb-3 flex items-center gap-2'>
 						<History size={16} className='text-amber-900/70 dark:text-muted-foreground' /> Events
 					</h3>
-					<EntityHistory events={history} />
+					<EntityHistory events={history} fullHeight />
 				</div>
 			)}
 			{/* Level Up Banner */}

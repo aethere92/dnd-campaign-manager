@@ -1,51 +1,86 @@
-import { BookOpen, ArrowRight, Users } from 'lucide-react';
+import { ArrowRight, Users, Map, BookOpen } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
+import { clsx } from 'clsx';
 
 export const CampaignCard = ({ campaign, onSelect }) => {
 	const initial = (campaign.name?.[0] || 'C').toUpperCase();
+	const bgImage = campaign.attributes?.background_image;
+	const campaignIcon = campaign.attributes?.icon; // Check for icon in attributes
+	const mapData = campaign.attributes?.map_data ? 'Atlas active' : 'No Atlas';
+
+	// Fallback pattern if no image is provided
+	const hasBg = !!bgImage;
 
 	return (
-		<div className='bg-card/80 backdrop-blur-sm rounded-xl border border-border shadow-lg hover:shadow-xl transition-all p-6 flex flex-col h-full border-t-4 border-t-primary'>
-			{/* ID Badge */}
-			<div className='mb-4 flex justify-between items-start'>
-				<div className='w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-serif font-bold text-xl border border-primary/20'>
-					{initial}
-				</div>
-				<span className='text-[10px] font-mono text-muted-foreground/70 bg-muted px-2 py-1 rounded'>
-					ID: {campaign.id.slice(0, 8)}...
-				</span>
-			</div>
-
-			<div className='flex-1 mb-6'>
-				<h3 className='text-xl font-bold text-foreground font-serif mb-2'>{campaign.name}</h3>
-				<p className='text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed italic'>
-					{campaign.description || 'A journey into the unknown.'}
-				</p>
-
-				{/* Characters Section */}
-				{campaign.characterNames?.length > 0 && (
-					<div className='pt-4 border-t border-border/50'>
-						<div className='flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider mb-2'>
-							<Users size={12} />
-							Party Members
-						</div>
-						<div className='flex flex-wrap gap-1'>
-							{campaign.characterNames
-								.filter((name) => name !== 'Party')
-								.map((name, i) => (
-									<span
-										key={i}
-										className='text-[11px] px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20'>
-										{name}
-									</span>
-								))}
-						</div>
-					</div>
+		<div className='group relative flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden'>
+			{/* Banner / Header Image */}
+			<div className={clsx('relative h-32 w-full shrink-0 overflow-hidden', !hasBg && 'bg-muted')}>
+				{hasBg ? (
+					<img
+						src={bgImage}
+						alt='Campaign Cover'
+						className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-105'
+					/>
+				) : (
+					<div
+						className='absolute inset-0 opacity-10'
+						style={{
+							backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+							backgroundSize: '16px 16px',
+						}}
+					/>
 				)}
+
+				{/* Gradient Overlay for Text Readability/Transition */}
+				<div className='absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent' />
 			</div>
 
-			<div className='mt-auto'>
-				<Button onClick={() => onSelect(campaign.id)} fullWidth variant='primary' icon={ArrowRight}>
+			{/* Card Content */}
+			<div className='flex flex-col flex-1 px-6 pb-6 relative'>
+				{/* Avatar Badge (Icon or Initial) */}
+				<div className='-mt-12 mb-6'>
+					<div className='w-20 h-20 border-border rounded-xl bg-background border hover:shadow-md flex items-center justify-center overflow-hidden transition-colors'>
+						{campaignIcon ? (
+							<img src={campaignIcon} alt={`${campaign.name} icon`} className='w-full h-full object-cover' />
+						) : (
+							<span className='text-4xl font-serif font-bold text-primary/80 group-hover:text-primary'>{initial}</span>
+						)}
+					</div>
+				</div>
+
+				{/* Title & Description */}
+				<div className='mb-6'>
+					<h3 className='text-[clamp(1rem,5vw,1.2rem)] font-bold font-serif text-foreground leading-tight mb-2 group-hover:text-primary transition-colors'>
+						{campaign.name}
+					</h3>
+					<p className='text-sm text-muted-foreground line-clamp-5 leading-relaxed'>
+						{campaign.description || 'A journey into the unknown.'}
+					</p>
+				</div>
+
+				{/* Metadata / Stats Row */}
+				<div className='mt-auto pt-4 border-t border-border/50 grid grid-cols-2 gap-4 mb-6'>
+					<div className='flex flex-col'>
+						<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1.5'>
+							<Users size={10} /> Party Size
+						</span>
+						<span className='text-sm font-medium text-foreground'>{campaign.characterNames?.length || 0} Heroes</span>
+					</div>
+					<div className='flex flex-col'>
+						<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1.5'>
+							<Map size={10} /> Setting
+						</span>
+						<span className='text-sm font-medium text-foreground'>{mapData}</span>
+					</div>
+				</div>
+
+				{/* Action Button */}
+				<Button
+					onClick={() => onSelect(campaign.id)}
+					fullWidth
+					variant='outline'
+					className='group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors'
+					icon={ArrowRight}>
 					Enter Campaign
 				</Button>
 			</div>

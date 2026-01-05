@@ -60,11 +60,9 @@ export default function DashboardView() {
 					<SectionDivider className='my-6' />
 
 					{/* ROW 3: Active Party */}
-					<div>
-						<PartyWidget party={activeParty} />
-					</div>
+					<PartyWidget party={activeParty} />
 
-					<SectionDivider className='my-6' />
+					<SectionDivider className='my-6 mb-12' />
 
 					{/* ROW 4: Status Panel (Insights & Threads) */}
 					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[400px]'>
