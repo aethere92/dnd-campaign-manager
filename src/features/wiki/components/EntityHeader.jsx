@@ -85,7 +85,7 @@ export const EntityHeader = ({ data }) => {
 						onClick={(e) => e.stopPropagation()}>
 						<Link
 							to={`/dm/manage/${typeLabel.toLowerCase()}/${entityId}`}
-							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-amber-700 hover:border-amber-500/50 transition-all group/edit'>
+							className='flex items-center gap-2 px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full shadow-lg text-muted-foreground hover:text-primary hover:border-primary transition-all group/edit'>
 							<Edit3 size={14} className='group-hover/edit:scale-110 transition-transform' />
 							<span className='text-[10px] font-bold uppercase tracking-tight'>Quick Edit</span>
 						</Link>

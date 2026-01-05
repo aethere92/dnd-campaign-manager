@@ -36,7 +36,7 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 			title={title}
 			className={clsx(
 				'p-1.5 rounded transition-colors flex items-center justify-center h-7 w-7',
-				isActive ? 'bg-amber-500/20 text-amber-700' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+				isActive ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
 				disabled && 'opacity-30 cursor-not-allowed'
 			)}>
 			<Icon size={14} strokeWidth={2.5} />
@@ -120,8 +120,8 @@ const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
 				type='button'
 				onClick={onMentionClick}
 				className={clsx(
-					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-amber-500/10 transition-colors',
-					'text-amber-600/80 hover:text-amber-600'
+					'ml-1 flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase rounded hover:bg-primary/10 transition-colors',
+					'text-primary'
 				)}
 				title='Mention Entity (@)'>
 				<AtSign size={13} />

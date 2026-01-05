@@ -32,10 +32,10 @@ const NavItem = ({ to, icon: Icon, label }) => {
 			className={clsx(
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
-					? 'bg-primary text-amber-900 shadow-sm ring-1 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-100 dark:ring-amber-800'
+					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
 					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 			)}>
-			<Icon size={15} className={isActive ? 'text-primary dark:text-amber-400' : 'opacity-70'} />
+			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
 			{label}
 		</Link>
 	);

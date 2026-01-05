@@ -142,14 +142,14 @@ export default function SplitPaneManager() {
 										}`}>
 										{/* Active Marker Strip */}
 										<div
-											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-amber-500/100' : 'bg-transparent'}`}
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-primary' : 'bg-transparent'}`}
 										/>
 
 										{/* Main Content Area */}
 										<div className='flex-1 py-3 pl-4 pr-2 min-w-0'>
 											<div
 												className={`font-bold text-sm truncate mb-0.5 ${
-													isActive ? 'text-amber-900' : 'text-foreground'
+													isActive ? 'text-primary' : 'text-foreground'
 												}`}>
 												{item.name || item.title}
 											</div>
