@@ -35,7 +35,7 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 					{filteredLibrary.map((group) => (
 						<div key={group.category} className='space-y-3 animate-in fade-in slide-in-from-bottom-1 duration-300'>
 							<h3 className='text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2'>
-								<FolderOpen size={10} className='text-amber-600' />
+								<FolderOpen size={10} className='text-primary' />
 								{group.category}
 								<span className='text-[8px] font-normal lowercase tracking-normal bg-muted px-1.5 rounded-full'>
 									{group.files.length} images

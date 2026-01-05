@@ -16,7 +16,7 @@ const LevelUpBanner = ({ level }) => {
 	return (
 		<div className='mt-4 mb-6 w-full'>
 			{/* Full Width, Fixed Height (~64px) Banner */}
-			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-amber-700/80 rounded-lg shadow-sm w-full overflow-hidden'>
+			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-primary rounded-lg shadow-sm w-full overflow-hidden'>
 				{/* Logo Section - Vertical Center */}
 				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10/50 border-r border-border/40'>
 					<img src={logoPath} alt='Campaign Logo' className='h-12 w-auto object-contain opacity-80 drop-shadow-sm' />
@@ -24,7 +24,7 @@ const LevelUpBanner = ({ level }) => {
 
 				{/* Text Content */}
 				<div className='flex-1 flex flex-col justify-center px-4'>
-					<h3 className='text-xs font-serif font-bold text-amber-900 uppercase tracking-[0.15em] leading-none m-0! p-0!'>
+					<h3 className='text-xs font-serif font-bold text-primary uppercase tracking-[0.15em] leading-none m-0! p-0!'>
 						Level Up
 					</h3>
 					<p className='font-serif text-sm text-card-foreground leading-none p-0! m-0!'>

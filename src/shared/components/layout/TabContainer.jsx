@@ -12,7 +12,7 @@ function TabButton({ active, label, onClick, icon: Icon }) {
 			className={clsx(
 				'px-4 py-2 text-sm font-medium transition-all border-b-2 cursor-pointer',
 				active
-					? 'border-amber-600 text-amber-600 bg-amber-500/10/30'
+					? 'border-primary text-primary bg-amber-500/10/30'
 					: 'border-transparent text-muted-foreground hover:text-foreground/80 hover:bg-muted/30'
 			)}>
 			<span className='flex items-center gap-2'>

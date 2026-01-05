@@ -323,11 +323,11 @@ export default function MarkdownEditorImpl({ label, value, onChange, placeholder
 			{/* Mention Popup */}
 			{mentionPos && (
 				<div
-					className='fixed z-[9999] w-72 bg-background border border-amber-500/50 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+					className='fixed z-[9999] w-72 bg-background border border-primary/30 shadow-2xl rounded-lg animate-in fade-in zoom-in-95 duration-100 flex flex-col'
 					style={{ top: mentionPos.top, left: mentionPos.left }}
 					onClick={(e) => e.stopPropagation()}>
 					<div className='flex justify-between items-center p-2 border-b border-border bg-muted/50'>
-						<span className='text-[10px] font-bold uppercase text-amber-600 tracking-widest flex items-center gap-1'>
+						<span className='text-[10px] font-bold uppercase text-primary tracking-widest flex items-center gap-1'>
 							<Wand2 size={10} /> Link Entity
 						</span>
 						<button

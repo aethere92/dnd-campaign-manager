@@ -98,7 +98,7 @@ export default function SessionEventManager({ sessionId }) {
 		<div className={ADMIN_SECTION_CLASS}>
 			<div className={`${ADMIN_HEADER_CLASS} flex items-center justify-between`}>
 				<span className='flex items-center gap-2'>
-					<Calendar size={18} className='text-amber-600' /> Session Timeline
+					<Calendar size={18} className='text-primary' /> Session Timeline
 				</span>
 				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
 					Add Event
@@ -110,7 +110,7 @@ export default function SessionEventManager({ sessionId }) {
 					<div key={evt.id} className='group'>
 						{editingId === evt.id ? (
 							/* --- EDIT MODE --- */
-							<div className='bg-muted/30 border border-amber-300 rounded-lg p-4 space-y-4 animate-in fade-in'>
+							<div className='bg-muted/30 border border-primary/20 rounded-lg p-4 space-y-4 animate-in fade-in'>
 								<div className='flex gap-3'>
 									<div className='w-16'>
 										<label className={ADMIN_LABEL_CLASS}>Order</label>

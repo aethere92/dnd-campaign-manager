@@ -10,7 +10,7 @@ export const TocItem = ({ item, isActive, onClick }) => {
 			className={clsx(
 				'group flex items-start text-left w-full py-1.5 transition-all duration-200 border-l-[3px] px-4',
 				isActive
-					? 'border-amber-600 text-amber-700 font-bold bg-amber-500/10/50'
+					? 'border-primary text-primary font-bold bg-primary/10'
 					: 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
 			)}>
 			<span

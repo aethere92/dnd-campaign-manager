@@ -15,7 +15,7 @@ const Group = ({ label, icon: Icon, children, defaultOpen = true }) => {
 					e.stopPropagation();
 					setIsOpen(!isOpen);
 				}}
-				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-amber-700 transition-colors mb-1 select-none font-sans'>
+				className='flex items-center w-full text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mb-1 select-none font-sans'>
 				<span className='mr-1 opacity-70'>{isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}</span>
 				<span className='flex items-center gap-1.5'>
 					{Icon && <Icon size={12} />}
