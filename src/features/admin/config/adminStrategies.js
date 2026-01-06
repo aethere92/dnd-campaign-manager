@@ -27,6 +27,7 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy', 'Unknown'] },
 			{ key: 'status', label: 'Status', type: 'text' },
 			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 

@@ -155,6 +155,8 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       useTooltipState.js
       components/
         TooltipCard.jsx
+      config/
+        tooltipProfiles.js
     table-of-contents/
       TableOfContents.jsx
       components/
@@ -277,16 +279,16 @@ import { TimelineArcHeader } from './components/TimelineArcHeader';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import { useMemo } from 'react';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { Search, ChevronsUp, ChevronsDown, X } from 'lucide-react';
 
 export default function TimelineView() {
-	const { timelineItems, isLoading } = useTimelineViewModel();
+	const { timelineItems, isLoading, searchQuery, setSearchQuery, toggleSession, expandAll, collapseAll } =
+		useTimelineViewModel();
 
 	const tocItems = useMemo(() => {
 		if (!timelineItems) return [];
 
-		// Flatten the hierarchy into a linear list
 		return timelineItems.flatMap((item) => {
-			// LEVEL 1: Arc Header
 			if (item.type === 'arc_header') {
 				return [
 					{
@@ -296,25 +298,21 @@ export default function TimelineView() {
 					},
 				];
 			}
-
-			// LEVEL 2: Session
 			if (item.type === 'session') {
 				const sessionNode = {
-					id: `session-marker-${item.number}`, // Ensure this ID exists in DOM
+					id: `session-marker-${item.number}`,
 					text: item.title,
 					depth: 2,
 				};
+				if (!item.isExpanded) return [sessionNode];
 
-				// LEVEL 3: Events (if they exist)
 				const eventNodes = (item.events || []).map((event) => ({
-					id: event.id, // The DOM element ID for the event card
+					id: event.id,
 					text: event.title,
 					depth: 3,
 				}));
-
 				return [sessionNode, ...eventNodes];
 			}
-
 			return [];
 		});
 	}, [timelineItems]);
@@ -325,29 +323,77 @@ export default function TimelineView() {
 		<div className='h-full overflow-hidden flex flex-col'>
 			<div className='flex-1 overflow-y-auto bg-background custom-scrollbar'>
 				<div className='max-w-7xl mx-auto p-4 md:p-12'>
-					<h1 className='text-3xl font-serif font-bold text-foreground mb-10'>Campaign History</h1>
+					<div className='flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10'>
+						<h1 className='text-3xl font-serif font-bold text-foreground'>Campaign History</h1>
+
+						{/* --- TOOLBAR --- */}
+						<div className='flex flex-col sm:flex-row gap-3 w-full md:w-auto'>
+							{/* Search Input */}
+							<div className='relative w-full sm:w-64'>
+								<Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+								<input
+									type='text'
+									placeholder='Filter events...'
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
+									className='w-full h-9 pl-9 pr-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+								/>
+								{searchQuery && (
+									<button
+										onClick={() => setSearchQuery('')}
+										className='absolute right-2 top-2.5 text-muted-foreground hover:text-foreground'>
+										<X size={14} />
+									</button>
+								)}
+							</div>
+
+							{/* Toggle Buttons */}
+							<div className='flex items-center rounded-md border border-input bg-background shadow-sm h-9'>
+								<button
+									onClick={expandAll}
+									className='flex-1 sm:flex-none px-3 h-full flex items-center gap-2 hover:bg-muted/50 transition-colors border-r border-input text-xs font-medium'
+									title='Expand All'>
+									<ChevronsDown size={14} /> <span className='sm:hidden lg:inline'>Expand</span>
+								</button>
+								<button
+									onClick={collapseAll}
+									className='flex-1 sm:flex-none px-3 h-full flex items-center gap-2 hover:bg-muted/50 transition-colors text-xs font-medium'
+									title='Collapse All'>
+									<ChevronsUp size={14} /> <span className='sm:hidden lg:inline'>Collapse</span>
+								</button>
+							</div>
+						</div>
+					</div>
 
 					<div className='grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-12 relative'>
 						{/* 
-                           KEEPING THE BORDER: 
-                           The border-l-2 creates the "timeline". 
-                           Both Sessions and Arc Headers sit inside this, putting markers on the line.
+                           Timeline Container 
+                           FIX: Reduced mobile margin to ml-6 (24px) to give content more width.
+                           The Arc Icon overhangs -21px. ml-6 + p-4 = 40px space. Safe.
                         */}
-						<div className='relative border-l-2 border-border ml-3 md:ml-4 space-y-8 pb-20'>
-							{timelineItems.map((item) => {
-								if (item.type === 'arc_header') {
+						<div className='relative border-l-2 border-border ml-3 md:ml-10 space-y-8 pb-20'>
+							{timelineItems.length === 0 ? (
+								<div className='py-20 text-center text-muted-foreground'>No events found matching "{searchQuery}"</div>
+							) : (
+								timelineItems.map((item) => {
+									if (item.type === 'arc_header') {
+										return (
+											<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
+												<TimelineArcHeader arc={item} id={`arc-${item.id}`} />
+											</div>
+										);
+									}
 									return (
-										<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
-											<TimelineArcHeader arc={item} id={`arc-${item.id}`} />
+										<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
+											<TimelineSession
+												session={item}
+												id={`session-${item.number}`}
+												onToggle={() => toggleSession(item.id)}
+											/>
 										</div>
 									);
-								}
-								return (
-									<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
-										<TimelineSession session={item} id={`session-${item.number}`} />
-									</div>
-								);
-							})}
+								})
+							)}
 						</div>
 
 						<TableOfContents items={tocItems} visibilityClass='hidden xl:block' mobileToggleClass='xl:hidden' />
@@ -361,7 +407,7 @@ export default function TimelineView() {
 --- END OF features\timeline\TimelinePage.jsx ---
 
 --- FILE: features\timeline\useTimelineView.js ---
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTimeline } from '@/features/timeline/api/timelineService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
@@ -369,6 +415,8 @@ import { getEventStyle } from './utils/eventStyles';
 
 export function useTimelineViewModel() {
 	const { campaignId } = useCampaign();
+	const [searchQuery, setSearchQuery] = useState('');
+	const [collapsedSessions, setCollapsedSessions] = useState(new Set());
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['timeline', campaignId],
@@ -376,31 +424,50 @@ export function useTimelineViewModel() {
 		enabled: !!campaignId,
 	});
 
+	// --- Actions ---
+
+	const toggleSession = useCallback((sessionId) => {
+		setCollapsedSessions((prev) => {
+			const next = new Set(prev);
+			if (next.has(sessionId)) {
+				next.delete(sessionId);
+			} else {
+				next.add(sessionId);
+			}
+			return next;
+		});
+	}, []);
+
+	const collapseAll = useCallback(() => {
+		if (!data) return;
+		const allIds = data.map((s) => s.session_id);
+		setCollapsedSessions(new Set(allIds));
+	}, [data]);
+
+	const expandAll = useCallback(() => {
+		setCollapsedSessions(new Set());
+	}, []);
+
+	// --- Filtering & Processing ---
+
 	const timelineItems = useMemo(() => {
 		if (!data) return [];
 
 		const items = [];
 		let currentArcId = null;
 
-		data.forEach((session) => {
-			// 1. Detect Arc Change
-			// Use strict comparison to detect switching from one arc to another
-			if (session.arc_id && session.arc_id !== currentArcId) {
-				items.push({
-					type: 'arc_header',
-					id: `arc-${session.arc_id}`,
-					title: session.arc_title,
-					description: session.arc_description,
-					color: session.arc_attributes?.color || 'amber', // Future proofing
-				});
-				currentArcId = session.arc_id;
-			} else if (!session.arc_id && currentArcId !== null) {
-				// Optional: We dropped out of an arc into "uncategorized"
-				currentArcId = null;
-			}
+		// Normalize Search
+		const query = searchQuery.toLowerCase().trim();
+		const isSearching = query.length > 0;
 
-			// 2. Process Session (Existing Logic)
-			const events = (session.events || []).map((event) => ({
+		// Process each session from the DB
+		data.forEach((session) => {
+			// 1. Filter Logic
+			let matchingEvents = [];
+			const sessionMatches = session.session_title.toLowerCase().includes(query);
+
+			// Map events to view model first
+			const allEvents = (session.events || []).map((event) => ({
 				id: event.id,
 				title: event.title,
 				typeLabel: event.type?.replace(/_/g, ' ') || 'Event',
@@ -409,20 +476,71 @@ export function useTimelineViewModel() {
 				style: getEventStyle(event.type),
 			}));
 
+			if (isSearching) {
+				if (sessionMatches) {
+					// Match on Session Title -> Show all events
+					matchingEvents = allEvents;
+				} else {
+					// Match on Event Content -> Show only matching events
+					matchingEvents = allEvents.filter(
+						(e) =>
+							e.title.toLowerCase().includes(query) ||
+							(e.description && e.description.toLowerCase().includes(query)) ||
+							e.tags.some((t) => t.name.toLowerCase().includes(query))
+					);
+				}
+			} else {
+				matchingEvents = allEvents;
+			}
+
+			// If searching and nothing matches, skip this session entirely
+			if (isSearching && !sessionMatches && matchingEvents.length === 0) {
+				return;
+			}
+
+			// 2. Arc Logic (Only add Arc header if we are adding a session under it)
+			if (session.arc_id && session.arc_id !== currentArcId) {
+				items.push({
+					type: 'arc_header',
+					id: `arc-${session.arc_id}`,
+					title: session.arc_title,
+					description: session.arc_description,
+					color: session.arc_attributes?.color || 'amber',
+				});
+				currentArcId = session.arc_id;
+			} else if (!session.arc_id && currentArcId !== null) {
+				currentArcId = null;
+			}
+
+			// 3. Determine Expansion State
+			// If searching, always expand. Otherwise, check state.
+			const isExpanded = isSearching ? true : !collapsedSessions.has(session.session_id);
+
 			items.push({
 				type: 'session',
 				id: session.session_id,
 				number: session.session_number ?? 999,
 				dateLabel: session.session_date || 'Unknown Date',
 				title: session.session_title,
-				events,
+				events: matchingEvents,
+				synopsis: session?.attributes?.synopsis || null,
+				isExpanded,
+				hasActiveSearch: isSearching, // Pass this down to disable toggles during search if desired
 			});
 		});
 
 		return items;
-	}, [data]);
+	}, [data, searchQuery, collapsedSessions]);
 
-	return { timelineItems, isLoading };
+	return {
+		timelineItems,
+		isLoading,
+		searchQuery,
+		setSearchQuery,
+		toggleSession,
+		expandAll,
+		collapseAll,
+	};
 }
 
 --- END OF features\timeline\useTimelineView.js ---
@@ -454,9 +572,14 @@ export const TimelineArcHeader = ({ arc }) => {
 		// pt-10: Space from previous session.
 		// pb-1: Reduced space to the next session (tight coupling).
 		<div className='relative pl-8 md:pl-12 pt-10 pb-1'>
-			{/* "Chapter Marker" - Placed on the vertical line
-			    -left-[19px] centers the 40px icon on the ~2px border line. */}
-			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-primary/10 shadow-sm z-10 text-primary'>
+			{/* 
+                FIX: "Chapter Marker" Alignment
+                - Width 40px (w-10). Center is 20px.
+                - Border is 2px. Center is 1px relative to parent.
+                - Content starts at 2px.
+                - To align centers: Left = -21px (was -19px)
+            */}
+			<div className='absolute -left-[21px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-primary/10 shadow-sm z-10 text-primary'>
 				<BookOpen size={20} strokeWidth={2.5} />
 			</div>
 
@@ -481,51 +604,44 @@ export const TimelineArcHeader = ({ arc }) => {
 --- END OF features\timeline\components\TimelineArcHeader.jsx ---
 
 --- FILE: features\timeline\components\TimelineEvent.jsx ---
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { Diamond } from 'lucide-react';
 
-export const TimelineEvent = ({ event, id }) => {
+export const TimelineEvent = memo(({ event, id }) => {
 	const { Icon, container } = event.style;
 
-	// Group tags by entity type
 	const groupedTags = useMemo(() => {
 		if (!event.tags || event.tags.length === 0) return [];
-
 		const groups = {};
 		event.tags.forEach((tag) => {
 			const type = tag.type || 'default';
-			if (!groups[type]) {
-				groups[type] = [];
-			}
+			if (!groups[type]) groups[type] = [];
 			groups[type].push(tag);
 		});
-
-		// Convert to array of groups
 		return Object.values(groups);
 	}, [event.tags]);
 
 	return (
-		<div className='relative flex gap-3 md:gap-4 group'>
-			{/* Icon Bubble */}
+		// FIX: Reduced gap on mobile (gap-2.5) to gap-4 on desktop
+		<div className='relative flex gap-2.5 md:gap-4 group'>
+			{/* Icon Bubble - Slightly smaller on mobile (w-7) */}
 			<div
 				className={clsx(
-					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110 bg-background',
+					'shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110 bg-background',
 					container
 				)}>
-				<Icon size={14} strokeWidth={2.5} />
+				<Icon className='w-3.5 h-3.5 md:w-4 md:h-4' strokeWidth={2.5} />
 			</div>
 
 			{/* Content */}
 			<div id={id} className='flex-1 -mt-1 pb-2 min-w-0'>
-				{/* FIX: Title color muted to text-foreground/80 */}
 				<h4 className='text-sm font-bold text-foreground/80 mb-1 flex flex-wrap items-center gap-2'>
 					<span className='mr-auto'>{event.title}</span>
-					<span className='text-[9px] font-normal uppercase tracking-wider text-foreground border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
+					{/* <span className='text-[9px] font-normal uppercase tracking-wider text-foreground border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
 						{event.typeLabel}
-					</span>
+					</span> */}
 				</h4>
 
 				{event.description && (
@@ -534,35 +650,13 @@ export const TimelineEvent = ({ event, id }) => {
 					</div>
 				)}
 
-				{/* Grouped Tags */}
 				{groupedTags.length > 0 && (
-					<div className='flex flex-wrap items-center gap-2 mt-2'>
+					<div className='flex flex-wrap items-center gap-2 mt-2 p-1 bg-card'>
 						{groupedTags.map((group, groupIndex) => (
 							<div key={groupIndex} className='flex items-center gap-2'>
-								{/* Tags in this group */}
-								<div className='flex flex-wrap gap-1.5'>
-									{group.map((tag, idx) => {
-										const config = getEntityConfig(tag.type);
-										const TagIcon = config.icon;
-										const styles = config.tailwind;
-
-										return (
-											<span
-												key={`${tag.name}-${idx}`}
-												className={clsx(
-													// FIX: Changed font-bold to font-semibold for better legibility
-													'inline-flex items-center gap-1 text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border cursor-default whitespace-nowrap',
-													styles.bg,
-													styles.text,
-													styles.border
-												)}>
-												<TagIcon size={10} /> {tag.name}
-											</span>
-										);
-									})}
+								<div className='flex flex-wrap gap-2 text-[12px]'>
+									<SmartMarkdown inline>{group.map((tag) => tag.name).join(' ')}</SmartMarkdown>
 								</div>
-
-								{/* Separator */}
 								{groupIndex < groupedTags.length - 1 && (
 									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
 								)}
@@ -573,50 +667,123 @@ export const TimelineEvent = ({ event, id }) => {
 			</div>
 		</div>
 	);
-};
+});
+
+TimelineEvent.displayName = 'TimelineEvent';
 
 --- END OF features\timeline\components\TimelineEvent.jsx ---
 
 --- FILE: features\timeline\components\TimelineSession.jsx ---
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { TimelineEvent } from './TimelineEvent';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { clsx } from 'clsx';
 
-export const TimelineSession = ({ session, id }) => {
+// Estimated height of an event card to prevent massive layout shifts
+const ESTIMATED_EVENT_HEIGHT = 120;
+
+export const TimelineSession = memo(({ session, id, onToggle }) => {
+	const [isVisible, setIsVisible] = useState(false);
+	const containerRef = useRef(null);
+	const { isExpanded, hasActiveSearch } = session;
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+		if (!isExpanded) return;
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				if (entry.isIntersecting) {
+					setIsVisible(true);
+					observer.disconnect();
+				}
+			},
+			{
+				rootMargin: '600px 0px',
+				threshold: 0,
+			}
+		);
+
+		observer.observe(containerRef.current);
+
+		return () => {
+			observer.disconnect();
+		};
+	}, [isExpanded]);
+
+	const eventList = useMemo(() => {
+		if (!isVisible) return null;
+		return session.events.map((event) => <TimelineEvent key={event.id} event={event} id={event.id} />);
+	}, [session.events, isVisible]);
+
+	const placeholderHeight = session.events.length * ESTIMATED_EVENT_HEIGHT;
+
 	return (
-		// OPTIMIZATION: Reduced padding (pl-4) on mobile to maximize text width
-		<div id={id} className='relative pl-4 md:pl-12'>
-			{/* Session Marker (Circle on the main line) */}
-			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
+		<div id={id} ref={containerRef} className='relative pl-3 md:pl-12'>
+			{/* Session Marker */}
+			<div className='absolute -left-[11px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
 				<div className='w-2 h-2 rounded-full bg-gray-400' />
 			</div>
 
-			{/* Session Header */}
-			<div className='mb-8'>
-				<div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2'>
-					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded self-start border border-border'>
+			{/* 
+               FIX: Header Layout
+               Removed flex-row columns. The chevron is now inline with the title.
+            */}
+			<div className='mb-6 cursor-pointer group pl-5 md:pl-0'>
+				{/* Metadata Row */}
+				<div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2'>
+					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
 						Session {session.number - 1}
 					</span>
 					<time className='text-xs text-muted-foreground/70 flex items-center gap-1 font-medium'>
 						<Calendar size={12} /> {session.dateLabel}
 					</time>
 				</div>
-				<h2 className='text-2xl font-serif font-bold text-foreground mb-3'>{session.title}</h2>
+
+				{/* Title Row with Inline Chevron */}
+				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight'>
+					{/* align-middle ensures text aligns with icon */}
+					<span className='align-middle'>{session.title}</span>
+
+					{!hasActiveSearch && (
+						<span
+							onClick={!hasActiveSearch ? onToggle : undefined}
+							className={clsx(
+								'inline-flex items-center justify-center align-middle ml-2 p-1 rounded-full text-muted-foreground/50 group-hover:bg-muted group-hover:text-foreground transition-all',
+								isExpanded ? 'rotate-0' : '-rotate-90'
+							)}>
+							<ChevronDown size={20} />
+						</span>
+					)}
+				</h2>
+
+				{session.synopsis && (
+					<div className='text-muted-foreground prose prose-sm prose-p:my-1 max-w-none text-pretty'>
+						<SmartMarkdown>{session.synopsis}</SmartMarkdown>
+					</div>
+				)}
 			</div>
 
 			{/* Events List */}
-			<div className='space-y-6 relative'>
-				{/* Connector Line for events */}
-				{/* Adjusted left position slightly to align with tighter padding if needed, 
-                    but 15px centers it nicely within the w-8 icon (16px center) roughly */}
-				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-muted -z-10' />
-
-				{session.events.map((event) => (
-					<TimelineEvent key={event.id} event={event} id={event.id} />
-				))}
-			</div>
+			{isExpanded && (
+				<div className='space-y-6 relative min-h-[50px] animate-in fade-in slide-in-from-top-2 duration-300'>
+					{isVisible ? (
+						eventList
+					) : (
+						<div
+							style={{ height: placeholderHeight }}
+							className='w-full rounded-lg border border-dashed border-border/50 bg-muted/20 flex items-center justify-center'>
+							<span className='text-xs text-muted-foreground/50'>Loading {session.events.length} events...</span>
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
-};
+});
+
+TimelineSession.displayName = 'TimelineSession';
 
 --- END OF features\timeline\components\TimelineSession.jsx ---
 

@@ -139,6 +139,7 @@ export const isIgnoredAttribute = (key) => {
 		'is_active',
 		'map_image',
 		'map_markers',
+		'aliases',
 	];
 
 	return ignoredKeys.includes(key.toLowerCase());

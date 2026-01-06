@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useRef, useCallback } from 'react'; // ADDED
 import { clsx } from 'clsx';
 import { useTooltip } from '@/features/smart-tooltip/TooltipContext';
 import { getEntityStyles } from '@/domain/entity/config/entityStyles';
@@ -19,56 +18,30 @@ export default function EntityLink({
 	const { openTooltip, closeTooltip } = useTooltip();
 	const styles = getEntityStyles(type);
 
-	// --- IMPROVEMENT #4: Long Press Logic ---
-	const pressTimer = useRef(null);
-	const isLongPress = useRef(false);
-
-	const handleTouchStart = (e) => {
-		isLongPress.current = false;
-		pressTimer.current = setTimeout(() => {
-			isLongPress.current = true;
-			// Open Tooltip on long press position
-			openTooltip(e, id, type, true);
-		}, 500); // 500ms threshold
-	};
-
-	const handleTouchEnd = (e) => {
-		if (pressTimer.current) {
-			clearTimeout(pressTimer.current);
-		}
-		// If it wasn't a long press, treat as click (Navigate)
-		if (!isLongPress.current) {
-			navigate(`/wiki/${type}/${id}`);
-			closeTooltip();
-		}
-		// Prevent ghost clicks if it was a long press
-		if (isLongPress.current && e.cancelable) {
-			e.preventDefault();
-		}
-	};
-
-	const handleTouchMove = () => {
-		// Cancel everything if user scrolls
-		if (pressTimer.current) {
-			clearTimeout(pressTimer.current);
-			isLongPress.current = true; // Treat as "handled" so we don't navigate
-		}
-	};
-	// ----------------------------------------
-
 	const handleMouseEnter = (e) => {
-		// Desktop only
+		// Desktop only: Hover to open
 		if (window.matchMedia('(hover: hover)').matches) {
 			openTooltip(e, id, type);
 		}
 	};
 
+	// FIX: Guard closeTooltip so mobile touch emulation doesn't auto-close it
+	const handleMouseLeave = () => {
+		if (window.matchMedia('(hover: hover)').matches) {
+			closeTooltip();
+		}
+	};
+
 	const handleClick = (e) => {
 		e.preventDefault();
-		// Desktop click handling (Touch handled via TouchEnd)
+
 		if (window.matchMedia('(hover: hover)').matches) {
+			// Desktop: Click to navigate
 			navigate(`/wiki/${type}/${id}`);
 			closeTooltip();
+		} else {
+			// Mobile: Tap to open tooltip (Sticky mode = true)
+			openTooltip(e, id, type, true);
 		}
 	};
 
@@ -76,11 +49,7 @@ export default function EntityLink({
 		href: `/wiki/${type}/${id}`,
 		onClick: handleClick,
 		onMouseEnter: handleMouseEnter,
-		onMouseLeave: closeTooltip,
-		// Mobile Events
-		onTouchStart: handleTouchStart,
-		onTouchEnd: handleTouchEnd,
-		onTouchMove: handleTouchMove,
+		onMouseLeave: handleMouseLeave, // Use the guarded handler
 		...props,
 	};
 

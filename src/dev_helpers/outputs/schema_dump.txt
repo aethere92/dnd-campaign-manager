@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/5/2026, 4:20:05 PM
+   Generated: 1/6/2026, 5:55:05 PM
 =========================================
 
 -----------------------------------------
@@ -661,29 +661,29 @@ TABLE: sessions [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "ed49e6cd-f7aa-40f7-8723-8f4cc02d23d7",
+    "id": "14230e1c-07ea-4fe8-9157-335fb1554508",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "08 - The Shattered Artifact",
-    "narrative": "### The Onslaught Begins The dust had barely settled from the explosion that had torn a hole in the chamber wall when a new threat emerged. Through the breach, the party could see the silhouettes of an approaching force, their numbers obscured by the gloom but their intent made terrifyingly clear by their steady advance. \"Guys, there is kind of an army coming towards us,\" Bonnie warned, her small voice tight with urgency. Olek, standing beside the ritualist they had come to confront, stared out at the encroaching soldiers. \"I have an idea,\" he declared, his voice ringing with grim... [TRUNCATED AT 100 WORDS]",
-    "created_at": "2025-11-21T10:56:22.394Z",
-    "updated_at": "2026-01-02T11:16:24.541Z",
+    "title": "04 - Echoes of the Arena",
+    "narrative": "### The Cavern of Horrors The party emerged from the darkness of the tunnel into a vast cavern that would haunt their memories for days to come. The chamber reeked of decay and ancient evil, its walls lined with cages forged from wood yet reinforced with some manner of dark magic. Inside these prisons, the companions spotted dozens of skulls—some humanoid, others reptilian, and still others belonging to creatures they couldn't even begin to identify. The sight sent chills down their spines. As they explored further, Norr noticed the unmistakable traces of a ritual: burned reagents, charcoal, magical powder, and... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-21T10:54:14.096Z",
+    "updated_at": "2026-01-06T08:30:24.136Z",
     "attributes": {
-      "level_up": "8",
-      "session_date": "2025-10-18",
-      "session_number": "9"
+      "synopsis": "Deeper in the caves, they find a laboratory with notes about opening demon lord gates to breed creatures for arena games. Kalistra's name appears in burned ledgers mentioning Kilgor and the Festival of Life. They befriend two Megatherium named Gicuța and Mișu, then battle acid-blooded Arthropleura spiders. Victory secured, they discover an underwater chest and more ritual evidence. Vandal and the mercenaries explosively collapse a wall, freeing a submerged pirate ship that surges through collapsing tunnels, launching everyone through a waterfall into the open sea.",
+      "session_date": "2025-06-15",
+      "session_number": "5"
     }
   },
   {
-    "id": "b2f8c12f-b108-4c35-87d1-8ae0e6e98ce5",
+    "id": "2249578d-60be-4968-b0c3-ba14fba1ed22",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "01 - To Drellin's Ferry",
-    "narrative": "### First encounter We begin on the fourth day of travel. Afternoon has settled in, the sun still burning, the air hot and still. The lands of Elsir Vale have blurred by now - every town looks the same, and our heroes can no longer tell one from the next. Drellin's Ferry lies just a few miles ahead - both their destination and their long-awaited respite from the arduous road. Conversation has grown scarce. After four days on the road, there's little left to say, and even less to want beyond a soft bed and a hot meal. A small... [TRUNCATED AT 100 WORDS]",
-    "created_at": "2025-11-19T20:57:25.759Z",
-    "updated_at": "2026-01-03T07:53:20.970Z",
+    "title": "06 - The Ruined Fortress",
+    "narrative": "### An Uneasy Respite The party arrived at the inn weary and travel-worn, the day's combat having left them in dire need of rest. It was eight o'clock in the evening, and the common room was surprisingly quiet as they entered. The source of the tranquility soon became apparent; the innkeeper, a woman with an adventurous culinary spirit, was experimenting with a new stew. An intensely aromatic and pleasant scent, a mix of mushrooms and exotic herbs, wafted from the kitchen, promising a unique meal. While most of the party was drawn to the scent of food and the promise... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-21T10:55:19.821Z",
+    "updated_at": "2026-01-06T08:21:03.581Z",
     "attributes": {
-      "session_date": "2025-04-12",
-      "session_number": "2",
-      "background_image": "images/assets/session_backgrounds/campaign_002/session_01_bg.webp"
+      "synopsis": "The party's thylacoleo cubs cause chaos at the inn, with Kaedin's cats literally eating through the wall on a hunting spree. After restocking supplies and selling materials to Sertieren, they investigate missing scouts. Following orc tracks from burned caravans, they reach the ruined fortress, Vraath Keep. Norr's opening fireball triggers battle against Manticore, Minotaur, Mud Elemental, hobgoblins, and wargs. The fleeing survivors shout to alert the Wyrmlord.",
+      "session_date": "2025-07-26",
+      "session_number": "7"
     }
   }
 ]
@@ -1110,7 +1110,8 @@ VIEW: view_entity_index
   (attr.attributes ->> 'icon'::text) AS icon_url,
   (attr.attributes ->> 'status'::text) AS status,
   (attr.attributes ->> 'affinity'::text) AS affinity,
-  (attr.attributes ->> 'background_image'::text) AS background_image
+  (attr.attributes ->> 'background_image'::text) AS background_image,
+  ((attr.attributes ->> 'aliases'::text))::jsonb AS aliases
   FROM (entities e
   LEFT JOIN view_entity_attributes_source attr ON ((e.id = attr.id)))
   WHERE (e.type <> ALL (ARRAY['event'::text, 'session_event'::text]));

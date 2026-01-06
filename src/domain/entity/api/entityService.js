@@ -105,6 +105,7 @@ export const getEntityIndex = async (campaignId) => {
 				status: e.status,
 				affinity: e.affinity,
 				background_image: e.background_image,
+				aliases: e.aliases,
 			},
 		}))
 		.sort((a, b) => b.name.length - a.name.length);

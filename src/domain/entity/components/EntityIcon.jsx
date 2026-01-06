@@ -5,13 +5,7 @@ import { getEntityStyles } from '@/domain/entity/config/entityStyles';
 /**
  * EntityIcon Component
  * Renders an entity icon with optional custom image override
- *
- * @param {string} type - Entity type
- * @param {string} customIconUrl - Optional custom icon URL
- * @param {number} size - Icon size in pixels (default 16)
- * @param {string} className - Additional CSS classes
- * @param {boolean} showBackground - Show colored background (default false)
- * @param {boolean} inline - Use span instead of div for inline contexts (default false)
+ * STRICTLY uses <span> to ensure hydration safety inside <p> tags.
  */
 export default function EntityIcon({
 	type,
@@ -25,15 +19,15 @@ export default function EntityIcon({
 	const Icon = getEntityIcon(type);
 	const styles = getEntityStyles(type);
 
-	// Choose container element (span for inline, div for block)
-	const Container = inline ? 'span' : 'div';
+	// FIX: Always use 'span' to avoid "div descendant of p" hydration errors
+	const Container = 'span';
 
-	// If custom icon provided, render image
+	// 1. Custom Image Case
 	if (customIconUrl) {
 		return (
 			<Container
 				className={clsx(
-					'inline-flex items-center justify-center overflow-hidden',
+					'inline-flex items-center justify-center overflow-hidden shrink-0 select-none bg-muted',
 					showBackground && clsx('rounded-lg border', styles.bg, styles.border),
 					className
 				)}
@@ -43,8 +37,8 @@ export default function EntityIcon({
 					src={customIconUrl}
 					alt=''
 					className='w-full h-full object-cover'
+					draggable={false}
 					onError={(e) => {
-						// Fallback to icon if image fails
 						e.target.style.display = 'none';
 						e.target.parentElement.classList.add('fallback-icon');
 					}}
@@ -53,22 +47,24 @@ export default function EntityIcon({
 		);
 	}
 
-	// Default icon rendering
+	// 2. Background/Frame Case
 	if (showBackground) {
 		return (
 			<Container
 				className={clsx(
-					'inline-flex items-center justify-center rounded-lg border p-1.5',
+					'inline-flex items-center justify-center rounded-lg border p-1.5 shrink-0 select-none',
 					styles.bg,
 					styles.border,
 					styles.text,
 					className
 				)}
+				style={{ width: size, height: size }}
 				{...props}>
-				<Icon size={size} strokeWidth={2} />
+				<Icon size={size * 0.75} strokeWidth={2} />
 			</Container>
 		);
 	}
 
+	// 3. Simple Icon Case (SVG is safe in <p>)
 	return <Icon size={size} className={clsx(styles.text, className)} strokeWidth={2} {...props} />;
 }

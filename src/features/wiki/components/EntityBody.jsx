@@ -49,7 +49,7 @@ export const EntityBody = ({
 	return (
 		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
-				<div className='mb-4'>
+				<div className='mb-4 text-muted-foreground'>
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}

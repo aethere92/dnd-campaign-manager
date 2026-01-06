@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-05 16:20:03
+Generated: 2026-01-06 17:55:03
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 189
-Total lines: 18,357
-Non-empty lines: 16,272
-Comment lines: 1,442
-Total size: 570,885 bytes (557.50 KB)
-Average lines per file: 97.1
+Total files: 190
+Total lines: 18,688
+Non-empty lines: 16,554
+Comment lines: 1,435
+Total size: 581,241 bytes (567.62 KB)
+Average lines per file: 98.4
 
 
 ### STATISTICS BY FILE TYPE
@@ -21,9 +21,9 @@ Average lines per file: 97.1
   Size: 11,092 bytes (10.83 KB)
 
 .js:
-  Files: 65
-  Lines: 6,162
-  Size: 171,839 bytes (167.81 KB)
+  Files: 66
+  Lines: 6,320
+  Size: 175,434 bytes (171.32 KB)
 
 .json:
   Files: 1
@@ -32,8 +32,8 @@ Average lines per file: 97.1
 
 .jsx:
   Files: 121
-  Lines: 11,529
-  Size: 382,141 bytes (373.18 KB)
+  Lines: 11,702
+  Size: 388,902 bytes (379.79 KB)
 
 .md:
   Files: 1
@@ -50,9 +50,10 @@ features\admin\api\adminService.js: 362 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
 features\wiki\components\EntityLocalGraph.jsx: 301 lines
-domain\entity\api\entityService.js: 273 lines
+domain\entity\api\entityService.js: 274 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
+features\smart-tooltip\components\TooltipCard.jsx: 251 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\wiki\components\character\CharacterSidebar.jsx: 224 lines
@@ -61,8 +62,7 @@ features\atlas\components\AtlasSidebar.jsx: 215 lines
 features\admin\pages\SplitPaneManager.jsx: 211 lines
 features\wiki\components\EntitySidebar.jsx: 209 lines
 features\wiki\components\EncounterTimeline.jsx: 208 lines
-features\admin\config\imageManifest.json: 205 lines
-domain\entity\utils\attributeParser.js: 204 lines
+domain\entity\utils\attributeParser.js: 205 lines
 
 
 ### STATISTICS BY CATEGORY
@@ -74,13 +74,13 @@ app:
 
 domain_entity:
   Files: 13
-  Lines: 1,463
-  Size: 39,637 bytes (38.71 KB)
+  Lines: 1,430
+  Size: 38,609 bytes (37.70 KB)
 
 features_admin:
   Files: 22
-  Lines: 4,082
-  Size: 134,046 bytes (130.90 KB)
+  Lines: 4,083
+  Size: 134,120 bytes (130.98 KB)
 
 features_atlas:
   Files: 16
@@ -90,7 +90,7 @@ features_atlas:
 features_campaign:
   Files: 6
   Lines: 290
-  Size: 9,574 bytes (9.35 KB)
+  Size: 9,538 bytes (9.31 KB)
 
 features_dashboard:
   Files: 10
@@ -114,13 +114,13 @@ features_search:
 
 features_smart-text:
   Files: 5
-  Lines: 437
-  Size: 12,474 bytes (12.18 KB)
+  Lines: 472
+  Size: 13,188 bytes (12.88 KB)
 
 features_smart-tooltip:
-  Files: 5
-  Lines: 402
-  Size: 12,246 bytes (11.96 KB)
+  Files: 6
+  Lines: 565
+  Size: 17,130 bytes (16.73 KB)
 
 features_table-of-contents:
   Files: 5
@@ -129,13 +129,13 @@ features_table-of-contents:
 
 features_timeline:
   Files: 7
-  Lines: 455
-  Size: 13,834 bytes (13.51 KB)
+  Lines: 620
+  Size: 19,553 bytes (19.09 KB)
 
 features_wiki:
   Files: 47
   Lines: 4,876
-  Size: 157,098 bytes (153.42 KB)
+  Size: 157,127 bytes (153.44 KB)
 
 root:
   Files: 2

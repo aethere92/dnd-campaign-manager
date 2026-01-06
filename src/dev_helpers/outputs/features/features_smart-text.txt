@@ -155,6 +155,8 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
       useTooltipState.js
       components/
         TooltipCard.jsx
+      config/
+        tooltipProfiles.js
     table-of-contents/
       TableOfContents.jsx
       components/
@@ -274,11 +276,12 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
 import ReactMarkdown from 'react-markdown';
 import { useSmartText } from './useSmartText';
 import { SmartEntityLink } from './components/SmartEntityLink';
-import { EntityEmbed } from './components/EntityEmbed'; // New Import
+import { EntityEmbed } from './components/EntityEmbed';
 import { generateId, extractText } from '@/shared/utils/textUtils';
+import { Link } from 'react-router-dom';
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
 
-export default function SmartMarkdown({ children, ...props }) {
-	// ... (Existing safety check logic) ...
+export default function SmartMarkdown({ children, inline = false, disableTooltips = false, ...props }) {
 	let safeText = children;
 	if (Array.isArray(children)) {
 		safeText = children.join('');
@@ -298,28 +301,40 @@ export default function SmartMarkdown({ children, ...props }) {
 	return (
 		<ReactMarkdown
 			{...props}
+			disallowedElements={inline ? ['p'] : []}
+			unwrapDisallowed={inline}
 			components={{
 				...props.components,
 				h1: (props) => <HeadingRenderer level={1} {...props} />,
 				h2: (props) => <HeadingRenderer level={2} {...props} />,
 				h3: (props) => <HeadingRenderer level={3} {...props} />,
 
-				// UPGRADED LINK RENDERER
 				a: ({ href, children }) => {
-					// 1. Check for Entity Link Protocol
 					if (href && href.startsWith('#entity/')) {
 						const parts = href.split('/');
 						const id = parts[1];
 						const type = parts[2] || 'default';
 
-						// Check content for Embed Pattern: ":: Label ::"
 						const textContent = String(children);
 						const isEmbed = textContent.startsWith('::') && textContent.endsWith('::');
 
 						if (isEmbed) {
-							// Clean the label (remove ::)
 							const label = textContent.replace(/^::\s*|\s*::$/g, '');
 							return <EntityEmbed id={id} type={type} label={label} />;
+						}
+
+						// PREVENT RECURSIVE TOOLTIPS
+						if (disableTooltips) {
+							const styles = getEntityStyles(type);
+							return (
+								<Link
+									to={`/wiki/${type}/${id}`}
+									className={`${styles.text} font-semibold hover:underline cursor-pointer`}
+									onClick={(e) => e.stopPropagation()} // Prevent card click
+								>
+									{children}
+								</Link>
+							);
 						}
 
 						return (
@@ -329,7 +344,6 @@ export default function SmartMarkdown({ children, ...props }) {
 						);
 					}
 
-					// 2. External Links
 					return (
 						<a href={href} className='text-blue-600 hover:underline' target='_blank' rel='noopener noreferrer'>
 							{children}
@@ -349,7 +363,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getEntityIndex } from '@/domain/entity/api/entityService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
-import { getParentId } from '@/domain/entity/utils/entityUtils'; // You added this util previously
+import { getParentId } from '@/domain/entity/utils/entityUtils';
 
 export function useEntityIndex() {
 	const { campaignId } = useCampaign();
@@ -361,36 +375,61 @@ export function useEntityIndex() {
 
 			const list = [];
 			const map = new Map();
+			const searchTokens = [];
 
 			rawData.forEach((entity) => {
 				const attrs = parseAttributes(entity.attributes);
+
 				const lightEntity = {
 					...entity,
-					// Pre-calculate hierarchy once
 					parentId: getParentId(entity),
-					// Resolve Icon once
 					iconUrl: resolveImageUrl(attrs, 'icon'),
+					attributes: attrs,
 				};
 
-				// Remove heavy relationships array to save memory
-				delete lightEntity.relationships;
+				// 1. Add Primary Name
+				if (entity.name && entity.name.length > 2) {
+					searchTokens.push({
+						term: entity.name,
+						entityId: entity.id,
+						type: entity.type,
+					});
+				}
+
+				// 2. Add Aliases
+				if (attrs.aliases) {
+					// Handle Array or String
+					const aliasList = Array.isArray(attrs.aliases)
+						? attrs.aliases
+						: typeof attrs.aliases === 'string'
+						? attrs.aliases.split(',').map((s) => s.trim())
+						: [];
+
+					aliasList.forEach((alias) => {
+						if (alias && alias.length > 2) {
+							searchTokens.push({
+								term: alias,
+								entityId: entity.id,
+								type: entity.type,
+							});
+						}
+					});
+				}
 
 				list.push(lightEntity);
 				map.set(entity.id, lightEntity);
 			});
 
-			// Return optimized structures
-			return {
-				list: list.sort((a, b) => b.name.length - a.name.length),
-				map,
-			};
+			// Sort by length DESC so "Captain Soranna" matches before "Soranna"
+			searchTokens.sort((a, b) => b.term.length - a.term.length);
+
+			return { list, map, searchTokens };
 		},
-		staleTime: 1000 * 60 * 30, // 30 mins
+		staleTime: 1000 * 60 * 30,
 		enabled: !!campaignId,
 	});
 
-	// Default return shape
-	return data || { list: [], map: new Map() };
+	return data || { list: [], map: new Map(), searchTokens: [] };
 }
 
 --- END OF features\smart-text\useEntityIndex.js ---
@@ -399,29 +438,24 @@ export function useEntityIndex() {
 import { useMemo } from 'react';
 import { useEntityIndex } from './useEntityIndex';
 
-/**
- * Escape special regex characters
- */
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/**
- * Find non-overlapping entity mentions in text
- */
-const findEntityMatches = (text, entityIndex) => {
+const findEntityMatches = (text, searchTokens, entityMap) => {
 	const matches = [];
 	const processedRanges = [];
 
-	// Sort by length DESC
-	const sortedEntities = [...entityIndex].sort((a, b) => b.name.length - a.name.length);
+	if (!searchTokens || searchTokens.length === 0) return [];
 
-	for (const entity of sortedEntities) {
-		const pattern = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
+	for (const token of searchTokens) {
+		// Use standard Word Boundaries (\b) for matching
+		const pattern = new RegExp(`\\b${escapeRegex(token.term)}\\b`, 'gi');
 		let match;
 
 		while ((match = pattern.exec(text)) !== null) {
 			const start = match.index;
-			const end = start + match[0].length;
+			const end = start + token.term.length;
 
+			// Check overlap
 			const overlaps = processedRanges.some(
 				(range) =>
 					(start >= range.start && start < range.end) ||
@@ -430,8 +464,18 @@ const findEntityMatches = (text, entityIndex) => {
 			);
 
 			if (!overlaps) {
-				matches.push({ start, end, text: match[0], entity });
-				processedRanges.push({ start, end });
+				const entity = entityMap.get(token.entityId);
+				if (entity) {
+					// CHANGED: Use text.slice(start, end) to grab the ACTUAL text
+					// (e.g., "the Arcane Brotherhood") instead of token.term ("The Arcane Brotherhood")
+					matches.push({
+						start,
+						end,
+						text: text.slice(start, end),
+						entity,
+					});
+					processedRanges.push({ start, end });
+				}
 			}
 		}
 	}
@@ -453,33 +497,26 @@ const replaceMatches = (text, matches) => {
 };
 
 export function useSmartText(text) {
-	const { list: entityIndex } = useEntityIndex();
+	const { searchTokens, map } = useEntityIndex();
 
 	const shouldProcess = useMemo(() => {
 		if (!text || typeof text !== 'string' || text.length < 3) return false;
-		if (!entityIndex || entityIndex.length === 0) return false;
+		if (!searchTokens || searchTokens.length === 0) return false;
 		return true;
-	}, [text, entityIndex]);
+	}, [text, searchTokens]);
 
 	return useMemo(() => {
 		if (!shouldProcess) return text || '';
 
 		try {
-			// CRITICAL FIX: Split by existing Markdown links to protect them
-			// Matches [text](url) pattern. The capturing group () keeps the delimiter in the result array.
-			// This regex is basic but handles standard single-line links.
 			const linkProtectionRegex = /(\[.*?\]\(.*?\))/g;
 			const parts = text.split(linkProtectionRegex);
 
-			// Process only the parts that ARE NOT links
 			const processedParts = parts.map((part) => {
-				// Simple check: does it look like a markdown link?
 				if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
-					return part; // Return existing link as-is (Protected)
+					return part;
 				}
-
-				// Otherwise, auto-link entities in this plain text segment
-				const matches = findEntityMatches(part, entityIndex);
+				const matches = findEntityMatches(part, searchTokens, map);
 				return replaceMatches(part, matches);
 			});
 
@@ -488,7 +525,7 @@ export function useSmartText(text) {
 			console.error('SmartMarkdown processing error:', err);
 			return text;
 		}
-	}, [text, entityIndex, shouldProcess]);
+	}, [text, searchTokens, map, shouldProcess]);
 }
 
 --- END OF features\smart-text\useSmartText.js ---

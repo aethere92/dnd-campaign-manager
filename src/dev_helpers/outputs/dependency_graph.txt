@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-05 16:20:03
+Generated: 2026-01-06 17:55:03
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -54,7 +54,6 @@ domain\entity\components\EntityLink.jsx:
   → @/domain/entity/config/entityStyles
   → @/features/smart-tooltip/TooltipContext
   → clsx
-  → react
   → react-router-dom
 
 domain\entity\components\EntityStatusIcon.jsx:
@@ -508,8 +507,10 @@ features\smart-text\SmartMarkdown.jsx:
   → ./components/EntityEmbed
   → ./components/SmartEntityLink
   → ./useSmartText
+  → @/domain/entity/config/entityStyles
   → @/shared/utils/textUtils
   → react-markdown
+  → react-router-dom
 
 features\smart-text\components\EntityEmbed.jsx:
   → @/domain/entity/components/EntityIcon
@@ -538,7 +539,6 @@ features\smart-text\useSmartText.js:
 features\smart-tooltip\TooltipContainer.jsx:
   → ./components/TooltipCard
   → @/domain/entity/api/entityService
-  → @/domain/entity/utils/attributeParser
   → @tanstack/react-query
   → react-dom
 
@@ -548,6 +548,8 @@ features\smart-tooltip\TooltipContext.jsx:
   → react
 
 features\smart-tooltip\components\TooltipCard.jsx:
+  → ../config/tooltipProfiles
+  → @/domain/entity/config/entityColors
   → @/domain/entity/config/entityConfig
   → @/domain/entity/utils/attributeParser
   → @/features/smart-text/SmartMarkdown
@@ -591,6 +593,7 @@ features\timeline\TimelinePage.jsx:
   → ./useTimelineView
   → @/features/table-of-contents/TableOfContents
   → @/shared/components/ui/LoadingSpinner
+  → lucide-react
   → react
 
 features\timeline\api\timelineService.js:
@@ -601,7 +604,6 @@ features\timeline\components\TimelineArcHeader.jsx:
   → lucide-react
 
 features\timeline\components\TimelineEvent.jsx:
-  → @/domain/entity/config/entityConfig
   → @/features/smart-text/SmartMarkdown
   → clsx
   → lucide-react
@@ -609,7 +611,10 @@ features\timeline\components\TimelineEvent.jsx:
 
 features\timeline\components\TimelineSession.jsx:
   → ./TimelineEvent
+  → @/features/smart-text/SmartMarkdown
+  → clsx
   → lucide-react
+  → react
 
 features\timeline\useTimelineView.js:
   → ./utils/eventStyles
@@ -1050,6 +1055,7 @@ Files with most outgoing dependencies:
   features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
+  features\smart-tooltip\components\TooltipCard.jsx: 10 imports
   features\wiki\layouts\SessionLayout.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
   features\admin\pages\SplitPaneManager.jsx: 9 imports
@@ -1059,7 +1065,6 @@ Files with most outgoing dependencies:
   features\admin\components\MarkdownEditorImpl.jsx: 8 imports
   features\navigation\MainLayout.jsx: 8 imports
   features\search\useGlobalSearch.js: 8 imports
-  features\smart-tooltip\components\TooltipCard.jsx: 8 imports
   features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
   features\wiki\components\landing\EntityTableGroup.jsx: 8 imports

@@ -161,6 +161,8 @@ INSTRUCTIONS FOR AI:
       useTooltipState.js
       components/
         TooltipCard.jsx
+      config/
+        tooltipProfiles.js
     table-of-contents/
       TableOfContents.jsx
       components/
@@ -1028,6 +1030,7 @@ export const getEntityIndex = async (campaignId) => {
 				status: e.status,
 				affinity: e.affinity,
 				background_image: e.background_image,
+				aliases: e.aliases,
 			},
 		}))
 		.sort((a, b) => b.name.length - a.name.length);
@@ -1251,13 +1254,7 @@ import { getEntityStyles } from '@/domain/entity/config/entityStyles';
 /**
  * EntityIcon Component
  * Renders an entity icon with optional custom image override
- *
- * @param {string} type - Entity type
- * @param {string} customIconUrl - Optional custom icon URL
- * @param {number} size - Icon size in pixels (default 16)
- * @param {string} className - Additional CSS classes
- * @param {boolean} showBackground - Show colored background (default false)
- * @param {boolean} inline - Use span instead of div for inline contexts (default false)
+ * STRICTLY uses <span> to ensure hydration safety inside <p> tags.
  */
 export default function EntityIcon({
 	type,
@@ -1271,15 +1268,15 @@ export default function EntityIcon({
 	const Icon = getEntityIcon(type);
 	const styles = getEntityStyles(type);
 
-	// Choose container element (span for inline, div for block)
-	const Container = inline ? 'span' : 'div';
+	// FIX: Always use 'span' to avoid "div descendant of p" hydration errors
+	const Container = 'span';
 
-	// If custom icon provided, render image
+	// 1. Custom Image Case
 	if (customIconUrl) {
 		return (
 			<Container
 				className={clsx(
-					'inline-flex items-center justify-center overflow-hidden',
+					'inline-flex items-center justify-center overflow-hidden shrink-0 select-none bg-muted',
 					showBackground && clsx('rounded-lg border', styles.bg, styles.border),
 					className
 				)}
@@ -1289,8 +1286,8 @@ export default function EntityIcon({
 					src={customIconUrl}
 					alt=''
 					className='w-full h-full object-cover'
+					draggable={false}
 					onError={(e) => {
-						// Fallback to icon if image fails
 						e.target.style.display = 'none';
 						e.target.parentElement.classList.add('fallback-icon');
 					}}
@@ -1299,23 +1296,25 @@ export default function EntityIcon({
 		);
 	}
 
-	// Default icon rendering
+	// 2. Background/Frame Case
 	if (showBackground) {
 		return (
 			<Container
 				className={clsx(
-					'inline-flex items-center justify-center rounded-lg border p-1.5',
+					'inline-flex items-center justify-center rounded-lg border p-1.5 shrink-0 select-none',
 					styles.bg,
 					styles.border,
 					styles.text,
 					className
 				)}
+				style={{ width: size, height: size }}
 				{...props}>
-				<Icon size={size} strokeWidth={2} />
+				<Icon size={size * 0.75} strokeWidth={2} />
 			</Container>
 		);
 	}
 
+	// 3. Simple Icon Case (SVG is safe in <p>)
 	return <Icon size={size} className={clsx(styles.text, className)} strokeWidth={2} {...props} />;
 }
 
@@ -1323,7 +1322,6 @@ export default function EntityIcon({
 
 --- FILE: domain\entity\components\EntityLink.jsx ---
 import { useNavigate } from 'react-router-dom';
-import { useRef, useCallback } from 'react'; // ADDED
 import { clsx } from 'clsx';
 import { useTooltip } from '@/features/smart-tooltip/TooltipContext';
 import { getEntityStyles } from '@/domain/entity/config/entityStyles';
@@ -1343,56 +1341,30 @@ export default function EntityLink({
 	const { openTooltip, closeTooltip } = useTooltip();
 	const styles = getEntityStyles(type);
 
-	// --- IMPROVEMENT #4: Long Press Logic ---
-	const pressTimer = useRef(null);
-	const isLongPress = useRef(false);
-
-	const handleTouchStart = (e) => {
-		isLongPress.current = false;
-		pressTimer.current = setTimeout(() => {
-			isLongPress.current = true;
-			// Open Tooltip on long press position
-			openTooltip(e, id, type, true);
-		}, 500); // 500ms threshold
-	};
-
-	const handleTouchEnd = (e) => {
-		if (pressTimer.current) {
-			clearTimeout(pressTimer.current);
-		}
-		// If it wasn't a long press, treat as click (Navigate)
-		if (!isLongPress.current) {
-			navigate(`/wiki/${type}/${id}`);
-			closeTooltip();
-		}
-		// Prevent ghost clicks if it was a long press
-		if (isLongPress.current && e.cancelable) {
-			e.preventDefault();
-		}
-	};
-
-	const handleTouchMove = () => {
-		// Cancel everything if user scrolls
-		if (pressTimer.current) {
-			clearTimeout(pressTimer.current);
-			isLongPress.current = true; // Treat as "handled" so we don't navigate
-		}
-	};
-	// ----------------------------------------
-
 	const handleMouseEnter = (e) => {
-		// Desktop only
+		// Desktop only: Hover to open
 		if (window.matchMedia('(hover: hover)').matches) {
 			openTooltip(e, id, type);
 		}
 	};
 
+	// FIX: Guard closeTooltip so mobile touch emulation doesn't auto-close it
+	const handleMouseLeave = () => {
+		if (window.matchMedia('(hover: hover)').matches) {
+			closeTooltip();
+		}
+	};
+
 	const handleClick = (e) => {
 		e.preventDefault();
-		// Desktop click handling (Touch handled via TouchEnd)
+
 		if (window.matchMedia('(hover: hover)').matches) {
+			// Desktop: Click to navigate
 			navigate(`/wiki/${type}/${id}`);
 			closeTooltip();
+		} else {
+			// Mobile: Tap to open tooltip (Sticky mode = true)
+			openTooltip(e, id, type, true);
 		}
 	};
 
@@ -1400,11 +1372,7 @@ export default function EntityLink({
 		href: `/wiki/${type}/${id}`,
 		onClick: handleClick,
 		onMouseEnter: handleMouseEnter,
-		onMouseLeave: closeTooltip,
-		// Mobile Events
-		onTouchStart: handleTouchStart,
-		onTouchEnd: handleTouchEnd,
-		onTouchMove: handleTouchMove,
+		onMouseLeave: handleMouseLeave, // Use the guarded handler
 		...props,
 	};
 
@@ -2064,6 +2032,7 @@ export const isIgnoredAttribute = (key) => {
 		'is_active',
 		'map_image',
 		'map_markers',
+		'aliases',
 	];
 
 	return ignoredKeys.includes(key.toLowerCase());
@@ -5484,6 +5453,7 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy', 'Unknown'] },
 			{ key: 'status', label: 'Status', type: 'text' },
 			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
 		],
 	},
 
@@ -8441,7 +8411,7 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 					onClick={() => onSelect(campaign.id)}
 					fullWidth
 					variant='outline'
-					className='group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors'
+					className='bg-primary text-primary-foreground border-primary transition-colors'
 					icon={ArrowRight}>
 					Enter Campaign
 				</Button>
@@ -10768,11 +10738,12 @@ export const transformSearchResults = (rawResults) => {
 import ReactMarkdown from 'react-markdown';
 import { useSmartText } from './useSmartText';
 import { SmartEntityLink } from './components/SmartEntityLink';
-import { EntityEmbed } from './components/EntityEmbed'; // New Import
+import { EntityEmbed } from './components/EntityEmbed';
 import { generateId, extractText } from '@/shared/utils/textUtils';
+import { Link } from 'react-router-dom';
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
 
-export default function SmartMarkdown({ children, ...props }) {
-	// ... (Existing safety check logic) ...
+export default function SmartMarkdown({ children, inline = false, disableTooltips = false, ...props }) {
 	let safeText = children;
 	if (Array.isArray(children)) {
 		safeText = children.join('');
@@ -10792,28 +10763,40 @@ export default function SmartMarkdown({ children, ...props }) {
 	return (
 		<ReactMarkdown
 			{...props}
+			disallowedElements={inline ? ['p'] : []}
+			unwrapDisallowed={inline}
 			components={{
 				...props.components,
 				h1: (props) => <HeadingRenderer level={1} {...props} />,
 				h2: (props) => <HeadingRenderer level={2} {...props} />,
 				h3: (props) => <HeadingRenderer level={3} {...props} />,
 
-				// UPGRADED LINK RENDERER
 				a: ({ href, children }) => {
-					// 1. Check for Entity Link Protocol
 					if (href && href.startsWith('#entity/')) {
 						const parts = href.split('/');
 						const id = parts[1];
 						const type = parts[2] || 'default';
 
-						// Check content for Embed Pattern: ":: Label ::"
 						const textContent = String(children);
 						const isEmbed = textContent.startsWith('::') && textContent.endsWith('::');
 
 						if (isEmbed) {
-							// Clean the label (remove ::)
 							const label = textContent.replace(/^::\s*|\s*::$/g, '');
 							return <EntityEmbed id={id} type={type} label={label} />;
+						}
+
+						// PREVENT RECURSIVE TOOLTIPS
+						if (disableTooltips) {
+							const styles = getEntityStyles(type);
+							return (
+								<Link
+									to={`/wiki/${type}/${id}`}
+									className={`${styles.text} font-semibold hover:underline cursor-pointer`}
+									onClick={(e) => e.stopPropagation()} // Prevent card click
+								>
+									{children}
+								</Link>
+							);
 						}
 
 						return (
@@ -10823,7 +10806,6 @@ export default function SmartMarkdown({ children, ...props }) {
 						);
 					}
 
-					// 2. External Links
 					return (
 						<a href={href} className='text-blue-600 hover:underline' target='_blank' rel='noopener noreferrer'>
 							{children}
@@ -10843,7 +10825,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getEntityIndex } from '@/domain/entity/api/entityService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
-import { getParentId } from '@/domain/entity/utils/entityUtils'; // You added this util previously
+import { getParentId } from '@/domain/entity/utils/entityUtils';
 
 export function useEntityIndex() {
 	const { campaignId } = useCampaign();
@@ -10855,36 +10837,61 @@ export function useEntityIndex() {
 
 			const list = [];
 			const map = new Map();
+			const searchTokens = [];
 
 			rawData.forEach((entity) => {
 				const attrs = parseAttributes(entity.attributes);
+
 				const lightEntity = {
 					...entity,
-					// Pre-calculate hierarchy once
 					parentId: getParentId(entity),
-					// Resolve Icon once
 					iconUrl: resolveImageUrl(attrs, 'icon'),
+					attributes: attrs,
 				};
 
-				// Remove heavy relationships array to save memory
-				delete lightEntity.relationships;
+				// 1. Add Primary Name
+				if (entity.name && entity.name.length > 2) {
+					searchTokens.push({
+						term: entity.name,
+						entityId: entity.id,
+						type: entity.type,
+					});
+				}
+
+				// 2. Add Aliases
+				if (attrs.aliases) {
+					// Handle Array or String
+					const aliasList = Array.isArray(attrs.aliases)
+						? attrs.aliases
+						: typeof attrs.aliases === 'string'
+						? attrs.aliases.split(',').map((s) => s.trim())
+						: [];
+
+					aliasList.forEach((alias) => {
+						if (alias && alias.length > 2) {
+							searchTokens.push({
+								term: alias,
+								entityId: entity.id,
+								type: entity.type,
+							});
+						}
+					});
+				}
 
 				list.push(lightEntity);
 				map.set(entity.id, lightEntity);
 			});
 
-			// Return optimized structures
-			return {
-				list: list.sort((a, b) => b.name.length - a.name.length),
-				map,
-			};
+			// Sort by length DESC so "Captain Soranna" matches before "Soranna"
+			searchTokens.sort((a, b) => b.term.length - a.term.length);
+
+			return { list, map, searchTokens };
 		},
-		staleTime: 1000 * 60 * 30, // 30 mins
+		staleTime: 1000 * 60 * 30,
 		enabled: !!campaignId,
 	});
 
-	// Default return shape
-	return data || { list: [], map: new Map() };
+	return data || { list: [], map: new Map(), searchTokens: [] };
 }
 
 --- END OF features\smart-text\useEntityIndex.js ---
@@ -10893,29 +10900,24 @@ export function useEntityIndex() {
 import { useMemo } from 'react';
 import { useEntityIndex } from './useEntityIndex';
 
-/**
- * Escape special regex characters
- */
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/**
- * Find non-overlapping entity mentions in text
- */
-const findEntityMatches = (text, entityIndex) => {
+const findEntityMatches = (text, searchTokens, entityMap) => {
 	const matches = [];
 	const processedRanges = [];
 
-	// Sort by length DESC
-	const sortedEntities = [...entityIndex].sort((a, b) => b.name.length - a.name.length);
+	if (!searchTokens || searchTokens.length === 0) return [];
 
-	for (const entity of sortedEntities) {
-		const pattern = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
+	for (const token of searchTokens) {
+		// Use standard Word Boundaries (\b) for matching
+		const pattern = new RegExp(`\\b${escapeRegex(token.term)}\\b`, 'gi');
 		let match;
 
 		while ((match = pattern.exec(text)) !== null) {
 			const start = match.index;
-			const end = start + match[0].length;
+			const end = start + token.term.length;
 
+			// Check overlap
 			const overlaps = processedRanges.some(
 				(range) =>
 					(start >= range.start && start < range.end) ||
@@ -10924,8 +10926,18 @@ const findEntityMatches = (text, entityIndex) => {
 			);
 
 			if (!overlaps) {
-				matches.push({ start, end, text: match[0], entity });
-				processedRanges.push({ start, end });
+				const entity = entityMap.get(token.entityId);
+				if (entity) {
+					// CHANGED: Use text.slice(start, end) to grab the ACTUAL text
+					// (e.g., "the Arcane Brotherhood") instead of token.term ("The Arcane Brotherhood")
+					matches.push({
+						start,
+						end,
+						text: text.slice(start, end),
+						entity,
+					});
+					processedRanges.push({ start, end });
+				}
 			}
 		}
 	}
@@ -10947,33 +10959,26 @@ const replaceMatches = (text, matches) => {
 };
 
 export function useSmartText(text) {
-	const { list: entityIndex } = useEntityIndex();
+	const { searchTokens, map } = useEntityIndex();
 
 	const shouldProcess = useMemo(() => {
 		if (!text || typeof text !== 'string' || text.length < 3) return false;
-		if (!entityIndex || entityIndex.length === 0) return false;
+		if (!searchTokens || searchTokens.length === 0) return false;
 		return true;
-	}, [text, entityIndex]);
+	}, [text, searchTokens]);
 
 	return useMemo(() => {
 		if (!shouldProcess) return text || '';
 
 		try {
-			// CRITICAL FIX: Split by existing Markdown links to protect them
-			// Matches [text](url) pattern. The capturing group () keeps the delimiter in the result array.
-			// This regex is basic but handles standard single-line links.
 			const linkProtectionRegex = /(\[.*?\]\(.*?\))/g;
 			const parts = text.split(linkProtectionRegex);
 
-			// Process only the parts that ARE NOT links
 			const processedParts = parts.map((part) => {
-				// Simple check: does it look like a markdown link?
 				if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
-					return part; // Return existing link as-is (Protected)
+					return part;
 				}
-
-				// Otherwise, auto-link entities in this plain text segment
-				const matches = findEntityMatches(part, entityIndex);
+				const matches = findEntityMatches(part, searchTokens, map);
 				return replaceMatches(part, matches);
 			});
 
@@ -10982,7 +10987,7 @@ export function useSmartText(text) {
 			console.error('SmartMarkdown processing error:', err);
 			return text;
 		}
-	}, [text, entityIndex, shouldProcess]);
+	}, [text, searchTokens, map, shouldProcess]);
 }
 
 --- END OF features\smart-text\useSmartText.js ---
@@ -11221,7 +11226,6 @@ import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getTooltipData } from '@/domain/entity/api/entityService';
 import { TooltipCard } from './components/TooltipCard';
-import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 	const targetId = target?.id;
@@ -11230,25 +11234,16 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['tooltip', targetId],
-		// Call Service instead of Supabase directly
 		queryFn: async () => {
 			if (!targetId) return null;
 			const rawData = await getTooltipData(targetId, targetType);
 
-			// Small amount of VIEW logic remains here to shape it for the Card
-			if (targetType === 'session') {
-				const attrs = (rawData.attributes || []).reduce((acc, c) => ({ ...acc, [c.name]: c.value }), {});
-				const num = getAttributeValue(attrs, ['session_number', 'Session']);
-				const date = getAttributeValue(attrs, ['session_date', 'Date']);
-				const summaryAttr = getAttributeValue(attrs, 'Summary');
-
-				return {
-					name: rawData.name,
-					type: 'session',
-					description: summaryAttr || rawData.description,
-					attributes: { Session: num, Date: date },
-				};
+			// FIX: If it's a session, ensure the 'narrative' is used as description
+			// because the entities table often has null description for sessions.
+			if (targetType === 'session' && !rawData.description && rawData.narrative) {
+				return { ...rawData, description: rawData.narrative };
 			}
+
 			return rawData;
 		},
 		enabled: !!targetId && isValidId,
@@ -11261,9 +11256,10 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 
 	return createPortal(
 		<>
-			{isMobile && target.isPinned && (
+			{/* Mobile Backdrop to close tooltip on tap outside */}
+			{isMobile && (
 				<div
-					className='fixed inset-0 bg-black/20 z-[9998]'
+					className='fixed inset-0 z-[9998]'
 					onClick={(e) => {
 						e.stopPropagation();
 						onMouseLeave && onMouseLeave();
@@ -11494,20 +11490,79 @@ export function useTooltipState() {
 --- FILE: features\smart-tooltip\components\TooltipCard.jsx ---
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '@/domain/entity/config/entityConfig';
-import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Heart, Crown, Shield, Wind } from 'lucide-react';
 import { useSmartPosition } from '@/features/smart-tooltip/useSmartPosition';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
+// SINGLE SOURCE OF TRUTH IMPORTS
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { getEntityPalette } from '@/domain/entity/config/entityColors';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import { TOOLTIP_PROFILES, DEFAULT_PROFILE } from '../config/tooltipProfiles';
+
+// --- UTILS ---
+
+const resolveField = (attrs, key) => {
+	if (key === 'level_prefix') {
+		const lvl = getAttributeValue(attrs, 'level');
+		return lvl ? `Lvl ${lvl}` : null;
+	}
+	if (key === 'session_number_prefixed') {
+		const num = getAttributeValue(attrs, ['session_number', 'number']);
+		return num ? `Session ${num}` : null;
+	}
+	return getAttributeValue(attrs, key);
+};
+
+// --- MINI COMPONENTS ---
+
+const StatusDot = ({ status }) => {
+	if (!status) return null;
+	const s = status.toLowerCase();
+	const isDead = ['dead', 'destroyed', 'completed', 'failed'].includes(s);
+	const isAlive = ['alive', 'active', 'in progress'].includes(s);
+
+	let colorClass = 'bg-muted-foreground/50';
+	if (isDead) colorClass = 'bg-red-500';
+	if (isAlive) colorClass = 'bg-emerald-500';
+
+	return (
+		<div className='flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/90'>
+			<span className={`w-1.5 h-1.5 rounded-full ${colorClass}`} />
+			{status}
+		</div>
+	);
+};
+
+const TagText = ({ value, type }) => {
+	if (!value) return null;
+	const v = value.toLowerCase();
+
+	let colorClass = 'text-muted-foreground';
+
+	if (type === 'affinity') {
+		if (['enemy', 'hostile'].includes(v)) colorClass = 'text-orange-600 dark:text-orange-400';
+		if (['ally', 'friendly'].includes(v)) colorClass = 'text-blue-600 dark:text-blue-400';
+	}
+
+	return <span className={clsx('text-[10px] font-bold uppercase tracking-wide opacity-90', colorClass)}>{value}</span>;
+};
+
+// --- MAIN CARD ---
+
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
 	const navigate = useNavigate();
-	const config = getEntityConfig(type);
-	const Icon = config.icon;
 
-	// Use smart positioning hook
-	const { style, tooltipRef, isPositioned } = useSmartPosition(position, true);
+	// 1. Get Domain Configuration
+	const config = getEntityConfig(type);
+	const palette = getEntityPalette(type);
+	const TypeIcon = config.icon;
+
+	// 2. Get Layout Profile
+	const profile = TOOLTIP_PROFILES[type] || DEFAULT_PROFILE;
+
+	const { style, tooltipRef } = useSmartPosition(position, true);
 
 	const handleClick = (e) => {
 		e.stopPropagation();
@@ -11515,13 +11570,19 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 		onMouseLeave && onMouseLeave();
 	};
 
+	// 3. Dynamic Styles based on Entity Palette (500 shade)
+	const primaryColor = palette[500];
+	const fallbackGradient = {
+		background: `linear-gradient(135deg, ${primaryColor}33 0%, ${primaryColor}11 100%)`,
+	};
+
 	if (isLoading) {
 		return (
 			<div
 				ref={tooltipRef}
 				style={style}
-				className='bg-background p-3 rounded-lg shadow-xl border border-border text-xs text-muted-foreground/70'>
-				Loading info...
+				className='bg-background/95 backdrop-blur p-4 rounded-lg shadow-xl border border-border text-xs text-muted-foreground'>
+				Loading...
 			</div>
 		);
 	}
@@ -11530,11 +11591,27 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 
 	const attributes = parseAttributes(data.attributes);
 	const image = resolveImageUrl(attributes, 'background');
-	const status = getAttributeValue(attributes, ['status', 'disposition']);
-	const race = getAttributeValue(attributes, ['race', 'ancestry']);
-	const classJob = getAttributeValue(attributes, ['class', 'occupation', 'role']);
 
-	const tags = [status, race, classJob].filter(Boolean).join(' • ');
+	// Info Line
+	const infoParts = (profile.subtitle || []).map((key) => resolveField(attributes, key)).filter(Boolean);
+	const infoLine = infoParts.join(' • ');
+
+	// Extra Data
+	const hp = profile.features?.showHP ? getAttributeValue(attributes, ['hit points', 'hp']) : null;
+	const armorClass = profile.features?.showArmorClass ? getAttributeValue(attributes, ['armor class', 'ac']) : null;
+	const movement = profile.features?.showMovement ? getAttributeValue(attributes, ['movement', 'speed']) : null;
+	const ruler = profile.features?.showRuler ? getAttributeValue(attributes, 'ruler') : null;
+
+	// Personality Parsing
+	let parsedPersonality = null;
+	const personality = profile.features?.showPersonality ? getAttributeValue(attributes, 'personality') : null;
+	if (personality) {
+		if (Array.isArray(personality)) {
+			parsedPersonality = personality.map((p) => p.value || p).join(' ');
+		} else {
+			parsedPersonality = personality;
+		}
+	}
 
 	return (
 		<div
@@ -11544,87 +11621,118 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 			className={clsx(
-				'bg-background rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/10 cursor-pointer group',
-				'hover:ring-amber-500/50 transition-shadow'
+				'bg-background rounded-lg shadow-2xl ring-1 ring-border group flex flex-col w-[300px] overflow-hidden select-none',
+				'hover:ring-2 transition-all duration-200'
 			)}>
-			{/* IMAGE BANNER */}
+			{/* HEADER */}
 			{image ? (
-				<div className='h-24 w-full relative bg-gray-900 overflow-hidden'>
-					<img
-						src={image}
-						alt={data.name}
-						onError={(e) => {
-							e.target.style.display = 'none';
-							e.target.parentElement.classList.add('bg-amber-900');
-						}}
-						className='w-full h-full object-cover object-top opacity-80 group-hover:scale-105 transition-transform duration-500'
-					/>
-					<div className='absolute inset-0 bg-gradient-to-t from-background to-transparent' />
+				<div className='h-28 w-full bg-muted relative shrink-0'>
+					<img src={image} alt='' className='w-full h-full object-cover opacity-90' />
+					<div className='absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent' />
 				</div>
 			) : (
-				<div
-					className={clsx(
-						'h-1.5 w-full',
-						config.tailwind.bg.replace(
-							'bg-',
-							'bg-gradient-to-r from-transparent via-current to-transparent opacity-50'
-						),
-						config.tailwind.text
-					)}
-				/>
+				<div className='h-20 w-full relative overflow-hidden shrink-0' style={fallbackGradient}>
+					<TypeIcon
+						strokeWidth={1.5}
+						className='absolute -bottom-3 -right-3 w-24 h-24 opacity-[0.07] -rotate-12 text-foreground'
+						style={{ color: primaryColor }}
+					/>
+				</div>
 			)}
 
-			<div className={clsx('px-4', image ? '-mt-6 relative z-10' : 'pt-3')}>
-				<div className='flex items-start justify-between'>
-					<div>
+			{/* CONTENT */}
+			<div className={clsx('flex flex-col px-4 pb-3', image ? '-mt-8 relative z-10' : 'pt-2')}>
+				{/* TITLE ROW */}
+				<div className='flex justify-between items-end gap-2 mb-1'>
+					<div className='min-w-0 flex-1'>
 						<span
-							className={clsx(
-								'text-[10px] font-bold uppercase tracking-wider opacity-70 mb-0.5 block',
-								config.tailwind.text
-							)}>
+							className='text-[9px] font-bold uppercase tracking-wider block opacity-70 mb-0.5'
+							style={{ color: primaryColor }}>
 							{data.type}
 						</span>
-						<h3 className='font-serif font-bold text-lg leading-none text-foreground group-hover:text-amber-700 transition-colors'>
+						<h3
+							className={clsx(
+								'font-serif font-bold text-xl leading-none truncate pr-1 drop-shadow-sm text-foreground'
+							)}>
 							{data.name}
 						</h3>
 					</div>
+					{/* Floating Icon Badge */}
 					<div
 						className={clsx(
-							'p-1.5 rounded-lg shadow-sm border bg-background',
-							config.tailwind.border,
-							config.tailwind.text
+							'p-1.5 rounded-md border shadow-sm shrink-0 mb-0.5',
+							image
+								? 'bg-background/90 text-foreground border-transparent backdrop-blur'
+								: 'bg-muted/30 border-border/50'
 						)}>
-						<Icon size={16} />
+						<TypeIcon size={18} strokeWidth={1.5} style={!image ? { color: primaryColor } : {}} />
 					</div>
 				</div>
-				{tags && (
-					<p className='text-[11px] font-medium text-muted-foreground mt-1.5 pb-2 border-b border-border/50'>{tags}</p>
+
+				{/* SUBTITLE */}
+				{infoLine && <div className='text-xs font-medium text-muted-foreground/90 mb-2 truncate'>{infoLine}</div>}
+
+				{/* TAGS */}
+				{(profile.tags?.length > 0 || hp) && (
+					<div className='flex items-center gap-3 mb-3 border-b border-border/40 pb-2'>
+						{hp && (
+							<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground mr-1'>
+								<Heart size={10} className='text-red-500/70 fill-red-500/10' /> {hp}
+							</div>
+						)}
+						{armorClass && (
+							<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground mr-1'>
+								<Shield size={10} className='text-emerald-500/70 fill-emerald-500/10' /> {armorClass}
+							</div>
+						)}
+						{movement && (
+							<div className='flex items-center gap-1 text-[10px] font-bold text-muted-foreground mr-1'>
+								<Wind size={10} className='text-blue-500/70 fill-blue-500/10' /> {movement}
+							</div>
+						)}
+						{profile.tags?.includes('status') && <StatusDot status={getAttributeValue(attributes, 'status')} />}
+						{profile.tags?.includes('affinity') && (
+							<TagText value={getAttributeValue(attributes, 'affinity')} type='affinity' />
+						)}
+						{profile.tags?.includes('priority') && (
+							<TagText value={getAttributeValue(attributes, 'priority')} type='priority' />
+						)}
+					</div>
+				)}
+
+				{/* PERSONALITY */}
+				{parsedPersonality && (
+					<div className='mb-2 text-xs italic text-muted-foreground/80 leading-relaxed border-l-2 border-border/60 pl-2'>
+						<SmartMarkdown inline={true} disableTooltips={true}>
+							{`"${parsedPersonality}"`}
+						</SmartMarkdown>
+					</div>
+				)}
+
+				{/* DESCRIPTION */}
+				{data.description && (
+					<div className='text-xs text-muted-foreground/90'>
+						<div className='max-h-[140px] overflow-y-auto pr-2 custom-scrollbar leading-relaxed'>
+							<SmartMarkdown inline={true} disallowedElements={['h1', 'h2', 'h3', 'img']} disableTooltips={true}>
+								{data.description}
+							</SmartMarkdown>
+						</div>
+					</div>
 				)}
 			</div>
 
-			<div className='p-4 pt-3'>
-				{/* ARCHITECTURE FIX: Use div instead of p to avoid invalid nesting (p cannot contain div/p) */}
-				<div
-					className='text-xs text-muted-foreground overflow-auto h-full max-h-32 leading-relaxed custom-scrollbar'
-					onClick={(e) => {
-						// CRITICAL: Stop propagation if clicking a link/embed inside the tooltip.
-						// Otherwise, the card's main onClick fires and navigates to the card's entity instead of the link's target.
-						if (e.target.closest('a') || e.target.closest('[role="button"]')) {
-							e.stopPropagation();
-						}
-					}}>
-					<SmartMarkdown
-						// Prevent huge headers or images inside the tooltip
-						disallowedElements={['h1', 'h2', 'img']}
-						unwrapDisallowed={true}>
-						{data.description || 'No overview available.'}
-					</SmartMarkdown>
-				</div>
-			</div>
+			{/* FOOTER */}
+			<div className='bg-muted/30 py-1.5 px-3 border-t border-border flex justify-between items-center mt-auto shrink-0'>
+				<span className='text-[9px] text-muted-foreground/50 font-medium'>
+					{ruler && (
+						<span className='flex items-center gap-1'>
+							<Crown size={8} /> {ruler}
+						</span>
+					)}
+				</span>
 
-			<div className='bg-muted/50 p-2 border-t border-border flex justify-end'>
-				<span className='text-[10px] font-semibold text-muted-foreground/70 flex items-center gap-1 group-hover:text-amber-600 transition-colors'>
-					View Details <ArrowRight size={10} />
+				<span className='text-[9px] font-semibold text-muted-foreground/60 flex items-center gap-1 group-hover:text-amber-600 transition-colors'>
+					Open Wiki <ArrowRight size={8} />
 				</span>
 			</div>
 		</div>
@@ -11632,6 +11740,69 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 };
 
 --- END OF features\smart-tooltip\components\TooltipCard.jsx ---
+
+--- FILE: features\smart-tooltip\config\tooltipProfiles.js ---
+// Defines WHICH data fields to show for each entity type.
+// Visuals (Icons, Colors) are handled by the centralized EntityConfig.
+
+export const TOOLTIP_PROFILES = {
+	// --- CHARACTERS ---
+	character: {
+		subtitle: ['level_prefix', 'race', 'class'],
+		tags: ['status'],
+		features: { showHP: true, showArmorClass: true, showMovement: true },
+	},
+
+	// --- NPCs ---
+	npc: {
+		subtitle: ['gender', 'race', 'role'],
+		tags: ['status', 'affinity'],
+		features: { showPersonality: true },
+	},
+
+	// --- LOCATIONS ---
+	location: {
+		subtitle: ['type', 'parent_location'],
+		tags: [],
+		features: { showRuler: true },
+	},
+
+	// --- QUESTS ---
+	quest: {
+		subtitle: ['quest type'],
+		tags: ['status', 'priority'],
+		features: {},
+	},
+
+	// --- ENCOUNTERS ---
+	encounter: {
+		subtitle: ['status'],
+		tags: [],
+		features: {},
+	},
+
+	// --- FACTIONS ---
+	faction: {
+		subtitle: ['affinity'],
+		tags: [],
+		features: {},
+	},
+
+	// --- SESSIONS ---
+	session: {
+		subtitle: ['session_number_prefixed', 'session_date'],
+		tags: [],
+		features: {},
+	},
+};
+
+export const DEFAULT_PROFILE = {
+	subtitle: ['type'],
+	tags: [],
+	features: {},
+};
+
+--- END OF features\smart-tooltip\config\tooltipProfiles.js ---
 
 --- FILE: features\table-of-contents\TableOfContents.jsx ---
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -12046,16 +12217,16 @@ import { TimelineArcHeader } from './components/TimelineArcHeader';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
 import { useMemo } from 'react';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { Search, ChevronsUp, ChevronsDown, X } from 'lucide-react';
 
 export default function TimelineView() {
-	const { timelineItems, isLoading } = useTimelineViewModel();
+	const { timelineItems, isLoading, searchQuery, setSearchQuery, toggleSession, expandAll, collapseAll } =
+		useTimelineViewModel();
 
 	const tocItems = useMemo(() => {
 		if (!timelineItems) return [];
 
-		// Flatten the hierarchy into a linear list
 		return timelineItems.flatMap((item) => {
-			// LEVEL 1: Arc Header
 			if (item.type === 'arc_header') {
 				return [
 					{
@@ -12065,25 +12236,21 @@ export default function TimelineView() {
 					},
 				];
 			}
-
-			// LEVEL 2: Session
 			if (item.type === 'session') {
 				const sessionNode = {
-					id: `session-marker-${item.number}`, // Ensure this ID exists in DOM
+					id: `session-marker-${item.number}`,
 					text: item.title,
 					depth: 2,
 				};
+				if (!item.isExpanded) return [sessionNode];
 
-				// LEVEL 3: Events (if they exist)
 				const eventNodes = (item.events || []).map((event) => ({
-					id: event.id, // The DOM element ID for the event card
+					id: event.id,
 					text: event.title,
 					depth: 3,
 				}));
-
 				return [sessionNode, ...eventNodes];
 			}
-
 			return [];
 		});
 	}, [timelineItems]);
@@ -12094,29 +12261,77 @@ export default function TimelineView() {
 		<div className='h-full overflow-hidden flex flex-col'>
 			<div className='flex-1 overflow-y-auto bg-background custom-scrollbar'>
 				<div className='max-w-7xl mx-auto p-4 md:p-12'>
-					<h1 className='text-3xl font-serif font-bold text-foreground mb-10'>Campaign History</h1>
+					<div className='flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10'>
+						<h1 className='text-3xl font-serif font-bold text-foreground'>Campaign History</h1>
+
+						{/* --- TOOLBAR --- */}
+						<div className='flex flex-col sm:flex-row gap-3 w-full md:w-auto'>
+							{/* Search Input */}
+							<div className='relative w-full sm:w-64'>
+								<Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+								<input
+									type='text'
+									placeholder='Filter events...'
+									value={searchQuery}
+									onChange={(e) => setSearchQuery(e.target.value)}
+									className='w-full h-9 pl-9 pr-8 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+								/>
+								{searchQuery && (
+									<button
+										onClick={() => setSearchQuery('')}
+										className='absolute right-2 top-2.5 text-muted-foreground hover:text-foreground'>
+										<X size={14} />
+									</button>
+								)}
+							</div>
+
+							{/* Toggle Buttons */}
+							<div className='flex items-center rounded-md border border-input bg-background shadow-sm h-9'>
+								<button
+									onClick={expandAll}
+									className='flex-1 sm:flex-none px-3 h-full flex items-center gap-2 hover:bg-muted/50 transition-colors border-r border-input text-xs font-medium'
+									title='Expand All'>
+									<ChevronsDown size={14} /> <span className='sm:hidden lg:inline'>Expand</span>
+								</button>
+								<button
+									onClick={collapseAll}
+									className='flex-1 sm:flex-none px-3 h-full flex items-center gap-2 hover:bg-muted/50 transition-colors text-xs font-medium'
+									title='Collapse All'>
+									<ChevronsUp size={14} /> <span className='sm:hidden lg:inline'>Collapse</span>
+								</button>
+							</div>
+						</div>
+					</div>
 
 					<div className='grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-12 relative'>
 						{/* 
-                           KEEPING THE BORDER: 
-                           The border-l-2 creates the "timeline". 
-                           Both Sessions and Arc Headers sit inside this, putting markers on the line.
+                           Timeline Container 
+                           FIX: Reduced mobile margin to ml-6 (24px) to give content more width.
+                           The Arc Icon overhangs -21px. ml-6 + p-4 = 40px space. Safe.
                         */}
-						<div className='relative border-l-2 border-border ml-3 md:ml-4 space-y-8 pb-20'>
-							{timelineItems.map((item) => {
-								if (item.type === 'arc_header') {
+						<div className='relative border-l-2 border-border ml-3 md:ml-10 space-y-8 pb-20'>
+							{timelineItems.length === 0 ? (
+								<div className='py-20 text-center text-muted-foreground'>No events found matching "{searchQuery}"</div>
+							) : (
+								timelineItems.map((item) => {
+									if (item.type === 'arc_header') {
+										return (
+											<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
+												<TimelineArcHeader arc={item} id={`arc-${item.id}`} />
+											</div>
+										);
+									}
 									return (
-										<div key={item.id} id={`arc-marker-${item.id}`} className='scroll-mt-12'>
-											<TimelineArcHeader arc={item} id={`arc-${item.id}`} />
+										<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
+											<TimelineSession
+												session={item}
+												id={`session-${item.number}`}
+												onToggle={() => toggleSession(item.id)}
+											/>
 										</div>
 									);
-								}
-								return (
-									<div key={item.id} id={`session-marker-${item.number}`} className='scroll-mt-24'>
-										<TimelineSession session={item} id={`session-${item.number}`} />
-									</div>
-								);
-							})}
+								})
+							)}
 						</div>
 
 						<TableOfContents items={tocItems} visibilityClass='hidden xl:block' mobileToggleClass='xl:hidden' />
@@ -12130,7 +12345,7 @@ export default function TimelineView() {
 --- END OF features\timeline\TimelinePage.jsx ---
 
 --- FILE: features\timeline\useTimelineView.js ---
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTimeline } from '@/features/timeline/api/timelineService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
@@ -12138,6 +12353,8 @@ import { getEventStyle } from './utils/eventStyles';
 
 export function useTimelineViewModel() {
 	const { campaignId } = useCampaign();
+	const [searchQuery, setSearchQuery] = useState('');
+	const [collapsedSessions, setCollapsedSessions] = useState(new Set());
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['timeline', campaignId],
@@ -12145,31 +12362,50 @@ export function useTimelineViewModel() {
 		enabled: !!campaignId,
 	});
 
+	// --- Actions ---
+
+	const toggleSession = useCallback((sessionId) => {
+		setCollapsedSessions((prev) => {
+			const next = new Set(prev);
+			if (next.has(sessionId)) {
+				next.delete(sessionId);
+			} else {
+				next.add(sessionId);
+			}
+			return next;
+		});
+	}, []);
+
+	const collapseAll = useCallback(() => {
+		if (!data) return;
+		const allIds = data.map((s) => s.session_id);
+		setCollapsedSessions(new Set(allIds));
+	}, [data]);
+
+	const expandAll = useCallback(() => {
+		setCollapsedSessions(new Set());
+	}, []);
+
+	// --- Filtering & Processing ---
+
 	const timelineItems = useMemo(() => {
 		if (!data) return [];
 
 		const items = [];
 		let currentArcId = null;
 
-		data.forEach((session) => {
-			// 1. Detect Arc Change
-			// Use strict comparison to detect switching from one arc to another
-			if (session.arc_id && session.arc_id !== currentArcId) {
-				items.push({
-					type: 'arc_header',
-					id: `arc-${session.arc_id}`,
-					title: session.arc_title,
-					description: session.arc_description,
-					color: session.arc_attributes?.color || 'amber', // Future proofing
-				});
-				currentArcId = session.arc_id;
-			} else if (!session.arc_id && currentArcId !== null) {
-				// Optional: We dropped out of an arc into "uncategorized"
-				currentArcId = null;
-			}
+		// Normalize Search
+		const query = searchQuery.toLowerCase().trim();
+		const isSearching = query.length > 0;
 
-			// 2. Process Session (Existing Logic)
-			const events = (session.events || []).map((event) => ({
+		// Process each session from the DB
+		data.forEach((session) => {
+			// 1. Filter Logic
+			let matchingEvents = [];
+			const sessionMatches = session.session_title.toLowerCase().includes(query);
+
+			// Map events to view model first
+			const allEvents = (session.events || []).map((event) => ({
 				id: event.id,
 				title: event.title,
 				typeLabel: event.type?.replace(/_/g, ' ') || 'Event',
@@ -12178,20 +12414,71 @@ export function useTimelineViewModel() {
 				style: getEventStyle(event.type),
 			}));
 
+			if (isSearching) {
+				if (sessionMatches) {
+					// Match on Session Title -> Show all events
+					matchingEvents = allEvents;
+				} else {
+					// Match on Event Content -> Show only matching events
+					matchingEvents = allEvents.filter(
+						(e) =>
+							e.title.toLowerCase().includes(query) ||
+							(e.description && e.description.toLowerCase().includes(query)) ||
+							e.tags.some((t) => t.name.toLowerCase().includes(query))
+					);
+				}
+			} else {
+				matchingEvents = allEvents;
+			}
+
+			// If searching and nothing matches, skip this session entirely
+			if (isSearching && !sessionMatches && matchingEvents.length === 0) {
+				return;
+			}
+
+			// 2. Arc Logic (Only add Arc header if we are adding a session under it)
+			if (session.arc_id && session.arc_id !== currentArcId) {
+				items.push({
+					type: 'arc_header',
+					id: `arc-${session.arc_id}`,
+					title: session.arc_title,
+					description: session.arc_description,
+					color: session.arc_attributes?.color || 'amber',
+				});
+				currentArcId = session.arc_id;
+			} else if (!session.arc_id && currentArcId !== null) {
+				currentArcId = null;
+			}
+
+			// 3. Determine Expansion State
+			// If searching, always expand. Otherwise, check state.
+			const isExpanded = isSearching ? true : !collapsedSessions.has(session.session_id);
+
 			items.push({
 				type: 'session',
 				id: session.session_id,
 				number: session.session_number ?? 999,
 				dateLabel: session.session_date || 'Unknown Date',
 				title: session.session_title,
-				events,
+				events: matchingEvents,
+				synopsis: session?.attributes?.synopsis || null,
+				isExpanded,
+				hasActiveSearch: isSearching, // Pass this down to disable toggles during search if desired
 			});
 		});
 
 		return items;
-	}, [data]);
+	}, [data, searchQuery, collapsedSessions]);
 
-	return { timelineItems, isLoading };
+	return {
+		timelineItems,
+		isLoading,
+		searchQuery,
+		setSearchQuery,
+		toggleSession,
+		expandAll,
+		collapseAll,
+	};
 }
 
 --- END OF features\timeline\useTimelineView.js ---
@@ -12223,9 +12510,14 @@ export const TimelineArcHeader = ({ arc }) => {
 		// pt-10: Space from previous session.
 		// pb-1: Reduced space to the next session (tight coupling).
 		<div className='relative pl-8 md:pl-12 pt-10 pb-1'>
-			{/* "Chapter Marker" - Placed on the vertical line
-			    -left-[19px] centers the 40px icon on the ~2px border line. */}
-			<div className='absolute -left-[19px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-primary/10 shadow-sm z-10 text-primary'>
+			{/* 
+                FIX: "Chapter Marker" Alignment
+                - Width 40px (w-10). Center is 20px.
+                - Border is 2px. Center is 1px relative to parent.
+                - Content starts at 2px.
+                - To align centers: Left = -21px (was -19px)
+            */}
+			<div className='absolute -left-[21px] top-10 flex items-center justify-center w-10 h-10 rounded-full bg-background border-4 border-primary/10 shadow-sm z-10 text-primary'>
 				<BookOpen size={20} strokeWidth={2.5} />
 			</div>
 
@@ -12250,51 +12542,44 @@ export const TimelineArcHeader = ({ arc }) => {
 --- END OF features\timeline\components\TimelineArcHeader.jsx ---
 
 --- FILE: features\timeline\components\TimelineEvent.jsx ---
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { clsx } from 'clsx';
-import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { Diamond } from 'lucide-react';
 
-export const TimelineEvent = ({ event, id }) => {
+export const TimelineEvent = memo(({ event, id }) => {
 	const { Icon, container } = event.style;
 
-	// Group tags by entity type
 	const groupedTags = useMemo(() => {
 		if (!event.tags || event.tags.length === 0) return [];
-
 		const groups = {};
 		event.tags.forEach((tag) => {
 			const type = tag.type || 'default';
-			if (!groups[type]) {
-				groups[type] = [];
-			}
+			if (!groups[type]) groups[type] = [];
 			groups[type].push(tag);
 		});
-
-		// Convert to array of groups
 		return Object.values(groups);
 	}, [event.tags]);
 
 	return (
-		<div className='relative flex gap-3 md:gap-4 group'>
-			{/* Icon Bubble */}
+		// FIX: Reduced gap on mobile (gap-2.5) to gap-4 on desktop
+		<div className='relative flex gap-2.5 md:gap-4 group'>
+			{/* Icon Bubble - Slightly smaller on mobile (w-7) */}
 			<div
 				className={clsx(
-					'shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110 bg-background',
+					'shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shadow-sm border-2 z-10 transition-transform group-hover:scale-110 bg-background',
 					container
 				)}>
-				<Icon size={14} strokeWidth={2.5} />
+				<Icon className='w-3.5 h-3.5 md:w-4 md:h-4' strokeWidth={2.5} />
 			</div>
 
 			{/* Content */}
 			<div id={id} className='flex-1 -mt-1 pb-2 min-w-0'>
-				{/* FIX: Title color muted to text-foreground/80 */}
 				<h4 className='text-sm font-bold text-foreground/80 mb-1 flex flex-wrap items-center gap-2'>
 					<span className='mr-auto'>{event.title}</span>
-					<span className='text-[9px] font-normal uppercase tracking-wider text-foreground border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
+					{/* <span className='text-[9px] font-normal uppercase tracking-wider text-foreground border border-border px-1.5 rounded-sm bg-muted whitespace-nowrap'>
 						{event.typeLabel}
-					</span>
+					</span> */}
 				</h4>
 
 				{event.description && (
@@ -12303,35 +12588,13 @@ export const TimelineEvent = ({ event, id }) => {
 					</div>
 				)}
 
-				{/* Grouped Tags */}
 				{groupedTags.length > 0 && (
-					<div className='flex flex-wrap items-center gap-2 mt-2'>
+					<div className='flex flex-wrap items-center gap-2 mt-2 p-1 bg-card'>
 						{groupedTags.map((group, groupIndex) => (
 							<div key={groupIndex} className='flex items-center gap-2'>
-								{/* Tags in this group */}
-								<div className='flex flex-wrap gap-1.5'>
-									{group.map((tag, idx) => {
-										const config = getEntityConfig(tag.type);
-										const TagIcon = config.icon;
-										const styles = config.tailwind;
-
-										return (
-											<span
-												key={`${tag.name}-${idx}`}
-												className={clsx(
-													// FIX: Changed font-bold to font-semibold for better legibility
-													'inline-flex items-center gap-1 text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border cursor-default whitespace-nowrap',
-													styles.bg,
-													styles.text,
-													styles.border
-												)}>
-												<TagIcon size={10} /> {tag.name}
-											</span>
-										);
-									})}
+								<div className='flex flex-wrap gap-2 text-[12px]'>
+									<SmartMarkdown inline>{group.map((tag) => tag.name).join(' ')}</SmartMarkdown>
 								</div>
-
-								{/* Separator */}
 								{groupIndex < groupedTags.length - 1 && (
 									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
 								)}
@@ -12342,50 +12605,123 @@ export const TimelineEvent = ({ event, id }) => {
 			</div>
 		</div>
 	);
-};
+});
+
+TimelineEvent.displayName = 'TimelineEvent';
 
 --- END OF features\timeline\components\TimelineEvent.jsx ---
 
 --- FILE: features\timeline\components\TimelineSession.jsx ---
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { TimelineEvent } from './TimelineEvent';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { clsx } from 'clsx';
 
-export const TimelineSession = ({ session, id }) => {
+// Estimated height of an event card to prevent massive layout shifts
+const ESTIMATED_EVENT_HEIGHT = 120;
+
+export const TimelineSession = memo(({ session, id, onToggle }) => {
+	const [isVisible, setIsVisible] = useState(false);
+	const containerRef = useRef(null);
+	const { isExpanded, hasActiveSearch } = session;
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+		if (!isExpanded) return;
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				if (entry.isIntersecting) {
+					setIsVisible(true);
+					observer.disconnect();
+				}
+			},
+			{
+				rootMargin: '600px 0px',
+				threshold: 0,
+			}
+		);
+
+		observer.observe(containerRef.current);
+
+		return () => {
+			observer.disconnect();
+		};
+	}, [isExpanded]);
+
+	const eventList = useMemo(() => {
+		if (!isVisible) return null;
+		return session.events.map((event) => <TimelineEvent key={event.id} event={event} id={event.id} />);
+	}, [session.events, isVisible]);
+
+	const placeholderHeight = session.events.length * ESTIMATED_EVENT_HEIGHT;
+
 	return (
-		// OPTIMIZATION: Reduced padding (pl-4) on mobile to maximize text width
-		<div id={id} className='relative pl-4 md:pl-12'>
-			{/* Session Marker (Circle on the main line) */}
-			<div className='absolute -left-[9px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
+		<div id={id} ref={containerRef} className='relative pl-3 md:pl-12'>
+			{/* Session Marker */}
+			<div className='absolute -left-[11px] top-0 flex items-center justify-center w-5 h-5 rounded-full bg-background border-2 border-border shadow-sm z-10'>
 				<div className='w-2 h-2 rounded-full bg-gray-400' />
 			</div>
 
-			{/* Session Header */}
-			<div className='mb-8'>
-				<div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2'>
-					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded self-start border border-border'>
+			{/* 
+               FIX: Header Layout
+               Removed flex-row columns. The chevron is now inline with the title.
+            */}
+			<div className='mb-6 cursor-pointer group pl-5 md:pl-0'>
+				{/* Metadata Row */}
+				<div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2'>
+					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
 						Session {session.number - 1}
 					</span>
 					<time className='text-xs text-muted-foreground/70 flex items-center gap-1 font-medium'>
 						<Calendar size={12} /> {session.dateLabel}
 					</time>
 				</div>
-				<h2 className='text-2xl font-serif font-bold text-foreground mb-3'>{session.title}</h2>
+
+				{/* Title Row with Inline Chevron */}
+				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight'>
+					{/* align-middle ensures text aligns with icon */}
+					<span className='align-middle'>{session.title}</span>
+
+					{!hasActiveSearch && (
+						<span
+							onClick={!hasActiveSearch ? onToggle : undefined}
+							className={clsx(
+								'inline-flex items-center justify-center align-middle ml-2 p-1 rounded-full text-muted-foreground/50 group-hover:bg-muted group-hover:text-foreground transition-all',
+								isExpanded ? 'rotate-0' : '-rotate-90'
+							)}>
+							<ChevronDown size={20} />
+						</span>
+					)}
+				</h2>
+
+				{session.synopsis && (
+					<div className='text-muted-foreground prose prose-sm prose-p:my-1 max-w-none text-pretty'>
+						<SmartMarkdown>{session.synopsis}</SmartMarkdown>
+					</div>
+				)}
 			</div>
 
 			{/* Events List */}
-			<div className='space-y-6 relative'>
-				{/* Connector Line for events */}
-				{/* Adjusted left position slightly to align with tighter padding if needed, 
-                    but 15px centers it nicely within the w-8 icon (16px center) roughly */}
-				<div className='absolute left-[15px] top-4 bottom-4 w-0.5 bg-muted -z-10' />
-
-				{session.events.map((event) => (
-					<TimelineEvent key={event.id} event={event} id={event.id} />
-				))}
-			</div>
+			{isExpanded && (
+				<div className='space-y-6 relative min-h-[50px] animate-in fade-in slide-in-from-top-2 duration-300'>
+					{isVisible ? (
+						eventList
+					) : (
+						<div
+							style={{ height: placeholderHeight }}
+							className='w-full rounded-lg border border-dashed border-border/50 bg-muted/20 flex items-center justify-center'>
+							<span className='text-xs text-muted-foreground/50'>Loading {session.events.length} events...</span>
+						</div>
+					)}
+				</div>
+			)}
 		</div>
 	);
-};
+});
+
+TimelineSession.displayName = 'TimelineSession';
 
 --- END OF features\timeline\components\TimelineSession.jsx ---
 
@@ -13016,7 +13352,7 @@ export const EntityBody = ({
 	return (
 		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
-				<div className='mb-4'>
+				<div className='mb-4 text-muted-foreground'>
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}
@@ -14655,14 +14991,14 @@ const NetworkGroup = ({ type, items }) => {
 						id={rel.entity_id}
 						type={rel.entity_type}
 						inline={true}
-						showIcon={false}
+						showIcon={true}
 						className={clsx(
 							'!flex !w-full !items-center !justify-between !p-2 !rounded-md !border !bg-card !transition-all !cursor-pointer !no-underline',
 							'!border-border hover:!border-primary/50 hover:!shadow-sm hover:!bg-muted/20 group'
 						)}>
 						{/* Left: Icon + Name */}
 						<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-							<EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' />
+							{/* <EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' /> */}
 							<span className='text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors'>
 								{rel.entity_name}
 							</span>

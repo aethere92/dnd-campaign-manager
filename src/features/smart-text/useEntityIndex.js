@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getEntityIndex } from '@/domain/entity/api/entityService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
-import { getParentId } from '@/domain/entity/utils/entityUtils'; // You added this util previously
+import { getParentId } from '@/domain/entity/utils/entityUtils';
 
 export function useEntityIndex() {
 	const { campaignId } = useCampaign();
@@ -14,34 +14,59 @@ export function useEntityIndex() {
 
 			const list = [];
 			const map = new Map();
+			const searchTokens = [];
 
 			rawData.forEach((entity) => {
 				const attrs = parseAttributes(entity.attributes);
+
 				const lightEntity = {
 					...entity,
-					// Pre-calculate hierarchy once
 					parentId: getParentId(entity),
-					// Resolve Icon once
 					iconUrl: resolveImageUrl(attrs, 'icon'),
+					attributes: attrs,
 				};
 
-				// Remove heavy relationships array to save memory
-				delete lightEntity.relationships;
+				// 1. Add Primary Name
+				if (entity.name && entity.name.length > 2) {
+					searchTokens.push({
+						term: entity.name,
+						entityId: entity.id,
+						type: entity.type,
+					});
+				}
+
+				// 2. Add Aliases
+				if (attrs.aliases) {
+					// Handle Array or String
+					const aliasList = Array.isArray(attrs.aliases)
+						? attrs.aliases
+						: typeof attrs.aliases === 'string'
+						? attrs.aliases.split(',').map((s) => s.trim())
+						: [];
+
+					aliasList.forEach((alias) => {
+						if (alias && alias.length > 2) {
+							searchTokens.push({
+								term: alias,
+								entityId: entity.id,
+								type: entity.type,
+							});
+						}
+					});
+				}
 
 				list.push(lightEntity);
 				map.set(entity.id, lightEntity);
 			});
 
-			// Return optimized structures
-			return {
-				list: list.sort((a, b) => b.name.length - a.name.length),
-				map,
-			};
+			// Sort by length DESC so "Captain Soranna" matches before "Soranna"
+			searchTokens.sort((a, b) => b.term.length - a.term.length);
+
+			return { list, map, searchTokens };
 		},
-		staleTime: 1000 * 60 * 30, // 30 mins
+		staleTime: 1000 * 60 * 30,
 		enabled: !!campaignId,
 	});
 
-	// Default return shape
-	return data || { list: [], map: new Map() };
+	return data || { list: [], map: new Map(), searchTokens: [] };
 }

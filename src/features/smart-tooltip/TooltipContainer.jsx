@@ -2,7 +2,6 @@ import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getTooltipData } from '@/domain/entity/api/entityService';
 import { TooltipCard } from './components/TooltipCard';
-import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 	const targetId = target?.id;
@@ -11,25 +10,16 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 
 	const { data, isLoading } = useQuery({
 		queryKey: ['tooltip', targetId],
-		// Call Service instead of Supabase directly
 		queryFn: async () => {
 			if (!targetId) return null;
 			const rawData = await getTooltipData(targetId, targetType);
 
-			// Small amount of VIEW logic remains here to shape it for the Card
-			if (targetType === 'session') {
-				const attrs = (rawData.attributes || []).reduce((acc, c) => ({ ...acc, [c.name]: c.value }), {});
-				const num = getAttributeValue(attrs, ['session_number', 'Session']);
-				const date = getAttributeValue(attrs, ['session_date', 'Date']);
-				const summaryAttr = getAttributeValue(attrs, 'Summary');
-
-				return {
-					name: rawData.name,
-					type: 'session',
-					description: summaryAttr || rawData.description,
-					attributes: { Session: num, Date: date },
-				};
+			// FIX: If it's a session, ensure the 'narrative' is used as description
+			// because the entities table often has null description for sessions.
+			if (targetType === 'session' && !rawData.description && rawData.narrative) {
+				return { ...rawData, description: rawData.narrative };
 			}
+
 			return rawData;
 		},
 		enabled: !!targetId && isValidId,
@@ -42,9 +32,10 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 
 	return createPortal(
 		<>
-			{isMobile && target.isPinned && (
+			{/* Mobile Backdrop to close tooltip on tap outside */}
+			{isMobile && (
 				<div
-					className='fixed inset-0 bg-black/20 z-[9998]'
+					className='fixed inset-0 z-[9998]'
 					onClick={(e) => {
 						e.stopPropagation();
 						onMouseLeave && onMouseLeave();

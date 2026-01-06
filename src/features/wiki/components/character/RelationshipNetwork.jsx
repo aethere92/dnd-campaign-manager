@@ -30,14 +30,14 @@ const NetworkGroup = ({ type, items }) => {
 						id={rel.entity_id}
 						type={rel.entity_type}
 						inline={true}
-						showIcon={false}
+						showIcon={true}
 						className={clsx(
 							'!flex !w-full !items-center !justify-between !p-2 !rounded-md !border !bg-card !transition-all !cursor-pointer !no-underline',
 							'!border-border hover:!border-primary/50 hover:!shadow-sm hover:!bg-muted/20 group'
 						)}>
 						{/* Left: Icon + Name */}
 						<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-							<EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' />
+							{/* <EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' /> */}
 							<span className='text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors'>
 								{rel.entity_name}
 							</span>

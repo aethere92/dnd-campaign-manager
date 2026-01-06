@@ -1,29 +1,24 @@
 import { useMemo } from 'react';
 import { useEntityIndex } from './useEntityIndex';
 
-/**
- * Escape special regex characters
- */
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/**
- * Find non-overlapping entity mentions in text
- */
-const findEntityMatches = (text, entityIndex) => {
+const findEntityMatches = (text, searchTokens, entityMap) => {
 	const matches = [];
 	const processedRanges = [];
 
-	// Sort by length DESC
-	const sortedEntities = [...entityIndex].sort((a, b) => b.name.length - a.name.length);
+	if (!searchTokens || searchTokens.length === 0) return [];
 
-	for (const entity of sortedEntities) {
-		const pattern = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
+	for (const token of searchTokens) {
+		// Use standard Word Boundaries (\b) for matching
+		const pattern = new RegExp(`\\b${escapeRegex(token.term)}\\b`, 'gi');
 		let match;
 
 		while ((match = pattern.exec(text)) !== null) {
 			const start = match.index;
-			const end = start + match[0].length;
+			const end = start + token.term.length;
 
+			// Check overlap
 			const overlaps = processedRanges.some(
 				(range) =>
 					(start >= range.start && start < range.end) ||
@@ -32,8 +27,18 @@ const findEntityMatches = (text, entityIndex) => {
 			);
 
 			if (!overlaps) {
-				matches.push({ start, end, text: match[0], entity });
-				processedRanges.push({ start, end });
+				const entity = entityMap.get(token.entityId);
+				if (entity) {
+					// CHANGED: Use text.slice(start, end) to grab the ACTUAL text
+					// (e.g., "the Arcane Brotherhood") instead of token.term ("The Arcane Brotherhood")
+					matches.push({
+						start,
+						end,
+						text: text.slice(start, end),
+						entity,
+					});
+					processedRanges.push({ start, end });
+				}
 			}
 		}
 	}
@@ -55,33 +60,26 @@ const replaceMatches = (text, matches) => {
 };
 
 export function useSmartText(text) {
-	const { list: entityIndex } = useEntityIndex();
+	const { searchTokens, map } = useEntityIndex();
 
 	const shouldProcess = useMemo(() => {
 		if (!text || typeof text !== 'string' || text.length < 3) return false;
-		if (!entityIndex || entityIndex.length === 0) return false;
+		if (!searchTokens || searchTokens.length === 0) return false;
 		return true;
-	}, [text, entityIndex]);
+	}, [text, searchTokens]);
 
 	return useMemo(() => {
 		if (!shouldProcess) return text || '';
 
 		try {
-			// CRITICAL FIX: Split by existing Markdown links to protect them
-			// Matches [text](url) pattern. The capturing group () keeps the delimiter in the result array.
-			// This regex is basic but handles standard single-line links.
 			const linkProtectionRegex = /(\[.*?\]\(.*?\))/g;
 			const parts = text.split(linkProtectionRegex);
 
-			// Process only the parts that ARE NOT links
 			const processedParts = parts.map((part) => {
-				// Simple check: does it look like a markdown link?
 				if (part.startsWith('[') && part.includes('](') && part.endsWith(')')) {
-					return part; // Return existing link as-is (Protected)
+					return part;
 				}
-
-				// Otherwise, auto-link entities in this plain text segment
-				const matches = findEntityMatches(part, entityIndex);
+				const matches = findEntityMatches(part, searchTokens, map);
 				return replaceMatches(part, matches);
 			});
 
@@ -90,5 +88,5 @@ export function useSmartText(text) {
 			console.error('SmartMarkdown processing error:', err);
 			return text;
 		}
-	}, [text, entityIndex, shouldProcess]);
+	}, [text, searchTokens, map, shouldProcess]);
 }

@@ -155,6 +155,8 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
       useTooltipState.js
       components/
         TooltipCard.jsx
+      config/
+        tooltipProfiles.js
     table-of-contents/
       TableOfContents.jsx
       components/

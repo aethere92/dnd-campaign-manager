@@ -79,7 +79,7 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 					onClick={() => onSelect(campaign.id)}
 					fullWidth
 					variant='outline'
-					className='group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors'
+					className='bg-primary text-primary-foreground border-primary transition-colors'
 					icon={ArrowRight}>
 					Enter Campaign
 				</Button>
