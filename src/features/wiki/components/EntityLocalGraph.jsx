@@ -13,7 +13,7 @@ const LOCAL_LAYOUT = {
 	name: 'fcose',
 	quality: 'default',
 	randomize: true,
-	animate: true,
+	animate: false,
 	animationDuration: 800,
 	fit: true,
 	padding: 30,
