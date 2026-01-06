@@ -45,14 +45,14 @@ export const TimelineEvent = memo(({ event, id }) => {
 				)}
 
 				{groupedTags.length > 0 && (
-					<div className='flex flex-wrap items-center gap-2 mt-2 p-1 bg-card'>
+					<div className='flex flex-wrap items-center gap-2 mt-2 px-2 py-1 bg-muted/60 rounded-sm w-max'>
 						{groupedTags.map((group, groupIndex) => (
 							<div key={groupIndex} className='flex items-center gap-2'>
-								<div className='flex flex-wrap gap-2 text-[12px]'>
+								<div className='flex flex-wrap gap-2 text-[12px] text-muted-foreground/10'>
 									<SmartMarkdown inline>{group.map((tag) => tag.name).join(' ')}</SmartMarkdown>
 								</div>
 								{groupIndex < groupedTags.length - 1 && (
-									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
+									<Diamond size={6} className='text-muted-foreground fill-muted-foreground shrink-0' />
 								)}
 							</div>
 						))}
