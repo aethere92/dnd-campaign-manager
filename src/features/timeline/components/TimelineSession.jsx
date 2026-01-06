@@ -54,7 +54,7 @@ export const TimelineSession = memo(({ session, id, onToggle }) => {
                FIX: Header Layout
                Removed flex-row columns. The chevron is now inline with the title.
             */}
-			<div className='mb-6 cursor-pointer group pl-5 md:pl-0'>
+			<div className='mb-6 group pl-5 md:pl-0'>
 				{/* Metadata Row */}
 				<div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2'>
 					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
@@ -66,7 +66,7 @@ export const TimelineSession = memo(({ session, id, onToggle }) => {
 				</div>
 
 				{/* Title Row with Inline Chevron */}
-				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight'>
+				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight cursor-pointer'>
 					{/* align-middle ensures text aligns with icon */}
 					<span className='align-middle'>{session.title}</span>
 
