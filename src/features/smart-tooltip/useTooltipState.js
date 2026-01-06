@@ -34,7 +34,7 @@ export function useTooltipState() {
 		// Add a delay so the user can move their mouse from the link TO the tooltip
 		timeoutRef.current = setTimeout(() => {
 			setActiveTooltip(null);
-		}, 300); // 300ms grace period
+		}, 100); // 300ms grace period
 	}, []);
 
 	// Allows the Tooltip Card to say "I'm being hovered, don't close!"

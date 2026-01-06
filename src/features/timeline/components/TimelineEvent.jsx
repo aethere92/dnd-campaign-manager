@@ -45,7 +45,7 @@ export const TimelineEvent = memo(({ event, id }) => {
 				)}
 
 				{groupedTags.length > 0 && (
-					<div className='flex flex-wrap items-center gap-2 mt-2 px-2 py-1 bg-muted/60 rounded-sm w-max'>
+					<div className='flex flex-wrap items-center gap-2 mt-2 px-2 py-1 bg-muted/60 rounded-sm w-fit max-w-full'>
 						{groupedTags.map((group, groupIndex) => (
 							<div key={groupIndex} className='flex items-center gap-2'>
 								<div className='flex flex-wrap gap-2 text-[12px] text-muted-foreground/10'>
