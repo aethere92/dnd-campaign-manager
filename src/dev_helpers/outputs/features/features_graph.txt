@@ -39,6 +39,7 @@ PARTIAL BUNDLE: FEATURES GRAPH
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdvancedFilter.jsx
         EncounterManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
@@ -52,7 +53,6 @@ PARTIAL BUNDLE: FEATURES GRAPH
         TacticalMapManager.jsx
       config/
         adminStrategies.js
-        imageLibrary.js
         imageManifest.json
       layouts/
         AdminLayout.jsx
@@ -61,6 +61,8 @@ PARTIAL BUNDLE: FEATURES GRAPH
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
+      utils/
+        filterUtils.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -685,7 +687,7 @@ const INK_COLORS = {
 	NEUTRAL: '#78716c',
 };
 
-const FALLBACK_ICON_PATH = 'images/icons';
+const FALLBACK_ICON_PATH = 'images/global/icons';
 
 export const transformGraphData = (rawEntities) => {
 	if (!rawEntities || rawEntities.length === 0) return [];

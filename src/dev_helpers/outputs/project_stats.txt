@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-07 15:01:19
+Generated: 2026-01-07 17:50:15
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 190
-Total lines: 18,742
-Non-empty lines: 16,602
-Comment lines: 1,441
-Total size: 583,486 bytes (569.81 KB)
-Average lines per file: 98.6
+Total files: 191
+Total lines: 19,236
+Non-empty lines: 17,040
+Comment lines: 1,468
+Total size: 600,191 bytes (586.12 KB)
+Average lines per file: 100.7
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,18 +22,18 @@ Average lines per file: 98.6
 
 .js:
   Files: 66
-  Lines: 6,320
-  Size: 175,434 bytes (171.32 KB)
+  Lines: 6,411
+  Size: 178,507 bytes (174.32 KB)
 
 .json:
   Files: 1
-  Lines: 230
-  Size: 6,433 bytes (6.28 KB)
+  Lines: 200
+  Size: 4,835 bytes (4.72 KB)
 
 .jsx:
-  Files: 121
-  Lines: 11,731
-  Size: 390,012 bytes (380.87 KB)
+  Files: 122
+  Lines: 12,164
+  Size: 405,242 bytes (395.74 KB)
 
 .md:
   Files: 1
@@ -44,8 +44,8 @@ Average lines per file: 98.6
 ### LARGEST FILES (by lines)
 
 app\styles\global.css: 451 lines
+features\admin\components\AdminForm.jsx: 430 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
-features\admin\components\AdminForm.jsx: 406 lines
 features\admin\api\adminService.js: 362 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
@@ -53,14 +53,14 @@ features\wiki\components\EntityLocalGraph.jsx: 301 lines
 domain\entity\api\entityService.js: 274 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
+features\admin\pages\SplitPaneManager.jsx: 265 lines
 features\smart-tooltip\components\TooltipCard.jsx: 251 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
-features\admin\config\imageManifest.json: 230 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\wiki\components\character\CharacterSidebar.jsx: 224 lines
 features\atlas\data\modularize.js: 223 lines
+features\admin\components\SmartImageInput.jsx: 218 lines
 features\atlas\components\AtlasSidebar.jsx: 215 lines
-features\admin\pages\SplitPaneManager.jsx: 211 lines
 features\wiki\components\EntitySidebar.jsx: 209 lines
 features\wiki\components\EncounterTimeline.jsx: 208 lines
 
@@ -70,7 +70,7 @@ features\wiki\components\EncounterTimeline.jsx: 208 lines
 app:
   Files: 4
   Lines: 574
-  Size: 15,299 bytes (14.94 KB)
+  Size: 15,318 bytes (14.96 KB)
 
 domain_entity:
   Files: 13
@@ -78,9 +78,9 @@ domain_entity:
   Size: 38,609 bytes (37.70 KB)
 
 features_admin:
-  Files: 22
-  Lines: 4,108
-  Size: 135,255 bytes (132.08 KB)
+  Files: 23
+  Lines: 4,602
+  Size: 151,927 bytes (148.37 KB)
 
 features_atlas:
   Files: 16
@@ -100,7 +100,7 @@ features_dashboard:
 features_graph:
   Files: 7
   Lines: 484
-  Size: 13,334 bytes (13.02 KB)
+  Size: 13,341 bytes (13.03 KB)
 
 features_navigation:
   Files: 7
@@ -135,7 +135,7 @@ features_timeline:
 features_wiki:
   Files: 47
   Lines: 4,876
-  Size: 157,128 bytes (153.45 KB)
+  Size: 157,135 bytes (153.45 KB)
 
 root:
   Files: 2

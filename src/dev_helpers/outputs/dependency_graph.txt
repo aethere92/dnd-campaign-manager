@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-07 15:01:19
+Generated: 2026-01-07 17:50:15
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -103,6 +103,12 @@ features\admin\components\AdminForm.jsx:
   → react-hook-form
   → react-router-dom
 
+features\admin\components\AdvancedFilter.jsx:
+  → @/features/admin/utils/filterUtils
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
 features\admin\components\EncounterManager.jsx:
   → ./AdminFormStyles
   → ./EntitySearch
@@ -170,6 +176,7 @@ features\admin\components\SessionEventManager.jsx:
 features\admin\components\SmartImageInput.jsx:
   → ./AdminFormStyles
   → ./ImageLibraryModal
+  → @/features/admin/config/imageManifest.json
   → lucide-react
   → react
 
@@ -217,12 +224,17 @@ features\admin\pages\SplitPaneManager.jsx:
   → @/domain/entity/api/entityService
   → @/features/admin/api/adminService
   → @/features/admin/components/AdminForm
+  → @/features/admin/components/AdvancedFilter
+  → @/features/admin/utils/filterUtils
   → @/features/campaign/CampaignContext
   → @/shared/components/ui/Button
   → @tanstack/react-query
   → lucide-react
   → react
   → react-router-dom
+
+features\admin\utils\filterUtils.js:
+  → @/features/admin/config/adminStrategies
 
 features\atlas\MapPage.jsx:
   → ./components/MapCanvas
@@ -1054,13 +1066,13 @@ Files with most outgoing dependencies:
   app\AppRoutes.jsx: 16 imports
   features\dashboard\DashboardPage.jsx: 12 imports
   features\wiki\components\EntityMiniMap.jsx: 12 imports
+  features\admin\pages\SplitPaneManager.jsx: 11 imports
   features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 10 imports
   features\smart-tooltip\components\TooltipCard.jsx: 10 imports
   features\wiki\layouts\SessionLayout.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
-  features\admin\pages\SplitPaneManager.jsx: 9 imports
   features\atlas\components\layers\MapMarkers.jsx: 9 imports
   features\wiki\components\EntityLocalGraph.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports

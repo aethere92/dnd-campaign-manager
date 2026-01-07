@@ -39,6 +39,7 @@ PARTIAL BUNDLE: FEATURES TIMELINE
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdvancedFilter.jsx
         EncounterManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
@@ -52,7 +53,6 @@ PARTIAL BUNDLE: FEATURES TIMELINE
         TacticalMapManager.jsx
       config/
         adminStrategies.js
-        imageLibrary.js
         imageManifest.json
       layouts/
         AdminLayout.jsx
@@ -61,6 +61,8 @@ PARTIAL BUNDLE: FEATURES TIMELINE
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
+      utils/
+        filterUtils.js
     atlas/
       MapPage.jsx
       useMapData.js

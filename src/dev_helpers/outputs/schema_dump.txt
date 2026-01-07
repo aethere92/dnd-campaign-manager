@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/7/2026, 3:00:59 PM
+   Generated: 1/7/2026, 5:50:13 PM
 =========================================
 
 -----------------------------------------
@@ -50,19 +50,6 @@ TABLE: campaigns [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "campaign_id": 2,
-    "name": "Red Hand of Doom",
-    "attributes": {
-      "icon": "images/icons/factions/campaign_002/red_hand_icon.webp",
-      "campaign_id": 2,
-      "background_image": "images/assets/character_backgrounds/campaign_002/party_bg_horizontal.webp"
-    },
-    "created_at": "2025-11-19T18:55:54.343Z",
-    "updated_at": "2025-11-19T18:55:54.343Z",
-    "description": "Five unlikely heroes journey through lush subtropical forests. Bound by shared purpose or hidden motives, their story begins on a wild path where camaraderie grows with each step.\n"
-  },
-  {
     "id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
     "campaign_id": 1,
     "name": "A questin' we shall go",
@@ -74,6 +61,19 @@ TABLE: campaigns [⚠️ RLS DISABLED]
     "created_at": "2025-12-01T12:40:52.720Z",
     "updated_at": "2025-12-01T12:40:52.720Z",
     "description": "Six adventurers receive mysterious invitations to a strange, distant land. Teaming up with pirates, they battle monsters and navigate treacherous seas toward the enigmatic island of Korinis."
+  },
+  {
+    "id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "campaign_id": 2,
+    "name": "Red Hand of Doom",
+    "attributes": {
+      "icon": "images/c02/factions/red_hand_icon.webp",
+      "campaign_id": 2,
+      "background_image": "images/c02/chars/party_header.webp"
+    },
+    "created_at": "2025-11-19T18:55:54.343Z",
+    "updated_at": "2025-11-19T18:55:54.343Z",
+    "description": "Five unlikely heroes journey through lush subtropical forests. Bound by shared purpose or hidden motives, their story begins on a wild path where camaraderie grows with each step.\n"
   }
 ]
 
@@ -253,11 +253,11 @@ TABLE: encounters [⚠️ RLS DISABLED]
     "name": "Demonic Ambush",
     "description": "Pursuing thieves into a dark alley, the party fell into a trap set by Brotherhood agents. A hooded summoner conjured lesser demons while archers rained poison arrows from the rooftops. Kaedin and Loraine held the line against the demonic onslaught, utilizing echoes and vampiric blood magic, while Soshi and Bonnie provided devastating fire support and healing. Despite being poisoned and outnumbered, the party broke the summoner's defenses, killing the demons and forcing the surviving agents to flee.",
     "created_at": "2025-12-25T15:17:42.658Z",
-    "updated_at": "2026-01-03T10:51:41.615Z",
+    "updated_at": "2026-01-07T14:33:22.613Z",
     "attributes": {
       "status": "Completed",
-      "map_image": "images/assets/map_backgrounds/campaign_002/demonic_ambush_map.webp",
-      "background_image": "images/assets/encounter_backgrounds/campaign_002/demonic_ambush_bg.webp"
+      "map_image": "images/c02/encounters/demonic_ambush_map.webp",
+      "background_image": "images/c02/encounters/demonic_ambush_header.webp"
     }
   }
 ]
@@ -275,20 +275,20 @@ TABLE: entities [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "964c0ea9-838b-46b0-a606-8d109749624f",
-    "type": "npc",
-    "name": "Glass",
-    "created_at": "2025-11-20T20:53:50.456Z",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "description": "Massive ice elemental who speaks agonizingly slowly except when conducting business.\n"
-  },
-  {
     "id": "0b5848ff-04c4-43a9-4b50-398553255624",
     "type": "npc",
     "name": "Kresimir",
     "created_at": "2025-11-23T17:09:23.293Z",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "description": "A resurrected deity who serves as the admiral and spiritual leader of the Angevin Fleet. He appeared in the shared vision of Olek and Norr, leading a devastating naval assault on the Paladin fortress of Bremen."
+  },
+  {
+    "id": "c555bcd2-a3bc-49be-8240-a8df5360d476",
+    "type": "npc",
+    "name": "Lem",
+    "created_at": "2025-11-20T19:29:42.106Z",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "description": "Lem is a 19-year-old human, surprisingly short and rotund for a guard (1.5 meters tall). Last seen, he was recovering in the barracks infirmary after a patrol gone wrong."
   }
 ]
 
@@ -415,18 +415,6 @@ TABLE: locations [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "29de2f8f-40de-4813-9672-ee982e8372e8",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Pelagos",
-    "description": "A kingdom on the continent of Lustria, formerly ruled by House Corina. The throne was usurped by the necromancer Sandro who murdered King Corina (Bianca's father) during a civil war. The conflict began when the deep jungles suddenly regrew, ending the war with lizardfolk but triggering internal strife. Sandro turned entire villages into zombie armies, forcing Queen Bianca and her loyal followers to flee. The kingdom is now under necromantic tyranny.",
-    "created_at": "2025-11-23T17:22:31.232Z",
-    "updated_at": "2026-01-07T12:47:43.856Z",
-    "attributes": {
-      "type": "city",
-      "background_image": "images/assets/locations/415036c7-08cc-4832-bfec-6daca13e3f8a/pelagos_29de2f8f-40de-4813-9672-ee982e8372e8.webp"
-    }
-  },
-  {
     "id": "bb98adb9-4467-4e04-bb48-343102c0ce5a",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Lustria",
@@ -435,6 +423,19 @@ TABLE: locations [⚠️ RLS DISABLED]
     "updated_at": "2026-01-07T08:22:01.769Z",
     "attributes": {
       "type": "region"
+    }
+  },
+  {
+    "id": "6c7b2b0c-dca0-4976-a9c7-bab110b1de59",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Luskan",
+    "description": "A port city at the mouth of the River Mirar on the Sword Coast North, known as the City of Sails. Once a bustling city, it was nearly annihilated during the Spellplague, leaving only a fraction of its former population. Home base of the Arcane Brotherhood, where Norr and Soshi were recruited and where they eventually stole the map before fleeing. The city is ruled by Jarlaxle Baenre as of 1489 DR. A harsh, unforgiving place where Soshi learned that power equals survival.\n",
+    "created_at": "2025-11-23T17:21:40.774Z",
+    "updated_at": "2026-01-07T14:22:03.084Z",
+    "attributes": {
+      "type": "city",
+      "ruler": "Jarlaxle Baenre (1489 DR)",
+      "background_image": "images/c02/locs/luskan_header.webp"
     }
   }
 ]
@@ -493,31 +494,14 @@ TABLE: npcs [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "72e9b966-7c3b-5410-b2c7-40966436673b",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Clyde",
-    "description": "Bonnie's best friend in Feywild. Saved from execution by Bonnie's sacrifice. Captured with Bonnie, sentenced to death. Bonnie chose banishment to spare Clyde's life.",
-    "created_at": "2025-11-09T10:06:04.612Z",
-    "updated_at": "2026-01-03T07:54:57.890Z",
-    "attributes": {
-      "icon": "../../images/icons/quickling.webp",
-      "race": "Quickling",
-      "role": "Friend",
-      "gender": "Male",
-      "status": "alive",
-      "affinity": "Ally",
-      "is_active": "true"
-    }
-  },
-  {
     "id": "964c0ea9-838b-46b0-a606-8d109749624f",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Glass",
     "description": "Massive ice elemental who speaks agonizingly slowly except when conducting business.\n",
     "created_at": "2025-11-20T20:53:50.456Z",
-    "updated_at": "2026-01-03T07:55:14.287Z",
+    "updated_at": "2026-01-07T14:16:48.828Z",
     "attributes": {
-      "icon": "../../images/icons/elemental.webp",
+      "icon": "images/global/icons/elemental.webp",
       "race": "Ice Elemental",
       "role": "Quartermaster",
       "gender": "male",
@@ -525,6 +509,34 @@ TABLE: npcs [⚠️ RLS DISABLED]
       "affinity": "Neutral",
       "is_active": "true",
       "personality": "Loyal, methodical, all-business when negotiating."
+    }
+  },
+  {
+    "id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Jareth",
+    "description": "A remarkably muscled Drow found in the shopping district, operating a general store in Drellin's Ferry under an illusion magic to appear clothed, though he is actually nude. He has been waiting 20 years for a signal from Matron Zaya. During the evacuation, his shop was abandoned, looted by thieves, and subsequently became the site of trigger of the demon battle in Drellin's Ferry.\n",
+    "created_at": "2025-11-21T16:55:16.081Z",
+    "updated_at": "2026-01-07T14:17:06.199Z",
+    "attributes": {
+      "icon": "images/global/icons/male.webp",
+      "race": "Drow",
+      "role": "Merchant",
+      "class": "Merchant",
+      "gender": "Male",
+      "status": "alive",
+      "affinity": "Neutral",
+      "is_active": "true",
+      "personality": [
+        {
+          "value": "**Patient**: He has waited 20 years for a single signal.",
+          "is_private": false
+        },
+        {
+          "value": "**Obedient**: He follows the matriarchal hierarchy of his culture without question.",
+          "is_private": false
+        }
+      ]
     }
   }
 ]

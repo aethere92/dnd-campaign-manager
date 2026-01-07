@@ -45,6 +45,7 @@ INSTRUCTIONS FOR AI:
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdvancedFilter.jsx
         EncounterManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
@@ -58,7 +59,6 @@ INSTRUCTIONS FOR AI:
         TacticalMapManager.jsx
       config/
         adminStrategies.js
-        imageLibrary.js
         imageManifest.json
       layouts/
         AdminLayout.jsx
@@ -67,6 +67,8 @@ INSTRUCTIONS FOR AI:
         EntityEditorPage.jsx
         EntityListPage.jsx
         SplitPaneManager.jsx
+      utils/
+        filterUtils.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -350,7 +352,7 @@ function AppContent() {
 
 	// 1. Set global texture
 	useEffect(() => {
-		const texturePath = `${import.meta.env.BASE_URL}images/background_texture.webp`;
+		const texturePath = `${import.meta.env.BASE_URL}images/global/backgrounds/background_texture.webp`;
 		document.documentElement.style.setProperty('--bg-texture', `url('${texturePath}')`);
 	}, []);
 
@@ -2764,7 +2766,7 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
@@ -3005,6 +3007,30 @@ export default function AdminForm({ type, id }) {
 			<div className={ADMIN_SECTION_CLASS}>
 				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
 				<div className='grid grid-cols-1 gap-4'>
+					{/* ID Display Field */}
+					{id && (
+						<div>
+							<label className={ADMIN_LABEL_CLASS}>System ID</label>
+							<div className='flex gap-2 items-center'>
+								<input
+									type='text'
+									value={id}
+									readOnly
+									className={`${ADMIN_INPUT_CLASS} font-mono text-xs text-muted-foreground bg-muted/50 select-all cursor-text`}
+									onClick={(e) => e.target.select()}
+								/>
+								<Button
+									type='button'
+									variant='ghost'
+									size='sm'
+									icon={Copy}
+									onClick={() => navigator.clipboard.writeText(id)}
+									title='Copy ID'
+								/>
+							</div>
+						</div>
+					)}
+
 					<div>
 						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
 						<input
@@ -3179,6 +3205,186 @@ export const ADMIN_HEADER_CLASS =
 
 --- END OF features\admin\components\AdminFormStyles.js ---
 
+--- FILE: features\admin\components\AdvancedFilter.jsx ---
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Filter, Plus, X, Trash2, CheckCircle2 } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import { OPERATORS, extractAvailableFields } from '@/features/admin/utils/filterUtils';
+
+export default function AdvancedFilter({ type, data, onFilterChange }) {
+	const [isOpen, setIsOpen] = useState(false);
+	const [rules, setRules] = useState([]);
+	const containerRef = useRef(null);
+
+	// Calculate available fields based on the actual data passed in
+	const availableFields = useMemo(() => extractAvailableFields(type, data), [type, data]);
+
+	// Notify parent whenever rules change
+	useEffect(() => {
+		onFilterChange(rules);
+	}, [rules]);
+
+	// Close on click outside
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (containerRef.current && !containerRef.current.contains(event.target)) {
+				setIsOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
+
+	const addRule = () => {
+		setRules([
+			...rules,
+			{
+				id: Date.now(),
+				field: 'name',
+				operator: 'contains',
+				value: '',
+			},
+		]);
+	};
+
+	const updateRule = (id, field, val) => {
+		setRules((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: val } : r)));
+	};
+
+	const removeRule = (id) => {
+		setRules((prev) => prev.filter((r) => r.id !== id));
+	};
+
+	const clearAll = () => setRules([]);
+
+	const activeCount = rules.length;
+
+	return (
+		<div className='relative' ref={containerRef}>
+			{/* TRIGGER BUTTON */}
+			<button
+				onClick={() => setIsOpen(!isOpen)}
+				className={`h-full aspect-square flex items-center justify-center rounded-md border transition-all relative ${
+					activeCount > 0
+						? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+						: 'bg-background border-border text-muted-foreground hover:bg-muted'
+				}`}
+				title='Advanced Filters'>
+				<Filter size={14} strokeWidth={activeCount > 0 ? 2.5 : 2} />
+				{activeCount > 0 && (
+					<span className='absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-background shadow-sm'>
+						{activeCount}
+					</span>
+				)}
+			</button>
+
+			{/* DROPDOWN PANEL */}
+			{isOpen && (
+				<div className='absolute right-0 top-full mt-2 w-[290px] bg-popover border border-border rounded-lg shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 flex flex-col max-h-[60vh] ring-1 ring-black/5'>
+					{/* HEADER */}
+					<div className='p-3 border-b border-border bg-muted/30 flex justify-between items-center shrink-0'>
+						<span className='text-[10px] font-bold uppercase text-muted-foreground tracking-wider'>
+							Filter Conditions
+						</span>
+						{activeCount > 0 && (
+							<button
+								onClick={clearAll}
+								className='text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1 font-medium px-2 py-0.5 rounded hover:bg-red-500/10 transition-colors'>
+								<Trash2 size={10} /> Clear All
+							</button>
+						)}
+					</div>
+
+					{/* RULES LIST */}
+					<div className='p-2 space-y-2 overflow-y-auto min-h-[100px] custom-scrollbar'>
+						{rules.length === 0 ? (
+							<div className='flex flex-col items-center justify-center py-6 text-muted-foreground opacity-60'>
+								<Filter size={24} className='mb-2 opacity-50' />
+								<span className='text-xs italic'>No filters applied.</span>
+							</div>
+						) : (
+							rules.map((rule) => {
+								const opDef = OPERATORS.find((o) => o.value === rule.operator);
+								const needsValue = opDef?.needsValue ?? true;
+
+								return (
+									<div
+										key={rule.id}
+										className='flex flex-col gap-2 p-2 bg-muted/40 border border-border/60 rounded-md group hover:border-border hover:bg-muted/60 transition-colors shadow-sm'>
+										<div className='flex gap-2 items-center'>
+											{/* Field Select */}
+											<select
+												className='flex-1 h-7 text-[11px] rounded border border-input bg-background px-2 focus:ring-1 focus:ring-primary outline-none shadow-sm cursor-pointer font-medium'
+												value={rule.field}
+												onChange={(e) => updateRule(rule.id, 'field', e.target.value)}>
+												{availableFields.map((f) => (
+													<option key={f.value} value={f.value}>
+														{f.label}
+													</option>
+												))}
+											</select>
+
+											{/* Remove Button */}
+											<button
+												onClick={() => removeRule(rule.id)}
+												className='text-muted-foreground/50 hover:text-red-500 p-1 rounded-sm hover:bg-red-500/10 transition-colors'
+												title='Remove Condition'>
+												<X size={14} />
+											</button>
+										</div>
+
+										<div className='flex gap-2'>
+											{/* Operator Select */}
+											<select
+												className={`h-7 text-[11px] rounded border border-input bg-background px-2 focus:ring-1 focus:ring-primary outline-none shadow-sm cursor-pointer ${
+													needsValue ? 'w-1/3' : 'w-full'
+												}`}
+												value={rule.operator}
+												onChange={(e) => updateRule(rule.id, 'operator', e.target.value)}>
+												{OPERATORS.map((op) => (
+													<option key={op.value} value={op.value}>
+														{op.label}
+													</option>
+												))}
+											</select>
+
+											{/* Value Input (Conditional) */}
+											{needsValue && (
+												<input
+													type='text'
+													className='flex-1 h-7 text-[11px] rounded border border-input bg-background px-2 focus:ring-1 focus:ring-primary outline-none shadow-sm'
+													placeholder='Value...'
+													value={rule.value}
+													onChange={(e) => updateRule(rule.id, 'value', e.target.value)}
+												/>
+											)}
+										</div>
+									</div>
+								);
+							})
+						)}
+					</div>
+
+					{/* FOOTER */}
+					<div className='p-2 border-t border-border bg-muted/10 shrink-0'>
+						<Button
+							onClick={addRule}
+							variant='secondary'
+							size='sm'
+							fullWidth
+							icon={Plus}
+							className='h-8 text-xs font-medium'>
+							Add Filter Condition
+						</Button>
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\AdvancedFilter.jsx ---
+
 --- FILE: features\admin\components\EncounterManager.jsx ---
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Swords, Skull, Target, Zap, HeartHandshake } from 'lucide-react'; // Added HeartHandshake
@@ -3280,16 +3486,16 @@ export default function EncounterActionManager({ encounterId }) {
 					const isFriendly = action.is_friendly;
 					const theme = isFriendly
 						? {
-								border: 'border-emerald-200 hover:border-emerald-300',
-								bg: 'bg-emerald-500/10/20',
+								border: 'border-emerald-700 hover:border-emerald-300',
+								bg: 'bg-background',
 								accentText: 'text-emerald-700',
-								badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+								badge: 'bg-emerald-100 text-emerald-700 border-emerald-500',
 						  }
 						: {
-								border: 'border-red-200 hover:border-red-300',
+								border: 'border-red-800 hover:border-red-500',
 								bg: 'bg-background',
 								accentText: 'text-red-700',
-								badge: 'bg-red-500/10 text-red-700 border-red-100',
+								badge: 'bg-red-500/10 text-red-500 border-red-700',
 						  };
 
 					return (
@@ -3501,7 +3707,7 @@ export default function EncounterActionManager({ encounterId }) {
 												</div>
 											)}
 											{action.effect && (
-												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-800 bg-red-500/10 px-2 py-0.5 rounded border border-red-100'>
+												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-700'>
 													<Zap size={12} /> {action.effect}
 												</div>
 											)}
@@ -3773,17 +3979,22 @@ export default function EventTagger({ eventId }) {
 --- END OF features\admin\components\EventTagger.jsx ---
 
 --- FILE: features\admin\components\ImageLibraryModal.jsx ---
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Image as ImageIcon, FolderOpen, RefreshCw } from 'lucide-react';
 import { Drawer } from '@/shared/components/ui/Drawer';
 import { ADMIN_INPUT_CLASS } from './AdminFormStyles';
-// IMPORT THE GENERATED FILE
 import imageLibraryData from '../config/imageManifest.json';
 
-export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
-	const [searchTerm, setSearchTerm] = useState('');
+export default function ImageLibraryModal({ isOpen, onClose, onSelect, initialSearch = '' }) {
+	const [searchTerm, setSearchTerm] = useState(initialSearch);
 
-	// Use the dynamic data from the script
+	// Reset search when modal opens with a new suggestion
+	useEffect(() => {
+		if (isOpen && initialSearch) {
+			setSearchTerm(initialSearch);
+		}
+	}, [isOpen, initialSearch]);
+
 	const filteredLibrary = imageLibraryData
 		.map((cat) => ({
 			...cat,
@@ -3838,7 +4049,6 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 												className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500'
 												loading='lazy'
 											/>
-											{/* Hover Overlay with filename */}
 											<div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1'>
 												<p className='text-[7px] text-white truncate w-full text-center font-mono'>{file}</p>
 											</div>
@@ -4475,7 +4685,7 @@ export default function QuestObjectiveManager({ questId }) {
 									{(obj.objective_update || obj.completed_session_id) && (
 										<div className='mt-2 flex flex-col gap-1'>
 											{obj.objective_update && (
-												<div className='text-xs text-emerald-700 bg-emerald-100/50 px-2 py-1 rounded border border-emerald-100 italic'>
+												<div className='text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded border border-emerald-500 italic'>
 													"{obj.objective_update}"
 												</div>
 											)}
@@ -5169,10 +5379,11 @@ export default function SessionEventManager({ sessionId }) {
 --- END OF features\admin\components\SessionEventManager.jsx ---
 
 --- FILE: features\admin\components\SmartImageInput.jsx ---
-import React, { useState } from 'react';
-import { Image as ImageIcon, X, Link as LinkIcon, Search } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Image as ImageIcon, X, Link as LinkIcon, Search, Check, AlertTriangle, FileImage } from 'lucide-react';
 import { ADMIN_INPUT_CLASS } from './AdminFormStyles';
 import ImageLibraryModal from './ImageLibraryModal';
+import imageManifest from '@/features/admin/config/imageManifest.json';
 
 const resolvePreviewUrl = (url) => {
 	if (!url) return null;
@@ -5182,30 +5393,134 @@ const resolvePreviewUrl = (url) => {
 
 export default function SmartImageInput({ value, onChange, placeholder, ...props }) {
 	const [isPickerOpen, setIsPickerOpen] = useState(false);
-	const previewUrl = resolvePreviewUrl(value);
+	const [isFocused, setIsFocused] = useState(false);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [inputValue, setInputValue] = useState(value || '');
+	const containerRef = useRef(null);
+
+	// Sync local input with parent value
+	useEffect(() => {
+		setInputValue(value || '');
+	}, [value]);
+
+	// 1. Flatten the Manifest for Search
+	const flatManifest = useMemo(() => {
+		const list = [];
+		imageManifest.forEach((cat) => {
+			cat.files.forEach((file) => {
+				list.push({
+					name: file,
+					path: cat.path + file,
+					category: cat.category,
+				});
+			});
+		});
+		return list;
+	}, []);
+
+	// 2. Validate Current Value
+	const isValidPath = useMemo(() => {
+		if (!inputValue) return null; // Neutral
+		return flatManifest.some((item) => item.path === inputValue);
+	}, [inputValue, flatManifest]);
+
+	// 3. Filter Suggestions
+	const suggestions = useMemo(() => {
+		if (!inputValue || isValidPath) return []; // Don't suggest if empty or already valid
+		const lower = inputValue.toLowerCase();
+		return flatManifest
+			.filter((item) => item.name.toLowerCase().includes(lower) || item.path.toLowerCase().includes(lower))
+			.slice(0, 5); // Limit to 5
+	}, [inputValue, isValidPath, flatManifest]);
+
+	// Close suggestions on click outside
+	useEffect(() => {
+		const handleClickOutside = (event) => {
+			if (containerRef.current && !containerRef.current.contains(event.target)) {
+				setShowSuggestions(false);
+				setIsFocused(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
+
+	const handleSelectSuggestion = (path) => {
+		setInputValue(path);
+		onChange({ target: { value: path } });
+		setShowSuggestions(false);
+	};
+
+	const handleInputChange = (e) => {
+		const newVal = e.target.value;
+		setInputValue(newVal);
+		onChange(e);
+		setShowSuggestions(true);
+	};
+
+	// Pretty display logic
+	const displayValue =
+		!isFocused && inputValue && isValidPath
+			? inputValue.split('/').pop() // Show filename only when blurred & valid
+			: inputValue;
+
+	const previewUrl = resolvePreviewUrl(inputValue);
 
 	return (
-		<div className='space-y-2'>
+		<div className='space-y-2' ref={containerRef}>
 			<div className='flex gap-2 items-center'>
 				<div className='relative flex-1 group'>
-					<div className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50'>
-						<LinkIcon size={14} />
+					{/* Icon Indicator */}
+					<div className='absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none'>
+						{isValidPath === true ? (
+							<Check size={14} className='text-emerald-500' />
+						) : isValidPath === false && inputValue ? (
+							<AlertTriangle size={14} className='text-amber-500' />
+						) : (
+							<LinkIcon size={14} className='text-muted-foreground/50' />
+						)}
 					</div>
+
 					<input
 						type='text'
-						className={`${ADMIN_INPUT_CLASS} pl-9 pr-20`} // Extra padding for buttons
-						placeholder={placeholder || 'images/path/to/file.png'}
-						value={value || ''}
-						onChange={onChange}
+						className={`${ADMIN_INPUT_CLASS} pl-9 pr-20 transition-all ${
+							!isFocused && isValidPath ? 'text-primary font-medium bg-primary/5' : ''
+						}`}
+						placeholder={placeholder || 'Search images...'}
+						value={displayValue}
+						onChange={handleInputChange}
+						onFocus={() => {
+							setIsFocused(true);
+							setShowSuggestions(true);
+							setInputValue(value || ''); // Ensure we edit the full path
+						}}
+						onBlur={() => {
+							// Delay blur to allow click on suggestion
+							setTimeout(() => setIsFocused(false), 200);
+						}}
 						{...props}
 					/>
 
+					{/* Pretty Filename Badge (Only visual hint if valid) */}
+					{!isFocused && isValidPath && (
+						<div className='absolute right-20 top-1/2 -translate-y-1/2 text-[9px] text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-border pointer-events-none'>
+							{flatManifest
+								.find((i) => i.path === inputValue)
+								?.category.split('>')
+								.pop()
+								.trim()}
+						</div>
+					)}
+
 					{/* Actions inside input */}
 					<div className='absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5'>
-						{value && (
+						{inputValue && (
 							<button
 								type='button'
-								onClick={() => onChange({ target: { value: '' } })}
+								onClick={() => {
+									setInputValue('');
+									onChange({ target: { value: '' } });
+								}}
 								className='p-1.5 text-muted-foreground hover:text-red-500 transition-colors'
 								title='Clear'>
 								<X size={14} />
@@ -5219,10 +5534,41 @@ export default function SmartImageInput({ value, onChange, placeholder, ...props
 							<Search size={14} strokeWidth={3} />
 						</button>
 					</div>
+
+					{/* AUTOCOMPLETE DROPDOWN */}
+					{showSuggestions && suggestions.length > 0 && (
+						<div className='absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden'>
+							<div className='text-[10px] uppercase font-bold text-muted-foreground px-3 py-1 bg-muted/30'>
+								Suggested Files
+							</div>
+							{suggestions.map((item) => (
+								<button
+									key={item.path}
+									type='button'
+									onClick={() => handleSelectSuggestion(item.path)}
+									className='flex items-center gap-3 w-full text-left px-3 py-2 hover:bg-accent/50 transition-colors border-b border-border/40 last:border-0'>
+									<div className='w-8 h-8 rounded bg-muted shrink-0 overflow-hidden border border-border/50'>
+										<img
+											src={`${import.meta.env.BASE_URL}${item.path}`}
+											className='w-full h-full object-cover'
+											loading='lazy'
+										/>
+									</div>
+									<div className='min-w-0'>
+										<div className='text-sm font-medium text-foreground truncate'>{item.name}</div>
+										<div className='text-[10px] text-muted-foreground truncate'>{item.category}</div>
+									</div>
+								</button>
+							))}
+						</div>
+					)}
 				</div>
 
-				{/* Visual Preview */}
-				<div className='shrink-0 w-10 h-10 rounded-lg border border-border bg-card flex items-center justify-center overflow-hidden shadow-sm'>
+				{/* Visual Preview Box */}
+				<div
+					className={`shrink-0 w-10 h-10 rounded-lg border flex items-center justify-center overflow-hidden shadow-sm transition-colors ${
+						isValidPath ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-border bg-card'
+					}`}>
 					{previewUrl ? (
 						<img
 							src={previewUrl}
@@ -5241,7 +5587,11 @@ export default function SmartImageInput({ value, onChange, placeholder, ...props
 			<ImageLibraryModal
 				isOpen={isPickerOpen}
 				onClose={() => setIsPickerOpen(false)}
-				onSelect={(path) => onChange({ target: { value: path } })}
+				onSelect={(path) => {
+					setInputValue(path);
+					onChange({ target: { value: path } });
+				}}
+				initialSearch={inputValue.split('/').pop() || ''} // Auto-search current value in modal
 			/>
 		</div>
 	);
@@ -5619,182 +5969,184 @@ export const getStrategy = (type) => {
 
 --- END OF features\admin\config\adminStrategies.js ---
 
---- FILE: features\admin\config\imageLibrary.js ---
-export const IMAGE_LIBRARY = [
-	{
-		category: 'Icons',
-		path: 'images/icons/',
-		// Example list: In a real app, you can generate this JSON via a script
-		// or just list your primary D&D icons here.
-		files: ['npc.png', 'location.png', 'quest.png', 'faction.png', 'encounter.png', 'item.png'],
-	},
-	{
-		category: 'Backgrounds',
-		path: 'images/backgrounds/',
-		files: ['forest.jpg', 'dungeon.jpg', 'city.jpg', 'tavern.jpg', 'map_parchment.jpg'],
-	},
-	{
-		category: 'Tokens',
-		path: 'images/tokens/',
-		files: ['party_token.png', 'enemy_token.png'],
-	},
-];
-
---- END OF features\admin\config\imageLibrary.js ---
-
 --- FILE: features\admin\config\imageManifest.json ---
 [
   {
-    "category": "Assets > Character_backgrounds > Campaign_002",
-    "path": "images/assets/character_backgrounds/campaign_002/",
+    "category": "_archive > Maps",
+    "path": "images/_archive/maps/",
     "files": [
-      "bonnie_bg_horizontal.webp",
-      "bonnie_bg_square.webp",
-      "kaedin_bg_horizontal.webp",
-      "kaedin_bg_vertical.webp",
-      "norr_bg_horizontal.webp",
-      "olek_bg_horizontal.webp",
-      "olek_bg_square.webp",
-      "party_bg_horizontal.webp",
-      "soshi_bg_horizontal.webp",
-      "soshi_bg_vertical.webp"
+      "brindol_map_backup.webp",
+      "drellin_ferry_map_backup.webp",
+      "elsir_vale_map_backup_1.webp",
+      "elsir_vale_map_backup_2.webp",
+      "witchwood_map_backup.webp"
     ]
   },
   {
-    "category": "Assets > Character_thumbnails > Campaign_001",
-    "path": "images/assets/character_thumbnails/campaign_001/",
+    "category": "_archive > Overlays",
+    "path": "images/_archive/overlays/",
     "files": [
-      "aenwyn.webp",
-      "aethere.webp",
-      "alezander.webp",
-      "nora.webp",
-      "samantha.webp",
-      "smasherina.webp"
+      "penal_colony_mine_overlay_backup.webp"
     ]
   },
   {
-    "category": "Assets > Character_thumbnails > Campaign_002",
-    "path": "images/assets/character_thumbnails/campaign_002/",
+    "category": "C01 > Chars",
+    "path": "images/c01/chars/",
     "files": [
-      "bonnie.webp",
-      "kaedin.webp",
-      "norr.webp",
-      "olek.webp",
-      "party.webp",
-      "soshi.webp"
+      "aenwyn_portrait.webp",
+      "aethere_portrait.webp",
+      "alezander_portrait.webp",
+      "nora_portrait.webp",
+      "samantha_portrait.webp",
+      "smasherina_portrait.webp"
     ]
   },
   {
-    "category": "Assets > Encounter_backgrounds > Campaign_002",
-    "path": "images/assets/encounter_backgrounds/campaign_002/",
+    "category": "C01 > Items",
+    "path": "images/c01/items/",
     "files": [
-      "demonic_ambush_bg.webp",
-      "hydra_encounter_bg.webp",
-      "thylacoleo_ambush_bg.webp"
+      "amulet_mualthar_icon.webp",
+      "amulet_slow_icon.webp",
+      "boots_speed_icon.webp",
+      "ring_haste_icon.webp",
+      "trinket_tiny_oracle_icon.webp"
     ]
   },
   {
-    "category": "Assets > Location_backgrounds > Campaign_002",
-    "path": "images/assets/location_backgrounds/campaign_002/",
+    "category": "C01 > Locs",
+    "path": "images/c01/locs/",
     "files": [
-      "avarthel_grove_bg.webp",
-      "drellin_ferry_bg.webp",
-      "grackledorn_bg.webp",
-      "neverwinter_bg.webp",
-      "strategic_bridge.webp",
-      "underground_temple_complex.webp",
-      "wrath_keep_bg.webp"
+      "korinis_harbour_map.webp",
+      "korinis_lower_map.webp",
+      "korinis_upper_map.webp",
+      "lobart_farm_map.webp",
+      "penal_colony_barracks_overlay.webp",
+      "penal_colony_chapel_overlay.webp",
+      "penal_colony_merchant_cave_overlay.webp",
+      "penal_colony_mine_overlay.webp",
+      "penal_colony_spider_cave_overlay.webp"
     ]
   },
   {
-    "category": "Assets > Locations > 415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "path": "images/assets/locations/415036c7-08cc-4832-bfec-6daca13e3f8a/",
+    "category": "C02 > Chars",
+    "path": "images/c02/chars/",
     "files": [
-      "brindol_dcdb9c63-0211-4472-8632-acc5068e862f.webp",
-      "dennovar_55cd877e-7bce-4883-bfa9-c0ec74370887.webp",
-      "luskan_6c7b2b0c-dca0-4976-a9c7-bab110b1de59.webp",
-      "pahuax_022408d1-93f1-4695-9be8-2806bdcbf6f0.webp",
-      "pelagos_29de2f8f-40de-4813-9672-ee982e8372e8.webp",
-      "the_dusk_way_a1493792-2d8a-49b6-88de-d722251cc576.webp",
-      "the_feywild_4235b763-4e7f-4645-8710-37610a7e32d2.webp",
-      "the_leviathan_s_hull_ca9a1d7f-9a35-4a66-b14d-3237c267a948.webp",
-      "the_underdark_df8bdb1b-8227-49a9-aef1-bb2c4ce902a6.webp",
-      "velkynvelve_391819c0-77b3-480c-a44d-9d14d606e575.webp",
-      "yuma_caves_cd093c0f-bec6-437c-9e95-3e62474a2e2d.webp"
+      "bonnie_header.webp",
+      "bonnie_icon.webp",
+      "bonnie_portrait.webp",
+      "kaedin_header.webp",
+      "kaedin_icon.webp",
+      "kaedin_portrait.webp",
+      "norr_header.webp",
+      "norr_icon.webp",
+      "olek_header.webp",
+      "olek_icon.webp",
+      "olek_portrait.webp",
+      "party_header.webp",
+      "party_icon.webp",
+      "soshi_header.webp",
+      "soshi_icon.webp",
+      "soshi_portrait.webp"
     ]
   },
   {
-    "category": "Assets > Map_backgrounds > Backups",
-    "path": "images/assets/map_backgrounds/backups/",
+    "category": "C02 > Encounters",
+    "path": "images/c02/encounters/",
     "files": [
-      "brindol_map.webp",
-      "drellin_ferry_map.webp",
-      "elsir_vale_map (2).webp",
-      "elsir_vale_map.webp",
-      "witchwood_map.webp"
-    ]
-  },
-  {
-    "category": "Assets > Map_backgrounds > Campaign_001",
-    "path": "images/assets/map_backgrounds/campaign_001/",
-    "files": [
-      "korinis_city_harbour.webp",
-      "korinis_city_lower_city.webp",
-      "korinis_city_upper_city.webp",
-      "lobart_farm.webp"
-    ]
-  },
-  {
-    "category": "Assets > Map_backgrounds > Campaign_002",
-    "path": "images/assets/map_backgrounds/campaign_002/",
-    "files": [
-      "brindol_map.webp",
+      "demonic_ambush_header.webp",
       "demonic_ambush_map.webp",
-      "drellin_ferry_map.webp",
-      "elsir_vale_map.webp",
+      "hydra_swamp_header.webp",
+      "strategic_bridge_header.webp",
       "strategic_bridge_map.webp",
-      "vraath_courtyard_map.webp",
-      "witchwood_map.webp"
+      "thylacoleo_ambush_header.webp",
+      "vraath_courtyard_map.webp"
     ]
   },
   {
-    "category": "Assets > Npc_backgrounds > Campaign_002",
-    "path": "images/assets/npc_backgrounds/campaign_002/",
+    "category": "C02 > Factions",
+    "path": "images/c02/factions/",
     "files": [
-      "avarthel_bg.webp",
-      "soranna_bg.webp",
-      "thalos.webp",
-      "yoghurt_bg.webp"
+      "arcane_brotherhood_icon.webp",
+      "circle_land_icon.webp",
+      "crazy_hogs_icon.webp",
+      "kryn_dynasty_icon.webp",
+      "red_hand_icon.webp",
+      "thay_red_wizards_icon.webp",
+      "thieves_guild_icon.webp"
     ]
   },
   {
-    "category": "Assets > Quests > 415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "path": "images/assets/quests/415036c7-08cc-4832-bfec-6daca13e3f8a/",
+    "category": "C02 > Items",
+    "path": "images/c02/items/",
     "files": [
-      "the_shadow_of_abuse_6f3aa44b-9986-40c7-b33c-9176014d804b.webp"
+      "boots_jungle_strider_icon.webp",
+      "bracers_spell_plague_icon.webp",
+      "dagger_crocodile_tears_icon.webp",
+      "gloves_brotherhood_icon.webp",
+      "staff_veilbranch_icon.webp",
+      "talisman_elemental_icon.webp"
     ]
   },
   {
-    "category": "Assets > Session_backgrounds > Campaign_002",
-    "path": "images/assets/session_backgrounds/campaign_002/",
+    "category": "C02 > Locs",
+    "path": "images/c02/locs/",
     "files": [
-      "session_01_bg.webp"
+      "avarthel_grove_header.webp",
+      "brindol_header.webp",
+      "brindol_map.webp",
+      "dennovar_header.webp",
+      "drellin_ferry_header.webp",
+      "drellin_ferry_map.webp",
+      "dusk_way_header.webp",
+      "elsir_vale_map.webp",
+      "faerun_header.webp",
+      "feywild_header.webp",
+      "grackledorn_header.webp",
+      "leviathan_hull_header.webp",
+      "luskan_header.webp",
+      "neverwinter_header.webp",
+      "pahuax_header.webp",
+      "pelagos_header.webp",
+      "strategic_bridge_header.webp",
+      "temple_underground_header.webp",
+      "underdark_header.webp",
+      "velkynvelve_header.webp",
+      "vraath_keep_header.webp",
+      "witchwood_map.webp",
+      "yuma_caves_header.webp"
     ]
   },
   {
-    "category": "General",
-    "path": "images/",
+    "category": "C02 > Npcs",
+    "path": "images/c02/npcs/",
+    "files": [
+      "avarthel_header.webp",
+      "soranna_header.webp",
+      "thalos_header.webp",
+      "yoghurt_header.webp"
+    ]
+  },
+  {
+    "category": "C02 > Sessions",
+    "path": "images/c02/sessions/",
+    "files": [
+      "s01_header.webp"
+    ]
+  },
+  {
+    "category": "Global > Backgrounds",
+    "path": "images/global/backgrounds/",
     "files": [
       "background_texture.webp"
     ]
   },
   {
-    "category": "Icons",
-    "path": "images/icons/",
+    "category": "Global > Icons",
+    "path": "images/global/icons/",
     "files": [
       "avian.webp",
-      "bonnie.webp",
       "deity.webp",
+      "dice.webp",
       "dwarf.webp",
       "earth_genasi.webp",
       "elemental.webp",
@@ -5805,71 +6157,16 @@ export const IMAGE_LIBRARY = [
       "gnome.webp",
       "goblin.webp",
       "hobgoblin.webp",
-      "kaedin.webp",
       "location.webp",
       "male.webp",
       "monster.webp",
-      "norr.webp",
       "ogre.webp",
-      "olek.webp",
-      "other.webp",
-      "party.webp",
       "phoenix.webp",
       "quest.webp",
       "quickling.webp",
       "rat.webp",
       "session.webp",
-      "soshi.webp",
-      "tabaxi.webp",
-      "unknown.webp"
-    ]
-  },
-  {
-    "category": "Icons > Factions > Campaign_002",
-    "path": "images/icons/factions/campaign_002/",
-    "files": [
-      "arcane_brotherhood_icon.webp",
-      "circle_of_the_land_icon.webp",
-      "crazy_hogs_icon.webp",
-      "kryn_dynasty_icon.webp",
-      "red_hand_icon.webp",
-      "red_wizards_of_thay_icon.webp",
-      "thieves_guild.webp"
-    ]
-  },
-  {
-    "category": "Icons > Weapons > Campaign_001",
-    "path": "images/icons/weapons/campaign_001/",
-    "files": [
-      "amulet_of_mualthar.webp",
-      "amulet_of_slow.webp",
-      "boots_of_speed.webp",
-      "ring_of_haste.webp",
-      "tiny_oracle.webp"
-    ]
-  },
-  {
-    "category": "Icons > Weapons > Campaign_002",
-    "path": "images/icons/weapons/campaign_002/",
-    "files": [
-      "boots_jungle_strider.webp",
-      "bracers_spell_plague_icon.webp",
-      "crocodile_tears_icon.webp",
-      "gloves_brotherhood_icon.webp",
-      "talisman_elemental_acuity_icon.webp",
-      "veilbranch.webp"
-    ]
-  },
-  {
-    "category": "Overlays > Korinis_island",
-    "path": "images/overlays/korinis_island/",
-    "files": [
-      "korinis_island_penal_colony_chapel.webp",
-      "korinis_island_penal_colony_merchants_cave.webp",
-      "korinis_island_penal_colony_mine_cave.webp",
-      "korinis_island_penal_colony_mine_cave_v2.webp",
-      "korinis_island_penal_colony_paladin_barracks.webp",
-      "korinis_island_penal_colony_spider_cave.webp"
+      "tabaxi.webp"
     ]
   }
 ]
@@ -6184,12 +6481,20 @@ export default function EntityEditorPage() {
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Edit, Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { Edit, Plus, Search, Loader2, Copy, Trash2, Image as ImageIcon } from 'lucide-react';
 import { getEntities } from '@/domain/entity/api/entityService';
 import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import Button from '@/shared/components/ui/Button';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
+
+// Helper to clean paths for display
+const resolveImgUrl = (url) => {
+	if (!url) return null;
+	// Remove leading slashes or ../ sequences
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
 
 export default function EntityListPage() {
 	const { type } = useParams();
@@ -6211,7 +6516,6 @@ export default function EntityListPage() {
 		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
 	);
 
-	// ... (Handlers handleDuplicate and handleDelete remain same) ...
 	const handleDuplicate = async (originalId) => {
 		if (!confirm('Create a copy of this entity?')) return;
 		setIsCloning(originalId);
@@ -6286,62 +6590,89 @@ export default function EntityListPage() {
 							{search ? `No matches for "${search}"` : `No ${type}s found. Create one to get started.`}
 						</div>
 					) : (
-						filtered.map((item) => (
-							<div
-								key={item.id}
-								// CHANGED: Added virtual-list-item class for CSS native virtualization
-								className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
-								{/* Left: Info */}
-								<div className='flex items-center gap-3 min-w-0 flex-1'>
-									<div className='min-w-0'>
-										<div className='flex items-center gap-2'>
-											<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
-											{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+						filtered.map((item) => {
+							// Determine icon URL (Check both flattened 'icon_url' and nested attributes)
+							const rawIcon = item.icon_url || item.attributes?.icon;
+							const iconSrc = resolveImgUrl(rawIcon);
+
+							return (
+								<div
+									key={item.id}
+									className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+									{/* Left: Info */}
+									<div className='flex items-center gap-4 min-w-0 flex-1'>
+										{/* --- NEW: Entity Icon --- */}
+										<div className='shrink-0 w-10 h-10 rounded-md bg-muted border border-border overflow-hidden flex items-center justify-center'>
+											{iconSrc ? (
+												<img
+													src={iconSrc}
+													alt={item.name}
+													className='w-full h-full object-cover'
+													loading='lazy'
+													onError={(e) => {
+														e.target.style.display = 'none';
+														e.target.nextSibling.style.display = 'flex';
+													}}
+												/>
+											) : (
+												<ImageIcon size={16} className='text-muted-foreground/20' />
+											)}
+											{/* Fallback hidden by default, shown on error */}
+											<div className='hidden w-full h-full items-center justify-center bg-muted'>
+												<ImageIcon size={16} className='text-muted-foreground/20' />
+											</div>
 										</div>
-										<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
-											{item.summary || item.narrative || item.description || 'No description'}
+
+										<div className='min-w-0'>
+											<div className='flex items-center gap-2'>
+												<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
+												{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+											</div>
+											<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
+												{item.summary || item.narrative || item.description || 'No description'}
+											</div>
 										</div>
 									</div>
-								</div>
 
-								{/* Right: Actions */}
-								<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
-									<EntityBadge
-										type={item.type}
-										size='sm'
-										variant='outline'
-										className='opacity-50 hidden sm:inline-flex'
-									/>
-									<button
-										onClick={() => handleDuplicate(item.id)}
-										disabled={isCloning === item.id}
-										className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
-										title='Duplicate'>
-										{isCloning === item.id ? (
-											<Loader2 size={16} className='animate-spin text-amber-600' />
-										) : (
-											<Copy size={16} />
-										)}
-									</button>
-									<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
-										<Button
-											variant='ghost'
+									{/* Right: Actions */}
+									<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+										<EntityBadge
+											type={item.type}
 											size='sm'
-											icon={Edit}
-											className='h-8 px-2 text-muted-foreground hover:text-foreground'>
-											Edit
-										</Button>
-									</Link>
-									<button
-										onClick={() => handleDelete(item.id)}
-										disabled={isDeleting === item.id}
-										className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
-										title='Delete'>
-										{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
-									</button>
+											variant='outline'
+											className='opacity-50 hidden sm:inline-flex'
+										/>
+										<button
+											onClick={() => handleDuplicate(item.id)}
+											disabled={isCloning === item.id}
+											className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
+											title='Duplicate'>
+											{isCloning === item.id ? (
+												<Loader2 size={16} className='animate-spin text-amber-600' />
+											) : (
+												<Copy size={16} />
+											)}
+										</button>
+										<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
+											<Button
+												variant='ghost'
+												size='sm'
+												icon={Edit}
+												className='h-8 px-2 text-muted-foreground hover:text-foreground'>
+												Edit
+											</Button>
+										</Link>
+										<button
+											onClick={() => handleDelete(item.id)}
+											disabled={isDeleting === item.id}
+											className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+											title='Delete'>
+											{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
+										</button>
+									</div>
 								</div>
-							</div>
-						))
+							);
+						})
 					)}
 				</div>
 			</div>
@@ -6352,31 +6683,43 @@ export default function EntityListPage() {
 --- END OF features\admin\pages\EntityListPage.jsx ---
 
 --- FILE: features\admin\pages\SplitPaneManager.jsx ---
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { Plus, Search, Loader2, Copy, Trash2, Image as ImageIcon } from 'lucide-react';
 import { getEntities } from '@/domain/entity/api/entityService';
 import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import AdminForm from '@/features/admin/components/AdminForm';
 import Button from '@/shared/components/ui/Button';
 
+// NEW IMPORTS
+import AdvancedFilter from '@/features/admin/components/AdvancedFilter';
+import { applyFilterRules } from '@/features/admin/utils/filterUtils';
+
+const resolveImgUrl = (url) => {
+	if (!url) return null;
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
 export default function SplitPaneManager() {
 	const { type, id } = useParams();
 	const navigate = useNavigate();
 	const { campaignId } = useCampaign();
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// State
 	const [search, setSearch] = useState('');
+	const [filterRules, setFilterRules] = useState([]); // Array of rules from AdvancedFilter
 
 	// Action States
 	const [isCloning, setIsCloning] = useState(null);
 	const [isDeleting, setIsDeleting] = useState(null);
 
-	const normalizedType = type === 'sessions' ? 'session' : type;
-
-	// 1. Fetch List Data
+	// 1. Fetch Full List
 	const {
-		data: entities,
+		data: allEntities,
 		isLoading,
 		refetch,
 	} = useQuery({
@@ -6385,35 +6728,40 @@ export default function SplitPaneManager() {
 		enabled: normalizedType === 'campaign' || !!campaignId,
 	});
 
-	const filtered = (entities || []).filter((item) =>
-		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
-	);
+	// 2. Apply Filters & Search
+	const displayedEntities = useMemo(() => {
+		if (!allEntities) return [];
 
-	// --- ACTIONS ---
+		// Step A: Basic Text Search (Name/Title)
+		let result = allEntities.filter((item) => {
+			const term = search.toLowerCase();
+			return (item.name || '').toLowerCase().includes(term) || (item.title || '').toLowerCase().includes(term);
+		});
 
+		// Step B: Advanced Rules
+		result = applyFilterRules(result, filterRules);
+
+		return result;
+	}, [allEntities, search, filterRules]);
+
+	// ... (Duplicate/Delete handlers remain the same) ...
 	const handleDuplicate = async (originalId, e) => {
-		e.stopPropagation(); // Prevent navigation
+		e.stopPropagation();
 		if (!confirm('Create a copy?')) return;
 
 		setIsCloning(originalId);
 		try {
 			const raw = await fetchRawEntity(normalizedType, originalId);
-			// Fix: Check for attributesList vs attributes object structure from fetchRawEntity
-			// fetchRawEntity returns { ..., attributes: {...} } OR { ..., attributesList: [...] } depending on version
-			// The service handles formatting for createEntity, we just need to modify the name.
-
 			const copyData = {
 				...raw,
 				name: raw.name ? `${raw.name} (Copy)` : undefined,
 				title: raw.title ? `${raw.title} (Copy)` : undefined,
 				campaign_id: campaignId,
 			};
-
-			// If ID exists in raw data, remove it so DB creates new one
 			delete copyData.id;
 
 			const result = await createEntity(normalizedType, copyData);
-			refetch(); // Refresh list
+			refetch();
 			navigate(`/dm/manage/${normalizedType}/${result.id}`);
 		} catch (e) {
 			alert('Failed to duplicate: ' + e.message);
@@ -6423,14 +6771,13 @@ export default function SplitPaneManager() {
 	};
 
 	const handleDelete = async (itemId, e) => {
-		e.stopPropagation(); // Prevent navigation
+		e.stopPropagation();
 		if (!confirm('Delete this entry?')) return;
 
 		setIsDeleting(itemId);
 		try {
 			await deleteEntity(normalizedType, itemId);
 			refetch();
-			// If we deleted the currently selected item, go back to "Create New"
 			if (id === itemId) {
 				navigate(`/dm/manage/${normalizedType}`);
 			}
@@ -6445,13 +6792,13 @@ export default function SplitPaneManager() {
 		<div className='flex h-[100vh] overflow-hidden bg-muted/10'>
 			{/* --- LEFT PANE: LIST --- */}
 			<div className='w-80 flex flex-col border-r border-border bg-background shrink-0 shadow-sm z-10'>
-				{/* Header & Search */}
-				<div className='p-3 border-b border-border space-y-3 bg-muted/10'>
-					<div className='flex items-center justify-between'>
+				{/* HEADER */}
+				<div className='p-3 border-b border-border space-y-3 bg-muted/10 relative z-20'>
+					<div className='flex items-center justify-between mb-2'>
 						<h2 className='text-lg font-serif font-bold capitalize text-foreground flex items-center gap-2'>
 							{type}s
 							<span className='text-xs font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
-								{entities?.length || 0}
+								{allEntities?.length || 0}
 							</span>
 						</h2>
 						<Button
@@ -6463,30 +6810,53 @@ export default function SplitPaneManager() {
 							New
 						</Button>
 					</div>
-					<div className='relative'>
-						<Search className='absolute left-2.5 top-2 text-muted-foreground/60' size={14} />
-						<input
-							type='text'
-							placeholder='Filter list...'
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							className='w-full pl-8 pr-3 py-1.5 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm'
-						/>
+
+					<div className='flex gap-2'>
+						{/* Search Input */}
+						<div className='relative flex-1'>
+							<Search className='absolute left-2.5 top-2 text-muted-foreground/60' size={14} />
+							<input
+								type='text'
+								placeholder='Search...'
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								className='w-full pl-8 pr-3 py-1.5 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm'
+							/>
+						</div>
+
+						{/* ADVANCED FILTER BUTTON */}
+						<AdvancedFilter type={normalizedType} data={allEntities || []} onFilterChange={setFilterRules} />
 					</div>
+
+					{/* Active Filter Summary (optional UI polish) */}
+					{filterRules.length > 0 && (
+						<div className='flex flex-wrap gap-1'>
+							{filterRules.map((rule) => (
+								<div
+									key={rule.id}
+									className='text-[9px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded truncate max-w-full'>
+									{rule.field.split('.').pop()} {rule.operator === 'equals' ? '=' : rule.operator} {rule.value}
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 
-				{/* Scrollable List */}
+				{/* LIST */}
 				<div className='flex-1 overflow-y-auto custom-scrollbar'>
 					{isLoading ? (
 						<div className='p-8 flex justify-center'>
 							<Loader2 className='animate-spin text-amber-600' />
 						</div>
-					) : filtered.length === 0 ? (
-						<div className='p-6 text-center text-xs text-muted-foreground italic'>No matches.</div>
+					) : displayedEntities.length === 0 ? (
+						<div className='p-6 text-center text-xs text-muted-foreground italic'>No matches found.</div>
 					) : (
 						<div className='divide-y divide-border/40'>
-							{filtered.map((item) => {
+							{displayedEntities.map((item) => {
 								const isActive = id === item.id;
+								const rawIcon = item.icon_url || item.attributes?.icon;
+								const iconSrc = resolveImgUrl(rawIcon);
+
 								return (
 									<div
 										key={item.id}
@@ -6494,44 +6864,59 @@ export default function SplitPaneManager() {
 										className={`group relative flex items-center w-full text-left transition-all cursor-pointer ${
 											isActive ? 'bg-amber-500/10/80' : 'bg-background hover:bg-muted/50'
 										}`}>
-										{/* Active Marker Strip */}
+										{/* Active Marker */}
 										<div
 											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-primary' : 'bg-transparent'}`}
 										/>
 
-										{/* Main Content Area */}
-										<div className='flex-1 py-3 pl-4 pr-2 min-w-0'>
-											<div
-												className={`font-bold text-sm truncate mb-0.5 ${
-													isActive ? 'text-primary' : 'text-foreground'
-												}`}>
-												{item.name || item.title}
-											</div>
-											<div className='flex items-center justify-between'>
-												<div className='text-[10px] text-muted-foreground truncate w-full'>
-													{item.summary || item.narrative || item.description || 'No description'}
-												</div>
-												{/* Status Dot */}
-												{item.status && (
-													<div
-														title={item.status}
-														className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-															item.status.toLowerCase().includes('active')
-																? 'bg-emerald-500/100'
-																: item.status.toLowerCase().includes('dead')
-																? 'bg-red-500/100'
-																: 'bg-slate-300'
-														}`}
+										<div className='flex items-center gap-3 py-2 pl-3 pr-2 flex-1 min-w-0'>
+											<div className='shrink-0 w-9 h-9 rounded bg-muted border border-border overflow-hidden flex items-center justify-center'>
+												{iconSrc ? (
+													<img
+														src={iconSrc}
+														className='w-full h-full object-cover'
+														loading='lazy'
+														onError={(e) => {
+															e.target.style.display = 'none';
+															e.target.nextSibling.style.display = 'flex';
+														}}
 													/>
+												) : (
+													<ImageIcon size={14} className='text-muted-foreground/30' />
 												)}
+												<div className='hidden w-full h-full items-center justify-center bg-muted'>
+													<ImageIcon size={14} className='text-muted-foreground/30' />
+												</div>
+											</div>
+
+											<div className='min-w-0 flex-1'>
+												<div
+													className={`font-bold text-sm truncate mb-0.5 leading-none ${
+														isActive ? 'text-primary' : 'text-foreground'
+													}`}>
+													{item.name || item.title}
+												</div>
+												<div className='flex items-center justify-between gap-2'>
+													<div className='text-[10px] text-muted-foreground truncate opacity-80'>
+														{item.summary || item.narrative || item.description || 'No description'}
+													</div>
+													{item.status && (
+														<div
+															title={item.status}
+															className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+																item.status.toLowerCase().includes('active') ? 'bg-emerald-500' : 'bg-slate-300'
+															}`}
+														/>
+													)}
+												</div>
 											</div>
 										</div>
 
-										{/* Action Buttons (Visible on Hover) */}
+										{/* Actions */}
 										<div
-											className={`flex flex-col gap-1 pr-1 pl-1 ${
+											className={`flex flex-col gap-0.5 pr-1 pl-1 border-l border-transparent group-hover:border-border/50 h-full justify-center ${
 												isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-											} transition-opacity`}>
+											} transition-opacity bg-gradient-to-l from-background to-transparent`}>
 											<button
 												onClick={(e) => handleDuplicate(item.id, e)}
 												className='p-1 text-muted-foreground hover:text-blue-600 hover:bg-blue-100 rounded'
@@ -6564,6 +6949,120 @@ export default function SplitPaneManager() {
 }
 
 --- END OF features\admin\pages\SplitPaneManager.jsx ---
+
+--- FILE: features\admin\utils\filterUtils.js ---
+import { getStrategy } from '@/features/admin/config/adminStrategies';
+
+export const OPERATORS = [
+	{ value: 'contains', label: 'Contains', needsValue: true },
+	{ value: 'equals', label: 'Is Exactly', needsValue: true },
+	{ value: 'starts_with', label: 'Starts With', needsValue: true },
+	{ value: 'not_contains', label: 'Does Not Contain', needsValue: true },
+	{ value: 'is_set', label: 'Has Any Value', needsValue: false },
+	{ value: 'is_not_set', label: 'Is Empty / Missing', needsValue: false },
+	{ value: 'true', label: 'Is True', needsValue: false },
+	{ value: 'false', label: 'Is False', needsValue: false },
+];
+
+/**
+ * deeply resolves a property from an object using dot notation
+ * e.g. resolveField(item, 'attributes.race')
+ */
+export const resolveField = (obj, path) => {
+	if (!obj || !path) return undefined;
+	return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
+/**
+ * Applies a list of rules to the dataset.
+ */
+export const applyFilterRules = (data, rules) => {
+	if (!data || !rules || rules.length === 0) return data;
+
+	return data.filter((item) => {
+		return rules.every((rule) => {
+			const { field, operator, value } = rule;
+			let itemValue = resolveField(item, field);
+
+			// Normalization for comparison
+			if (itemValue === undefined || itemValue === null) itemValue = '';
+
+			// Handle number/boolean to string conversion for text search
+			const strValue = String(itemValue).toLowerCase();
+			const queryVal = String(value || '').toLowerCase();
+
+			switch (operator) {
+				case 'contains':
+					return strValue.includes(queryVal);
+				case 'not_contains':
+					return !strValue.includes(queryVal);
+				case 'equals':
+					return strValue === queryVal;
+				case 'starts_with':
+					return strValue.startsWith(queryVal);
+				case 'is_set':
+					return itemValue !== '' && itemValue !== null && itemValue !== undefined;
+				case 'is_not_set':
+					return itemValue === '' || itemValue === null || itemValue === undefined;
+				case 'true':
+					return strValue === 'true' || itemValue === true;
+				case 'false':
+					return strValue === 'false' || itemValue === false;
+				default:
+					return true;
+			}
+		});
+	});
+};
+
+/**
+ * extractAvailableFields
+ * Dynamically builds the list of filterable fields based on the Entity Strategy.
+ */
+export const extractAvailableFields = (type, data = []) => {
+	const strategy = getStrategy(type);
+
+	// 1. Determine Core Fields based on Strategy Mapping
+	// e.g. Sessions use 'title' instead of 'name'
+	const nameField = strategy.colMapping?.name || 'name';
+	const descField = strategy.colMapping?.description || 'description';
+
+	const fields = [
+		{ value: nameField, label: 'Name / Title' },
+		{ value: descField, label: 'Description / Narrative' },
+	];
+
+	// 2. Add Strategy Fields (Configured Attributes)
+	if (strategy && strategy.defaultAttributes) {
+		strategy.defaultAttributes.forEach((attr) => {
+			fields.push({
+				value: `attributes.${attr.key}`,
+				label: attr.label,
+			});
+		});
+	}
+
+	// 3. Scan Data for Custom Attributes (Discovery Mode)
+	// This allows filtering by ad-hoc fields added via JSON
+	const seenKeys = new Set(fields.map((f) => f.value));
+
+	data.forEach((item) => {
+		if (!item.attributes) return;
+		Object.keys(item.attributes).forEach((key) => {
+			const path = `attributes.${key}`;
+			if (!seenKeys.has(path)) {
+				// Formatting: "custom_field" -> "Custom Field"
+				const label = key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+				fields.push({ value: path, label: `(Custom) ${label}` });
+				seenKeys.add(path);
+			}
+		});
+	});
+
+	return fields.sort((a, b) => a.label.localeCompare(b.label));
+};
+
+--- END OF features\admin\utils\filterUtils.js ---
 
 --- FILE: features\atlas\MapPage.jsx ---
 import { useMapData } from './useMapData';
@@ -9743,7 +10242,7 @@ const INK_COLORS = {
 	NEUTRAL: '#78716c',
 };
 
-const FALLBACK_ICON_PATH = 'images/icons';
+const FALLBACK_ICON_PATH = 'images/global/icons';
 
 export const transformGraphData = (rawEntities) => {
 	if (!rawEntities || rawEntities.length === 0) return [];
@@ -13858,7 +14357,7 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 		const edges = [];
 		const addedIds = new Set();
 		const typeGroups = {};
-		const FALLBACK_ICON_ROOT = 'images/icons';
+		const FALLBACK_ICON_ROOT = 'images/global/icons';
 
 		const resolveNodeIcon = (type, attributes, id) => {
 			let url = resolveImageUrl(attributes, 'icon');
