@@ -12,6 +12,5 @@ export default function MapView() {
 			</div>
 		);
 	}
-
 	return <MapCanvas data={data} onNavigate={navigateToMap} currentMapKey={currentMapKey} />;
 }

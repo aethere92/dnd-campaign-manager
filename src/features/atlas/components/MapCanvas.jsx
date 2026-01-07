@@ -52,7 +52,14 @@ export const MapCanvas = ({ data, onNavigate }) => {
 	const wrapperRef = useRef(null);
 	const [flyToTarget, setFlyToTarget] = useState(null);
 
-	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
+	const fileExt = config.fileExtension || 'png';
+	const isAbsolute = config.path.startsWith('http');
+	const baseUrl = isAbsolute
+		? config.path
+		: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}`;
+
+	// 3. Construct the Tile URL
+	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${fileExt}`;
 	const minZoom = 0;
 
 	return (

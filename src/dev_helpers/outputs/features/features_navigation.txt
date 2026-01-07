@@ -82,11 +82,16 @@ PARTIAL BUNDLE: FEATURES NAVIGATION
       data/
         modularize.js
         refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
       utils/
         mapNavigation.js
         markerUtils.js
     campaign/
       CampaignContext.jsx
+      useCampaignData.js
       useCampaignPersistence.js
       useCampaignSelection.js
       api/

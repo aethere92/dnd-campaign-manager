@@ -82,11 +82,16 @@ PARTIAL BUNDLE: FEATURES CAMPAIGN
       data/
         modularize.js
         refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
       utils/
         mapNavigation.js
         markerUtils.js
     campaign/
       CampaignContext.jsx
+      useCampaignData.js
       useCampaignPersistence.js
       useCampaignSelection.js
       api/
@@ -275,15 +280,32 @@ PARTIAL BUNDLE: FEATURES CAMPAIGN
 ================================================================
 
 --- FILE: features\campaign\CampaignContext.jsx ---
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useCampaignPersistence } from './useCampaignPersistence';
+import { useCampaignData } from './useCampaignData'; // Import the new hook
 
 const CampaignContext = createContext(null);
 
 export const CampaignProvider = ({ children }) => {
-	const persistence = useCampaignPersistence();
+	// 1. Manage ID Persistence
+	const { campaignId, setCampaignId } = useCampaignPersistence();
 
-	return <CampaignContext.Provider value={persistence}>{children}</CampaignContext.Provider>;
+	// 2. Fetch Data based on ID
+	const { campaignRow, campaignData, isLoading } = useCampaignData(campaignId);
+
+	// 3. Combine into a single context value
+	const value = useMemo(
+		() => ({
+			campaignId,
+			setCampaignId,
+			campaignRow, // The DB metadata
+			campaignData, // The Resolved JS Map Config
+			isLoading,
+		}),
+		[campaignId, setCampaignId, campaignRow, campaignData, isLoading]
+	);
+
+	return <CampaignContext.Provider value={value}>{children}</CampaignContext.Provider>;
 };
 
 export const useCampaign = () => {
@@ -295,6 +317,61 @@ export const useCampaign = () => {
 };
 
 --- END OF features\campaign\CampaignContext.jsx ---
+
+--- FILE: features\campaign\useCampaignData.js ---
+import { useState, useEffect } from 'react';
+import { supabase } from '@/shared/api/supabaseClient';
+import { CAMPAIGN_REGISTRY } from '@/features/atlas/utils/mapNavigation';
+
+export function useCampaignData(campaignId) {
+	const [campaignRow, setCampaignRow] = useState(null);
+	const [campaignData, setCampaignData] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState(null);
+
+	useEffect(() => {
+		// If no ID is selected, reset everything
+		if (!campaignId) {
+			setCampaignRow(null);
+			setCampaignData(null);
+			return;
+		}
+
+		const fetchCampaign = async () => {
+			setIsLoading(true);
+			try {
+				// 1. Fetch the specific campaign row
+				const { data, error } = await supabase.from('campaigns').select('*').eq('id', campaignId).single();
+
+				if (error) throw error;
+
+				setCampaignRow(data);
+
+				// 2. Resolve the Map Config Object
+				// The DB attribute "map_data" holds the string key (e.g. "campaign_002_map_data")
+				const mapDataKey = data?.attributes?.map_data;
+
+				if (mapDataKey && CAMPAIGN_REGISTRY[mapDataKey]) {
+					setCampaignData(CAMPAIGN_REGISTRY[mapDataKey]);
+				} else {
+					console.warn(`[useCampaignData] Registry key not found or empty: ${mapDataKey}`);
+					setCampaignData(null);
+				}
+			} catch (err) {
+				console.error('[useCampaignData] Error loading campaign:', err);
+				setError(err);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		fetchCampaign();
+	}, [campaignId]);
+
+	return { campaignRow, campaignData, isLoading, error };
+}
+
+--- END OF features\campaign\useCampaignData.js ---
 
 --- FILE: features\campaign\useCampaignPersistence.js ---
 import { useState, useCallback } from 'react';

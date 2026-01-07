@@ -88,11 +88,16 @@ INSTRUCTIONS FOR AI:
       data/
         modularize.js
         refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
       utils/
         mapNavigation.js
         markerUtils.js
     campaign/
       CampaignContext.jsx
+      useCampaignData.js
       useCampaignPersistence.js
       useCampaignSelection.js
       api/
@@ -7079,7 +7084,6 @@ export default function MapView() {
 			</div>
 		);
 	}
-
 	return <MapCanvas data={data} onNavigate={navigateToMap} currentMapKey={currentMapKey} />;
 }
 
@@ -7087,18 +7091,29 @@ export default function MapView() {
 
 --- FILE: features\atlas\useMapData.js ---
 import { useSearchParams } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getMapConfig } from './utils/mapNavigation';
 
 export function useMapData() {
-	const { campaignData } = useCampaign();
+	const { campaignData, isLoading: isCampaignLoading } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const currentMapKey = searchParams.get('map') || 'world_maps'; // Default updated to match typical ID
+	const urlMapKey = searchParams.get('map');
+
+	// 1. Determine effective map key
+	// If data isn't loaded yet, don't default to 'world_maps' yet.
+	const currentMapKey = urlMapKey || campaignData?.defaultMap;
+
+	// 2. Update URL if needed (only if we have data)
+	useEffect(() => {
+		if (!urlMapKey && campaignData?.defaultMap) {
+			setSearchParams({ map: campaignData.defaultMap }, { replace: true });
+		}
+	}, [urlMapKey, campaignData, setSearchParams]);
 
 	const mapConfig = useMemo(() => {
-		// If campaignData comes from API/DB, ensure it matches the { maps: { ... } } structure
+		// Pass the loaded campaignData
 		return getMapConfig(currentMapKey, campaignData);
 	}, [currentMapKey, campaignData]);
 
@@ -7442,7 +7457,14 @@ export const MapCanvas = ({ data, onNavigate }) => {
 	const wrapperRef = useRef(null);
 	const [flyToTarget, setFlyToTarget] = useState(null);
 
-	const tileUrl = `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}/{z}/{x}_{y}.png`;
+	const fileExt = config.fileExtension || 'png';
+	const isAbsolute = config.path.startsWith('http');
+	const baseUrl = isAbsolute
+		? config.path
+		: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}`;
+
+	// 3. Construct the Tile URL
+	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${fileExt}`;
 	const minZoom = 0;
 
 	return (
@@ -8533,43 +8555,71 @@ export const CAMPAIGN_01 = ${mainString};
 
 --- END OF features\atlas\data\refactor.js ---
 
---- FILE: features\atlas\utils\mapNavigation.js ---
-// 1. Update the import to point to your new generated folder
-// Ensure this path matches where your modularize.js script output the files
-import { CAMPAIGN_01 } from '@/features/atlas/data/campaign_01/index';
+--- FILE: features\atlas\data\campaign_02\index.js ---
+import { FAERUN_MAP } from './faerun/index.js';
 
-/**
- * Resolves the configuration object for a specific map key.
- *
- * CHANGE: With the modular structure, all maps are now siblings
- * in the .maps object, so deep traversal/aliases are no longer needed.
- */
-export const getMapConfig = (mapKey, campaignData) => {
-	// 1. Use context data if provided, otherwise fallback to static generated file
-	const rootData = campaignData || CAMPAIGN_01;
-
-	// 2. Determine ID (Default to 'world_maps' if undefined)
-	// Make sure 'world_maps' matches the mapId in your world map's metadata
-	const targetId = mapKey || 'world_maps';
-
-	// 3. Direct Lookup
-	// The new structure is simply { maps: { [id]: { ...config } } }
-	if (rootData.maps && rootData.maps[targetId]) {
-		return rootData.maps[targetId];
-	}
-
-	console.warn(`[getMapConfig] Map ID not found: ${targetId}`);
-	return null;
+export const campaign_002_map_data = {
+	name: 'Red Hand of Doom',
+	defaultMap: 'faerun_map',
+	maps: {
+		// The ID here MUST match the mapId in the metadata
+		[FAERUN_MAP.metadata.mapId]: FAERUN_MAP,
+	},
 };
 
-/**
- * Helper to calculate map bounds based on image size
- */
-export const calculateBounds = (imageWidth, imageHeight) => {
-	return [
-		[-imageHeight, 0],
-		[0, imageWidth],
-	];
+--- END OF features\atlas\data\campaign_02\index.js ---
+
+--- FILE: features\atlas\data\campaign_02\faerun\index.js ---
+// features/atlas/data/maps/faerun/index.js
+
+export const FAERUN_MAP = {
+	metadata: {
+		mapId: 'faerun_map',
+		path: 'https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/faerun',
+		fileExtension: 'webp',
+		sizes: {
+			maxZoom: 7,
+			imageWidth: 18607,
+			imageHeight: 15017,
+		},
+		label: 'Faerûn',
+	},
+	annotations: {
+		locations: { name: 'Locations', items: [] },
+		pois: { name: 'Points of Interest', items: [] },
+	},
+	paths: [],
+	areas: {},
+	overlays: [],
+};
+
+--- END OF features\atlas\data\campaign_02\faerun\index.js ---
+
+--- FILE: features\atlas\utils\mapNavigation.js ---
+import { campaign_001_map_data } from '@/features/atlas/data/campaign_01/index';
+import { campaign_002_map_data } from '@/features/atlas/data/campaign_02/index'; // Ensure path is correct
+
+// FIX: Keys updated to match Database "map_data" attribute values
+export const CAMPAIGN_REGISTRY = {
+	campaign_001_map_data: campaign_001_map_data,
+	campaign_002_map_data: campaign_002_map_data,
+};
+
+export const getMapConfig = (mapKey, campaignData) => {
+	// 1. Use context data if provided
+	// If campaignData is null (loading/error), we don't want to default to Campaign 1 immediately
+	// or it will flash the wrong map.
+	const rootData = campaignData;
+
+	if (!rootData) return null;
+
+	// 2. Direct Lookup
+	if (rootData.maps && rootData.maps[mapKey]) {
+		return rootData.maps[mapKey];
+	}
+
+	console.warn(`[getMapConfig] Map ID not found: ${mapKey}`);
+	return null;
 };
 
 --- END OF features\atlas\utils\mapNavigation.js ---
@@ -8715,15 +8765,32 @@ export const createDotIcon = (color) =>
 --- END OF features\atlas\utils\markerUtils.js ---
 
 --- FILE: features\campaign\CampaignContext.jsx ---
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useCampaignPersistence } from './useCampaignPersistence';
+import { useCampaignData } from './useCampaignData'; // Import the new hook
 
 const CampaignContext = createContext(null);
 
 export const CampaignProvider = ({ children }) => {
-	const persistence = useCampaignPersistence();
+	// 1. Manage ID Persistence
+	const { campaignId, setCampaignId } = useCampaignPersistence();
 
-	return <CampaignContext.Provider value={persistence}>{children}</CampaignContext.Provider>;
+	// 2. Fetch Data based on ID
+	const { campaignRow, campaignData, isLoading } = useCampaignData(campaignId);
+
+	// 3. Combine into a single context value
+	const value = useMemo(
+		() => ({
+			campaignId,
+			setCampaignId,
+			campaignRow, // The DB metadata
+			campaignData, // The Resolved JS Map Config
+			isLoading,
+		}),
+		[campaignId, setCampaignId, campaignRow, campaignData, isLoading]
+	);
+
+	return <CampaignContext.Provider value={value}>{children}</CampaignContext.Provider>;
 };
 
 export const useCampaign = () => {
@@ -8735,6 +8802,61 @@ export const useCampaign = () => {
 };
 
 --- END OF features\campaign\CampaignContext.jsx ---
+
+--- FILE: features\campaign\useCampaignData.js ---
+import { useState, useEffect } from 'react';
+import { supabase } from '@/shared/api/supabaseClient';
+import { CAMPAIGN_REGISTRY } from '@/features/atlas/utils/mapNavigation';
+
+export function useCampaignData(campaignId) {
+	const [campaignRow, setCampaignRow] = useState(null);
+	const [campaignData, setCampaignData] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState(null);
+
+	useEffect(() => {
+		// If no ID is selected, reset everything
+		if (!campaignId) {
+			setCampaignRow(null);
+			setCampaignData(null);
+			return;
+		}
+
+		const fetchCampaign = async () => {
+			setIsLoading(true);
+			try {
+				// 1. Fetch the specific campaign row
+				const { data, error } = await supabase.from('campaigns').select('*').eq('id', campaignId).single();
+
+				if (error) throw error;
+
+				setCampaignRow(data);
+
+				// 2. Resolve the Map Config Object
+				// The DB attribute "map_data" holds the string key (e.g. "campaign_002_map_data")
+				const mapDataKey = data?.attributes?.map_data;
+
+				if (mapDataKey && CAMPAIGN_REGISTRY[mapDataKey]) {
+					setCampaignData(CAMPAIGN_REGISTRY[mapDataKey]);
+				} else {
+					console.warn(`[useCampaignData] Registry key not found or empty: ${mapDataKey}`);
+					setCampaignData(null);
+				}
+			} catch (err) {
+				console.error('[useCampaignData] Error loading campaign:', err);
+				setError(err);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		fetchCampaign();
+	}, [campaignId]);
+
+	return { campaignRow, campaignData, isLoading, error };
+}
+
+--- END OF features\campaign\useCampaignData.js ---
 
 --- FILE: features\campaign\useCampaignPersistence.js ---
 import { useState, useCallback } from 'react';

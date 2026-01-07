@@ -1,16 +1,27 @@
 import { useSearchParams } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getMapConfig } from './utils/mapNavigation';
 
 export function useMapData() {
-	const { campaignData } = useCampaign();
+	const { campaignData, isLoading: isCampaignLoading } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const currentMapKey = searchParams.get('map') || 'world_maps'; // Default updated to match typical ID
+	const urlMapKey = searchParams.get('map');
+
+	// 1. Determine effective map key
+	// If data isn't loaded yet, don't default to 'world_maps' yet.
+	const currentMapKey = urlMapKey || campaignData?.defaultMap;
+
+	// 2. Update URL if needed (only if we have data)
+	useEffect(() => {
+		if (!urlMapKey && campaignData?.defaultMap) {
+			setSearchParams({ map: campaignData.defaultMap }, { replace: true });
+		}
+	}, [urlMapKey, campaignData, setSearchParams]);
 
 	const mapConfig = useMemo(() => {
-		// If campaignData comes from API/DB, ensure it matches the { maps: { ... } } structure
+		// Pass the loaded campaignData
 		return getMapConfig(currentMapKey, campaignData);
 	}, [currentMapKey, campaignData]);
 

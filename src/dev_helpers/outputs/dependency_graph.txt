@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-07 17:50:15
+Generated: 2026-01-07 20:55:13
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -296,6 +296,9 @@ features\atlas\components\useMapCanvasViewModel.js:
   → lucide-react
   → react
 
+features\atlas\data\campaign_02\index.js:
+  → ./faerun/index.js
+
 features\atlas\data\modularize.js:
   → fs
   → path
@@ -311,6 +314,7 @@ features\atlas\useMapData.js:
 
 features\atlas\utils\mapNavigation.js:
   → @/features/atlas/data/campaign_01/index
+  → @/features/atlas/data/campaign_02/index
 
 features\atlas\utils\markerUtils.js:
   → leaflet
@@ -319,6 +323,7 @@ features\atlas\utils\markerUtils.js:
   → react-dom/server
 
 features\campaign\CampaignContext.jsx:
+  → ./useCampaignData
   → ./useCampaignPersistence
   → react
 
@@ -335,6 +340,11 @@ features\campaign\components\CampaignSelect.jsx:
   → @/features/campaign/useCampaignSelection
   → @/shared/components/ui/LoadingSpinner
   → @/shared/hooks/useTheme
+  → react
+
+features\campaign\useCampaignData.js:
+  → @/features/atlas/utils/mapNavigation
+  → @/shared/api/supabaseClient
   → react
 
 features\campaign\useCampaignPersistence.js:
