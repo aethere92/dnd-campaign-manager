@@ -5,7 +5,7 @@ export const overlays = [
 			[-347.5, 596],
 			[-420, 690],
 		],
-		image: 'images/overlays/korinis_island/korinis_island_penal_colony_mine_cave_v2.webp',
+		image: 'images/c01/locs/penal_colony_mine_overlay.webp',
 	},
 	{
 		name: 'Penal Colony Spider Cave',
@@ -13,7 +13,7 @@ export const overlays = [
 			[-380.2, 709.5],
 			[-391.9, 720.4],
 		],
-		image: 'images/overlays/korinis_island/korinis_island_penal_colony_spider_cave.webp',
+		image: 'images/c01/locs/penal_colony_spider_cave_overlay.webp',
 	},
 	{
 		name: 'Penal Colony Merchants Cave',
@@ -21,7 +21,7 @@ export const overlays = [
 			[-411, 580],
 			[-433, 604],
 		],
-		image: 'images/overlays/korinis_island/korinis_island_penal_colony_merchants_cave.webp',
+		image: 'images/c01/locs/penal_colony_merchant_cave_overlay.webp',
 	},
 	{
 		name: 'Penal Colony Chapel',
@@ -29,7 +29,7 @@ export const overlays = [
 			[-530.9, 527.2],
 			[-556.6, 550],
 		],
-		image: 'images/overlays/korinis_island/korinis_island_penal_colony_chapel.webp',
+		image: 'images/c01/locs/penal_colony_chapel_overlay.webp',
 	},
 	{
 		name: 'Penal Colony Paladin Barracks',
@@ -37,6 +37,6 @@ export const overlays = [
 			[-516, 488],
 			[-549, 521],
 		],
-		image: 'images/overlays/korinis_island/korinis_island_penal_colony_paladin_barracks.webp',
+		image: 'images/c01/locs/penal_colony_barracks_overlay.webp',
 	},
 ];

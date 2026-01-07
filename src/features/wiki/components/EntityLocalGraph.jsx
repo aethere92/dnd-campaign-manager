@@ -151,7 +151,7 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 		const edges = [];
 		const addedIds = new Set();
 		const typeGroups = {};
-		const FALLBACK_ICON_ROOT = 'images/icons';
+		const FALLBACK_ICON_ROOT = 'images/global/icons';
 
 		const resolveNodeIcon = (type, attributes, id) => {
 			let url = resolveImageUrl(attributes, 'icon');

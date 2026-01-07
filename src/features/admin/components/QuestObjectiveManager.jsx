@@ -226,7 +226,7 @@ export default function QuestObjectiveManager({ questId }) {
 									{(obj.objective_update || obj.completed_session_id) && (
 										<div className='mt-2 flex flex-col gap-1'>
 											{obj.objective_update && (
-												<div className='text-xs text-emerald-700 bg-emerald-100/50 px-2 py-1 rounded border border-emerald-100 italic'>
+												<div className='text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded border border-emerald-500 italic'>
 													"{obj.objective_update}"
 												</div>
 											)}

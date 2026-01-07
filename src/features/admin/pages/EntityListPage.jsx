@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Edit, Plus, Search, Loader2, Copy, Trash2 } from 'lucide-react';
+import { Edit, Plus, Search, Loader2, Copy, Trash2, Image as ImageIcon } from 'lucide-react';
 import { getEntities } from '@/domain/entity/api/entityService';
 import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import Button from '@/shared/components/ui/Button';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
+
+// Helper to clean paths for display
+const resolveImgUrl = (url) => {
+	if (!url) return null;
+	// Remove leading slashes or ../ sequences
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
 
 export default function EntityListPage() {
 	const { type } = useParams();
@@ -28,7 +36,6 @@ export default function EntityListPage() {
 		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
 	);
 
-	// ... (Handlers handleDuplicate and handleDelete remain same) ...
 	const handleDuplicate = async (originalId) => {
 		if (!confirm('Create a copy of this entity?')) return;
 		setIsCloning(originalId);
@@ -103,62 +110,89 @@ export default function EntityListPage() {
 							{search ? `No matches for "${search}"` : `No ${type}s found. Create one to get started.`}
 						</div>
 					) : (
-						filtered.map((item) => (
-							<div
-								key={item.id}
-								// CHANGED: Added virtual-list-item class for CSS native virtualization
-								className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
-								{/* Left: Info */}
-								<div className='flex items-center gap-3 min-w-0 flex-1'>
-									<div className='min-w-0'>
-										<div className='flex items-center gap-2'>
-											<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
-											{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+						filtered.map((item) => {
+							// Determine icon URL (Check both flattened 'icon_url' and nested attributes)
+							const rawIcon = item.icon_url || item.attributes?.icon;
+							const iconSrc = resolveImgUrl(rawIcon);
+
+							return (
+								<div
+									key={item.id}
+									className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+									{/* Left: Info */}
+									<div className='flex items-center gap-4 min-w-0 flex-1'>
+										{/* --- NEW: Entity Icon --- */}
+										<div className='shrink-0 w-10 h-10 rounded-md bg-muted border border-border overflow-hidden flex items-center justify-center'>
+											{iconSrc ? (
+												<img
+													src={iconSrc}
+													alt={item.name}
+													className='w-full h-full object-cover'
+													loading='lazy'
+													onError={(e) => {
+														e.target.style.display = 'none';
+														e.target.nextSibling.style.display = 'flex';
+													}}
+												/>
+											) : (
+												<ImageIcon size={16} className='text-muted-foreground/20' />
+											)}
+											{/* Fallback hidden by default, shown on error */}
+											<div className='hidden w-full h-full items-center justify-center bg-muted'>
+												<ImageIcon size={16} className='text-muted-foreground/20' />
+											</div>
 										</div>
-										<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
-											{item.summary || item.narrative || item.description || 'No description'}
+
+										<div className='min-w-0'>
+											<div className='flex items-center gap-2'>
+												<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
+												{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+											</div>
+											<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
+												{item.summary || item.narrative || item.description || 'No description'}
+											</div>
 										</div>
 									</div>
-								</div>
 
-								{/* Right: Actions */}
-								<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
-									<EntityBadge
-										type={item.type}
-										size='sm'
-										variant='outline'
-										className='opacity-50 hidden sm:inline-flex'
-									/>
-									<button
-										onClick={() => handleDuplicate(item.id)}
-										disabled={isCloning === item.id}
-										className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
-										title='Duplicate'>
-										{isCloning === item.id ? (
-											<Loader2 size={16} className='animate-spin text-amber-600' />
-										) : (
-											<Copy size={16} />
-										)}
-									</button>
-									<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
-										<Button
-											variant='ghost'
+									{/* Right: Actions */}
+									<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+										<EntityBadge
+											type={item.type}
 											size='sm'
-											icon={Edit}
-											className='h-8 px-2 text-muted-foreground hover:text-foreground'>
-											Edit
-										</Button>
-									</Link>
-									<button
-										onClick={() => handleDelete(item.id)}
-										disabled={isDeleting === item.id}
-										className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
-										title='Delete'>
-										{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
-									</button>
+											variant='outline'
+											className='opacity-50 hidden sm:inline-flex'
+										/>
+										<button
+											onClick={() => handleDuplicate(item.id)}
+											disabled={isCloning === item.id}
+											className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
+											title='Duplicate'>
+											{isCloning === item.id ? (
+												<Loader2 size={16} className='animate-spin text-amber-600' />
+											) : (
+												<Copy size={16} />
+											)}
+										</button>
+										<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
+											<Button
+												variant='ghost'
+												size='sm'
+												icon={Edit}
+												className='h-8 px-2 text-muted-foreground hover:text-foreground'>
+												Edit
+											</Button>
+										</Link>
+										<button
+											onClick={() => handleDelete(item.id)}
+											disabled={isDeleting === item.id}
+											className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+											title='Delete'>
+											{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
+										</button>
+									</div>
 								</div>
-							</div>
-						))
+							);
+						})
 					)}
 				</div>
 			</div>

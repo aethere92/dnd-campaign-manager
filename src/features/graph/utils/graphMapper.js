@@ -8,7 +8,7 @@ const INK_COLORS = {
 	NEUTRAL: '#78716c',
 };
 
-const FALLBACK_ICON_PATH = 'images/icons';
+const FALLBACK_ICON_PATH = 'images/global/icons';
 
 export const transformGraphData = (rawEntities) => {
 	if (!rawEntities || rawEntities.length === 0) return [];
