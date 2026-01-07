@@ -57,6 +57,21 @@ INSTRUCTIONS FOR AI:
         SessionEventManager.jsx
         SmartImageInput.jsx
         TacticalMapManager.jsx
+        atlas/
+          AtlasForms.jsx
+          editor/
+            AtlasEditor.jsx
+            AtlasEditorContext.jsx
+            components/
+              EditorMapEvents.jsx
+              EditorSidebar.jsx
+              EditorToolbar.jsx
+              VertexHandle.jsx
+            layers/
+              EditAreasLayer.jsx
+              EditMarkersLayer.jsx
+              EditOverlaysLayer.jsx
+              EditPathsLayer.jsx
       config/
         adminStrategies.js
         imageManifest.json
@@ -66,12 +81,16 @@ INSTRUCTIONS FOR AI:
         BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
         SplitPaneManager.jsx
       utils/
         filterUtils.js
     atlas/
       MapPage.jsx
       useMapData.js
+      api/
+        mapService.js
       components/
         AtlasSidebar.jsx
         MapCanvas.jsx
@@ -417,6 +436,8 @@ const WikiLandingPage = lazy(() => import('@/features/wiki/pages/WikiLandingPage
 const AdminLayout = lazy(() => import('@/features/admin/layouts/AdminLayout'));
 const SplitPaneManager = lazy(() => import('@/features/admin/pages/SplitPaneManager'));
 const BulkReplaceTool = lazy(() => import('@/features/admin/pages/BulkReplaceTool'));
+const MapMigrationTool = lazy(() => import('@/features/admin/pages/MapMigrationTool'));
+const MapManagerPage = lazy(() => import('@/features/admin/pages/MapManagerPage'));
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
@@ -431,6 +452,8 @@ export const AppRoutes = () => {
 						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
 						<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
 						<Route path='tools/replace' element={<BulkReplaceTool />} />
+						<Route path='tools/migration' element={<MapMigrationTool />} />
+						<Route path='tools/atlas' element={<MapManagerPage />} />
 					</Route>
 				)}
 
@@ -5778,6 +5801,1205 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 
 --- END OF features\admin\components\TacticalMapManager.jsx ---
 
+--- FILE: features\admin\components\atlas\AtlasForms.jsx ---
+import React from 'react';
+import { Trash2, Info, Plus, X } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+
+// --- SHARED HEADER ---
+const Header = ({ title, onDelete }) => (
+	<div className='flex justify-between items-center p-3 border-b border-border bg-muted/30'>
+		<span className='font-bold text-sm uppercase'>{title}</span>
+		<button
+			onClick={onDelete}
+			className='text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors'>
+			<Trash2 size={16} />
+		</button>
+	</div>
+);
+
+// --- MARKER FORM ---
+export const MarkerForm = ({ data, onChange, onDelete, onClose }) => {
+	if (!data) return null;
+	return (
+		<div className='flex flex-col h-full bg-card border-l border-border w-80 shadow-xl z-[1001]'>
+			<Header title='Edit Marker' onDelete={onDelete} />
+			<div className='p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Label</label>
+					<input
+						className={ADMIN_INPUT_CLASS}
+						value={data.label || ''}
+						onChange={(e) => onChange('label', e.target.value)}
+						autoFocus
+					/>
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Category</label>
+					<select
+						className={ADMIN_INPUT_CLASS}
+						value={data.category || 'default'}
+						onChange={(e) => onChange('category', e.target.value)}>
+						<option value='default'>Default</option>
+						<option value='cities'>Cities & Towns</option>
+						<option value='locations'>Locations</option>
+						<option value='points_of_interest'>Points of Interest</option>
+						<option value='combat_encounters'>Combat / Danger</option>
+						<option value='quests'>Quest Objectives</option>
+					</select>
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Map Link (Child Key)</label>
+					<input
+						className={ADMIN_INPUT_CLASS}
+						value={data.mapLink || ''}
+						placeholder='e.g. korinis_dungeon'
+						onChange={(e) => onChange('mapLink', e.target.value)}
+					/>
+				</div>
+			</div>
+			<div className='p-3 border-t border-border bg-muted/10'>
+				<Button fullWidth variant='secondary' size='sm' onClick={onClose}>
+					Done
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+// --- PATH FORM (Sessions) ---
+export const PathForm = ({ data, onChange, onDelete, onClose }) => {
+	if (!data) return null;
+	return (
+		<div className='flex flex-col h-full bg-card border-l border-border w-80 shadow-xl z-[1001]'>
+			<Header title='Edit Path / Session' onDelete={onDelete} />
+			<div className='p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>
+				<div className='bg-blue-500/10 border border-blue-200 p-2 rounded text-xs text-blue-800 mb-2'>
+					Drag the <strong>white dots</strong> on the map to reshape the path.
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Name / Session Title</label>
+					<input
+						className={ADMIN_INPUT_CLASS}
+						value={data.name || ''}
+						onChange={(e) => onChange('name', e.target.value)}
+					/>
+				</div>
+				<div className='grid grid-cols-2 gap-2'>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Color</label>
+						<input
+							type='color'
+							className='w-full h-9 p-1 bg-background border border-border rounded cursor-pointer'
+							value={data.lineColor || '#d97706'}
+							onChange={(e) => onChange('lineColor', e.target.value)}
+						/>
+					</div>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Opacity</label>
+						<input
+							type='number'
+							step='0.1'
+							min='0.1'
+							max='1'
+							className={ADMIN_INPUT_CLASS}
+							value={data.opacity || 0.7}
+							onChange={(e) => onChange('opacity', parseFloat(e.target.value))}
+						/>
+					</div>
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Dash Array</label>
+					<input
+						className={ADMIN_INPUT_CLASS}
+						value={data.dashArray || ''}
+						placeholder='e.g. 10, 10'
+						onChange={(e) => onChange('dashArray', e.target.value)}
+					/>
+					<div className='text-[9px] text-muted-foreground mt-1'>Leave empty for solid line.</div>
+				</div>
+			</div>
+			<div className='p-3 border-t border-border bg-muted/10'>
+				<Button fullWidth variant='secondary' size='sm' onClick={onClose}>
+					Done
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+// --- AREA FORM (Regions) ---
+export const AreaForm = ({ data, onChange, onDelete, onClose }) => {
+	if (!data) return null;
+	return (
+		<div className='flex flex-col h-full bg-card border-l border-border w-80 shadow-xl z-[1001]'>
+			<Header title='Edit Region / Area' onDelete={onDelete} />
+			<div className='p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>
+				<div className='bg-purple-500/10 border border-purple-200 p-2 rounded text-xs text-purple-800 mb-2'>
+					Drag the <strong>white dots</strong> to reshape the polygon.
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Region Name</label>
+					<input
+						className={ADMIN_INPUT_CLASS}
+						value={data.name || ''}
+						onChange={(e) => onChange('name', e.target.value)}
+					/>
+				</div>
+				<div className='grid grid-cols-2 gap-2'>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Border Color</label>
+						<input
+							type='color'
+							className='w-full h-9 p-1 bg-background border border-border rounded cursor-pointer'
+							value={data.lineColor || '#ffffff'}
+							onChange={(e) => onChange('lineColor', e.target.value)}
+						/>
+					</div>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Fill Color</label>
+						<input
+							type='color'
+							className='w-full h-9 p-1 bg-background border border-border rounded cursor-pointer'
+							value={data.interiorColor || '#ff0000'}
+							onChange={(e) => onChange('interiorColor', e.target.value)}
+						/>
+					</div>
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Text Rotation (deg)</label>
+					<input
+						type='number'
+						className={ADMIN_INPUT_CLASS}
+						value={data.textRotation || 0}
+						onChange={(e) => onChange('textRotation', parseFloat(e.target.value))}
+					/>
+				</div>
+			</div>
+			<div className='p-3 border-t border-border bg-muted/10'>
+				<Button fullWidth variant='secondary' size='sm' onClick={onClose}>
+					Done
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\admin\components\atlas\AtlasForms.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\AtlasEditor.jsx ---
+import React, { useMemo } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
+
+// UI
+import EditorToolbar from './components/EditorToolbar';
+import EditorSidebar from './components/EditorSidebar';
+import EditorMapEvents from './components/EditorMapEvents';
+
+// Layers
+import EditMarkersLayer from './layers/EditMarkersLayer';
+import EditPathsLayer from './layers/EditPathsLayer';
+import EditAreasLayer from './layers/EditAreasLayer';
+import EditOverlaysLayer from './layers/EditOverlaysLayer';
+
+function AtlasEditorInner() {
+	const { state } = useAtlasEditor();
+	const { mapConfig } = state;
+
+	// Calculate Tile Config
+	const tileConfig = useMemo(() => {
+		if (!mapConfig) return null;
+		const fileExt = mapConfig.fileExtension || 'png';
+		const isAbsolute = mapConfig.path.startsWith('http');
+		const baseUrl = isAbsolute
+			? mapConfig.path
+			: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${mapConfig.path}`;
+
+		return {
+			url: `${baseUrl}/{z}/{x}_{y}.${fileExt}`,
+			maxZoom: mapConfig.sizes?.maxZoom || 4,
+			minZoom: 0,
+		};
+	}, [mapConfig]);
+
+	// Calculate Bounds
+	const bounds = useMemo(() => {
+		if (!mapConfig?.sizes) return null;
+		const scaleFactor = Math.pow(2, mapConfig.sizes.maxZoom);
+		return [
+			[-mapConfig.sizes.imageHeight / scaleFactor, 0],
+			[0, mapConfig.sizes.imageWidth / scaleFactor],
+		];
+	}, [mapConfig]);
+
+	if (!bounds || !tileConfig) return <div>Invalid Configuration</div>;
+
+	return (
+		<div className='flex h-full w-full relative overflow-hidden bg-[#1a1412]'>
+			<EditorToolbar />
+
+			<div className='flex-1 h-full z-0'>
+				<MapContainer
+					center={[0, 0]}
+					zoom={0}
+					crs={L.CRS.Simple}
+					minZoom={tileConfig.minZoom}
+					maxZoom={tileConfig.maxZoom}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					zoomControl={false}
+					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					<TileLayer url={tileConfig.url} noWrap={true} bounds={bounds} maxNativeZoom={tileConfig.maxZoom} />
+
+					{/* LOGIC & LAYERS */}
+					<EditorMapEvents />
+					<EditOverlaysLayer />
+					<EditAreasLayer />
+					<EditPathsLayer />
+					<EditMarkersLayer />
+				</MapContainer>
+			</div>
+
+			<EditorSidebar />
+		</div>
+	);
+}
+
+// Wrapper to provide Context
+export default function AtlasEditor({ initialData }) {
+	return (
+		<AtlasEditorProvider initialData={initialData}>
+			<AtlasEditorInner />
+		</AtlasEditorProvider>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\AtlasEditor.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\AtlasEditorContext.jsx ---
+import React, { createContext, useContext, useReducer, useMemo, useEffect } from 'react';
+import { updateMapData } from '@/features/atlas/api/mapService';
+
+const AtlasEditorContext = createContext(null);
+
+// --- INITIALIZER ---
+// Normalizes the nested data structure into flat arrays with stable IDs
+const initializeState = (initialData) => {
+	const markers = [];
+	const rawAnn = initialData.annotations || {};
+	Object.keys(rawAnn).forEach((cat) => {
+		if (rawAnn[cat].items) {
+			rawAnn[cat].items.forEach((item) => {
+				markers.push({ ...item, category: cat, _id: crypto.randomUUID() });
+			});
+		}
+	});
+
+	const paths = (initialData.paths || []).map((p) => ({
+		...p,
+		_id: crypto.randomUUID(),
+		// Ensure points array exists and items are objects
+		points: (Array.isArray(p.points) ? p.points : []).map((pt) =>
+			// Handle legacy [x,y] vs new {coordinates:[x,y]}
+			Array.isArray(pt) ? { coordinates: pt, text: '' } : pt
+		),
+	}));
+
+	const areas = [];
+	const rawAreas = initialData.areas || {};
+
+	if (Array.isArray(rawAreas)) {
+		rawAreas.forEach((a) => {
+			areas.push({
+				...a,
+				points: Array.isArray(a.points) ? a.points : [], // Ensure array
+				_id: crypto.randomUUID(),
+			});
+		});
+	} else {
+		Object.values(rawAreas).forEach((cat) => {
+			if (cat.items) {
+				cat.items.forEach((a) => {
+					areas.push({
+						...a,
+						points: Array.isArray(a.points) ? a.points : [], // Ensure array
+						_id: crypto.randomUUID(),
+					});
+				});
+			}
+		});
+	}
+
+	const overlays = (initialData.overlays || []).map((o) => ({
+		...o,
+		_id: crypto.randomUUID(),
+	}));
+
+	return {
+		mapId: initialData.id,
+		mapConfig: initialData.metadata,
+		markers,
+		paths,
+		areas,
+		overlays,
+		selection: null, // { type, id, index? }
+		mode: 'select', // 'select', 'draw'
+		activeTool: 'markers', // 'markers', 'paths', 'areas', 'overlays'
+		isSaving: false,
+	};
+};
+
+// --- REDUCER ---
+const reducer = (state, action) => {
+	switch (action.type) {
+		case 'SELECT_ITEM':
+			return { ...state, selection: action.payload, mode: 'select' };
+
+		case 'SET_TOOL':
+			return { ...state, activeTool: action.payload, selection: null, mode: 'select' };
+
+		case 'SET_MODE':
+			return { ...state, mode: action.payload };
+
+		// --- CRUD: MARKERS ---
+		case 'ADD_MARKER':
+			return {
+				...state,
+				markers: [...state.markers, action.payload],
+				selection: { type: 'marker', id: action.payload._id },
+			};
+		case 'UPDATE_MARKER':
+			return { ...state, markers: state.markers.map((m) => (m._id === action.id ? { ...m, ...action.updates } : m)) };
+		case 'DELETE_MARKER':
+			return { ...state, markers: state.markers.filter((m) => m._id !== action.id), selection: null };
+
+		// --- CRUD: PATHS ---
+		case 'ADD_PATH':
+			return {
+				...state,
+				paths: [...state.paths, action.payload],
+				selection: { type: 'path', id: action.payload._id },
+				mode: 'draw',
+			};
+		case 'UPDATE_PATH':
+			return { ...state, paths: state.paths.map((p) => (p._id === action.id ? { ...p, ...action.updates } : p)) };
+		case 'DELETE_PATH':
+			return { ...state, paths: state.paths.filter((p) => p._id !== action.id), selection: null };
+		case 'UPDATE_PATH_POINT': {
+			// Updates a specific vertex (coordinates or text)
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					const newPoints = [...p.points];
+					newPoints[action.index] = { ...newPoints[action.index], ...action.updates };
+					return { ...p, points: newPoints };
+				}),
+			};
+		}
+		case 'APPEND_PATH_POINT': {
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					return { ...p, points: [...p.points, { coordinates: action.coordinates }] };
+				}),
+			};
+		}
+
+		// --- CRUD: AREAS ---
+		case 'ADD_AREA':
+			return {
+				...state,
+				areas: [...state.areas, action.payload],
+				selection: { type: 'area', id: action.payload._id },
+				mode: 'draw',
+			};
+		case 'UPDATE_AREA':
+			return { ...state, areas: state.areas.map((a) => (a._id === action.id ? { ...a, ...action.updates } : a)) };
+		case 'DELETE_AREA':
+			return { ...state, areas: state.areas.filter((a) => a._id !== action.id), selection: null };
+		case 'UPDATE_AREA_POINT': {
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = [...a.points];
+					newPoints[action.index] = { ...newPoints[action.index], coordinates: action.coordinates };
+					return { ...a, points: newPoints };
+				}),
+			};
+		}
+		case 'APPEND_AREA_POINT': {
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					// Ensure points array exists
+					const pts = a.points || [];
+					return { ...a, points: [...pts, { coordinates: action.coordinates }] };
+				}),
+			};
+		}
+
+		// --- CRUD: OVERLAYS ---
+		case 'ADD_OVERLAY':
+			return {
+				...state,
+				overlays: [...state.overlays, action.payload],
+				selection: { type: 'overlay', id: action.payload._id },
+			};
+		case 'UPDATE_OVERLAY':
+			return { ...state, overlays: state.overlays.map((o) => (o._id === action.id ? { ...o, ...action.updates } : o)) };
+		case 'DELETE_OVERLAY':
+			return { ...state, overlays: state.overlays.filter((o) => o._id !== action.id), selection: null };
+
+		case 'SET_SAVING':
+			return { ...state, isSaving: action.payload };
+
+		default:
+			return state;
+	}
+};
+
+export const AtlasEditorProvider = ({ initialData, children }) => {
+	const [state, dispatch] = useReducer(reducer, initialData, initializeState);
+
+	// --- SAVING LOGIC (De-Normalization) ---
+	const saveMap = async () => {
+		dispatch({ type: 'SET_SAVING', payload: true });
+		try {
+			// 1. Group Markers
+			const annotations = {};
+			state.markers.forEach((m) => {
+				const cat = m.category || 'default';
+				const catName = cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+				if (!annotations[cat]) annotations[cat] = { name: catName, items: [] };
+				const { _id, category, ...rest } = m;
+				annotations[cat].items.push(rest);
+			});
+
+			// 2. Clean Paths
+			const paths = state.paths.map(({ _id, ...rest }) => rest);
+
+			// 3. Clean Areas (Group if needed, flat for now is fine for DB, Viewer handles structure)
+			// We'll wrap in a "Regions" category to match legacy viewer expectation
+			const areas = {
+				regions: { name: 'Regions', items: state.areas.map(({ _id, ...rest }) => rest) },
+			};
+
+			// 4. Clean Overlays
+			const overlays = state.overlays.map(({ _id, ...rest }) => rest);
+
+			const contentData = { annotations, paths, areas, overlays };
+
+			await updateMapData(state.mapId, contentData);
+			alert('Map saved successfully.');
+		} catch (e) {
+			console.error(e);
+			alert('Save failed: ' + e.message);
+		} finally {
+			dispatch({ type: 'SET_SAVING', payload: false });
+		}
+	};
+
+	const value = useMemo(() => ({ state, dispatch, saveMap }), [state]);
+
+	return <AtlasEditorContext.Provider value={value}>{children}</AtlasEditorContext.Provider>;
+};
+
+export const useAtlasEditor = () => {
+	const ctx = useContext(AtlasEditorContext);
+	if (!ctx) throw new Error('useAtlasEditor must be used within AtlasEditorProvider');
+	return ctx;
+};
+
+--- END OF features\admin\components\atlas\editor\AtlasEditorContext.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\components\EditorMapEvents.jsx ---
+import { useMapEvents } from 'react-leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+
+export default function EditorMapEvents() {
+	const { state, dispatch } = useAtlasEditor();
+	const { mode, selection, activeTool } = state;
+
+	useMapEvents({
+		click(e) {
+			const pos = { lat: Number(e.latlng.lat.toFixed(4)), lng: Number(e.latlng.lng.toFixed(4)) };
+
+			// Drawing Logic
+			if (mode === 'draw' && selection) {
+				if (selection.type === 'path') {
+					dispatch({ type: 'APPEND_PATH_POINT', id: selection.id, coordinates: [pos.lat, pos.lng] });
+				} else if (selection.type === 'area') {
+					dispatch({ type: 'APPEND_AREA_POINT', id: selection.id, coordinates: [pos.lat, pos.lng] });
+				}
+			}
+			// Creation Logic (if we decide to allow click-to-create in empty space)
+			else if (activeTool === 'markers' && !selection) {
+				// Optional: Create marker on empty click
+				const newMarker = {
+					_id: crypto.randomUUID(),
+					label: 'New Marker',
+					lat: pos.lat,
+					lng: pos.lng,
+					category: 'default',
+					type: 'place',
+				};
+				dispatch({ type: 'ADD_MARKER', payload: newMarker });
+			}
+			// Deselect Logic
+			else {
+				dispatch({ type: 'SELECT_ITEM', payload: null });
+			}
+		},
+	});
+	return null;
+}
+
+--- END OF features\admin\components\atlas\editor\components\EditorMapEvents.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\components\EditorSidebar.jsx ---
+import React from 'react';
+import { Trash2, X } from 'lucide-react';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+
+export default function EditorSidebar() {
+	const { state, dispatch } = useAtlasEditor();
+	const { selection, markers, paths, areas, overlays } = state;
+
+	if (!selection) return null;
+
+	const handleClose = () => dispatch({ type: 'SELECT_ITEM', payload: null });
+	const handleDelete = () => {
+		const typeMap = { marker: 'DELETE_MARKER', path: 'DELETE_PATH', area: 'DELETE_AREA', overlay: 'DELETE_OVERLAY' };
+		if (confirm('Delete this item?')) {
+			dispatch({ type: typeMap[selection.type], id: selection.id });
+		}
+	};
+
+	// --- SELECT DATA SOURCE ---
+	let data = null;
+	if (selection.type === 'marker') data = markers.find((m) => m._id === selection.id);
+	if (selection.type === 'path') data = paths.find((p) => p._id === selection.id);
+	if (selection.type === 'area') data = areas.find((a) => a._id === selection.id);
+	if (selection.type === 'overlay') data = overlays.find((o) => o._id === selection.id);
+
+	if (!data) return null;
+
+	// --- PATH POINT EDITOR (Special Case) ---
+	if (selection.type === 'path' && selection.index !== undefined) {
+		const point = data.points[selection.index];
+		return (
+			<SidebarShell
+				title='Edit Path Node'
+				onClose={handleClose}
+				onDelete={() => {
+					/* maybe delete point logic later */
+				}}>
+				<div className='space-y-4'>
+					<div className='text-xs text-muted-foreground'>Node #{selection.index + 1}</div>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Coordinates</label>
+						<div className='flex gap-2'>
+							<input className={ADMIN_INPUT_CLASS} disabled value={point.coordinates[0]} />
+							<input className={ADMIN_INPUT_CLASS} disabled value={point.coordinates[1]} />
+						</div>
+					</div>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Narrative Text</label>
+						<textarea
+							className={ADMIN_INPUT_CLASS}
+							rows={4}
+							value={point.text || ''}
+							placeholder='Story event that happened here...'
+							onChange={(e) =>
+								dispatch({
+									type: 'UPDATE_PATH_POINT',
+									id: selection.id,
+									index: selection.index,
+									updates: { text: e.target.value },
+								})
+							}
+						/>
+					</div>
+				</div>
+			</SidebarShell>
+		);
+	}
+
+	// --- GENERIC EDITORS ---
+	return (
+		<SidebarShell title={`Edit ${selection.type}`} onClose={handleClose} onDelete={handleDelete}>
+			<div className='space-y-4'>
+				{/* NAME / LABEL */}
+				{selection.type !== 'overlay' && (
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground'>
+							{selection.type === 'marker' ? 'Label' : 'Name'}
+						</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={data.label || data.name || ''}
+							onChange={(e) => {
+								const field = selection.type === 'marker' ? 'label' : 'name';
+								dispatch({
+									type: `UPDATE_${selection.type.toUpperCase()}`,
+									id: selection.id,
+									updates: { [field]: e.target.value },
+								});
+							}}
+						/>
+					</div>
+				)}
+
+				{/* MARKER SPECIFIC */}
+				{selection.type === 'marker' && (
+					<>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Category</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={data.category || 'default'}
+								onChange={(e) =>
+									dispatch({ type: 'UPDATE_MARKER', id: selection.id, updates: { category: e.target.value } })
+								}>
+								<option value='default'>Default</option>
+								<option value='cities'>Cities</option>
+								<option value='locations'>Locations</option>
+								<option value='points_of_interest'>POIs</option>
+								<option value='combat_encounters'>Combat</option>
+							</select>
+						</div>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Map Link</label>
+							<input
+								className={ADMIN_INPUT_CLASS}
+								value={data.mapLink || ''}
+								onChange={(e) =>
+									dispatch({ type: 'UPDATE_MARKER', id: selection.id, updates: { mapLink: e.target.value } })
+								}
+							/>
+						</div>
+					</>
+				)}
+
+				{/* PATH SPECIFIC */}
+				{selection.type === 'path' && (
+					<div className='grid grid-cols-2 gap-2'>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Color</label>
+							<input
+								type='color'
+								className='w-full h-8'
+								value={data.lineColor || '#d97706'}
+								onChange={(e) =>
+									dispatch({ type: 'UPDATE_PATH', id: selection.id, updates: { lineColor: e.target.value } })
+								}
+							/>
+						</div>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Style</label>
+							<input
+								className={ADMIN_INPUT_CLASS}
+								placeholder='Dash array (5,5)'
+								value={data.dashArray || ''}
+								onChange={(e) =>
+									dispatch({ type: 'UPDATE_PATH', id: selection.id, updates: { dashArray: e.target.value } })
+								}
+							/>
+						</div>
+					</div>
+				)}
+
+				{/* OVERLAY SPECIFIC */}
+				{selection.type === 'overlay' && (
+					<>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Name</label>
+							<input
+								className={ADMIN_INPUT_CLASS}
+								value={data.name || ''}
+								onChange={(e) =>
+									dispatch({ type: 'UPDATE_OVERLAY', id: selection.id, updates: { name: e.target.value } })
+								}
+							/>
+						</div>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Image URL</label>
+							<input
+								className={ADMIN_INPUT_CLASS}
+								value={data.image || ''}
+								onChange={(e) =>
+									dispatch({ type: 'UPDATE_OVERLAY', id: selection.id, updates: { image: e.target.value } })
+								}
+							/>
+						</div>
+						<div className='bg-muted p-2 rounded text-[10px]'>
+							<div className='font-bold'>Bounds:</div>
+							<div>
+								TL: {data.bounds[0][0]}, {data.bounds[0][1]}
+							</div>
+							<div>
+								BR: {data.bounds[1][0]}, {data.bounds[1][1]}
+							</div>
+							<div className='text-muted-foreground mt-1'>
+								Edit bounds manually in JSON if needed, or drag corners (todo).
+							</div>
+						</div>
+					</>
+				)}
+			</div>
+		</SidebarShell>
+	);
+}
+
+const SidebarShell = ({ title, children, onClose, onDelete }) => (
+	<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto'>
+		<div className='flex justify-between items-center p-3 border-b border-border bg-muted/30'>
+			<span className='font-bold text-sm uppercase'>{title}</span>
+			<div className='flex gap-1'>
+				<button onClick={onDelete} className='p-1 text-red-500 hover:bg-red-50 rounded'>
+					<Trash2 size={16} />
+				</button>
+				<button onClick={onClose} className='p-1 text-muted-foreground hover:bg-muted rounded'>
+					<X size={16} />
+				</button>
+			</div>
+		</div>
+		<div className='p-4 flex-1 overflow-y-auto custom-scrollbar'>{children}</div>
+	</div>
+);
+
+--- END OF features\admin\components\atlas\editor\components\EditorSidebar.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\components\EditorToolbar.jsx ---
+import React from 'react';
+import { Save, Loader2, MapPin, Footprints, Hexagon, Image as ImageIcon, Plus } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import clsx from 'clsx';
+
+const ToolBtn = ({ icon: Icon, label, active, onClick }) => (
+	<button
+		onClick={onClick}
+		className={clsx(
+			'flex items-center gap-2 p-2 rounded-md transition-all text-xs font-bold uppercase',
+			active ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'
+		)}
+		title={label}>
+		<Icon size={18} />
+		<span className='hidden md:inline'>{label}</span>
+	</button>
+);
+
+export default function EditorToolbar() {
+	const { state, dispatch, saveMap } = useAtlasEditor();
+	const { activeTool, isSaving, mode } = state;
+
+	// Handlers for "New Item" buttons
+	const handleNewPath = () => {
+		const newPath = {
+			_id: crypto.randomUUID(),
+			name: 'New Path',
+			lineColor: '#d97706',
+			opacity: 1,
+			points: [],
+		};
+		dispatch({ type: 'ADD_PATH', payload: newPath });
+	};
+
+	const handleNewArea = () => {
+		const newArea = {
+			_id: crypto.randomUUID(),
+			name: 'New Region',
+			interiorColor: '#ff0000',
+			lineColor: 'transparent',
+			points: [],
+		};
+		dispatch({ type: 'ADD_AREA', payload: newArea });
+	};
+
+	const handleNewOverlay = () => {
+		const newOverlay = {
+			_id: crypto.randomUUID(),
+			name: 'New Overlay',
+			image: '',
+			bounds: [
+				[0, 0],
+				[-100, 100],
+			], // Default box
+		};
+		dispatch({ type: 'ADD_OVERLAY', payload: newOverlay });
+	};
+
+	return (
+		<div className='absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-auto'>
+			{/* SAVE */}
+			<div className='bg-background/95 backdrop-blur border border-border p-2 rounded-lg shadow-xl'>
+				<Button size='sm' variant='primary' icon={isSaving ? Loader2 : Save} onClick={saveMap} disabled={isSaving}>
+					{isSaving ? 'Saving' : 'Save'}
+				</Button>
+			</div>
+
+			{/* TOOLS */}
+			<div className='bg-background/95 backdrop-blur border border-border p-1 rounded-lg shadow-xl flex flex-col gap-1'>
+				<ToolBtn
+					icon={MapPin}
+					label='Markers'
+					active={activeTool === 'markers'}
+					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'markers' })}
+				/>
+				<ToolBtn
+					icon={Footprints}
+					label='Paths'
+					active={activeTool === 'paths'}
+					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'paths' })}
+				/>
+				<ToolBtn
+					icon={Hexagon}
+					label='Regions'
+					active={activeTool === 'areas'}
+					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'areas' })}
+				/>
+				<ToolBtn
+					icon={ImageIcon}
+					label='Overlays'
+					active={activeTool === 'overlays'}
+					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'overlays' })}
+				/>
+			</div>
+
+			{/* ACTIONS */}
+			{activeTool === 'paths' && (
+				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewPath} className='shadow-xl'>
+					New Path
+				</Button>
+			)}
+			{activeTool === 'areas' && (
+				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewArea} className='shadow-xl'>
+					New Region
+				</Button>
+			)}
+			{activeTool === 'overlays' && (
+				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewOverlay} className='shadow-xl'>
+					New Overlay
+				</Button>
+			)}
+
+			{/* DRAWING MODE INDICATOR */}
+			{mode === 'draw' && (
+				<div
+					className='bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl animate-pulse text-center cursor-pointer'
+					onClick={() => dispatch({ type: 'SET_MODE', payload: 'select' })}>
+					DRAWING ACTIVE
+					<br />
+					<span className='underline opacity-80'>Stop</span>
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\components\EditorToolbar.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\components\VertexHandle.jsx ---
+import L from 'leaflet';
+
+export const createHandleIcon = (isSelected, isSpecial = false) => {
+	const color = isSpecial ? '#3b82f6' : isSelected ? '#d97706' : '#333';
+	return L.divIcon({
+		className: 'vertex-handle',
+		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+		iconSize: [10, 10],
+		iconAnchor: [5, 5],
+	});
+};
+
+--- END OF features\admin\components\atlas\editor\components\VertexHandle.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\layers\EditAreasLayer.jsx ---
+import React from 'react';
+import { Polygon, Marker, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { createHandleIcon } from '../components/VertexHandle';
+
+export default function EditAreasLayer() {
+	const { state, dispatch } = useAtlasEditor();
+	const { areas, selection, activeTool } = state;
+	const isInteractive = activeTool === 'areas';
+
+	return (
+		<>
+			{areas.map((area) => {
+				const isSelected = selection?.type === 'area' && selection.id === area._id;
+				const positions = (area.points || []).map((p) => p.coordinates);
+
+				// --- FIX: CRITICAL CRASH PREVENTION ---
+				// Leaflet Polygon throws error if rendered with < 3 points (or 0) when a Tooltip is attached.
+				// We only render the polygon shape if it has valid geometry.
+				const hasValidGeometry = positions.length > 0;
+
+				return (
+					<React.Fragment key={area._id}>
+						{hasValidGeometry && (
+							<Polygon
+								positions={positions}
+								pathOptions={{
+									color: area.lineColor || 'transparent',
+									fillColor: area.interiorColor || '#ff0000',
+									fillOpacity: isSelected ? 0.6 : 0.3,
+									weight: 2,
+								}}
+								eventHandlers={{
+									click: (e) => {
+										if (!isInteractive) return;
+										L.DomEvent.stopPropagation(e);
+										dispatch({ type: 'SELECT_ITEM', payload: { type: 'area', id: area._id } });
+									},
+								}}>
+								{/* Only show label if we have enough points for a center */}
+								{positions.length > 2 && (
+									<Tooltip
+										permanent
+										direction='center'
+										className='bg-transparent border-0 shadow-none text-white font-bold text-center'>
+										<div style={{ transform: `rotate(${area.textRotation || 0}deg)` }}>{area.name}</div>
+									</Tooltip>
+								)}
+							</Polygon>
+						)}
+
+						{/* Render Handles even if Polygon is invisible (so we can see points as we draw) */}
+						{isSelected &&
+							(area.points || []).map((pt, idx) => (
+								<Marker
+									key={`${area._id}-pt-${idx}`}
+									position={pt.coordinates}
+									icon={createHandleIcon(true)}
+									draggable={true}
+									eventHandlers={{
+										dragend: (e) => {
+											const { lat, lng } = e.target.getLatLng();
+											dispatch({
+												type: 'UPDATE_AREA_POINT',
+												id: area._id,
+												index: idx,
+												coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))],
+											});
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+							))}
+					</React.Fragment>
+				);
+			})}
+		</>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\layers\EditAreasLayer.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\layers\EditMarkersLayer.jsx ---
+import React from 'react';
+import { Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+
+export default function EditMarkersLayer() {
+	const { state, dispatch } = useAtlasEditor();
+	const { markers, selection, activeTool } = state;
+
+	// Markers are always visible, but maybe only clickable if tool matches or generic select?
+	// Usually users expect to click markers anytime.
+
+	return (
+		<>
+			{markers.map((m) => {
+				const isSelected = selection?.type === 'marker' && selection.id === m._id;
+
+				return (
+					<Marker
+						key={m._id}
+						position={[m.lat, m.lng]}
+						icon={resolveMarkerIcon(m)}
+						draggable={true}
+						opacity={isSelected ? 1 : 0.8}
+						eventHandlers={{
+							click: (e) => {
+								L.DomEvent.stopPropagation(e);
+								dispatch({ type: 'SELECT_ITEM', payload: { type: 'marker', id: m._id } });
+							},
+							dragend: (e) => {
+								const { lat, lng } = e.target.getLatLng();
+								dispatch({
+									type: 'UPDATE_MARKER',
+									id: m._id,
+									updates: { lat: Number(lat.toFixed(4)), lng: Number(lng.toFixed(4)) },
+								});
+							},
+						}}
+					/>
+				);
+			})}
+		</>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\layers\EditMarkersLayer.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\layers\EditOverlaysLayer.jsx ---
+import React from 'react';
+import { ImageOverlay, Rectangle } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+
+export default function EditOverlaysLayer() {
+	const { state, dispatch } = useAtlasEditor();
+	const { overlays, selection, activeTool } = state;
+	const isInteractive = activeTool === 'overlays';
+
+	// Helper to resolve URL
+	const getUrl = (path) => (path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`);
+
+	return (
+		<>
+			{overlays.map((overlay) => {
+				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
+				// Overlay bounds: [[lat1, lng1], [lat2, lng2]]
+
+				return (
+					<React.Fragment key={overlay._id}>
+						<ImageOverlay
+							url={getUrl(overlay.image)}
+							bounds={overlay.bounds}
+							opacity={0.8}
+							interactive={isInteractive} // Allows clicks pass through if not editing overlays
+							eventHandlers={{
+								click: (e) => {
+									if (!isInteractive) return;
+									L.DomEvent.stopPropagation(e);
+									dispatch({ type: 'SELECT_ITEM', payload: { type: 'overlay', id: overlay._id } });
+								},
+							}}
+						/>
+
+						{/* Render a bounding box border when selected */}
+						{isSelected && (
+							<Rectangle
+								bounds={overlay.bounds}
+								pathOptions={{ color: '#3b82f6', weight: 2, fill: false, dashArray: '5, 5' }}
+							/>
+						)}
+					</React.Fragment>
+				);
+			})}
+		</>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\layers\EditOverlaysLayer.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\layers\EditPathsLayer.jsx ---
+import React from 'react';
+import { Polyline, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { createHandleIcon } from '../components/VertexHandle';
+
+export default function EditPathsLayer() {
+	const { state, dispatch } = useAtlasEditor();
+	const { paths, selection, activeTool } = state;
+
+	const isInteractive = activeTool === 'paths';
+
+	return (
+		<>
+			{paths.map((path) => {
+				const isSelected = selection?.type === 'path' && selection.id === path._id;
+				const positions = path.points.map((p) => p.coordinates);
+
+				// Skip empty paths to prevent rendering issues
+				if (positions.length === 0 && !isSelected) return null;
+
+				return (
+					<React.Fragment key={path._id}>
+						{positions.length > 0 && (
+							<Polyline
+								positions={positions}
+								pathOptions={{
+									color: path.lineColor || '#d97706',
+									weight: isSelected ? 5 : 3,
+									opacity: path.opacity || 0.7,
+									dashArray: path.dashArray,
+								}}
+								eventHandlers={{
+									click: (e) => {
+										if (!isInteractive) return;
+										L.DomEvent.stopPropagation(e);
+										dispatch({ type: 'SELECT_ITEM', payload: { type: 'path', id: path._id } });
+									},
+								}}
+							/>
+						)}
+
+						{/* Vertices/Nodes */}
+						{isSelected &&
+							path.points.map((pt, idx) => {
+								const hasText = !!pt.text;
+								return (
+									<Marker
+										key={`${path._id}-pt-${idx}`}
+										position={pt.coordinates}
+										icon={createHandleIcon(true, hasText)} // Blue if it has text
+										draggable={true}
+										eventHandlers={{
+											dragend: (e) => {
+												const { lat, lng } = e.target.getLatLng();
+												dispatch({
+													type: 'UPDATE_PATH_POINT',
+													id: path._id,
+													index: idx,
+													updates: { coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))] },
+												});
+											},
+											click: (e) => {
+												L.DomEvent.stopPropagation(e);
+												// Select this specific point to edit text
+												dispatch({
+													type: 'SELECT_ITEM',
+													payload: { type: 'path', id: path._id, index: idx },
+												});
+											},
+										}}>
+										{/* Preview text on hover */}
+										{hasText && (
+											<Popup autoClose={false} closeButton={false}>
+												{pt.text}
+											</Popup>
+										)}
+									</Marker>
+								);
+							})}
+					</React.Fragment>
+				);
+			})}
+		</>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\layers\EditPathsLayer.jsx ---
+
 --- FILE: features\admin\config\adminStrategies.js ---
 export const ADMIN_STRATEGIES = {
 	// 0. CAMPAIGN (Meta Entity)
@@ -6267,6 +7489,8 @@ export default function AdminLayout() {
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
 					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
+					<NavItem to='/dm/tools/migration' icon={Database} label='Map Migration' />
+					<NavItem to='/dm/tools/atlas' icon={MapPin} label='Atlas Manager' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities
@@ -6687,6 +7911,246 @@ export default function EntityListPage() {
 
 --- END OF features\admin\pages\EntityListPage.jsx ---
 
+--- FILE: features\admin\pages\MapManagerPage.jsx ---
+import React, { useState, useEffect } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { fetchCampaignMaps, fetchMapByKey } from '@/features/atlas/api/mapService';
+import { Map as MapIcon, Loader2, Edit3, ArrowLeft } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import AtlasEditor from '@/features/admin/components/atlas/editor/AtlasEditor'; // We will create this next
+import { ADMIN_HEADER_CLASS } from '@/features/admin/components/AdminFormStyles';
+
+export default function MapManagerPage() {
+	const { campaignId } = useCampaign();
+	const [maps, setMaps] = useState([]);
+	const [selectedMap, setSelectedMap] = useState(null);
+	const [loading, setLoading] = useState(false);
+
+	// Load list on mount
+	useEffect(() => {
+		if (campaignId) loadList();
+	}, [campaignId]);
+
+	const loadList = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchCampaignMaps(campaignId);
+			setMaps(data || []);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Load full map details when selected
+	const handleSelect = async (mapSummary) => {
+		setLoading(true);
+		try {
+			const fullData = await fetchMapByKey(campaignId, mapSummary.key);
+			// Merge the ID back in since fetchMapByKey flattens it
+			setSelectedMap({ ...fullData, id: mapSummary.id, key: mapSummary.key });
+		} catch (e) {
+			alert(e.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// --- RENDER: EDITOR MODE ---
+	if (selectedMap) {
+		return (
+			<div className='h-[calc(100vh-64px)] flex flex-col'>
+				<div className='bg-background border-b border-border p-2 flex items-center gap-4'>
+					<Button variant='ghost' size='sm' icon={ArrowLeft} onClick={() => setSelectedMap(null)}>
+						Back to List
+					</Button>
+					<span className='font-bold font-serif text-lg'>{selectedMap.metadata?.label || selectedMap.key}</span>
+				</div>
+				<div className='flex-1 overflow-hidden relative'>
+					<AtlasEditor initialData={selectedMap} />
+				</div>
+			</div>
+		);
+	}
+
+	// --- RENDER: LIST MODE ---
+	return (
+		<div className='max-w-5xl mx-auto p-8 space-y-6'>
+			<h1 className={ADMIN_HEADER_CLASS}>
+				<span className='flex items-center gap-2'>
+					<MapIcon className='text-primary' /> Atlas Manager
+				</span>
+			</h1>
+
+			{loading && (
+				<div className='text-center py-10'>
+					<Loader2 className='animate-spin mx-auto' />
+				</div>
+			)}
+
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+				{!loading &&
+					maps.map((m) => (
+						<button
+							key={m.id}
+							onClick={() => handleSelect(m)}
+							className='group flex flex-col items-start p-4 bg-card border border-border rounded-xl hover:border-primary hover:shadow-md transition-all text-left'>
+							<div className='w-full flex justify-between items-start mb-2'>
+								<span className='text-[10px] font-mono bg-muted px-2 py-1 rounded text-muted-foreground group-hover:text-primary transition-colors'>
+									{m.key}
+								</span>
+								<Edit3 size={16} className='opacity-0 group-hover:opacity-100 transition-opacity text-primary' />
+							</div>
+							<h3 className='font-bold text-lg'>{m.title}</h3>
+						</button>
+					))}
+			</div>
+
+			{!loading && maps.length === 0 && (
+				<div className='text-center py-20 text-muted-foreground italic border-2 border-dashed border-border rounded-xl'>
+					No maps found in database. Run the migration tool first.
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\MapManagerPage.jsx ---
+
+--- FILE: features\admin\pages\MapMigrationTool.jsx ---
+import React, { useState } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { upsertMap } from '@/features/atlas/api/mapService';
+import Button from '@/shared/components/ui/Button';
+import { UploadCloud, CheckCircle, AlertTriangle, RefreshCw, Database } from 'lucide-react';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from '@/features/admin/components/AdminFormStyles';
+
+export default function MapMigrationTool() {
+	const { campaignId, campaignData } = useCampaign();
+	const [status, setStatus] = useState({});
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	const handleMigration = async () => {
+		if (!campaignId || !campaignData) return;
+		if (!confirm(`Overwrite database maps for campaign ${campaignId} with data from local files?`)) return;
+
+		setIsProcessing(true);
+		const newStatus = {};
+
+		const maps = campaignData.maps || {};
+		const mapKeys = Object.keys(maps);
+
+		for (const key of mapKeys) {
+			const mapObj = maps[key];
+			try {
+				const metadata = mapObj.metadata || {};
+
+				// --- FIX FOR NESTED MAPS ---
+				// Capture parentId if it exists at the root level of the file object
+				const configPayload = {
+					...metadata,
+					parentId: mapObj.parentId || metadata.parentId || null,
+				};
+
+				const contentData = {
+					annotations: mapObj.annotations || {},
+					paths: mapObj.paths || [],
+					areas: mapObj.areas || {},
+					overlays: mapObj.overlays || [],
+				};
+
+				await upsertMap(
+					campaignId,
+					key,
+					metadata.label || key,
+					configPayload, // Now contains parentId
+					contentData
+				);
+
+				newStatus[key] = { success: true, msg: 'Synced' };
+			} catch (err) {
+				console.error(err);
+				newStatus[key] = { success: false, msg: err.message };
+			}
+		}
+
+		setStatus(newStatus);
+		setIsProcessing(false);
+	};
+
+	if (!campaignData) return <div className='p-8'>Select a campaign with file-based maps first.</div>;
+
+	return (
+		<div className='max-w-4xl mx-auto p-6 space-y-6 animate-in fade-in'>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>
+					<span className='flex items-center gap-2'>
+						<Database size={18} className='text-blue-600' /> Map Database Migration
+					</span>
+				</h2>
+
+				<div className='p-4 bg-amber-500/10 border border-amber-200 rounded-lg text-sm text-amber-900 mb-6 flex gap-3 items-start'>
+					<AlertTriangle size={18} className='shrink-0 mt-0.5' />
+					<div>
+						<p className='font-bold mb-1'>Overwrite Warning</p>
+						<p>
+							This tool reads the <strong>local .js map files</strong> (Legacy) and pushes them into the{' '}
+							<strong>Supabase 'maps' table</strong>.
+						</p>
+						<p className='mt-2 text-xs opacity-80'>
+							It preserves <code>parentId</code> links for nested map navigation.
+						</p>
+					</div>
+				</div>
+
+				<div className='grid grid-cols-1 gap-2 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2'>
+					{Object.keys(campaignData.maps || {}).map((mapKey) => (
+						<div
+							key={mapKey}
+							className='flex items-center justify-between p-3 border border-border rounded bg-background shadow-sm'>
+							<div className='flex items-center gap-3'>
+								<span className='font-mono text-[10px] bg-muted px-2 py-1 rounded border border-border'>{mapKey}</span>
+								<div className='flex flex-col'>
+									<span className='text-sm font-medium'>{campaignData.maps[mapKey].metadata?.label}</span>
+									{campaignData.maps[mapKey].parentId && (
+										<span className='text-[10px] text-muted-foreground'>
+											↳ Child of: {campaignData.maps[mapKey].parentId}
+										</span>
+									)}
+								</div>
+							</div>
+
+							{status[mapKey] ? (
+								<span
+									className={`text-xs font-bold flex items-center gap-1 ${
+										status[mapKey].success ? 'text-emerald-600' : 'text-red-600'
+									}`}>
+									{status[mapKey].success ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+									{status[mapKey].msg}
+								</span>
+							) : (
+								<span className='text-xs text-muted-foreground italic opacity-50'>Pending</span>
+							)}
+						</div>
+					))}
+				</div>
+
+				<Button
+					fullWidth
+					variant='primary'
+					onClick={handleMigration}
+					disabled={isProcessing}
+					icon={isProcessing ? RefreshCw : UploadCloud}>
+					{isProcessing ? 'Migrating Data...' : 'Start Database Sync'}
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\MapMigrationTool.jsx ---
+
 --- FILE: features\admin\pages\SplitPaneManager.jsx ---
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -7091,46 +8555,87 @@ export default function MapView() {
 
 --- FILE: features\atlas\useMapData.js ---
 import { useSearchParams } from 'react-router-dom';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
-import { getMapConfig } from './utils/mapNavigation';
+import { getMapConfig } from './utils/mapNavigation'; // Legacy File Loader
+import { fetchMapByKey } from './api/mapService'; // New DB Loader
 
 export function useMapData() {
-	const { campaignData, isLoading: isCampaignLoading } = useCampaign();
+	const { campaignData, campaignId, isLoading: isCampaignLoading } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
+
+	// New State for DB Data
+	const [dbMapData, setDbMapData] = useState(null);
+	const [isMapLoading, setIsMapLoading] = useState(false);
 
 	const urlMapKey = searchParams.get('map');
 
 	// 1. Determine effective map key
-	// If data isn't loaded yet, don't default to 'world_maps' yet.
 	const currentMapKey = urlMapKey || campaignData?.defaultMap;
 
-	// 2. Update URL if needed (only if we have data)
+	// 2. Fetch from DB when key changes
+	useEffect(() => {
+		let isMounted = true;
+
+		const loadMap = async () => {
+			if (!currentMapKey || !campaignId) return;
+
+			setIsMapLoading(true);
+			try {
+				// Try DB First
+				const fromDb = await fetchMapByKey(campaignId, currentMapKey);
+
+				if (isMounted) {
+					if (fromDb) {
+						console.log(`[Atlas] Loaded map '${currentMapKey}' from Database.`);
+						setDbMapData(fromDb);
+					} else {
+						// If not in DB, fall back to null (will use Legacy below)
+						console.log(`[Atlas] Map '${currentMapKey}' not found in DB. Using legacy files.`);
+						setDbMapData(null);
+					}
+				}
+			} catch (err) {
+				console.error(err);
+			} finally {
+				if (isMounted) setIsMapLoading(false);
+			}
+		};
+
+		loadMap();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [campaignId, currentMapKey]);
+
+	// 3. Update URL if needed (legacy behavior)
 	useEffect(() => {
 		if (!urlMapKey && campaignData?.defaultMap) {
 			setSearchParams({ map: campaignData.defaultMap }, { replace: true });
 		}
 	}, [urlMapKey, campaignData, setSearchParams]);
 
+	// 4. Merge Logic: DB > Legacy File
 	const mapConfig = useMemo(() => {
-		// Pass the loaded campaignData
+		if (dbMapData) return dbMapData;
+		// Fallback to file registry
 		return getMapConfig(currentMapKey, campaignData);
-	}, [currentMapKey, campaignData]);
+	}, [dbMapData, currentMapKey, campaignData]);
 
 	const viewData = useMemo(() => {
 		if (!mapConfig) return null;
 
 		const { metadata, annotations, paths, areas, overlays } = mapConfig;
 
-		// --- MATH FIX ---
+		if (!metadata) return null;
+
 		const scaleFactor = Math.pow(2, metadata.sizes.maxZoom);
 		const bounds = [
 			[-metadata.sizes.imageHeight / scaleFactor, 0],
 			[0, metadata.sizes.imageWidth / scaleFactor],
 		];
 
-		// --- MARKER FLATTENING ---
-		// The modular structure still passes 'annotations' as an object with categories
 		const markers = [];
 		if (annotations) {
 			Object.entries(annotations).forEach(([categoryKey, category]) => {
@@ -7147,7 +8652,6 @@ export function useMapData() {
 			});
 		}
 
-		// Process Areas
 		const mapAreas = [];
 		if (areas) {
 			Object.values(areas).forEach((category) => {
@@ -7161,7 +8665,7 @@ export function useMapData() {
 		}
 
 		return {
-			config: metadata, // mapConfig.metadata usually contains path, sizes, etc.
+			config: metadata,
 			bounds,
 			markers,
 			sessions: paths || [],
@@ -7178,11 +8682,91 @@ export function useMapData() {
 		data: viewData,
 		currentMapKey,
 		navigateToMap,
-		isLoading: false,
+		isLoading: isMapLoading, // Return specific map loading state
 	};
 }
 
 --- END OF features\atlas\useMapData.js ---
+
+--- FILE: features\atlas\api\mapService.js ---
+import { supabase } from '@/shared/api/supabaseClient';
+
+/**
+ * Fetches a specific map by its URL key for the active campaign.
+ */
+export const fetchMapByKey = async (campaignId, mapKey) => {
+	if (!campaignId || !mapKey) return null;
+
+	const { data, error } = await supabase
+		.from('maps')
+		.select('*')
+		.eq('campaign_id', campaignId)
+		.eq('key', mapKey)
+		.maybeSingle();
+
+	if (error) {
+		console.error('[MapService] Error fetching map:', error);
+		return null;
+	}
+
+	if (!data) return null;
+
+	// Reconstruct the object structure
+	return {
+		// Merge 'config' (metadata + parentId) back to the root level
+		// so the UI can find mapConfig.parentId if needed
+		...data.config,
+		metadata: data.config, // Keep a specific metadata key for compatibility
+
+		// Spread the content data (annotations, paths, etc)
+		...data.data,
+	};
+};
+
+export const upsertMap = async (campaignId, mapKey, title, config, contentData) => {
+	const payload = {
+		campaign_id: campaignId,
+		key: mapKey,
+		title: title,
+		config: config,
+		data: contentData,
+		updated_at: new Date(),
+	};
+
+	const { data, error } = await supabase
+		.from('maps')
+		.upsert(payload, { onConflict: 'campaign_id, key' })
+		.select()
+		.single();
+
+	if (error) throw error;
+	return data;
+};
+
+export const fetchCampaignMaps = async (campaignId) => {
+	const { data, error } = await supabase.from('maps').select('id, key, title').eq('campaign_id', campaignId);
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Updates only the content data (markers, paths, etc) of a map.
+ */
+export const updateMapData = async (mapId, contentData) => {
+	const { error } = await supabase
+		.from('maps')
+		.update({
+			data: contentData,
+			updated_at: new Date(),
+		})
+		.eq('id', mapId);
+
+	if (error) throw error;
+	return true;
+};
+
+--- END OF features\atlas\api\mapService.js ---
 
 --- FILE: features\atlas\components\AtlasSidebar.jsx ---
 import React, { useState } from 'react';

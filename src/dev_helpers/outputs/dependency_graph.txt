@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-07 20:55:13
+Generated: 2026-01-07 21:49:27
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -18,6 +18,8 @@ app\AppRoutes.jsx:
   → ./components/RouteLoading
   → @/features/admin/layouts/AdminLayout
   → @/features/admin/pages/BulkReplaceTool
+  → @/features/admin/pages/MapManagerPage
+  → @/features/admin/pages/MapMigrationTool
   → @/features/admin/pages/SplitPaneManager
   → @/features/atlas/MapPage
   → @/features/campaign/CampaignContext
@@ -189,6 +191,77 @@ features\admin\components\TacticalMapManager.jsx:
   → react
   → react-leaflet
 
+features\admin\components\atlas\AtlasForms.jsx:
+  → @/features/admin/components/AdminFormStyles
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\components\atlas\editor\AtlasEditor.jsx:
+  → ./AtlasEditorContext
+  → ./components/EditorMapEvents
+  → ./components/EditorSidebar
+  → ./components/EditorToolbar
+  → ./layers/EditAreasLayer
+  → ./layers/EditMarkersLayer
+  → ./layers/EditOverlaysLayer
+  → ./layers/EditPathsLayer
+  → leaflet
+  → react
+  → react-leaflet
+
+features\admin\components\atlas\editor\AtlasEditorContext.jsx:
+  → @/features/atlas/api/mapService
+  → react
+
+features\admin\components\atlas\editor\components\EditorMapEvents.jsx:
+  → ../AtlasEditorContext
+  → react-leaflet
+
+features\admin\components\atlas\editor\components\EditorSidebar.jsx:
+  → ../AtlasEditorContext
+  → @/features/admin/components/AdminFormStyles
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\components\atlas\editor\components\EditorToolbar.jsx:
+  → ../AtlasEditorContext
+  → @/shared/components/ui/Button
+  → clsx
+  → lucide-react
+  → react
+
+features\admin\components\atlas\editor\components\VertexHandle.jsx:
+  → leaflet
+
+features\admin\components\atlas\editor\layers\EditAreasLayer.jsx:
+  → ../AtlasEditorContext
+  → ../components/VertexHandle
+  → leaflet
+  → react
+  → react-leaflet
+
+features\admin\components\atlas\editor\layers\EditMarkersLayer.jsx:
+  → ../AtlasEditorContext
+  → @/features/atlas/utils/markerUtils
+  → leaflet
+  → react
+  → react-leaflet
+
+features\admin\components\atlas\editor\layers\EditOverlaysLayer.jsx:
+  → ../AtlasEditorContext
+  → leaflet
+  → react
+  → react-leaflet
+
+features\admin\components\atlas\editor\layers\EditPathsLayer.jsx:
+  → ../AtlasEditorContext
+  → ../components/VertexHandle
+  → leaflet
+  → react
+  → react-leaflet
+
 features\admin\layouts\AdminLayout.jsx:
   → @/features/campaign/CampaignContext
   → @/shared/hooks/useTheme
@@ -220,6 +293,23 @@ features\admin\pages\EntityListPage.jsx:
   → react
   → react-router-dom
 
+features\admin\pages\MapManagerPage.jsx:
+  → @/features/admin/components/AdminFormStyles
+  → @/features/admin/components/atlas/editor/AtlasEditor
+  → @/features/atlas/api/mapService
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\pages\MapMigrationTool.jsx:
+  → @/features/admin/components/AdminFormStyles
+  → @/features/atlas/api/mapService
+  → @/features/campaign/CampaignContext
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
 features\admin\pages\SplitPaneManager.jsx:
   → @/domain/entity/api/entityService
   → @/features/admin/api/adminService
@@ -240,6 +330,9 @@ features\atlas\MapPage.jsx:
   → ./components/MapCanvas
   → ./useMapData
   → @/shared/components/ui/LoadingSpinner
+
+features\atlas\api\mapService.js:
+  → @/shared/api/supabaseClient
 
 features\atlas\components\AtlasSidebar.jsx:
   → clsx
@@ -307,6 +400,7 @@ features\atlas\data\refactor.js:
   → fs
 
 features\atlas\useMapData.js:
+  → ./api/mapService
   → ./utils/mapNavigation
   → @/features/campaign/CampaignContext
   → react
@@ -1050,8 +1144,10 @@ shared\utils\markdownUtils.js:
 
 Most imported files (relative imports):
   ./AdminFormStyles: 10 imports
+  ../AtlasEditorContext: 7 imports
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
+  ../components/VertexHandle: 2 imports
   ./StatusIcon: 2 imports
   ./AppRoutes: 1 imports
   ./components/RouteLoading: 1 imports
@@ -1066,16 +1162,15 @@ Most imported files (relative imports):
   ./MarkdownEditorImpl: 1 imports
   ./EventTagger: 1 imports
   ./ImageLibraryModal: 1 imports
-  ./useMapData: 1 imports
-  ./components/MapCanvas: 1 imports
-  ./utils/mapNavigation: 1 imports
+  ./AtlasEditorContext: 1 imports
 
 
 Files with most outgoing dependencies:
+  app\AppRoutes.jsx: 18 imports
   features\admin\components\AdminForm.jsx: 17 imports
-  app\AppRoutes.jsx: 16 imports
   features\dashboard\DashboardPage.jsx: 12 imports
   features\wiki\components\EntityMiniMap.jsx: 12 imports
+  features\admin\components\atlas\editor\AtlasEditor.jsx: 11 imports
   features\admin\pages\SplitPaneManager.jsx: 11 imports
   features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
@@ -1091,4 +1186,3 @@ Files with most outgoing dependencies:
   features\search\useGlobalSearch.js: 8 imports
   features\wiki\components\EntityBody.jsx: 8 imports
   features\wiki\components\EntityHeader.jsx: 8 imports
-  features\wiki\components\landing\EntityTableGroup.jsx: 8 imports

@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-07 20:55:13
+Generated: 2026-01-07 21:49:27
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 194
-Total lines: 19,344
-Non-empty lines: 17,130
-Comment lines: 1,470
-Total size: 603,162 bytes (589.03 KB)
-Average lines per file: 99.7
+Total files: 208
+Total lines: 20,867
+Non-empty lines: 18,507
+Comment lines: 1,531
+Total size: 651,093 bytes (635.83 KB)
+Average lines per file: 100.3
 
 
 ### STATISTICS BY FILE TYPE
@@ -21,9 +21,9 @@ Average lines per file: 99.7
   Size: 11,092 bytes (10.83 KB)
 
 .js:
-  Files: 69
-  Lines: 6,496
-  Size: 180,757 bytes (176.52 KB)
+  Files: 70
+  Lines: 6,613
+  Size: 183,488 bytes (179.19 KB)
 
 .json:
   Files: 1
@@ -31,9 +31,9 @@ Average lines per file: 99.7
   Size: 4,835 bytes (4.72 KB)
 
 .jsx:
-  Files: 122
-  Lines: 12,187
-  Size: 405,963 bytes (396.45 KB)
+  Files: 135
+  Lines: 13,593
+  Size: 451,163 bytes (440.59 KB)
 
 .md:
   Files: 1
@@ -56,21 +56,21 @@ features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
 features\admin\pages\SplitPaneManager.jsx: 265 lines
 features\smart-tooltip\components\TooltipCard.jsx: 251 lines
 features\wiki\components\EntityMiniMap.jsx: 248 lines
+features\admin\components\atlas\editor\AtlasEditorContext.jsx: 237 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\wiki\components\character\CharacterSidebar.jsx: 224 lines
 features\atlas\data\modularize.js: 223 lines
 features\admin\components\SmartImageInput.jsx: 218 lines
 features\atlas\components\AtlasSidebar.jsx: 215 lines
-features\wiki\components\EntitySidebar.jsx: 209 lines
-features\wiki\components\EncounterTimeline.jsx: 208 lines
+features\admin\components\atlas\editor\components\EditorSidebar.jsx: 213 lines
 
 
 ### STATISTICS BY CATEGORY
 
 app:
   Files: 4
-  Lines: 574
-  Size: 15,318 bytes (14.96 KB)
+  Lines: 578
+  Size: 15,624 bytes (15.26 KB)
 
 domain_entity:
   Files: 13
@@ -78,14 +78,14 @@ domain_entity:
   Size: 38,609 bytes (37.70 KB)
 
 features_admin:
-  Files: 23
-  Lines: 4,602
-  Size: 151,927 bytes (148.37 KB)
+  Files: 36
+  Lines: 6,004
+  Size: 196,821 bytes (192.21 KB)
 
 features_atlas:
-  Files: 18
-  Lines: 1,641
-  Size: 51,173 bytes (49.97 KB)
+  Files: 19
+  Lines: 1,758
+  Size: 53,904 bytes (52.64 KB)
 
 features_campaign:
   Files: 7
