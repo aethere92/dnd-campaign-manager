@@ -1,44 +1,85 @@
 import { useSearchParams } from 'react-router-dom';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
-import { getMapConfig } from './utils/mapNavigation';
+import { getMapConfig } from './utils/mapNavigation'; // Legacy File Loader
+import { fetchMapByKey } from './api/mapService'; // New DB Loader
 
 export function useMapData() {
-	const { campaignData, isLoading: isCampaignLoading } = useCampaign();
+	const { campaignData, campaignId, isLoading: isCampaignLoading } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
+
+	// New State for DB Data
+	const [dbMapData, setDbMapData] = useState(null);
+	const [isMapLoading, setIsMapLoading] = useState(false);
 
 	const urlMapKey = searchParams.get('map');
 
 	// 1. Determine effective map key
-	// If data isn't loaded yet, don't default to 'world_maps' yet.
 	const currentMapKey = urlMapKey || campaignData?.defaultMap;
 
-	// 2. Update URL if needed (only if we have data)
+	// 2. Fetch from DB when key changes
+	useEffect(() => {
+		let isMounted = true;
+
+		const loadMap = async () => {
+			if (!currentMapKey || !campaignId) return;
+
+			setIsMapLoading(true);
+			try {
+				// Try DB First
+				const fromDb = await fetchMapByKey(campaignId, currentMapKey);
+
+				if (isMounted) {
+					if (fromDb) {
+						console.log(`[Atlas] Loaded map '${currentMapKey}' from Database.`);
+						setDbMapData(fromDb);
+					} else {
+						// If not in DB, fall back to null (will use Legacy below)
+						console.log(`[Atlas] Map '${currentMapKey}' not found in DB. Using legacy files.`);
+						setDbMapData(null);
+					}
+				}
+			} catch (err) {
+				console.error(err);
+			} finally {
+				if (isMounted) setIsMapLoading(false);
+			}
+		};
+
+		loadMap();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [campaignId, currentMapKey]);
+
+	// 3. Update URL if needed (legacy behavior)
 	useEffect(() => {
 		if (!urlMapKey && campaignData?.defaultMap) {
 			setSearchParams({ map: campaignData.defaultMap }, { replace: true });
 		}
 	}, [urlMapKey, campaignData, setSearchParams]);
 
+	// 4. Merge Logic: DB > Legacy File
 	const mapConfig = useMemo(() => {
-		// Pass the loaded campaignData
+		if (dbMapData) return dbMapData;
+		// Fallback to file registry
 		return getMapConfig(currentMapKey, campaignData);
-	}, [currentMapKey, campaignData]);
+	}, [dbMapData, currentMapKey, campaignData]);
 
 	const viewData = useMemo(() => {
 		if (!mapConfig) return null;
 
 		const { metadata, annotations, paths, areas, overlays } = mapConfig;
 
-		// --- MATH FIX ---
+		if (!metadata) return null;
+
 		const scaleFactor = Math.pow(2, metadata.sizes.maxZoom);
 		const bounds = [
 			[-metadata.sizes.imageHeight / scaleFactor, 0],
 			[0, metadata.sizes.imageWidth / scaleFactor],
 		];
 
-		// --- MARKER FLATTENING ---
-		// The modular structure still passes 'annotations' as an object with categories
 		const markers = [];
 		if (annotations) {
 			Object.entries(annotations).forEach(([categoryKey, category]) => {
@@ -55,7 +96,6 @@ export function useMapData() {
 			});
 		}
 
-		// Process Areas
 		const mapAreas = [];
 		if (areas) {
 			Object.values(areas).forEach((category) => {
@@ -69,7 +109,7 @@ export function useMapData() {
 		}
 
 		return {
-			config: metadata, // mapConfig.metadata usually contains path, sizes, etc.
+			config: metadata,
 			bounds,
 			markers,
 			sessions: paths || [],
@@ -86,6 +126,6 @@ export function useMapData() {
 		data: viewData,
 		currentMapKey,
 		navigateToMap,
-		isLoading: false,
+		isLoading: isMapLoading, // Return specific map loading state
 	};
 }

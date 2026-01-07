@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/7/2026, 8:55:10 PM
+   Generated: 1/7/2026, 9:49:22 PM
 =========================================
 
 -----------------------------------------
@@ -399,6 +399,143 @@ TABLE: locations [⚠️ RLS DISABLED]
 ]
 
 -----------------------------------------
+TABLE: maps [⚠️ RLS DISABLED]
+-----------------------------------------
+  id                        uuid            NOT NULL DEFAULT gen_random_uuid()
+  campaign_id               uuid            NOT NULL 
+  key                       text            NOT NULL 
+  title                     text            NOT NULL 
+  config                    jsonb            DEFAULT '{}'::jsonb
+  data                      jsonb            DEFAULT '{}'::jsonb
+  created_at                timestamp with time zone  DEFAULT now()
+  updated_at                timestamp with time zone  DEFAULT now()
+
+  -- EXAMPLE DATA (2 rows) --
+[
+  {
+    "id": "75f5ea76-e844-4299-98c5-c4099c629b41",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "key": "korinis_teleporter_c",
+    "title": "korinis_teleporter_c",
+    "config": {
+      "path": "maps/interiors/korinis_island/pyramid_teleporter/teleporter_c",
+      "mapId": "korinis_teleporter_c",
+      "sizes": {
+        "maxZoom": 3,
+        "imageWidth": 1800,
+        "imageHeight": 1200
+      },
+      "parentId": "korinis_island"
+    },
+    "data": {
+      "areas": {},
+      "paths": [],
+      "overlays": [],
+      "annotations": {
+        "navigation_arrows": {
+          "name": "Navigation arrows",
+          "items": [
+            {
+              "lat": -38.625,
+              "lng": 63.125,
+              "map": {
+                "exitZoom": 4,
+                "exitCoordinates": [
+                  -195,
+                  656
+                ]
+              },
+              "type": "place",
+              "label": "To Korinis Island",
+              "mapLink": "korinis_island"
+            }
+          ]
+        },
+        "points_of_interest": {
+          "name": "Points of Interest",
+          "items": [
+            {
+              "lat": -110,
+              "lng": 196.625,
+              "map": {
+                "exitZoom": 2,
+                "exitCoordinates": [
+                  -370,
+                  610
+                ]
+              },
+              "type": "place",
+              "label": "Teleporter to A (Pyramid)",
+              "mapLink": "korinis_pyramid"
+            }
+          ]
+        }
+      }
+    },
+    "created_at": "2026-01-07T19:18:00.553Z",
+    "updated_at": "2026-01-07T19:18:00.614Z"
+  },
+  {
+    "id": "e7db069d-ffcd-4aad-beb4-c7db5c5869f9",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "key": "korinis_pyramid",
+    "title": "korinis_pyramid",
+    "config": {
+      "path": "maps/interiors/korinis_island/water_mages_pyramid",
+      "mapId": "korinis_pyramid",
+      "sizes": {
+        "maxZoom": 3,
+        "imageWidth": 7800,
+        "imageHeight": 4800
+      },
+      "parentId": "korinis_island"
+    },
+    "data": {
+      "areas": {},
+      "paths": [],
+      "overlays": [],
+      "annotations": {
+        "navigation": {
+          "name": "Navigation arrows",
+          "items": [
+            {
+              "lat": -579.5,
+              "lng": 882,
+              "map": {
+                "exitZoom": 4,
+                "exitCoordinates": [
+                  -43,
+                  580
+                ]
+              },
+              "type": "people",
+              "label": "To Korinis Island",
+              "mapLink": "korinis_island"
+            },
+            {
+              "lat": -520.5,
+              "lng": 348,
+              "map": {
+                "exitZoom": 3,
+                "exitCoordinates": [
+                  -63.38,
+                  89.25
+                ]
+              },
+              "type": "place",
+              "label": "Final Location",
+              "mapLink": "final_location"
+            }
+          ]
+        }
+      }
+    },
+    "created_at": "2026-01-07T19:18:00.651Z",
+    "updated_at": "2026-01-07T19:18:00.722Z"
+  }
+]
+
+-----------------------------------------
 TABLE: narrative_arcs [⚠️ RLS DISABLED]
 -----------------------------------------
   id                        uuid            NOT NULL DEFAULT gen_random_uuid()
@@ -728,6 +865,15 @@ TABLE: locations
 
 TABLE: locations
   CREATE UNIQUE INDEX locations_pkey ON public.locations USING btree (id)
+
+TABLE: maps
+  CREATE INDEX idx_maps_key_campaign ON public.maps USING btree (campaign_id, key)
+
+TABLE: maps
+  CREATE UNIQUE INDEX maps_campaign_id_key_key ON public.maps USING btree (campaign_id, key)
+
+TABLE: maps
+  CREATE UNIQUE INDEX maps_pkey ON public.maps USING btree (id)
 
 TABLE: narrative_arcs
   CREATE UNIQUE INDEX narrative_arcs_pkey ON public.narrative_arcs USING btree (id)

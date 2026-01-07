@@ -51,6 +51,21 @@ PARTIAL BUNDLE: FEATURES ATLAS
         SessionEventManager.jsx
         SmartImageInput.jsx
         TacticalMapManager.jsx
+        atlas/
+          AtlasForms.jsx
+          editor/
+            AtlasEditor.jsx
+            AtlasEditorContext.jsx
+            components/
+              EditorMapEvents.jsx
+              EditorSidebar.jsx
+              EditorToolbar.jsx
+              VertexHandle.jsx
+            layers/
+              EditAreasLayer.jsx
+              EditMarkersLayer.jsx
+              EditOverlaysLayer.jsx
+              EditPathsLayer.jsx
       config/
         adminStrategies.js
         imageManifest.json
@@ -60,12 +75,16 @@ PARTIAL BUNDLE: FEATURES ATLAS
         BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
         SplitPaneManager.jsx
       utils/
         filterUtils.js
     atlas/
       MapPage.jsx
       useMapData.js
+      api/
+        mapService.js
       components/
         AtlasSidebar.jsx
         MapCanvas.jsx
@@ -301,46 +320,87 @@ export default function MapView() {
 
 --- FILE: features\atlas\useMapData.js ---
 import { useSearchParams } from 'react-router-dom';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
-import { getMapConfig } from './utils/mapNavigation';
+import { getMapConfig } from './utils/mapNavigation'; // Legacy File Loader
+import { fetchMapByKey } from './api/mapService'; // New DB Loader
 
 export function useMapData() {
-	const { campaignData, isLoading: isCampaignLoading } = useCampaign();
+	const { campaignData, campaignId, isLoading: isCampaignLoading } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
+
+	// New State for DB Data
+	const [dbMapData, setDbMapData] = useState(null);
+	const [isMapLoading, setIsMapLoading] = useState(false);
 
 	const urlMapKey = searchParams.get('map');
 
 	// 1. Determine effective map key
-	// If data isn't loaded yet, don't default to 'world_maps' yet.
 	const currentMapKey = urlMapKey || campaignData?.defaultMap;
 
-	// 2. Update URL if needed (only if we have data)
+	// 2. Fetch from DB when key changes
+	useEffect(() => {
+		let isMounted = true;
+
+		const loadMap = async () => {
+			if (!currentMapKey || !campaignId) return;
+
+			setIsMapLoading(true);
+			try {
+				// Try DB First
+				const fromDb = await fetchMapByKey(campaignId, currentMapKey);
+
+				if (isMounted) {
+					if (fromDb) {
+						console.log(`[Atlas] Loaded map '${currentMapKey}' from Database.`);
+						setDbMapData(fromDb);
+					} else {
+						// If not in DB, fall back to null (will use Legacy below)
+						console.log(`[Atlas] Map '${currentMapKey}' not found in DB. Using legacy files.`);
+						setDbMapData(null);
+					}
+				}
+			} catch (err) {
+				console.error(err);
+			} finally {
+				if (isMounted) setIsMapLoading(false);
+			}
+		};
+
+		loadMap();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [campaignId, currentMapKey]);
+
+	// 3. Update URL if needed (legacy behavior)
 	useEffect(() => {
 		if (!urlMapKey && campaignData?.defaultMap) {
 			setSearchParams({ map: campaignData.defaultMap }, { replace: true });
 		}
 	}, [urlMapKey, campaignData, setSearchParams]);
 
+	// 4. Merge Logic: DB > Legacy File
 	const mapConfig = useMemo(() => {
-		// Pass the loaded campaignData
+		if (dbMapData) return dbMapData;
+		// Fallback to file registry
 		return getMapConfig(currentMapKey, campaignData);
-	}, [currentMapKey, campaignData]);
+	}, [dbMapData, currentMapKey, campaignData]);
 
 	const viewData = useMemo(() => {
 		if (!mapConfig) return null;
 
 		const { metadata, annotations, paths, areas, overlays } = mapConfig;
 
-		// --- MATH FIX ---
+		if (!metadata) return null;
+
 		const scaleFactor = Math.pow(2, metadata.sizes.maxZoom);
 		const bounds = [
 			[-metadata.sizes.imageHeight / scaleFactor, 0],
 			[0, metadata.sizes.imageWidth / scaleFactor],
 		];
 
-		// --- MARKER FLATTENING ---
-		// The modular structure still passes 'annotations' as an object with categories
 		const markers = [];
 		if (annotations) {
 			Object.entries(annotations).forEach(([categoryKey, category]) => {
@@ -357,7 +417,6 @@ export function useMapData() {
 			});
 		}
 
-		// Process Areas
 		const mapAreas = [];
 		if (areas) {
 			Object.values(areas).forEach((category) => {
@@ -371,7 +430,7 @@ export function useMapData() {
 		}
 
 		return {
-			config: metadata, // mapConfig.metadata usually contains path, sizes, etc.
+			config: metadata,
 			bounds,
 			markers,
 			sessions: paths || [],
@@ -388,11 +447,91 @@ export function useMapData() {
 		data: viewData,
 		currentMapKey,
 		navigateToMap,
-		isLoading: false,
+		isLoading: isMapLoading, // Return specific map loading state
 	};
 }
 
 --- END OF features\atlas\useMapData.js ---
+
+--- FILE: features\atlas\api\mapService.js ---
+import { supabase } from '@/shared/api/supabaseClient';
+
+/**
+ * Fetches a specific map by its URL key for the active campaign.
+ */
+export const fetchMapByKey = async (campaignId, mapKey) => {
+	if (!campaignId || !mapKey) return null;
+
+	const { data, error } = await supabase
+		.from('maps')
+		.select('*')
+		.eq('campaign_id', campaignId)
+		.eq('key', mapKey)
+		.maybeSingle();
+
+	if (error) {
+		console.error('[MapService] Error fetching map:', error);
+		return null;
+	}
+
+	if (!data) return null;
+
+	// Reconstruct the object structure
+	return {
+		// Merge 'config' (metadata + parentId) back to the root level
+		// so the UI can find mapConfig.parentId if needed
+		...data.config,
+		metadata: data.config, // Keep a specific metadata key for compatibility
+
+		// Spread the content data (annotations, paths, etc)
+		...data.data,
+	};
+};
+
+export const upsertMap = async (campaignId, mapKey, title, config, contentData) => {
+	const payload = {
+		campaign_id: campaignId,
+		key: mapKey,
+		title: title,
+		config: config,
+		data: contentData,
+		updated_at: new Date(),
+	};
+
+	const { data, error } = await supabase
+		.from('maps')
+		.upsert(payload, { onConflict: 'campaign_id, key' })
+		.select()
+		.single();
+
+	if (error) throw error;
+	return data;
+};
+
+export const fetchCampaignMaps = async (campaignId) => {
+	const { data, error } = await supabase.from('maps').select('id, key, title').eq('campaign_id', campaignId);
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Updates only the content data (markers, paths, etc) of a map.
+ */
+export const updateMapData = async (mapId, contentData) => {
+	const { error } = await supabase
+		.from('maps')
+		.update({
+			data: contentData,
+			updated_at: new Date(),
+		})
+		.eq('id', mapId);
+
+	if (error) throw error;
+	return true;
+};
+
+--- END OF features\atlas\api\mapService.js ---
 
 --- FILE: features\atlas\components\AtlasSidebar.jsx ---
 import React, { useState } from 'react';

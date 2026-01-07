@@ -17,6 +17,8 @@ const WikiLandingPage = lazy(() => import('@/features/wiki/pages/WikiLandingPage
 const AdminLayout = lazy(() => import('@/features/admin/layouts/AdminLayout'));
 const SplitPaneManager = lazy(() => import('@/features/admin/pages/SplitPaneManager'));
 const BulkReplaceTool = lazy(() => import('@/features/admin/pages/BulkReplaceTool'));
+const MapMigrationTool = lazy(() => import('@/features/admin/pages/MapMigrationTool'));
+const MapManagerPage = lazy(() => import('@/features/admin/pages/MapManagerPage'));
 
 export const AppRoutes = () => {
 	const { campaignId } = useCampaign();
@@ -31,6 +33,8 @@ export const AppRoutes = () => {
 						<Route index element={<Navigate to='/dm/manage/campaign' replace />} />
 						<Route path='manage/:type/:id?' element={<SplitPaneManager />} />
 						<Route path='tools/replace' element={<BulkReplaceTool />} />
+						<Route path='tools/migration' element={<MapMigrationTool />} />
+						<Route path='tools/atlas' element={<MapManagerPage />} />
 					</Route>
 				)}
 

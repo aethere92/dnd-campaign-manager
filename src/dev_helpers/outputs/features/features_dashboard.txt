@@ -51,6 +51,21 @@ PARTIAL BUNDLE: FEATURES DASHBOARD
         SessionEventManager.jsx
         SmartImageInput.jsx
         TacticalMapManager.jsx
+        atlas/
+          AtlasForms.jsx
+          editor/
+            AtlasEditor.jsx
+            AtlasEditorContext.jsx
+            components/
+              EditorMapEvents.jsx
+              EditorSidebar.jsx
+              EditorToolbar.jsx
+              VertexHandle.jsx
+            layers/
+              EditAreasLayer.jsx
+              EditMarkersLayer.jsx
+              EditOverlaysLayer.jsx
+              EditPathsLayer.jsx
       config/
         adminStrategies.js
         imageManifest.json
@@ -60,12 +75,16 @@ PARTIAL BUNDLE: FEATURES DASHBOARD
         BulkReplaceTool.jsx
         EntityEditorPage.jsx
         EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
         SplitPaneManager.jsx
       utils/
         filterUtils.js
     atlas/
       MapPage.jsx
       useMapData.js
+      api/
+        mapService.js
       components/
         AtlasSidebar.jsx
         MapCanvas.jsx

@@ -87,6 +87,8 @@ export default function AdminLayout() {
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
 					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
+					<NavItem to='/dm/tools/migration' icon={Database} label='Map Migration' />
+					<NavItem to='/dm/tools/atlas' icon={MapPin} label='Atlas Manager' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities
