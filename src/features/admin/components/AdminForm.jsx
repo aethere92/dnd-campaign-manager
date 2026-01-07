@@ -5,7 +5,7 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
@@ -246,6 +246,30 @@ export default function AdminForm({ type, id }) {
 			<div className={ADMIN_SECTION_CLASS}>
 				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
 				<div className='grid grid-cols-1 gap-4'>
+					{/* ID Display Field */}
+					{id && (
+						<div>
+							<label className={ADMIN_LABEL_CLASS}>System ID</label>
+							<div className='flex gap-2 items-center'>
+								<input
+									type='text'
+									value={id}
+									readOnly
+									className={`${ADMIN_INPUT_CLASS} font-mono text-xs text-muted-foreground bg-muted/50 select-all cursor-text`}
+									onClick={(e) => e.target.select()}
+								/>
+								<Button
+									type='button'
+									variant='ghost'
+									size='sm'
+									icon={Copy}
+									onClick={() => navigator.clipboard.writeText(id)}
+									title='Copy ID'
+								/>
+							</div>
+						</div>
+					)}
+
 					<div>
 						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
 						<input

@@ -651,14 +651,14 @@ export const TimelineEvent = memo(({ event, id }) => {
 				)}
 
 				{groupedTags.length > 0 && (
-					<div className='flex flex-wrap items-center gap-2 mt-2 p-1 bg-card'>
+					<div className='flex flex-wrap items-center gap-2 mt-2 px-2 py-1 bg-muted/60 rounded-sm w-fit max-w-full'>
 						{groupedTags.map((group, groupIndex) => (
 							<div key={groupIndex} className='flex items-center gap-2'>
-								<div className='flex flex-wrap gap-2 text-[12px]'>
+								<div className='flex flex-wrap gap-2 text-[12px] text-muted-foreground/10'>
 									<SmartMarkdown inline>{group.map((tag) => tag.name).join(' ')}</SmartMarkdown>
 								</div>
 								{groupIndex < groupedTags.length - 1 && (
-									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
+									<Diamond size={6} className='text-muted-foreground fill-muted-foreground shrink-0' />
 								)}
 							</div>
 						))}
@@ -730,7 +730,7 @@ export const TimelineSession = memo(({ session, id, onToggle }) => {
                FIX: Header Layout
                Removed flex-row columns. The chevron is now inline with the title.
             */}
-			<div className='mb-6 cursor-pointer group pl-5 md:pl-0'>
+			<div className='mb-6 group pl-5 md:pl-0'>
 				{/* Metadata Row */}
 				<div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2'>
 					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
@@ -742,7 +742,7 @@ export const TimelineSession = memo(({ session, id, onToggle }) => {
 				</div>
 
 				{/* Title Row with Inline Chevron */}
-				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight'>
+				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight cursor-pointer'>
 					{/* align-middle ensures text aligns with icon */}
 					<span className='align-middle'>{session.title}</span>
 

@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Image as ImageIcon, FolderOpen, RefreshCw } from 'lucide-react';
 import { Drawer } from '@/shared/components/ui/Drawer';
 import { ADMIN_INPUT_CLASS } from './AdminFormStyles';
-// IMPORT THE GENERATED FILE
 import imageLibraryData from '../config/imageManifest.json';
 
-export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
-	const [searchTerm, setSearchTerm] = useState('');
+export default function ImageLibraryModal({ isOpen, onClose, onSelect, initialSearch = '' }) {
+	const [searchTerm, setSearchTerm] = useState(initialSearch);
 
-	// Use the dynamic data from the script
+	// Reset search when modal opens with a new suggestion
+	useEffect(() => {
+		if (isOpen && initialSearch) {
+			setSearchTerm(initialSearch);
+		}
+	}, [isOpen, initialSearch]);
+
 	const filteredLibrary = imageLibraryData
 		.map((cat) => ({
 			...cat,
@@ -63,7 +68,6 @@ export default function ImageLibraryModal({ isOpen, onClose, onSelect }) {
 												className='w-full h-full object-cover group-hover:scale-110 transition-transform duration-500'
 												loading='lazy'
 											/>
-											{/* Hover Overlay with filename */}
 											<div className='absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1'>
 												<p className='text-[7px] text-white truncate w-full text-center font-mono'>{file}</p>
 											</div>

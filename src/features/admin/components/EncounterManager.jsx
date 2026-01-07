@@ -98,16 +98,16 @@ export default function EncounterActionManager({ encounterId }) {
 					const isFriendly = action.is_friendly;
 					const theme = isFriendly
 						? {
-								border: 'border-emerald-200 hover:border-emerald-300',
-								bg: 'bg-emerald-500/10/20',
+								border: 'border-emerald-700 hover:border-emerald-300',
+								bg: 'bg-background',
 								accentText: 'text-emerald-700',
-								badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+								badge: 'bg-emerald-100 text-emerald-700 border-emerald-500',
 						  }
 						: {
-								border: 'border-red-200 hover:border-red-300',
+								border: 'border-red-800 hover:border-red-500',
 								bg: 'bg-background',
 								accentText: 'text-red-700',
-								badge: 'bg-red-500/10 text-red-700 border-red-100',
+								badge: 'bg-red-500/10 text-red-500 border-red-700',
 						  };
 
 					return (
@@ -319,7 +319,7 @@ export default function EncounterActionManager({ encounterId }) {
 												</div>
 											)}
 											{action.effect && (
-												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-800 bg-red-500/10 px-2 py-0.5 rounded border border-red-100'>
+												<div className='flex items-center gap-1.5 text-xs font-semibold text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-700'>
 													<Zap size={12} /> {action.effect}
 												</div>
 											)}

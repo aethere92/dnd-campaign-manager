@@ -5707,6 +5707,23 @@ export const IMAGE_LIBRARY = [
     ]
   },
   {
+    "category": "Assets > Locations > 415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "path": "images/assets/locations/415036c7-08cc-4832-bfec-6daca13e3f8a/",
+    "files": [
+      "brindol_dcdb9c63-0211-4472-8632-acc5068e862f.webp",
+      "dennovar_55cd877e-7bce-4883-bfa9-c0ec74370887.webp",
+      "luskan_6c7b2b0c-dca0-4976-a9c7-bab110b1de59.webp",
+      "pahuax_022408d1-93f1-4695-9be8-2806bdcbf6f0.webp",
+      "pelagos_29de2f8f-40de-4813-9672-ee982e8372e8.webp",
+      "the_dusk_way_a1493792-2d8a-49b6-88de-d722251cc576.webp",
+      "the_feywild_4235b763-4e7f-4645-8710-37610a7e32d2.webp",
+      "the_leviathan_s_hull_ca9a1d7f-9a35-4a66-b14d-3237c267a948.webp",
+      "the_underdark_df8bdb1b-8227-49a9-aef1-bb2c4ce902a6.webp",
+      "velkynvelve_391819c0-77b3-480c-a44d-9d14d606e575.webp",
+      "yuma_caves_cd093c0f-bec6-437c-9e95-3e62474a2e2d.webp"
+    ]
+  },
+  {
     "category": "Assets > Map_backgrounds > Backups",
     "path": "images/assets/map_backgrounds/backups/",
     "files": [
@@ -5746,7 +5763,15 @@ export const IMAGE_LIBRARY = [
     "files": [
       "avarthel_bg.webp",
       "soranna_bg.webp",
+      "thalos.webp",
       "yoghurt_bg.webp"
+    ]
+  },
+  {
+    "category": "Assets > Quests > 415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "path": "images/assets/quests/415036c7-08cc-4832-bfec-6daca13e3f8a/",
+    "files": [
+      "the_shadow_of_abuse_6f3aa44b-9986-40c7-b33c-9176014d804b.webp"
     ]
   },
   {
@@ -11222,14 +11247,19 @@ export const SmartEntityLink = ({ id, type, children }) => {
 --- END OF features\smart-text\components\SmartEntityLink.jsx ---
 
 --- FILE: features\smart-tooltip\TooltipContainer.jsx ---
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getTooltipData } from '@/domain/entity/api/entityService';
 import { TooltipCard } from './components/TooltipCard';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 	const targetId = target?.id;
 	const targetType = target?.type;
+	// We need a ref to the card to know if a click was "inside" or "outside"
+	const cardRef = useRef(null);
+
 	const isValidId = targetId ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId) : false;
 
 	const { data, isLoading } = useQuery({
@@ -11238,12 +11268,17 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 			if (!targetId) return null;
 			const rawData = await getTooltipData(targetId, targetType);
 
-			// FIX: If it's a session, ensure the 'narrative' is used as description
-			// because the entities table often has null description for sessions.
-			if (targetType === 'session' && !rawData.description && rawData.narrative) {
-				return { ...rawData, description: rawData.narrative };
-			}
+			if (targetType === 'session') {
+				const attrs = rawData.attributes || {};
+				const synopsis = getAttributeValue(attrs, 'synopsis');
 
+				if (!rawData.description) {
+					return {
+						...rawData,
+						description: synopsis || rawData.narrative || 'No synopsis available.',
+					};
+				}
+			}
 			return rawData;
 		},
 		enabled: !!targetId && isValidId,
@@ -11251,22 +11286,41 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 		retry: false,
 	});
 
+	// HANDLE OUTSIDE INTERACTIONS (The "No-Backdrop" Solution)
+	useEffect(() => {
+		if (!target) return;
+
+		// 1. Close on Scroll (User drags screen)
+		const handleScroll = () => {
+			if (onMouseLeave) onMouseLeave();
+		};
+
+		// 2. Close on Outside Tap (User taps background)
+		const handleOutsideTap = (e) => {
+			// If the tap is NOT inside the card, close it
+			if (cardRef.current && !cardRef.current.contains(e.target)) {
+				if (onMouseLeave) onMouseLeave();
+			}
+		};
+
+		// Passive listener for scroll performance
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		// Capture phase ensures we catch the tap before it triggers other buttons
+		document.addEventListener('touchstart', handleOutsideTap, { passive: false });
+		document.addEventListener('mousedown', handleOutsideTap);
+
+		return () => {
+			window.removeEventListener('scroll', handleScroll);
+			document.removeEventListener('touchstart', handleOutsideTap);
+			document.removeEventListener('mousedown', handleOutsideTap);
+		};
+	}, [target, onMouseLeave]);
+
 	if (!target) return null;
-	const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 1024;
 
 	return createPortal(
-		<>
-			{/* Mobile Backdrop to close tooltip on tap outside */}
-			{isMobile && (
-				<div
-					className='fixed inset-0 z-[9998]'
-					onClick={(e) => {
-						e.stopPropagation();
-						onMouseLeave && onMouseLeave();
-					}}
-					style={{ touchAction: 'none' }}
-				/>
-			)}
+		// Wrap with a simple div to attach the Ref for "contains" checking
+		<div ref={cardRef} style={{ display: 'contents' }}>
 			<TooltipCard
 				data={data}
 				type={target.type}
@@ -11276,7 +11330,7 @@ export const TooltipContainer = ({ target, onMouseEnter, onMouseLeave }) => {
 				onMouseEnter={onMouseEnter}
 				onMouseLeave={onMouseLeave}
 			/>
-		</>,
+		</div>,
 		document.body
 	);
 };
@@ -11469,7 +11523,7 @@ export function useTooltipState() {
 		// Add a delay so the user can move their mouse from the link TO the tooltip
 		timeoutRef.current = setTimeout(() => {
 			setActiveTooltip(null);
-		}, 300); // 300ms grace period
+		}, 100); // 300ms grace period
 	}, []);
 
 	// Allows the Tooltip Card to say "I'm being hovered, don't close!"
@@ -12589,14 +12643,14 @@ export const TimelineEvent = memo(({ event, id }) => {
 				)}
 
 				{groupedTags.length > 0 && (
-					<div className='flex flex-wrap items-center gap-2 mt-2 p-1 bg-card'>
+					<div className='flex flex-wrap items-center gap-2 mt-2 px-2 py-1 bg-muted/60 rounded-sm w-fit max-w-full'>
 						{groupedTags.map((group, groupIndex) => (
 							<div key={groupIndex} className='flex items-center gap-2'>
-								<div className='flex flex-wrap gap-2 text-[12px]'>
+								<div className='flex flex-wrap gap-2 text-[12px] text-muted-foreground/10'>
 									<SmartMarkdown inline>{group.map((tag) => tag.name).join(' ')}</SmartMarkdown>
 								</div>
 								{groupIndex < groupedTags.length - 1 && (
-									<Diamond size={6} className='text-gray-300 fill-gray-300 shrink-0' />
+									<Diamond size={6} className='text-muted-foreground fill-muted-foreground shrink-0' />
 								)}
 							</div>
 						))}
@@ -12668,7 +12722,7 @@ export const TimelineSession = memo(({ session, id, onToggle }) => {
                FIX: Header Layout
                Removed flex-row columns. The chevron is now inline with the title.
             */}
-			<div className='mb-6 cursor-pointer group pl-5 md:pl-0'>
+			<div className='mb-6 group pl-5 md:pl-0'>
 				{/* Metadata Row */}
 				<div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2'>
 					<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border'>
@@ -12680,7 +12734,7 @@ export const TimelineSession = memo(({ session, id, onToggle }) => {
 				</div>
 
 				{/* Title Row with Inline Chevron */}
-				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight'>
+				<h2 className='text-xl md:text-2xl font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight cursor-pointer'>
 					{/* align-middle ensures text aligns with icon */}
 					<span className='align-middle'>{session.title}</span>
 
@@ -13666,7 +13720,7 @@ const LOCAL_LAYOUT = {
 	name: 'fcose',
 	quality: 'default',
 	randomize: true,
-	animate: true,
+	animate: false,
 	animationDuration: 800,
 	fit: true,
 	padding: 30,

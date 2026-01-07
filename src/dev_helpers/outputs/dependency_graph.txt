@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-06 17:55:03
+Generated: 2026-01-07 15:01:19
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -539,7 +539,9 @@ features\smart-text\useSmartText.js:
 features\smart-tooltip\TooltipContainer.jsx:
   → ./components/TooltipCard
   → @/domain/entity/api/entityService
+  → @/domain/entity/utils/attributeParser
   → @tanstack/react-query
+  → react
   → react-dom
 
 features\smart-tooltip\TooltipContext.jsx:

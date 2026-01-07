@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/7/2026, 6:53:52 AM
+   Generated: 1/7/2026, 3:00:59 PM
 =========================================
 
 -----------------------------------------
@@ -415,17 +415,15 @@ TABLE: locations [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "dcdb9c63-0211-4472-8632-acc5068e862f",
+    "id": "29de2f8f-40de-4813-9672-ee982e8372e8",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Brindol",
-    "description": "A city with a dry dock and home to the Lion's Guard. Trade hub that has been raided by pirates. Brindol is a small city in the heart of Elsir Vale. One of the largest settlements in the Vale, Brindol is a prosperous farming community and caravan stopover located along the Dawn Way on the south bank of the Elsir River. Orchards of apple and pear trees follow the river's winding shores, while broad grain fields and farmlands surround the town for miles in all directions. Brindol is the home of Lord Aaron Jarmaath. His small keep and the city... [TRUNCATED AT 100 WORDS]",
-    "created_at": "2025-11-21T16:51:32.713Z",
-    "updated_at": "2026-01-03T10:51:00.809Z",
+    "name": "Pelagos",
+    "description": "A kingdom on the continent of Lustria, formerly ruled by House Corina. The throne was usurped by the necromancer Sandro who murdered King Corina (Bianca's father) during a civil war. The conflict began when the deep jungles suddenly regrew, ending the war with lizardfolk but triggering internal strife. Sandro turned entire villages into zombie armies, forcing Queen Bianca and her loyal followers to flee. The kingdom is now under necromantic tyranny.",
+    "created_at": "2025-11-23T17:22:31.232Z",
+    "updated_at": "2026-01-07T12:47:43.856Z",
     "attributes": {
       "type": "city",
-      "ruler": "Lord Aaron Jarmaath",
-      "map_image": "images/assets/map_backgrounds/campaign_002/brindol_map.webp",
-      "population": "6.700"
+      "background_image": "images/assets/locations/415036c7-08cc-4832-bfec-6daca13e3f8a/pelagos_29de2f8f-40de-4813-9672-ee982e8372e8.webp"
     }
   },
   {
@@ -434,7 +432,7 @@ TABLE: locations [⚠️ RLS DISABLED]
     "name": "Lustria",
     "description": "A distant southern continent featuring deep jungles and lizardfolk populations. Home to Pelagos and the origin point of the Arcane Brotherhood operations that affected Norr and Soshi. The continent experienced sudden jungle regrowth that dramatically altered regional politics and warfare. Contains penal mining colonies where General Lee led slave revolts.",
     "created_at": "2025-11-21T06:39:21.788Z",
-    "updated_at": "2026-01-02T07:53:19.600Z",
+    "updated_at": "2026-01-07T08:22:01.769Z",
     "attributes": {
       "type": "region"
     }
