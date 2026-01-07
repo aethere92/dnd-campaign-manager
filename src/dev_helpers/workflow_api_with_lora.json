@@ -1,0 +1,107 @@
+{
+	"3": {
+		"inputs": {
+			"seed": 156680208700286,
+			"steps": 5,
+			"cfg": 1.5,
+			"sampler_name": "dpmpp_sde",
+			"scheduler": "karras",
+			"denoise": 1,
+			"model": ["4", 0],
+			"positive": ["6", 0],
+			"negative": ["7", 0],
+			"latent_image": ["5", 0]
+		},
+		"class_type": "KSampler",
+		"_meta": { "title": "Base Generation (Lightning)" }
+	},
+	"4": {
+		"inputs": {
+			"ckpt_name": "dreamshaperXL_lightningDPMSDE.safetensors"
+		},
+		"class_type": "CheckpointLoaderSimple",
+		"_meta": { "title": "Load Checkpoint" }
+	},
+	"5": {
+		"inputs": {
+			"width": 1024,
+			"height": 576,
+			"batch_size": 1
+		},
+		"class_type": "EmptyLatentImage",
+		"_meta": { "title": "Base Resolution (1024x576)" }
+	},
+	"6": {
+		"inputs": {
+			"text": "POSITIVE PROMPT PLACEHOLDER",
+			"clip": ["4", 1]
+		},
+		"class_type": "CLIPTextEncode",
+		"_meta": { "title": "POSITIVE PROMPT" }
+	},
+	"7": {
+		"inputs": {
+			"text": "NEGATIVE PROMPT PLACEHOLDER",
+			"clip": ["4", 1]
+		},
+		"class_type": "CLIPTextEncode",
+		"_meta": { "title": "NEGATIVE PROMPT" }
+	},
+	"8": {
+		"inputs": {
+			"samples": ["3", 0],
+			"vae": ["4", 2]
+		},
+		"class_type": "VAEDecode",
+		"_meta": { "title": "Decode 1" }
+	},
+	"9": {
+		"inputs": {
+			"filename_prefix": "DND_Assets/final",
+			"images": ["13", 0]
+		},
+		"class_type": "SaveImage",
+		"_meta": { "title": "Save Final Image" }
+	},
+	"10": {
+		"inputs": {
+			"upscale_method": "nearest-exact",
+			"scale_by": 2,
+			"image": ["8", 0]
+		},
+		"class_type": "ImageScaleBy",
+		"_meta": { "title": "Upscale Image (2x)" }
+	},
+	"11": {
+		"inputs": {
+			"pixels": ["10", 0],
+			"vae": ["4", 2]
+		},
+		"class_type": "VAEEncode",
+		"_meta": { "title": "Encode for Refiner" }
+	},
+	"12": {
+		"inputs": {
+			"seed": 5626242,
+			"steps": 5,
+			"cfg": 1.5,
+			"sampler_name": "dpmpp_sde",
+			"scheduler": "karras",
+			"denoise": 0.4,
+			"model": ["4", 0],
+			"positive": ["6", 0],
+			"negative": ["7", 0],
+			"latent_image": ["11", 0]
+		},
+		"class_type": "KSampler",
+		"_meta": { "title": "Upscale Refiner (Lightning)" }
+	},
+	"13": {
+		"inputs": {
+			"samples": ["12", 0],
+			"vae": ["4", 2]
+		},
+		"class_type": "VAEDecode",
+		"_meta": { "title": "Final Decode" }
+	}
+}
