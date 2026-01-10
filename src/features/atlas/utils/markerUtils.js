@@ -17,10 +17,13 @@ import {
 	Square,
 	Star,
 	Flag,
+	RotateCcw, // Added this import
 } from 'lucide-react';
 
 // 1. Extended Icon Map
+// Maps both semantic categories (e.g., 'combat') and direct icon names (e.g., 'skull')
 const ICON_MAP = {
+	// Semantic Categories
 	combat: Skull,
 	danger: Skull,
 	encounter: Sword,
@@ -36,11 +39,25 @@ const ICON_MAP = {
 	landmark: MapPin,
 	dungeon: Mountain,
 	quest: Scroll,
+
+	// Direct Dropdown Matches
+	default: MapPin,
+	mappin: MapPin,
 	flag: Flag,
 	circle: Circle,
 	square: Square,
 	star: Star,
-	default: MapPin,
+	rotateccw: RotateCcw, // New mapping
+	skull: Skull,
+	castle: Castle,
+	user: User,
+	tent: Tent,
+	sparkles: Sparkles,
+	home: Home,
+	sword: Sword,
+	anchor: Anchor,
+	mountain: Mountain,
+	scroll: Scroll,
 };
 
 // Singleton for invisible/interactive-only markers
@@ -100,7 +117,7 @@ export const createFlatMarker = (IconComponent, color = '#d97706') => {
 
 	return L.divIcon({
 		className: 'custom-flat-marker',
-		html: `<div style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transform: transition: transform 0.2s;">${iconHtml}</div>`,
+		html: `<div style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transition: transform 0.2s;">${iconHtml}</div>`,
 		iconSize: [24, 24],
 		iconAnchor: [12, 12],
 		popupAnchor: [0, -12],
@@ -159,9 +176,13 @@ export const resolveMarkerIcon = (marker) => {
 	// 4. Determine Icon Component
 	let IconComponent = ICON_MAP.default;
 
-	// Check specific custom icon setting first
+	// Check specific custom icon setting first (matches your Dropdown values)
 	if (customIcon && ICON_MAP[customIcon]) {
 		IconComponent = ICON_MAP[customIcon];
+	}
+	// Also check 'icon' property in case DB saves it there instead of customIcon
+	else if (icon && ICON_MAP[icon]) {
+		IconComponent = ICON_MAP[icon];
 	}
 	// Fallback to category mapping
 	else {

@@ -10,6 +10,16 @@ import {
 	Star,
 	MapPin,
 	RotateCcw,
+	Skull,
+	Castle,
+	User,
+	Tent,
+	Sparkles,
+	Home,
+	Sword,
+	Anchor,
+	Mountain,
+	Scroll,
 } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
@@ -22,9 +32,21 @@ import clsx from 'clsx';
 const ICON_OPTIONS = [
 	{ value: 'default', label: 'Pin', icon: MapPin },
 	{ value: 'flag', label: 'Flag', icon: Flag },
-	{ value: 'star', label: 'Star', icon: Star },
 	{ value: 'circle', label: 'Circle', icon: Circle },
 	{ value: 'square', label: 'Square', icon: Square },
+	{ value: 'star', label: 'Star', icon: Star },
+	{ value: 'mappin', label: 'MapPin', icon: MapPin },
+	{ value: 'rotateccw', label: 'RotateCcw', icon: RotateCcw },
+	{ value: 'skull', label: 'Skull', icon: Skull },
+	{ value: 'castle', label: 'Castle', icon: Castle },
+	{ value: 'user', label: 'User', icon: User },
+	{ value: 'tent', label: 'Tent', icon: Tent },
+	{ value: 'sparkles', label: 'Sparkles', icon: Sparkles },
+	{ value: 'home', label: 'Home', icon: Home },
+	{ value: 'sword', label: 'Sword', icon: Sword },
+	{ value: 'anchor', label: 'Anchor', icon: Anchor },
+	{ value: 'mountain', label: 'Mountain', icon: Mountain },
+	{ value: 'scroll', label: 'Scroll', icon: Scroll },
 ];
 
 const Header = ({ title, onDelete, onClose }) => (
