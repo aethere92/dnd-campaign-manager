@@ -6981,7 +6981,7 @@ export default function EditorSidebar() {
 					/>
 				</div>
 
-				<div className='p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-700 dark:text-blue-300'>
+				<div className='p-3 bg-card border border-border rounded text-xs text-foreground'>
 					<strong>How to Position:</strong>
 					<ul className='list-disc pl-4 mt-1 space-y-1'>
 						<li>Click the overlay on the map to select it.</li>
@@ -8729,7 +8729,7 @@ export default function MapMigrationTool() {
 					</span>
 				</h2>
 
-				<div className='p-4 bg-amber-500/10 border border-amber-200 rounded-lg text-sm text-amber-900 mb-6 flex gap-3 items-start'>
+				<div className='p-4 bg-primary/20 border border-primary rounded-lg text-sm text-primary mb-6 flex gap-3 items-start'>
 					<AlertTriangle size={18} className='shrink-0 mt-0.5' />
 					<div>
 						<p className='font-bold mb-1'>Overwrite Warning</p>
