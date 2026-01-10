@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-10 10:27:55
+Generated: 2026-01-10 11:27:13
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -346,26 +346,28 @@ features\admin\utils\filterUtils.js:
   → @/features/admin/config/adminStrategies
 
 features\atlas\MapPage.jsx:
+  → ./components/AtlasSidebar
   → ./components/MapCanvas
-  → ./useMapData
-  → @/shared/components/ui/LoadingSpinner
+  → ./context/AtlasContext
+  → react
 
 features\atlas\api\mapService.js:
   → @/shared/api/supabaseClient
 
 features\atlas\components\AtlasSidebar.jsx:
+  → ../context/AtlasContext
   → clsx
   → react
 
 features\atlas\components\MapCanvas.jsx:
-  → ./AtlasSidebar
+  → ../context/AtlasContext
   → ./MapTools
   → ./MapZoomHandler
   → ./layers/MapAreas
   → ./layers/MapMarkers
   → ./layers/MapOverlays
   → ./layers/MapRecaps
-  → ./useMapCanvasViewModel
+  → @/shared/components/ui/LoadingSpinner
   → leaflet
   → react
   → react-leaflet
@@ -392,6 +394,7 @@ features\atlas\components\layers\MapAreas.jsx:
   → react-leaflet
 
 features\atlas\components\layers\MapMarkers.jsx:
+  → ../../context/AtlasContext
   → @/domain/entity/config/entityConfig
   → @/domain/entity/utils/attributeParser
   → @/features/atlas/utils/markerUtils
@@ -414,6 +417,12 @@ features\atlas\components\layers\MapRecaps.jsx:
 features\atlas\components\useMapCanvasViewModel.js:
   → lucide-react
   → react
+
+features\atlas\context\AtlasContext.jsx:
+  → ../api/mapService
+  → @/features/campaign/CampaignContext
+  → react
+  → react-router-dom
 
 features\atlas\data\campaign_02\index.js:
   → ./faerun/index.js
@@ -1173,6 +1182,7 @@ Most imported files (relative imports):
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
   ../components/VertexHandle: 3 imports
+  ../context/AtlasContext: 2 imports
   ./StatusIcon: 2 imports
   ./AppRoutes: 1 imports
   ./components/RouteLoading: 1 imports
@@ -1187,7 +1197,6 @@ Most imported files (relative imports):
   ./MarkdownEditorImpl: 1 imports
   ./EventTagger: 1 imports
   ./ImageLibraryModal: 1 imports
-  ./AtlasEditorContext: 1 imports
 
 
 Files with most outgoing dependencies:
@@ -1200,10 +1209,10 @@ Files with most outgoing dependencies:
   features\atlas\components\MapCanvas.jsx: 11 imports
   features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
+  features\atlas\components\layers\MapMarkers.jsx: 10 imports
   features\smart-tooltip\components\TooltipCard.jsx: 10 imports
   features\wiki\layouts\SessionLayout.jsx: 10 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
-  features\atlas\components\layers\MapMarkers.jsx: 9 imports
   features\wiki\components\EntityLocalGraph.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports
   features\admin\components\MarkdownEditorImpl.jsx: 8 imports

@@ -101,6 +101,8 @@ PARTIAL BUNDLE: FEATURES ADMIN
           MapRecaps.jsx
       config/
         mapConfig.js
+      context/
+        AtlasContext.jsx
       data/
         modularize.js
         refactor.js

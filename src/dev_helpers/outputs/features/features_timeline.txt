@@ -101,6 +101,8 @@ PARTIAL BUNDLE: FEATURES TIMELINE
           MapRecaps.jsx
       config/
         mapConfig.js
+      context/
+        AtlasContext.jsx
       data/
         modularize.js
         refactor.js

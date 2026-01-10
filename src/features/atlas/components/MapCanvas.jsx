@@ -1,112 +1,88 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
 import { MapMarkers } from './layers/MapMarkers';
 import { MapRecaps } from './layers/MapRecaps';
 import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
 import { MapTools } from './MapTools';
 import { MapZoomHandler } from './MapZoomHandler';
-import { AtlasSidebar } from './AtlasSidebar';
-import { useMapCanvasViewModel } from './useMapCanvasViewModel';
+import { useAtlas } from '../context/AtlasContext';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 
-// Controller to handle FlyTo from sidebar
-const MapController = ({ bounds, minZoom, config, flyToTarget }) => {
+const MapController = ({ config, flyToTarget }) => {
 	const map = useMap();
-	const prevConfigRef = useRef();
+	const prevMapId = useRef();
 
-	// Handle initial bounds
 	useEffect(() => {
-		if (!bounds) return;
-		const isNewMap = prevConfigRef.current !== config.path;
-		prevConfigRef.current = config.path;
+		if (!config || !config.sizes) return;
+		const scaleFactor = Math.pow(2, config.sizes.maxZoom);
+		const bounds = [
+			[-config.sizes.imageHeight / scaleFactor, 0],
+			[0, config.sizes.imageWidth / scaleFactor],
+		];
 
 		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
-		if (minZoom !== undefined) map.setMinZoom(minZoom);
-
-		map.fitBounds(bounds, {
-			animate: !isNewMap,
-			duration: isNewMap ? 0 : 0.5,
-		});
-	}, [map, bounds, minZoom, config.path]);
-
-	// Handle Sidebar FlyTo
-	useEffect(() => {
-		if (flyToTarget) {
-			map.flyTo(flyToTarget, config.sizes.maxZoom - 1, {
-				animate: true,
-				duration: 1.5,
-			});
+		if (prevMapId.current !== config.key) {
+			map.fitBounds(bounds, { animate: false });
+			prevMapId.current = config.key;
 		}
-	}, [map, flyToTarget]);
+	}, [map, config]);
+
+	useEffect(() => {
+		if (flyToTarget) map.flyTo(flyToTarget, config.sizes.maxZoom, { animate: true, duration: 1.5 });
+	}, [map, flyToTarget, config]);
 
 	return null;
 };
 
-export const MapCanvas = ({ data, onNavigate }) => {
-	if (!data) return null;
-
-	const { config, bounds, areas } = data;
-	const vm = useMapCanvasViewModel(data);
+export const MapCanvas = () => {
+	const { mapData, isLoading, visibility, flyToTarget } = useAtlas();
 	const wrapperRef = useRef(null);
-	const [flyToTarget, setFlyToTarget] = useState(null);
 
-	const fileExt = config.fileExtension || 'png';
+	if (isLoading || !mapData) {
+		return (
+			<div className='flex-1 flex items-center justify-center bg-[#1a1412]'>
+				<LoadingSpinner text='Unrolling...' className='text-amber-500' />
+			</div>
+		);
+	}
+
+	const { config, markers, sessions, overlays, areas } = mapData;
+	const visibleMarkers = markers.filter((m) => visibility[m.id]);
+	const visibleSessions = sessions.filter((s) => visibility[`session-${s.name}`]);
+	const visibleOverlays = overlays.filter((o) => visibility[`overlay-${o.name}`]);
+	const visibleAreas = areas.filter((a) => visibility[a.id]);
+
 	const isAbsolute = config.path.startsWith('http');
 	const baseUrl = isAbsolute
 		? config.path
 		: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}`;
-
-	// 3. Construct the Tile URL
-	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${fileExt}`;
-	const minZoom = 0;
+	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${config.fileExtension || 'png'}`;
 
 	return (
-		<div className='flex h-full w-full relative overflow-hidden'>
-			{/* MAP AREA - First in DOM (Left side in flex row) */}
-			<div
-				ref={wrapperRef}
-				className='flex-1 relative h-full bg-background'
-				style={{
-					backgroundColor: 'var(--background)',
-					backgroundImage:
-						'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
-					backgroundSize: '40px 40px, 20px 20px',
-					backgroundPosition: '0 0, 20px 20px',
-				}}>
-				<MapContainer
-					center={[0, 0]}
-					zoom={minZoom}
-					crs={L.CRS.Simple}
-					minZoom={minZoom}
-					maxZoom={config.sizes.maxZoom}
-					scrollWheelZoom={true}
-					attributionControl={false}
-					zoomControl={false}
-					style={{ height: '100%', width: '100%', background: 'transparent' }}>
-					<MapController bounds={bounds} minZoom={minZoom} config={config} flyToTarget={flyToTarget} />
-					<MapZoomHandler referenceZoom={3} />
+		<div ref={wrapperRef} className='flex-1 relative h-full bg-background'>
+			<MapContainer
+				center={[0, 0]}
+				zoom={0}
+				crs={L.CRS.Simple}
+				minZoom={0}
+				maxZoom={config.sizes.maxZoom}
+				scrollWheelZoom={true}
+				attributionControl={false}
+				zoomControl={false}
+				style={{ height: '100%', width: '100%', background: 'transparent' }}>
+				<MapController config={config} flyToTarget={flyToTarget} />
+				<MapZoomHandler referenceZoom={3} />
+				<TileLayer key={tileUrl} url={tileUrl} noWrap={true} maxNativeZoom={config.sizes.maxZoom} />
 
-					<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
-
-					<MapOverlays overlays={vm.visibleOverlays} />
-					{vm.showAreas && <MapAreas areas={areas} />}
-					<MapRecaps sessions={vm.visibleSessions} />
-					<MapMarkers markers={vm.visibleMarkers} onNavigate={onNavigate} />
-
-					<MapTools bounds={bounds} containerRef={wrapperRef} />
-				</MapContainer>
-			</div>
-
-			{/* ATLAS SIDEBAR - Second in DOM (Right side) */}
-			<AtlasSidebar
-				groups={vm.sidebarGroups}
-				visibility={vm.visibility}
-				onToggleLayer={vm.toggleLayer}
-				onFlyTo={setFlyToTarget}
-			/>
+				<MapOverlays overlays={visibleOverlays} />
+				<MapAreas areas={visibleAreas} />
+				<MapRecaps sessions={visibleSessions} />
+				<MapMarkers markers={visibleMarkers} />
+				<MapTools containerRef={wrapperRef} />
+			</MapContainer>
 		</div>
 	);
 };

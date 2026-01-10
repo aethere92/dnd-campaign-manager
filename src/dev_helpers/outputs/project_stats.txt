@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-10 10:27:55
+Generated: 2026-01-10 11:27:13
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 211
-Total lines: 21,690
-Non-empty lines: 19,245
-Comment lines: 1,554
-Total size: 676,549 bytes (660.69 KB)
-Average lines per file: 102.8
+Total files: 212
+Total lines: 21,969
+Non-empty lines: 19,496
+Comment lines: 1,562
+Total size: 684,636 bytes (668.59 KB)
+Average lines per file: 103.6
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 102.8
 
 .js:
   Files: 70
-  Lines: 6,736
-  Size: 186,800 bytes (182.42 KB)
+  Lines: 6,696
+  Size: 185,972 bytes (181.61 KB)
 
 .json:
   Files: 1
@@ -31,9 +31,9 @@ Average lines per file: 102.8
   Size: 4,835 bytes (4.72 KB)
 
 .jsx:
-  Files: 138
-  Lines: 14,293
-  Size: 473,307 bytes (462.21 KB)
+  Files: 139
+  Lines: 14,612
+  Size: 482,222 bytes (470.92 KB)
 
 .md:
   Files: 1
@@ -50,6 +50,7 @@ features\admin\api\adminService.js: 362 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
 features\admin\components\atlas\AtlasForms.jsx: 350 lines
+features\atlas\components\AtlasSidebar.jsx: 345 lines
 features\wiki\components\EntityLocalGraph.jsx: 301 lines
 domain\entity\api\entityService.js: 274 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
@@ -62,7 +63,6 @@ features\wiki\components\EntityMiniMap.jsx: 248 lines
 features\admin\components\SessionEventManager.jsx: 224 lines
 features\wiki\components\character\CharacterSidebar.jsx: 224 lines
 features\atlas\data\modularize.js: 223 lines
-features\admin\components\SmartImageInput.jsx: 218 lines
 
 
 ### STATISTICS BY CATEGORY
@@ -83,9 +83,9 @@ features_admin:
   Size: 216,888 bytes (211.80 KB)
 
 features_atlas:
-  Files: 20
-  Lines: 1,951
-  Size: 59,293 bytes (57.90 KB)
+  Files: 21
+  Lines: 2,230
+  Size: 67,380 bytes (65.80 KB)
 
 features_campaign:
   Files: 7

@@ -1,16 +1,23 @@
-import { useMapData } from './useMapData';
+// features/atlas/MapPage.jsx
+import React from 'react';
+import { AtlasProvider } from './context/AtlasContext';
 import { MapCanvas } from './components/MapCanvas';
-import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { AtlasSidebar } from './components/AtlasSidebar';
 
-export default function MapView() {
-	const { data, navigateToMap, isLoading, currentMapKey } = useMapData();
+const MapView = () => {
+	return (
+		// relative is CRITICAL here for the absolute sidebar positioning on mobile
+		<div className='flex h-full w-full relative overflow-hidden bg-background'>
+			<MapCanvas />
+			<AtlasSidebar />
+		</div>
+	);
+};
 
-	if (isLoading) {
-		return (
-			<div className='h-full flex items-center justify-center bg-[#1a1412]'>
-				<LoadingSpinner text='Unrolling the parchment...' className='text-amber-500' />
-			</div>
-		);
-	}
-	return <MapCanvas data={data} onNavigate={navigateToMap} currentMapKey={currentMapKey} />;
+export default function MapPage() {
+	return (
+		<AtlasProvider>
+			<MapView />
+		</AtlasProvider>
+	);
 }
