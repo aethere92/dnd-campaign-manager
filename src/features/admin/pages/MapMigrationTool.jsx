@@ -69,7 +69,7 @@ export default function MapMigrationTool() {
 					</span>
 				</h2>
 
-				<div className='p-4 bg-amber-500/10 border border-amber-200 rounded-lg text-sm text-amber-900 mb-6 flex gap-3 items-start'>
+				<div className='p-4 bg-primary/20 border border-primary rounded-lg text-sm text-primary mb-6 flex gap-3 items-start'>
 					<AlertTriangle size={18} className='shrink-0 mt-0.5' />
 					<div>
 						<p className='font-bold mb-1'>Overwrite Warning</p>

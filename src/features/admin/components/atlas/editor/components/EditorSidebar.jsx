@@ -145,7 +145,7 @@ export default function EditorSidebar() {
 					/>
 				</div>
 
-				<div className='p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-700 dark:text-blue-300'>
+				<div className='p-3 bg-card border border-border rounded text-xs text-foreground'>
 					<strong>How to Position:</strong>
 					<ul className='list-disc pl-4 mt-1 space-y-1'>
 						<li>Click the overlay on the map to select it.</li>
