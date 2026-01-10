@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
@@ -6,17 +6,20 @@ import { createHandleIcon } from '../components/VertexHandle';
 
 export default function EditPathsLayer() {
 	const { state, dispatch } = useAtlasEditor();
-	const { paths, selection, activeTool } = state;
+	const { paths, selection, activeTool, visibility } = state;
 
 	const isInteractive = activeTool === 'paths';
+
+	if (!visibility.paths) return null;
 
 	return (
 		<>
 			{paths.map((path) => {
 				const isSelected = selection?.type === 'path' && selection.id === path._id;
-				const positions = path.points.map((p) => p.coordinates);
 
-				// Skip empty paths to prevent rendering issues
+				// Memoize positions array to prevent Polyline flicker
+				const positions = useMemo(() => path.points.map((p) => p.coordinates), [path.points]);
+
 				if (positions.length === 0 && !isSelected) return null;
 
 				return (
@@ -28,7 +31,9 @@ export default function EditPathsLayer() {
 									color: path.lineColor || '#d97706',
 									weight: isSelected ? 5 : 3,
 									opacity: path.opacity || 0.7,
-									dashArray: path.dashArray,
+									dashArray: path.dashArray || null, // Respect styling
+									lineCap: 'round',
+									lineJoin: 'round',
 								}}
 								eventHandlers={{
 									click: (e) => {
@@ -40,7 +45,7 @@ export default function EditPathsLayer() {
 							/>
 						)}
 
-						{/* Vertices/Nodes */}
+						{/* Vertices: Only render when selected to save DOM nodes */}
 						{isSelected &&
 							path.points.map((pt, idx) => {
 								const hasText = !!pt.text;
@@ -48,9 +53,12 @@ export default function EditPathsLayer() {
 									<Marker
 										key={`${path._id}-pt-${idx}`}
 										position={pt.coordinates}
-										icon={createHandleIcon(true, hasText)} // Blue if it has text
+										icon={createHandleIcon(true, hasText)}
 										draggable={true}
 										eventHandlers={{
+											// Optimized drag: only dispatch on dragend to save renders
+											// Real-time visual feedback is handled by Leaflet internally for the marker
+											// We accept the line will lag slightly behind marker during drag until drop
 											dragend: (e) => {
 												const { lat, lng } = e.target.getLatLng();
 												dispatch({
@@ -62,17 +70,15 @@ export default function EditPathsLayer() {
 											},
 											click: (e) => {
 												L.DomEvent.stopPropagation(e);
-												// Select this specific point to edit text
 												dispatch({
 													type: 'SELECT_ITEM',
 													payload: { type: 'path', id: path._id, index: idx },
 												});
 											},
 										}}>
-										{/* Preview text on hover */}
 										{hasText && (
-											<Popup autoClose={false} closeButton={false}>
-												{pt.text}
+											<Popup autoClose={false} closeButton={false} offset={[0, -5]}>
+												<span className='text-xs font-semibold'>{pt.text.substring(0, 30)}...</span>
 											</Popup>
 										)}
 									</Marker>

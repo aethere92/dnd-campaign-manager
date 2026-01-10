@@ -6,10 +6,9 @@ import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
 export default function EditMarkersLayer() {
 	const { state, dispatch } = useAtlasEditor();
-	const { markers, selection, activeTool } = state;
+	const { markers, selection, activeTool, visibility } = state;
 
-	// Markers are always visible, but maybe only clickable if tool matches or generic select?
-	// Usually users expect to click markers anytime.
+	if (!visibility.markers) return null;
 
 	return (
 		<>

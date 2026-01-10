@@ -49,6 +49,7 @@ PARTIAL BUNDLE: SHARED
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
+        SmartColorPicker.jsx
         SmartImageInput.jsx
         TacticalMapManager.jsx
         atlas/
@@ -57,6 +58,7 @@ PARTIAL BUNDLE: SHARED
             AtlasEditor.jsx
             AtlasEditorContext.jsx
             components/
+              EditorLayerList.jsx
               EditorMapEvents.jsx
               EditorSidebar.jsx
               EditorToolbar.jsx
@@ -89,6 +91,7 @@ PARTIAL BUNDLE: SHARED
         AtlasSidebar.jsx
         MapCanvas.jsx
         MapTools.jsx
+        MapZoomHandler.jsx
         useMapCanvasViewModel.js
         __MapLayerControl.jsx
         layers/

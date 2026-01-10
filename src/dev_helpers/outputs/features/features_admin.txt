@@ -49,6 +49,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
+        SmartColorPicker.jsx
         SmartImageInput.jsx
         TacticalMapManager.jsx
         atlas/
@@ -57,6 +58,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
             AtlasEditor.jsx
             AtlasEditorContext.jsx
             components/
+              EditorLayerList.jsx
               EditorMapEvents.jsx
               EditorSidebar.jsx
               EditorToolbar.jsx
@@ -89,6 +91,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         AtlasSidebar.jsx
         MapCanvas.jsx
         MapTools.jsx
+        MapZoomHandler.jsx
         useMapCanvasViewModel.js
         __MapLayerControl.jsx
         layers/
@@ -3283,6 +3286,119 @@ export default function SessionEventManager({ sessionId }) {
 
 --- END OF features\admin\components\SessionEventManager.jsx ---
 
+--- FILE: features\admin\components\SmartColorPicker.jsx ---
+import React, { useState } from 'react';
+import { ENTITY_COLORS } from '@/domain/entity/config/entityColors';
+import { Check, ChevronDown, Pipette } from 'lucide-react';
+import { clsx } from 'clsx';
+
+const PRESETS = [
+	{ label: 'Amber', value: '#d97706' },
+	{ label: 'Red', value: '#dc2626' },
+	{ label: 'Emerald', value: '#059669' },
+	{ label: 'Blue', value: '#2563eb' },
+	{ label: 'Purple', value: '#7c3aed' },
+	{ label: 'Cyan', value: '#0891b2' },
+	{ label: 'Slate', value: '#475569' },
+	{ label: 'Black', value: '#1a1a1a' },
+	{ label: 'White', value: '#ffffff' },
+];
+
+export default function SmartColorPicker({ label, value, onChange }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<div className='relative'>
+			{label && <label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>{label}</label>}
+
+			<div className='flex gap-2'>
+				<button
+					type='button'
+					onClick={() => setIsOpen(!isOpen)}
+					className='flex-1 flex items-center gap-2 h-9 px-3 bg-background border border-border rounded-md hover:bg-muted/50 transition-colors'>
+					<div
+						className='w-4 h-4 rounded-full border border-black/10 shadow-sm'
+						style={{ backgroundColor: value || '#000' }}
+					/>
+					<span className='text-xs font-mono flex-1 text-left'>{value || 'Select...'}</span>
+					<ChevronDown size={14} className='opacity-50' />
+				</button>
+
+				{/* Native Picker Fallback/Override */}
+				<div className='relative w-9 h-9'>
+					<input
+						type='color'
+						value={value || '#000000'}
+						onChange={(e) => onChange(e.target.value)}
+						className='absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10'
+					/>
+					<div className='w-full h-full bg-background border border-border rounded-md flex items-center justify-center text-muted-foreground'>
+						<Pipette size={14} />
+					</div>
+				</div>
+			</div>
+
+			{/* Popover */}
+			{isOpen && (
+				<>
+					<div className='fixed inset-0 z-[1002]' onClick={() => setIsOpen(false)} />
+					<div className='absolute top-full left-0 mt-2 w-56 bg-card border border-border shadow-xl rounded-lg p-3 z-[1003] grid grid-cols-4 gap-2'>
+						{PRESETS.map((preset) => (
+							<button
+								key={preset.value}
+								type='button'
+								onClick={() => {
+									onChange(preset.value);
+									setIsOpen(false);
+								}}
+								className={clsx(
+									'w-8 h-8 rounded-full border border-black/10 shadow-sm relative transition-transform hover:scale-110',
+									value === preset.value && 'ring-2 ring-offset-2 ring-primary'
+								)}
+								style={{ backgroundColor: preset.value }}
+								title={preset.label}>
+								{value === preset.value && (
+									<div className='absolute inset-0 flex items-center justify-center'>
+										<Check
+											size={12}
+											className={['#ffffff', '#f1f5f9'].includes(preset.value) ? 'text-black' : 'text-white'}
+										/>
+									</div>
+								)}
+							</button>
+						))}
+
+						{/* Entity Type Colors */}
+						<div className='col-span-4 mt-2 pt-2 border-t border-border'>
+							<span className='text-[9px] font-bold uppercase text-muted-foreground block mb-2'>Entity Types</span>
+							<div className='grid grid-cols-4 gap-2'>
+								{Object.entries(ENTITY_COLORS).map(([key, col]) => (
+									<button
+										key={key}
+										type='button'
+										onClick={() => {
+											onChange(col);
+											setIsOpen(false);
+										}}
+										className={clsx(
+											'w-8 h-8 rounded-md border border-black/10 shadow-sm relative transition-transform hover:scale-110',
+											value === col && 'ring-2 ring-offset-2 ring-primary'
+										)}
+										style={{ backgroundColor: col }}
+										title={key}
+									/>
+								))}
+							</div>
+						</div>
+					</div>
+				</>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\SmartColorPicker.jsx ---
+
 --- FILE: features\admin\components\SmartImageInput.jsx ---
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Image as ImageIcon, X, Link as LinkIcon, Search, Check, AlertTriangle, FileImage } from 'lucide-react';
@@ -3679,185 +3795,351 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 --- END OF features\admin\components\TacticalMapManager.jsx ---
 
 --- FILE: features\admin\components\atlas\AtlasForms.jsx ---
-import React from 'react';
-import { Trash2, Info, Plus, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+	Trash2,
+	X,
+	Map as MapIcon,
+	Link as LinkIcon,
+	Flag,
+	Circle,
+	Square,
+	Star,
+	MapPin,
+	RotateCcw,
+} from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
+import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
+import { fetchCampaignMaps } from '@/features/atlas/api/mapService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import clsx from 'clsx';
 
-// --- SHARED HEADER ---
-const Header = ({ title, onDelete }) => (
-	<div className='flex justify-between items-center p-3 border-b border-border bg-muted/30'>
-		<span className='font-bold text-sm uppercase'>{title}</span>
-		<button
-			onClick={onDelete}
-			className='text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors'>
-			<Trash2 size={16} />
-		</button>
+// --- ICONS PRESET ---
+const ICON_OPTIONS = [
+	{ value: 'default', label: 'Pin', icon: MapPin },
+	{ value: 'flag', label: 'Flag', icon: Flag },
+	{ value: 'star', label: 'Star', icon: Star },
+	{ value: 'circle', label: 'Circle', icon: Circle },
+	{ value: 'square', label: 'Square', icon: Square },
+];
+
+const Header = ({ title, onDelete, onClose }) => (
+	<div className='flex justify-between items-center p-4 border-b border-border bg-muted/40 shrink-0'>
+		<span className='font-bold text-sm uppercase flex items-center gap-2'>
+			<div className='w-1.5 h-4 bg-primary rounded-full' />
+			{title}
+		</span>
+		<div className='flex gap-1'>
+			<button
+				onClick={onDelete}
+				className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+				title='Delete Item'>
+				<Trash2 size={16} />
+			</button>
+			<button
+				onClick={onClose}
+				className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors'
+				title='Close'>
+				<X size={16} />
+			</button>
+		</div>
 	</div>
 );
 
 // --- MARKER FORM ---
 export const MarkerForm = ({ data, onChange, onDelete, onClose }) => {
+	const { campaignId } = useCampaign();
+	const [mapOptions, setMapOptions] = useState([]);
+
+	useEffect(() => {
+		if (campaignId) {
+			fetchCampaignMaps(campaignId).then(setMapOptions);
+		}
+	}, [campaignId]);
+
 	if (!data) return null;
+
 	return (
-		<div className='flex flex-col h-full bg-card border-l border-border w-80 shadow-xl z-[1001]'>
-			<Header title='Edit Marker' onDelete={onDelete} />
-			<div className='p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>
-				<div>
-					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Label</label>
+		<div className='flex flex-col h-full bg-card shadow-2xl z-[1001] w-full'>
+			<Header title='Edit Marker' onDelete={onDelete} onClose={onClose} />
+
+			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				{/* 1. Content */}
+				<div className='space-y-3'>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Label & Category</label>
 					<input
 						className={ADMIN_INPUT_CLASS}
 						value={data.label || ''}
 						onChange={(e) => onChange('label', e.target.value)}
+						placeholder='Marker Label'
 						autoFocus
 					/>
-				</div>
-				<div>
-					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Category</label>
 					<select
 						className={ADMIN_INPUT_CLASS}
 						value={data.category || 'default'}
 						onChange={(e) => onChange('category', e.target.value)}>
 						<option value='default'>Default</option>
-						<option value='cities'>Cities & Towns</option>
-						<option value='locations'>Locations</option>
-						<option value='points_of_interest'>Points of Interest</option>
+						<option value='cities'>City / Settlement</option>
+						<option value='locations'>Location</option>
+						<option value='points_of_interest'>Point of Interest</option>
 						<option value='combat_encounters'>Combat / Danger</option>
-						<option value='quests'>Quest Objectives</option>
+						<option value='quests'>Quest Objective</option>
+						<option value='npcs'>NPC</option>
 					</select>
 				</div>
-				<div>
-					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Map Link (Child Key)</label>
-					<input
-						className={ADMIN_INPUT_CLASS}
-						value={data.mapLink || ''}
-						placeholder='e.g. korinis_dungeon'
-						onChange={(e) => onChange('mapLink', e.target.value)}
-					/>
+
+				{/* 2. Visuals */}
+				<div className='space-y-3 p-3 bg-muted/30 rounded-lg border border-border/50'>
+					<div className='text-[10px] font-bold uppercase text-muted-foreground'>Appearance</div>
+
+					<SmartColorPicker label='Marker Color' value={data.color} onChange={(val) => onChange('color', val)} />
+
+					<div className='grid grid-cols-2 gap-3 pt-2'>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Style</label>
+							<div className='flex bg-background border border-border rounded-md p-0.5'>
+								<button
+									className={clsx(
+										'flex-1 text-[10px] font-bold uppercase py-1.5 rounded-sm transition-colors',
+										!data.iconType || data.iconType === 'pin'
+											? 'bg-primary/10 text-primary'
+											: 'text-muted-foreground hover:text-foreground'
+									)}
+									onClick={() => onChange('iconType', 'pin')}>
+									Pin
+								</button>
+								<button
+									className={clsx(
+										'flex-1 text-[10px] font-bold uppercase py-1.5 rounded-sm transition-colors',
+										data.iconType === 'flat'
+											? 'bg-primary/10 text-primary'
+											: 'text-muted-foreground hover:text-foreground'
+									)}
+									onClick={() => onChange('iconType', 'flat')}>
+									Flat
+								</button>
+							</div>
+						</div>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Icon</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={data.customIcon || 'default'}
+								onChange={(e) => onChange('customIcon', e.target.value)}>
+								{ICON_OPTIONS.map((opt) => (
+									<option key={opt.value} value={opt.value}>
+										{opt.label}
+									</option>
+								))}
+							</select>
+						</div>
+					</div>
 				</div>
-			</div>
-			<div className='p-3 border-t border-border bg-muted/10'>
-				<Button fullWidth variant='secondary' size='sm' onClick={onClose}>
-					Done
-				</Button>
+
+				{/* 3. Interaction */}
+				<div className='space-y-3'>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1'>
+						<LinkIcon size={12} /> Map Link (Autocomplete)
+					</label>
+					<div className='relative'>
+						<select
+							className={ADMIN_INPUT_CLASS}
+							value={data.mapLink || ''}
+							onChange={(e) => onChange('mapLink', e.target.value)}>
+							<option value=''>-- No Link --</option>
+							{mapOptions.map((m) => (
+								<option key={m.key} value={m.key}>
+									{m.title} ({m.key})
+								</option>
+							))}
+						</select>
+						<MapIcon size={14} className='absolute right-3 top-2.5 text-muted-foreground pointer-events-none' />
+					</div>
+					<div className='text-[10px] text-muted-foreground/70'>
+						Links allow users to double-click this marker to enter a sub-map.
+					</div>
+				</div>
 			</div>
 		</div>
 	);
 };
 
-// --- PATH FORM (Sessions) ---
+// --- PATH FORM ---
 export const PathForm = ({ data, onChange, onDelete, onClose }) => {
 	if (!data) return null;
 	return (
-		<div className='flex flex-col h-full bg-card border-l border-border w-80 shadow-xl z-[1001]'>
-			<Header title='Edit Path / Session' onDelete={onDelete} />
-			<div className='p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>
-				<div className='bg-blue-500/10 border border-blue-200 p-2 rounded text-xs text-blue-800 mb-2'>
-					Drag the <strong>white dots</strong> on the map to reshape the path.
+		<div className='flex flex-col h-full bg-card shadow-2xl z-[1001] w-full'>
+			<Header title='Edit Path' onDelete={onDelete} onClose={onClose} />
+			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				<div className='bg-blue-500/10 border border-blue-200/50 p-3 rounded-md text-xs text-blue-800 flex items-start gap-2'>
+					<div className='mt-0.5 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0' />
+					<span>
+						Drag the <strong>white dots</strong> on the map to shape the path. Click a dot to edit its story text.
+					</span>
 				</div>
-				<div>
-					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Name / Session Title</label>
+
+				<div className='space-y-3'>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Path Name</label>
 					<input
 						className={ADMIN_INPUT_CLASS}
 						value={data.name || ''}
 						onChange={(e) => onChange('name', e.target.value)}
+						placeholder='e.g. Session 4 Journey'
 					/>
 				</div>
-				<div className='grid grid-cols-2 gap-2'>
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Color</label>
-						<input
-							type='color'
-							className='w-full h-9 p-1 bg-background border border-border rounded cursor-pointer'
-							value={data.lineColor || '#d97706'}
-							onChange={(e) => onChange('lineColor', e.target.value)}
-						/>
-					</div>
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Opacity</label>
-						<input
-							type='number'
-							step='0.1'
-							min='0.1'
-							max='1'
-							className={ADMIN_INPUT_CLASS}
-							value={data.opacity || 0.7}
-							onChange={(e) => onChange('opacity', parseFloat(e.target.value))}
-						/>
+
+				<div className='space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50'>
+					<div className='text-[10px] font-bold uppercase text-muted-foreground'>Line Styling</div>
+
+					<SmartColorPicker label='Line Color' value={data.lineColor} onChange={(val) => onChange('lineColor', val)} />
+
+					<div className='grid grid-cols-2 gap-4'>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Opacity</label>
+							<input
+								type='range'
+								min='0.1'
+								max='1'
+								step='0.1'
+								className='w-full accent-primary h-2 bg-border rounded-lg appearance-none cursor-pointer'
+								value={data.opacity || 0.7}
+								onChange={(e) => onChange('opacity', parseFloat(e.target.value))}
+							/>
+							<div className='text-right text-[10px] text-muted-foreground mt-1'>{data.opacity || 0.7}</div>
+						</div>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Style</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={data.dashArray || ''}
+								onChange={(e) => onChange('dashArray', e.target.value)}>
+								<option value=''>Solid Line</option>
+								<option value='10, 10'>Dashed (Large)</option>
+								<option value='5, 5'>Dashed (Small)</option>
+								<option value='1, 5'>Dotted</option>
+							</select>
+						</div>
 					</div>
 				</div>
-				<div>
-					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Dash Array</label>
-					<input
-						className={ADMIN_INPUT_CLASS}
-						value={data.dashArray || ''}
-						placeholder='e.g. 10, 10'
-						onChange={(e) => onChange('dashArray', e.target.value)}
-					/>
-					<div className='text-[9px] text-muted-foreground mt-1'>Leave empty for solid line.</div>
-				</div>
-			</div>
-			<div className='p-3 border-t border-border bg-muted/10'>
-				<Button fullWidth variant='secondary' size='sm' onClick={onClose}>
-					Done
-				</Button>
 			</div>
 		</div>
 	);
 };
 
-// --- AREA FORM (Regions) ---
+// --- AREA FORM ---
 export const AreaForm = ({ data, onChange, onDelete, onClose }) => {
 	if (!data) return null;
 	return (
-		<div className='flex flex-col h-full bg-card border-l border-border w-80 shadow-xl z-[1001]'>
-			<Header title='Edit Region / Area' onDelete={onDelete} />
-			<div className='p-4 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>
-				<div className='bg-purple-500/10 border border-purple-200 p-2 rounded text-xs text-purple-800 mb-2'>
-					Drag the <strong>white dots</strong> to reshape the polygon.
-				</div>
-				<div>
+		<div className='flex flex-col h-full w-full'>
+			<Header title='Edit Region' onDelete={onDelete} onClose={onClose} />
+			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				<div className='space-y-3'>
 					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Region Name</label>
 					<input
 						className={ADMIN_INPUT_CLASS}
 						value={data.name || ''}
 						onChange={(e) => onChange('name', e.target.value)}
+						placeholder='Region Label'
 					/>
 				</div>
-				<div className='grid grid-cols-2 gap-2'>
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Border Color</label>
-						<input
-							type='color'
-							className='w-full h-9 p-1 bg-background border border-border rounded cursor-pointer'
-							value={data.lineColor || '#ffffff'}
-							onChange={(e) => onChange('lineColor', e.target.value)}
-						/>
-					</div>
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Fill Color</label>
-						<input
-							type='color'
-							className='w-full h-9 p-1 bg-background border border-border rounded cursor-pointer'
-							value={data.interiorColor || '#ff0000'}
-							onChange={(e) => onChange('interiorColor', e.target.value)}
-						/>
-					</div>
-				</div>
-				<div>
-					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Text Rotation (deg)</label>
-					<input
-						type='number'
-						className={ADMIN_INPUT_CLASS}
-						value={data.textRotation || 0}
-						onChange={(e) => onChange('textRotation', parseFloat(e.target.value))}
+
+				<div className='space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50'>
+					<div className='text-[10px] font-bold uppercase text-muted-foreground'>Polygon Style</div>
+					<SmartColorPicker
+						label='Border Color'
+						value={data.lineColor}
+						onChange={(val) => onChange('lineColor', val)}
 					/>
+					<SmartColorPicker
+						label='Fill Color'
+						value={data.interiorColor}
+						onChange={(val) => onChange('interiorColor', val)}
+					/>
+
+					{/* NEW: Polygon Opacity */}
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Fill Opacity</label>
+						<input
+							type='range'
+							min='0'
+							max='1'
+							step='0.1'
+							className='w-full accent-primary h-2 bg-border rounded-lg appearance-none cursor-pointer'
+							value={data.fillOpacity ?? 0.2}
+							onChange={(e) => onChange('fillOpacity', parseFloat(e.target.value))}
+						/>
+						<div className='text-right text-[10px] text-muted-foreground'>{data.fillOpacity ?? 0.2}</div>
+					</div>
 				</div>
-			</div>
-			<div className='p-3 border-t border-border bg-muted/10'>
-				<Button fullWidth variant='secondary' size='sm' onClick={onClose}>
-					Done
-				</Button>
+
+				<div className='space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50'>
+					<div className='text-[10px] font-bold uppercase text-muted-foreground'>Label Typography</div>
+
+					<SmartColorPicker
+						label='Text Color'
+						value={data.labelColor || '#ffffff'}
+						onChange={(val) => onChange('labelColor', val)}
+					/>
+
+					<div className='grid grid-cols-2 gap-3'>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Text Size (px)</label>
+							<input
+								type='number'
+								className={ADMIN_INPUT_CLASS}
+								value={data.fontSize || 16}
+								onChange={(e) => onChange('fontSize', Number(e.target.value))}
+							/>
+						</div>
+						<div>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Rotation (°)</label>
+							<input
+								type='number'
+								className={ADMIN_INPUT_CLASS}
+								value={data.textRotation || 0}
+								onChange={(e) => onChange('textRotation', parseFloat(e.target.value))}
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div className='space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50'>
+					<div className='text-[10px] font-bold uppercase text-muted-foreground'>Label Background</div>
+
+					<SmartColorPicker
+						label='Background Color'
+						value={data.labelBgColor || '#000000'}
+						onChange={(val) => onChange('labelBgColor', val)}
+					/>
+
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>BG Opacity (0-1)</label>
+						<input
+							type='range'
+							min='0'
+							max='1'
+							step='0.1'
+							className='w-full accent-primary h-2 bg-border rounded-lg appearance-none cursor-pointer'
+							value={data.labelBgOpacity ?? 0}
+							onChange={(e) => onChange('labelBgOpacity', parseFloat(e.target.value))}
+						/>
+						<div className='text-right text-[10px] text-muted-foreground'>{data.labelBgOpacity ?? 0}</div>
+					</div>
+
+					{data.labelPosition && (
+						<div className='pt-2 border-t border-border/50'>
+							<Button
+								variant='secondary'
+								size='sm'
+								icon={RotateCcw}
+								fullWidth
+								onClick={() => onChange('labelPosition', null)}>
+								Reset Position to Center
+							</Button>
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);
@@ -3871,10 +4153,12 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
+import { MapZoomHandler } from '@/features/atlas/components/MapZoomHandler';
 
 // UI
 import EditorToolbar from './components/EditorToolbar';
 import EditorSidebar from './components/EditorSidebar';
+import EditorLayerList from './components/EditorLayerList';
 import EditorMapEvents from './components/EditorMapEvents';
 
 // Layers
@@ -3887,7 +4171,7 @@ function AtlasEditorInner() {
 	const { state } = useAtlasEditor();
 	const { mapConfig } = state;
 
-	// Calculate Tile Config
+	// ... tileConfig and bounds logic (same as before) ...
 	const tileConfig = useMemo(() => {
 		if (!mapConfig) return null;
 		const fileExt = mapConfig.fileExtension || 'png';
@@ -3903,7 +4187,6 @@ function AtlasEditorInner() {
 		};
 	}, [mapConfig]);
 
-	// Calculate Bounds
 	const bounds = useMemo(() => {
 		if (!mapConfig?.sizes) return null;
 		const scaleFactor = Math.pow(2, mapConfig.sizes.maxZoom);
@@ -3917,9 +4200,16 @@ function AtlasEditorInner() {
 
 	return (
 		<div className='flex h-full w-full relative overflow-hidden bg-[#1a1412]'>
-			<EditorToolbar />
+			{/* 1. Left Sidebar: Layer List */}
+			<div className='hidden lg:block shrink-0 relative z-[500]'>
+				<EditorLayerList />
+			</div>
 
-			<div className='flex-1 h-full z-0'>
+			{/* 2. Main Map Area */}
+			<div className='flex-1 h-full relative z-0'>
+				{/* Toolbar floats on top of map */}
+				<EditorToolbar />
+
 				<MapContainer
 					center={[0, 0]}
 					zoom={0}
@@ -3930,9 +4220,9 @@ function AtlasEditorInner() {
 					attributionControl={false}
 					zoomControl={false}
 					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					<MapZoomHandler referenceZoom={3} />
 					<TileLayer url={tileConfig.url} noWrap={true} bounds={bounds} maxNativeZoom={tileConfig.maxZoom} />
 
-					{/* LOGIC & LAYERS */}
 					<EditorMapEvents />
 					<EditOverlaysLayer />
 					<EditAreasLayer />
@@ -3941,12 +4231,12 @@ function AtlasEditorInner() {
 				</MapContainer>
 			</div>
 
+			{/* 3. Right Sidebar: Forms */}
 			<EditorSidebar />
 		</div>
 	);
 }
 
-// Wrapper to provide Context
 export default function AtlasEditor({ initialData }) {
 	return (
 		<AtlasEditorProvider initialData={initialData}>
@@ -3958,14 +4248,14 @@ export default function AtlasEditor({ initialData }) {
 --- END OF features\admin\components\atlas\editor\AtlasEditor.jsx ---
 
 --- FILE: features\admin\components\atlas\editor\AtlasEditorContext.jsx ---
-import React, { createContext, useContext, useReducer, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useMemo } from 'react';
 import { updateMapData } from '@/features/atlas/api/mapService';
 
 const AtlasEditorContext = createContext(null);
 
 // --- INITIALIZER ---
-// Normalizes the nested data structure into flat arrays with stable IDs
 const initializeState = (initialData) => {
+	// ... existing initialization logic ...
 	const markers = [];
 	const rawAnn = initialData.annotations || {};
 	Object.keys(rawAnn).forEach((cat) => {
@@ -3979,21 +4269,18 @@ const initializeState = (initialData) => {
 	const paths = (initialData.paths || []).map((p) => ({
 		...p,
 		_id: crypto.randomUUID(),
-		// Ensure points array exists and items are objects
 		points: (Array.isArray(p.points) ? p.points : []).map((pt) =>
-			// Handle legacy [x,y] vs new {coordinates:[x,y]}
 			Array.isArray(pt) ? { coordinates: pt, text: '' } : pt
 		),
 	}));
 
 	const areas = [];
 	const rawAreas = initialData.areas || {};
-
 	if (Array.isArray(rawAreas)) {
 		rawAreas.forEach((a) => {
 			areas.push({
 				...a,
-				points: Array.isArray(a.points) ? a.points : [], // Ensure array
+				points: Array.isArray(a.points) ? a.points : [],
 				_id: crypto.randomUUID(),
 			});
 		});
@@ -4003,7 +4290,7 @@ const initializeState = (initialData) => {
 				cat.items.forEach((a) => {
 					areas.push({
 						...a,
-						points: Array.isArray(a.points) ? a.points : [], // Ensure array
+						points: Array.isArray(a.points) ? a.points : [],
 						_id: crypto.randomUUID(),
 					});
 				});
@@ -4023,10 +4310,17 @@ const initializeState = (initialData) => {
 		paths,
 		areas,
 		overlays,
-		selection: null, // { type, id, index? }
-		mode: 'select', // 'select', 'draw'
-		activeTool: 'markers', // 'markers', 'paths', 'areas', 'overlays'
+		selection: null,
+		mode: 'select',
+		activeTool: 'markers',
 		isSaving: false,
+		// NEW: Visibility State (Map of ID/Type -> Boolean)
+		visibility: {
+			markers: true,
+			paths: true,
+			areas: true,
+			overlays: true,
+		},
 	};
 };
 
@@ -4041,6 +4335,18 @@ const reducer = (state, action) => {
 
 		case 'SET_MODE':
 			return { ...state, mode: action.payload };
+
+		// --- NEW: VISIBILITY ---
+		case 'TOGGLE_VISIBILITY': {
+			const target = action.payload; // 'markers', 'paths', 'areas', 'overlays' or specific ID
+			return {
+				...state,
+				visibility: {
+					...state.visibility,
+					[target]: !state.visibility[target],
+				},
+			};
+		}
 
 		// --- CRUD: MARKERS ---
 		case 'ADD_MARKER':
@@ -4067,7 +4373,6 @@ const reducer = (state, action) => {
 		case 'DELETE_PATH':
 			return { ...state, paths: state.paths.filter((p) => p._id !== action.id), selection: null };
 		case 'UPDATE_PATH_POINT': {
-			// Updates a specific vertex (coordinates or text)
 			return {
 				...state,
 				paths: state.paths.map((p) => {
@@ -4088,7 +4393,7 @@ const reducer = (state, action) => {
 			};
 		}
 
-		// --- CRUD: AREAS ---
+		// --- CRUD: AREAS (Enhanced) ---
 		case 'ADD_AREA':
 			return {
 				...state,
@@ -4116,9 +4421,32 @@ const reducer = (state, action) => {
 				...state,
 				areas: state.areas.map((a) => {
 					if (a._id !== action.id) return a;
-					// Ensure points array exists
 					const pts = a.points || [];
 					return { ...a, points: [...pts, { coordinates: action.coordinates }] };
+				}),
+			};
+		}
+		// NEW: INSERT/DELETE VERTICES
+		case 'INSERT_AREA_POINT': {
+			// Inserts at specific index (for splitting lines)
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = [...a.points];
+					// Insert at index + 1
+					newPoints.splice(action.index + 1, 0, { coordinates: action.coordinates });
+					return { ...a, points: newPoints };
+				}),
+			};
+		}
+		case 'DELETE_AREA_POINT': {
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = a.points.filter((_, i) => i !== action.index);
+					return { ...a, points: newPoints };
 				}),
 			};
 		}
@@ -4146,11 +4474,10 @@ const reducer = (state, action) => {
 export const AtlasEditorProvider = ({ initialData, children }) => {
 	const [state, dispatch] = useReducer(reducer, initialData, initializeState);
 
-	// --- SAVING LOGIC (De-Normalization) ---
+	// --- SAVING LOGIC ---
 	const saveMap = async () => {
 		dispatch({ type: 'SET_SAVING', payload: true });
 		try {
-			// 1. Group Markers
 			const annotations = {};
 			state.markers.forEach((m) => {
 				const cat = m.category || 'default';
@@ -4160,20 +4487,13 @@ export const AtlasEditorProvider = ({ initialData, children }) => {
 				annotations[cat].items.push(rest);
 			});
 
-			// 2. Clean Paths
 			const paths = state.paths.map(({ _id, ...rest }) => rest);
-
-			// 3. Clean Areas (Group if needed, flat for now is fine for DB, Viewer handles structure)
-			// We'll wrap in a "Regions" category to match legacy viewer expectation
 			const areas = {
 				regions: { name: 'Regions', items: state.areas.map(({ _id, ...rest }) => rest) },
 			};
-
-			// 4. Clean Overlays
 			const overlays = state.overlays.map(({ _id, ...rest }) => rest);
 
 			const contentData = { annotations, paths, areas, overlays };
-
 			await updateMapData(state.mapId, contentData);
 			alert('Map saved successfully.');
 		} catch (e) {
@@ -4196,6 +4516,155 @@ export const useAtlasEditor = () => {
 };
 
 --- END OF features\admin\components\atlas\editor\AtlasEditorContext.jsx ---
+
+--- FILE: features\admin\components\atlas\editor\components\EditorLayerList.jsx ---
+import React, { useState } from 'react';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import {
+	ChevronDown,
+	ChevronRight,
+	MapPin,
+	Footprints,
+	Hexagon,
+	Image as ImageIcon,
+	Search,
+	Eye,
+	EyeOff,
+} from 'lucide-react';
+import clsx from 'clsx';
+
+const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
+	const [isOpen, setIsOpen] = useState(true);
+	if (!items || items.length === 0) return null;
+
+	return (
+		<div className='mb-2'>
+			<div className='flex items-center w-full px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground bg-muted/20 hover:bg-muted/50 transition-colors group'>
+				<button onClick={() => setIsOpen(!isOpen)} className='flex items-center flex-1 text-left'>
+					<span className='mr-2 opacity-70'>{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+					<Icon size={14} className='mr-2' />
+					{title}
+					<span className='ml-auto text-[10px] bg-muted px-1.5 rounded'>{items.length}</span>
+				</button>
+
+				{/* Global Toggle for Type */}
+				<button
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggle();
+					}}
+					className={clsx(
+						'p-1 ml-2 rounded hover:bg-background transition-colors',
+						isVisible ? 'text-primary' : 'text-muted-foreground opacity-50'
+					)}
+					title={isVisible ? 'Hide Layer' : 'Show Layer'}>
+					{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+				</button>
+			</div>
+
+			{isOpen && isVisible && (
+				<div className='space-y-0.5 mt-1'>
+					{items.map((item) => {
+						const isSelected = selection?.type === type && selection.id === item._id;
+						return (
+							<button
+								key={item._id}
+								onClick={() => onSelect(type, item._id)}
+								className={clsx(
+									'flex items-center w-full text-left px-8 py-1.5 text-xs transition-colors border-l-2',
+									isSelected
+										? 'bg-primary/10 border-primary text-primary font-medium'
+										: 'border-transparent text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+								)}>
+								<span className='truncate'>{item.label || item.name || 'Untitled'}</span>
+							</button>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
+};
+
+export default function EditorLayerList() {
+	const { state, dispatch } = useAtlasEditor();
+	const { markers, paths, areas, overlays, selection, visibility } = state;
+	const [search, setSearch] = useState('');
+
+	const handleSelect = (type, id) => {
+		dispatch({ type: 'SELECT_ITEM', payload: { type, id } });
+	};
+
+	const handleToggle = (type) => {
+		dispatch({ type: 'TOGGLE_VISIBILITY', payload: type });
+	};
+
+	const filter = (list) => list.filter((i) => (i.label || i.name || '').toLowerCase().includes(search.toLowerCase()));
+
+	return (
+		<div className='flex flex-col h-full bg-background/95 backdrop-blur border-r border-border w-64 z-10'>
+			{/* Header */}
+			<div className='p-3 border-b border-border'>
+				<div className='relative'>
+					<Search className='absolute left-2.5 top-2 text-muted-foreground' size={12} />
+					<input
+						type='text'
+						placeholder='Filter layers...'
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						className='w-full bg-muted/50 border border-border rounded-md pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary'
+					/>
+				</div>
+			</div>
+
+			{/* List */}
+			<div className='flex-1 overflow-y-auto custom-scrollbar py-2'>
+				<Group
+					title='Markers'
+					icon={MapPin}
+					items={filter(markers)}
+					type='marker'
+					onSelect={handleSelect}
+					selection={selection}
+					isVisible={visibility.markers}
+					onToggle={() => handleToggle('markers')}
+				/>
+				<Group
+					title='Paths'
+					icon={Footprints}
+					items={filter(paths)}
+					type='path'
+					onSelect={handleSelect}
+					selection={selection}
+					isVisible={visibility.paths}
+					onToggle={() => handleToggle('paths')}
+				/>
+				<Group
+					title='Regions'
+					icon={Hexagon}
+					items={filter(areas)}
+					type='area'
+					onSelect={handleSelect}
+					selection={selection}
+					isVisible={visibility.areas}
+					onToggle={() => handleToggle('areas')}
+				/>
+				<Group
+					title='Overlays'
+					icon={ImageIcon}
+					items={filter(overlays)}
+					type='overlay'
+					onSelect={handleSelect}
+					selection={selection}
+					isVisible={visibility.overlays}
+					onToggle={() => handleToggle('overlays')}
+				/>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\components\atlas\editor\components\EditorLayerList.jsx ---
 
 --- FILE: features\admin\components\atlas\editor\components\EditorMapEvents.jsx ---
 import { useMapEvents } from 'react-leaflet';
@@ -4243,10 +4712,40 @@ export default function EditorMapEvents() {
 
 --- FILE: features\admin\components\atlas\editor\components\EditorSidebar.jsx ---
 import React from 'react';
-import { Trash2, X } from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
+import { MarkerForm, PathForm, AreaForm } from '../../AtlasForms';
+import SmartImageInput from '@/features/admin/components/SmartImageInput'; // <--- Added Import
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
-import Button from '@/shared/components/ui/Button';
+import { Trash2, X } from 'lucide-react';
+
+// Wrapper defined outside to prevent re-renders losing focus
+const SidebarWrapper = ({ children, title, onDelete, onClose }) => (
+	<div className='absolute top-4 right-4 bottom-4 w-96 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto animate-in slide-in-from-right-4 duration-200'>
+		{/* Header */}
+		<div className='flex justify-between items-center p-4 border-b border-border bg-muted/40 shrink-0'>
+			<span className='font-bold text-sm uppercase flex items-center gap-2'>{title}</span>
+			<div className='flex gap-1'>
+				{onDelete && (
+					<button
+						onClick={onDelete}
+						className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+						title='Delete Item'>
+						<Trash2 size={16} />
+					</button>
+				)}
+				<button
+					onClick={onClose}
+					className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors'
+					title='Close'>
+					<X size={16} />
+				</button>
+			</div>
+		</div>
+
+		{/* Scrollable Content */}
+		<div className='p-5 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>{children}</div>
+	</div>
+);
 
 export default function EditorSidebar() {
 	const { state, dispatch } = useAtlasEditor();
@@ -4269,191 +4768,112 @@ export default function EditorSidebar() {
 	if (selection.type === 'area') data = areas.find((a) => a._id === selection.id);
 	if (selection.type === 'overlay') data = overlays.find((o) => o._id === selection.id);
 
-	if (!data) return null;
+	// If data disappeared (deleted), close sidebar
+	if (!data && selection.type !== 'overlay') return null;
 
-	// --- PATH POINT EDITOR (Special Case) ---
+	// Special Case: Path Node Editor
 	if (selection.type === 'path' && selection.index !== undefined) {
 		const point = data.points[selection.index];
 		return (
-			<SidebarShell
-				title='Edit Path Node'
-				onClose={handleClose}
-				onDelete={() => {
-					/* maybe delete point logic later */
-				}}>
-				<div className='space-y-4'>
-					<div className='text-xs text-muted-foreground'>Node #{selection.index + 1}</div>
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Coordinates</label>
-						<div className='flex gap-2'>
-							<input className={ADMIN_INPUT_CLASS} disabled value={point.coordinates[0]} />
-							<input className={ADMIN_INPUT_CLASS} disabled value={point.coordinates[1]} />
-						</div>
-					</div>
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>Narrative Text</label>
-						<textarea
-							className={ADMIN_INPUT_CLASS}
-							rows={4}
-							value={point.text || ''}
-							placeholder='Story event that happened here...'
-							onChange={(e) =>
-								dispatch({
-									type: 'UPDATE_PATH_POINT',
-									id: selection.id,
-									index: selection.index,
-									updates: { text: e.target.value },
-								})
-							}
-						/>
-					</div>
+			<SidebarWrapper title={`Edit Path Node #${selection.index + 1}`} onClose={handleClose}>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Narrative Text</label>
+					<textarea
+						className={ADMIN_INPUT_CLASS}
+						rows={4}
+						value={point.text || ''}
+						placeholder='Story event that happened here...'
+						onChange={(e) =>
+							dispatch({
+								type: 'UPDATE_PATH_POINT',
+								id: selection.id,
+								index: selection.index,
+								updates: { text: e.target.value },
+							})
+						}
+					/>
 				</div>
-			</SidebarShell>
+			</SidebarWrapper>
 		);
 	}
 
-	// --- GENERIC EDITORS ---
-	return (
-		<SidebarShell title={`Edit ${selection.type}`} onClose={handleClose} onDelete={handleDelete}>
-			<div className='space-y-4'>
-				{/* NAME / LABEL */}
-				{selection.type !== 'overlay' && (
-					<div>
-						<label className='text-[10px] font-bold uppercase text-muted-foreground'>
-							{selection.type === 'marker' ? 'Label' : 'Name'}
-						</label>
-						<input
-							className={ADMIN_INPUT_CLASS}
-							value={data.label || data.name || ''}
-							onChange={(e) => {
-								const field = selection.type === 'marker' ? 'label' : 'name';
-								dispatch({
-									type: `UPDATE_${selection.type.toUpperCase()}`,
-									id: selection.id,
-									updates: { [field]: e.target.value },
-								});
-							}}
-						/>
-					</div>
-				)}
-
-				{/* MARKER SPECIFIC */}
-				{selection.type === 'marker' && (
-					<>
-						<div>
-							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Category</label>
-							<select
-								className={ADMIN_INPUT_CLASS}
-								value={data.category || 'default'}
-								onChange={(e) =>
-									dispatch({ type: 'UPDATE_MARKER', id: selection.id, updates: { category: e.target.value } })
-								}>
-								<option value='default'>Default</option>
-								<option value='cities'>Cities</option>
-								<option value='locations'>Locations</option>
-								<option value='points_of_interest'>POIs</option>
-								<option value='combat_encounters'>Combat</option>
-							</select>
-						</div>
-						<div>
-							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Map Link</label>
-							<input
-								className={ADMIN_INPUT_CLASS}
-								value={data.mapLink || ''}
-								onChange={(e) =>
-									dispatch({ type: 'UPDATE_MARKER', id: selection.id, updates: { mapLink: e.target.value } })
-								}
-							/>
-						</div>
-					</>
-				)}
-
-				{/* PATH SPECIFIC */}
-				{selection.type === 'path' && (
-					<div className='grid grid-cols-2 gap-2'>
-						<div>
-							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Color</label>
-							<input
-								type='color'
-								className='w-full h-8'
-								value={data.lineColor || '#d97706'}
-								onChange={(e) =>
-									dispatch({ type: 'UPDATE_PATH', id: selection.id, updates: { lineColor: e.target.value } })
-								}
-							/>
-						</div>
-						<div>
-							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Style</label>
-							<input
-								className={ADMIN_INPUT_CLASS}
-								placeholder='Dash array (5,5)'
-								value={data.dashArray || ''}
-								onChange={(e) =>
-									dispatch({ type: 'UPDATE_PATH', id: selection.id, updates: { dashArray: e.target.value } })
-								}
-							/>
-						</div>
-					</div>
-				)}
-
-				{/* OVERLAY SPECIFIC */}
-				{selection.type === 'overlay' && (
-					<>
-						<div>
-							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Name</label>
-							<input
-								className={ADMIN_INPUT_CLASS}
-								value={data.name || ''}
-								onChange={(e) =>
-									dispatch({ type: 'UPDATE_OVERLAY', id: selection.id, updates: { name: e.target.value } })
-								}
-							/>
-						</div>
-						<div>
-							<label className='text-[10px] font-bold uppercase text-muted-foreground'>Image URL</label>
-							<input
-								className={ADMIN_INPUT_CLASS}
-								value={data.image || ''}
-								onChange={(e) =>
-									dispatch({ type: 'UPDATE_OVERLAY', id: selection.id, updates: { image: e.target.value } })
-								}
-							/>
-						</div>
-						<div className='bg-muted p-2 rounded text-[10px]'>
-							<div className='font-bold'>Bounds:</div>
-							<div>
-								TL: {data.bounds[0][0]}, {data.bounds[0][1]}
-							</div>
-							<div>
-								BR: {data.bounds[1][0]}, {data.bounds[1][1]}
-							</div>
-							<div className='text-muted-foreground mt-1'>
-								Edit bounds manually in JSON if needed, or drag corners (todo).
-							</div>
-						</div>
-					</>
-				)}
+	if (selection.type === 'marker') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-96 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto animate-in slide-in-from-right-4 duration-200'>
+				<MarkerForm
+					data={data}
+					onChange={(field, val) => dispatch({ type: 'UPDATE_MARKER', id: selection.id, updates: { [field]: val } })}
+					onDelete={handleDelete}
+					onClose={handleClose}
+				/>
 			</div>
-		</SidebarShell>
+		);
+	}
+
+	if (selection.type === 'path') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-96 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto animate-in slide-in-from-right-4 duration-200'>
+				<PathForm
+					data={data}
+					onChange={(field, val) => dispatch({ type: 'UPDATE_PATH', id: selection.id, updates: { [field]: val } })}
+					onDelete={handleDelete}
+					onClose={handleClose}
+				/>
+			</div>
+		);
+	}
+
+	if (selection.type === 'area') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-96 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto animate-in slide-in-from-right-4 duration-200'>
+				<AreaForm
+					data={data}
+					onChange={(field, val) => dispatch({ type: 'UPDATE_AREA', id: selection.id, updates: { [field]: val } })}
+					onDelete={handleDelete}
+					onClose={handleClose}
+				/>
+			</div>
+		);
+	}
+
+	// Default Fallback (Overlays)
+	return (
+		<SidebarWrapper title='Edit Overlay' onDelete={handleDelete} onClose={handleClose}>
+			<div className='space-y-4'>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Name</label>
+					<input
+						className={ADMIN_INPUT_CLASS}
+						value={data.name || ''}
+						onChange={(e) => dispatch({ type: 'UPDATE_OVERLAY', id: selection.id, updates: { name: e.target.value } })}
+					/>
+				</div>
+				<div>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Image Selection</label>
+					{/* Replaced generic input with SmartImageInput */}
+					<SmartImageInput
+						value={data.image || ''}
+						onChange={(e) => dispatch({ type: 'UPDATE_OVERLAY', id: selection.id, updates: { image: e.target.value } })}
+						placeholder='Select or type image path...'
+					/>
+				</div>
+
+				<div className='p-3 bg-blue-500/10 border border-blue-500/20 rounded text-xs text-blue-700 dark:text-blue-300'>
+					<strong>How to Position:</strong>
+					<ul className='list-disc pl-4 mt-1 space-y-1'>
+						<li>Click the overlay on the map to select it.</li>
+						<li>
+							Drag the <strong>Center Handle</strong> to move.
+						</li>
+						<li>
+							Drag the <strong>Corner Handles</strong> to resize.
+						</li>
+					</ul>
+				</div>
+			</div>
+		</SidebarWrapper>
 	);
 }
-
-const SidebarShell = ({ title, children, onClose, onDelete }) => (
-	<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto'>
-		<div className='flex justify-between items-center p-3 border-b border-border bg-muted/30'>
-			<span className='font-bold text-sm uppercase'>{title}</span>
-			<div className='flex gap-1'>
-				<button onClick={onDelete} className='p-1 text-red-500 hover:bg-red-50 rounded'>
-					<Trash2 size={16} />
-				</button>
-				<button onClick={onClose} className='p-1 text-muted-foreground hover:bg-muted rounded'>
-					<X size={16} />
-				</button>
-			</div>
-		</div>
-		<div className='p-4 flex-1 overflow-y-auto custom-scrollbar'>{children}</div>
-	</div>
-);
 
 --- END OF features\admin\components\atlas\editor\components\EditorSidebar.jsx ---
 
@@ -4604,26 +5024,45 @@ export const createHandleIcon = (isSelected, isSpecial = false) => {
 
 --- FILE: features\admin\components\atlas\editor\layers\EditAreasLayer.jsx ---
 import React from 'react';
-import { Polygon, Marker, Tooltip } from 'react-leaflet';
+import { Polygon, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createHandleIcon } from '../components/VertexHandle';
+import { createLabelIcon, createMidpointIcon } from '@/features/atlas/utils/markerUtils';
+
+const getCentroid = (points) => {
+	if (!points || points.length === 0) return [0, 0];
+	let lat = 0,
+		lng = 0;
+	points.forEach((p) => {
+		lat += p.coordinates[0];
+		lng += p.coordinates[1];
+	});
+	return [lat / points.length, lng / points.length];
+};
+
+const getMidpoint = (p1, p2) => [
+	(p1.coordinates[0] + p2.coordinates[0]) / 2,
+	(p1.coordinates[1] + p2.coordinates[1]) / 2,
+];
 
 export default function EditAreasLayer() {
 	const { state, dispatch } = useAtlasEditor();
-	const { areas, selection, activeTool } = state;
+	const { areas, selection, activeTool, visibility } = state;
 	const isInteractive = activeTool === 'areas';
+
+	// 1. Check Visibility
+	if (!visibility.areas) return null;
 
 	return (
 		<>
 			{areas.map((area) => {
 				const isSelected = selection?.type === 'area' && selection.id === area._id;
 				const positions = (area.points || []).map((p) => p.coordinates);
-
-				// --- FIX: CRITICAL CRASH PREVENTION ---
-				// Leaflet Polygon throws error if rendered with < 3 points (or 0) when a Tooltip is attached.
-				// We only render the polygon shape if it has valid geometry.
 				const hasValidGeometry = positions.length > 0;
+
+				// Centroid for label default
+				const center = area.labelPosition || getCentroid(area.points);
 
 				return (
 					<React.Fragment key={area._id}>
@@ -4633,7 +5072,8 @@ export default function EditAreasLayer() {
 								pathOptions={{
 									color: area.lineColor || 'transparent',
 									fillColor: area.interiorColor || '#ff0000',
-									fillOpacity: isSelected ? 0.6 : 0.3,
+									// Use dynamic fillOpacity from data, default to logic if missing
+									fillOpacity: area.fillOpacity ?? (isSelected ? 0.5 : 0.2),
 									weight: 2,
 								}}
 								eventHandlers={{
@@ -4642,41 +5082,115 @@ export default function EditAreasLayer() {
 										L.DomEvent.stopPropagation(e);
 										dispatch({ type: 'SELECT_ITEM', payload: { type: 'area', id: area._id } });
 									},
-								}}>
-								{/* Only show label if we have enough points for a center */}
-								{positions.length > 2 && (
-									<Tooltip
-										permanent
-										direction='center'
-										className='bg-transparent border-0 shadow-none text-white font-bold text-center'>
-										<div style={{ transform: `rotate(${area.textRotation || 0}deg)` }}>{area.name}</div>
-									</Tooltip>
-								)}
-							</Polygon>
+								}}
+							/>
 						)}
 
-						{/* Render Handles even if Polygon is invisible (so we can see points as we draw) */}
-						{isSelected &&
-							(area.points || []).map((pt, idx) => (
-								<Marker
-									key={`${area._id}-pt-${idx}`}
-									position={pt.coordinates}
-									icon={createHandleIcon(true)}
-									draggable={true}
-									eventHandlers={{
-										dragend: (e) => {
-											const { lat, lng } = e.target.getLatLng();
-											dispatch({
-												type: 'UPDATE_AREA_POINT',
-												id: area._id,
-												index: idx,
-												coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))],
-											});
-										},
-										click: (e) => L.DomEvent.stopPropagation(e),
-									}}
-								/>
-							))}
+						{/* Label */}
+						{hasValidGeometry && area.name && (
+							<Marker
+								position={center}
+								icon={createLabelIcon(area.name, {
+									color: area.labelColor,
+									fontSize: area.fontSize,
+									rotation: area.textRotation,
+									bgColor: area.labelBgColor,
+									bgOpacity: area.labelBgOpacity,
+									isSelected: isSelected && isInteractive,
+								})}
+								draggable={isSelected && isInteractive}
+								eventHandlers={{
+									click: (e) => {
+										if (!isInteractive) return;
+										L.DomEvent.stopPropagation(e);
+										dispatch({ type: 'SELECT_ITEM', payload: { type: 'area', id: area._id } });
+									},
+									dragend: (e) => {
+										const { lat, lng } = e.target.getLatLng();
+										dispatch({
+											type: 'UPDATE_AREA',
+											id: area._id,
+											updates: { labelPosition: [Number(lat.toFixed(4)), Number(lng.toFixed(4))] },
+										});
+									},
+								}}
+							/>
+						)}
+
+						{/* EDIT MODE: Vertices & Midpoints */}
+						{isSelected && (
+							<>
+								{area.points.map((pt, idx) => (
+									<React.Fragment key={`${area._id}-v-${idx}`}>
+										{/* Real Vertex */}
+										<Marker
+											position={pt.coordinates}
+											icon={createHandleIcon(true)}
+											draggable={true}
+											eventHandlers={{
+												dragend: (e) => {
+													const { lat, lng } = e.target.getLatLng();
+													dispatch({
+														type: 'UPDATE_AREA_POINT',
+														id: area._id,
+														index: idx,
+														coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))],
+													});
+												},
+												contextmenu: (e) => {
+													L.DomEvent.stopPropagation(e);
+													if (confirm('Delete this point?')) {
+														dispatch({
+															type: 'DELETE_AREA_POINT',
+															id: area._id,
+															index: idx,
+														});
+													}
+												},
+												click: (e) => L.DomEvent.stopPropagation(e),
+											}}
+										/>
+
+										{/* Midpoint (Add new vertex) - Skip last if not closed loop, but areas are usually closed */}
+										{idx < area.points.length - 1 && (
+											<Marker
+												position={getMidpoint(pt, area.points[idx + 1])}
+												icon={createMidpointIcon()}
+												eventHandlers={{
+													click: (e) => {
+														L.DomEvent.stopPropagation(e);
+														dispatch({
+															type: 'INSERT_AREA_POINT',
+															id: area._id,
+															index: idx,
+															coordinates: getMidpoint(pt, area.points[idx + 1]),
+														});
+													},
+												}}
+											/>
+										)}
+										{/* Closing Midpoint (Last to First) */}
+										{idx === area.points.length - 1 && (
+											<Marker
+												position={getMidpoint(pt, area.points[0])}
+												icon={createMidpointIcon()}
+												eventHandlers={{
+													click: (e) => {
+														L.DomEvent.stopPropagation(e);
+														dispatch({
+															type: 'INSERT_AREA_POINT',
+															id: area._id,
+															index: idx,
+															coordinates: getMidpoint(pt, area.points[0]),
+														});
+													},
+												}}
+											/>
+										)}
+									</React.Fragment>
+								))}
+							</>
+						)}
 					</React.Fragment>
 				);
 			})}
@@ -4695,10 +5209,9 @@ import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
 export default function EditMarkersLayer() {
 	const { state, dispatch } = useAtlasEditor();
-	const { markers, selection, activeTool } = state;
+	const { markers, selection, activeTool, visibility } = state;
 
-	// Markers are always visible, but maybe only clickable if tool matches or generic select?
-	// Usually users expect to click markers anytime.
+	if (!visibility.markers) return null;
 
 	return (
 		<>
@@ -4737,31 +5250,104 @@ export default function EditMarkersLayer() {
 
 --- FILE: features\admin\components\atlas\editor\layers\EditOverlaysLayer.jsx ---
 import React from 'react';
-import { ImageOverlay, Rectangle } from 'react-leaflet';
+import { ImageOverlay, Rectangle, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
+import { createHandleIcon } from '../components/VertexHandle';
 
 export default function EditOverlaysLayer() {
 	const { state, dispatch } = useAtlasEditor();
-	const { overlays, selection, activeTool } = state;
+	const { overlays, selection, activeTool, visibility } = state;
 	const isInteractive = activeTool === 'overlays';
 
-	// Helper to resolve URL
 	const getUrl = (path) => (path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`);
+
+	if (!visibility.overlays) return null;
+
+	// --- LOGIC: HANDLE DRAG ---
+	// Update logic for corner handles
+	const onResize = (id, handle, newLat, newLng, oldBounds) => {
+		// oldBounds is [[lat1, lng1], [lat2, lng2]]
+		// usually [TL, BR] or [SW, NE]
+		const [p1, p2] = oldBounds;
+
+		let newBounds = [...oldBounds];
+
+		if (handle === 'tl') {
+			// Top Left: Modify Index 0
+			newBounds = [[newLat, newLng], p2];
+		} else if (handle === 'br') {
+			// Bottom Right: Modify Index 1
+			newBounds = [p1, [newLat, newLng]];
+		} else if (handle === 'tr') {
+			// Top Right: Lat from 0, Lng from 1
+			// We want new point to be [newLat, newLng]
+			// So P1 (TL) gets newLat, P2 (BR) gets newLng
+			newBounds = [
+				[newLat, p1[1]],
+				[p2[0], newLng],
+			];
+		} else if (handle === 'bl') {
+			// Bottom Left: Lat from 1, Lng from 0
+			newBounds = [
+				[p1[0], newLng],
+				[newLat, p2[1]],
+			];
+		}
+
+		dispatch({
+			type: 'UPDATE_OVERLAY',
+			id: id,
+			updates: { bounds: newBounds },
+		});
+	};
+
+	// Logic for moving the whole image
+	const onMove = (id, newCenter, oldCenter, oldBounds) => {
+		const latDiff = newCenter.lat - oldCenter.lat;
+		const lngDiff = newCenter.lng - oldCenter.lng;
+
+		const newBounds = [
+			[oldBounds[0][0] + latDiff, oldBounds[0][1] + lngDiff],
+			[oldBounds[1][0] + latDiff, oldBounds[1][1] + lngDiff],
+		];
+
+		dispatch({
+			type: 'UPDATE_OVERLAY',
+			id: id,
+			updates: { bounds: newBounds },
+		});
+	};
 
 	return (
 		<>
 			{overlays.map((overlay) => {
 				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
-				// Overlay bounds: [[lat1, lng1], [lat2, lng2]]
+
+				// Bounds: [[lat1, lng1], [lat2, lng2]]
+				const b = overlay.bounds;
+				const centerLat = (b[0][0] + b[1][0]) / 2;
+				const centerLng = (b[0][1] + b[1][1]) / 2;
 
 				return (
 					<React.Fragment key={overlay._id}>
+						{/* THE IMAGE */}
 						<ImageOverlay
 							url={getUrl(overlay.image)}
 							bounds={overlay.bounds}
-							opacity={0.8}
-							interactive={isInteractive} // Allows clicks pass through if not editing overlays
+							opacity={isSelected ? 0.8 : 1}
+							interactive={false} // Let the invisible Rect handle clicks
+						/>
+
+						{/* CLICK / DRAG HIT BOX */}
+						<Rectangle
+							bounds={overlay.bounds}
+							pathOptions={{
+								color: isSelected ? '#3b82f6' : 'transparent',
+								weight: 2,
+								fillOpacity: isSelected ? 0.1 : 0,
+								dashArray: '5, 5',
+							}}
 							eventHandlers={{
 								click: (e) => {
 									if (!isInteractive) return;
@@ -4771,12 +5357,59 @@ export default function EditOverlaysLayer() {
 							}}
 						/>
 
-						{/* Render a bounding box border when selected */}
+						{/* HANDLES (Only when selected) */}
 						{isSelected && (
-							<Rectangle
-								bounds={overlay.bounds}
-								pathOptions={{ color: '#3b82f6', weight: 2, fill: false, dashArray: '5, 5' }}
-							/>
+							<>
+								{/* CENTER MOVE HANDLE */}
+								<Marker
+									position={[centerLat, centerLng]}
+									draggable={true}
+									icon={L.divIcon({
+										className: 'move-handle',
+										html: '<div style="width: 24px; height: 24px; background: rgba(59, 130, 246, 0.5); border: 2px solid white; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 12h20L12 2zm0 20l10-10H2l10 10z"/></svg></div>',
+										iconSize: [24, 24],
+										iconAnchor: [12, 12],
+									})}
+									eventHandlers={{
+										dragend: (e) => {
+											const newCenter = e.target.getLatLng();
+											onMove(overlay._id, newCenter, { lat: centerLat, lng: centerLng }, overlay.bounds);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+
+								{/* RESIZE HANDLES */}
+								{/* Top Left */}
+								<Marker
+									position={b[0]}
+									draggable={true}
+									icon={createHandleIcon(true, true)}
+									eventHandlers={{
+										drag: (e) => {
+											// Optional: Live update if performant enough, else use dragend
+										},
+										dragend: (e) => {
+											const { lat, lng } = e.target.getLatLng();
+											onResize(overlay._id, 'tl', lat, lng, overlay.bounds);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+								{/* Bottom Right */}
+								<Marker
+									position={b[1]}
+									draggable={true}
+									icon={createHandleIcon(true, true)}
+									eventHandlers={{
+										dragend: (e) => {
+											const { lat, lng } = e.target.getLatLng();
+											onResize(overlay._id, 'br', lat, lng, overlay.bounds);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+							</>
 						)}
 					</React.Fragment>
 				);
@@ -4788,7 +5421,7 @@ export default function EditOverlaysLayer() {
 --- END OF features\admin\components\atlas\editor\layers\EditOverlaysLayer.jsx ---
 
 --- FILE: features\admin\components\atlas\editor\layers\EditPathsLayer.jsx ---
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
@@ -4796,17 +5429,20 @@ import { createHandleIcon } from '../components/VertexHandle';
 
 export default function EditPathsLayer() {
 	const { state, dispatch } = useAtlasEditor();
-	const { paths, selection, activeTool } = state;
+	const { paths, selection, activeTool, visibility } = state;
 
 	const isInteractive = activeTool === 'paths';
+
+	if (!visibility.paths) return null;
 
 	return (
 		<>
 			{paths.map((path) => {
 				const isSelected = selection?.type === 'path' && selection.id === path._id;
-				const positions = path.points.map((p) => p.coordinates);
 
-				// Skip empty paths to prevent rendering issues
+				// Memoize positions array to prevent Polyline flicker
+				const positions = useMemo(() => path.points.map((p) => p.coordinates), [path.points]);
+
 				if (positions.length === 0 && !isSelected) return null;
 
 				return (
@@ -4818,7 +5454,9 @@ export default function EditPathsLayer() {
 									color: path.lineColor || '#d97706',
 									weight: isSelected ? 5 : 3,
 									opacity: path.opacity || 0.7,
-									dashArray: path.dashArray,
+									dashArray: path.dashArray || null, // Respect styling
+									lineCap: 'round',
+									lineJoin: 'round',
 								}}
 								eventHandlers={{
 									click: (e) => {
@@ -4830,7 +5468,7 @@ export default function EditPathsLayer() {
 							/>
 						)}
 
-						{/* Vertices/Nodes */}
+						{/* Vertices: Only render when selected to save DOM nodes */}
 						{isSelected &&
 							path.points.map((pt, idx) => {
 								const hasText = !!pt.text;
@@ -4838,9 +5476,12 @@ export default function EditPathsLayer() {
 									<Marker
 										key={`${path._id}-pt-${idx}`}
 										position={pt.coordinates}
-										icon={createHandleIcon(true, hasText)} // Blue if it has text
+										icon={createHandleIcon(true, hasText)}
 										draggable={true}
 										eventHandlers={{
+											// Optimized drag: only dispatch on dragend to save renders
+											// Real-time visual feedback is handled by Leaflet internally for the marker
+											// We accept the line will lag slightly behind marker during drag until drop
 											dragend: (e) => {
 												const { lat, lng } = e.target.getLatLng();
 												dispatch({
@@ -4852,17 +5493,15 @@ export default function EditPathsLayer() {
 											},
 											click: (e) => {
 												L.DomEvent.stopPropagation(e);
-												// Select this specific point to edit text
 												dispatch({
 													type: 'SELECT_ITEM',
 													payload: { type: 'path', id: path._id, index: idx },
 												});
 											},
 										}}>
-										{/* Preview text on hover */}
 										{hasText && (
-											<Popup autoClose={false} closeButton={false}>
-												{pt.text}
+											<Popup autoClose={false} closeButton={false} offset={[0, -5]}>
+												<span className='text-xs font-semibold'>{pt.text.substring(0, 30)}...</span>
 											</Popup>
 										)}
 									</Marker>

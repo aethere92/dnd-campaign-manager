@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useReducer, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useMemo } from 'react';
 import { updateMapData } from '@/features/atlas/api/mapService';
 
 const AtlasEditorContext = createContext(null);
 
 // --- INITIALIZER ---
-// Normalizes the nested data structure into flat arrays with stable IDs
 const initializeState = (initialData) => {
+	// ... existing initialization logic ...
 	const markers = [];
 	const rawAnn = initialData.annotations || {};
 	Object.keys(rawAnn).forEach((cat) => {
@@ -19,21 +19,18 @@ const initializeState = (initialData) => {
 	const paths = (initialData.paths || []).map((p) => ({
 		...p,
 		_id: crypto.randomUUID(),
-		// Ensure points array exists and items are objects
 		points: (Array.isArray(p.points) ? p.points : []).map((pt) =>
-			// Handle legacy [x,y] vs new {coordinates:[x,y]}
 			Array.isArray(pt) ? { coordinates: pt, text: '' } : pt
 		),
 	}));
 
 	const areas = [];
 	const rawAreas = initialData.areas || {};
-
 	if (Array.isArray(rawAreas)) {
 		rawAreas.forEach((a) => {
 			areas.push({
 				...a,
-				points: Array.isArray(a.points) ? a.points : [], // Ensure array
+				points: Array.isArray(a.points) ? a.points : [],
 				_id: crypto.randomUUID(),
 			});
 		});
@@ -43,7 +40,7 @@ const initializeState = (initialData) => {
 				cat.items.forEach((a) => {
 					areas.push({
 						...a,
-						points: Array.isArray(a.points) ? a.points : [], // Ensure array
+						points: Array.isArray(a.points) ? a.points : [],
 						_id: crypto.randomUUID(),
 					});
 				});
@@ -63,10 +60,17 @@ const initializeState = (initialData) => {
 		paths,
 		areas,
 		overlays,
-		selection: null, // { type, id, index? }
-		mode: 'select', // 'select', 'draw'
-		activeTool: 'markers', // 'markers', 'paths', 'areas', 'overlays'
+		selection: null,
+		mode: 'select',
+		activeTool: 'markers',
 		isSaving: false,
+		// NEW: Visibility State (Map of ID/Type -> Boolean)
+		visibility: {
+			markers: true,
+			paths: true,
+			areas: true,
+			overlays: true,
+		},
 	};
 };
 
@@ -81,6 +85,18 @@ const reducer = (state, action) => {
 
 		case 'SET_MODE':
 			return { ...state, mode: action.payload };
+
+		// --- NEW: VISIBILITY ---
+		case 'TOGGLE_VISIBILITY': {
+			const target = action.payload; // 'markers', 'paths', 'areas', 'overlays' or specific ID
+			return {
+				...state,
+				visibility: {
+					...state.visibility,
+					[target]: !state.visibility[target],
+				},
+			};
+		}
 
 		// --- CRUD: MARKERS ---
 		case 'ADD_MARKER':
@@ -107,7 +123,6 @@ const reducer = (state, action) => {
 		case 'DELETE_PATH':
 			return { ...state, paths: state.paths.filter((p) => p._id !== action.id), selection: null };
 		case 'UPDATE_PATH_POINT': {
-			// Updates a specific vertex (coordinates or text)
 			return {
 				...state,
 				paths: state.paths.map((p) => {
@@ -128,7 +143,7 @@ const reducer = (state, action) => {
 			};
 		}
 
-		// --- CRUD: AREAS ---
+		// --- CRUD: AREAS (Enhanced) ---
 		case 'ADD_AREA':
 			return {
 				...state,
@@ -156,9 +171,32 @@ const reducer = (state, action) => {
 				...state,
 				areas: state.areas.map((a) => {
 					if (a._id !== action.id) return a;
-					// Ensure points array exists
 					const pts = a.points || [];
 					return { ...a, points: [...pts, { coordinates: action.coordinates }] };
+				}),
+			};
+		}
+		// NEW: INSERT/DELETE VERTICES
+		case 'INSERT_AREA_POINT': {
+			// Inserts at specific index (for splitting lines)
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = [...a.points];
+					// Insert at index + 1
+					newPoints.splice(action.index + 1, 0, { coordinates: action.coordinates });
+					return { ...a, points: newPoints };
+				}),
+			};
+		}
+		case 'DELETE_AREA_POINT': {
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = a.points.filter((_, i) => i !== action.index);
+					return { ...a, points: newPoints };
 				}),
 			};
 		}
@@ -186,11 +224,10 @@ const reducer = (state, action) => {
 export const AtlasEditorProvider = ({ initialData, children }) => {
 	const [state, dispatch] = useReducer(reducer, initialData, initializeState);
 
-	// --- SAVING LOGIC (De-Normalization) ---
+	// --- SAVING LOGIC ---
 	const saveMap = async () => {
 		dispatch({ type: 'SET_SAVING', payload: true });
 		try {
-			// 1. Group Markers
 			const annotations = {};
 			state.markers.forEach((m) => {
 				const cat = m.category || 'default';
@@ -200,20 +237,13 @@ export const AtlasEditorProvider = ({ initialData, children }) => {
 				annotations[cat].items.push(rest);
 			});
 
-			// 2. Clean Paths
 			const paths = state.paths.map(({ _id, ...rest }) => rest);
-
-			// 3. Clean Areas (Group if needed, flat for now is fine for DB, Viewer handles structure)
-			// We'll wrap in a "Regions" category to match legacy viewer expectation
 			const areas = {
 				regions: { name: 'Regions', items: state.areas.map(({ _id, ...rest }) => rest) },
 			};
-
-			// 4. Clean Overlays
 			const overlays = state.overlays.map(({ _id, ...rest }) => rest);
 
 			const contentData = { annotations, paths, areas, overlays };
-
 			await updateMapData(state.mapId, contentData);
 			alert('Map saved successfully.');
 		} catch (e) {

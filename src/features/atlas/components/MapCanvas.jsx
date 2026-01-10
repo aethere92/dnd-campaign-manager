@@ -8,6 +8,7 @@ import { MapRecaps } from './layers/MapRecaps';
 import { MapAreas } from './layers/MapAreas';
 import { MapOverlays } from './layers/MapOverlays';
 import { MapTools } from './MapTools';
+import { MapZoomHandler } from './MapZoomHandler';
 import { AtlasSidebar } from './AtlasSidebar';
 import { useMapCanvasViewModel } from './useMapCanvasViewModel';
 
@@ -86,6 +87,7 @@ export const MapCanvas = ({ data, onNavigate }) => {
 					zoomControl={false}
 					style={{ height: '100%', width: '100%', background: 'transparent' }}>
 					<MapController bounds={bounds} minZoom={minZoom} config={config} flyToTarget={flyToTarget} />
+					<MapZoomHandler referenceZoom={3} />
 
 					<TileLayer key={tileUrl} url={tileUrl} noWrap={true} bounds={bounds} maxNativeZoom={config.sizes.maxZoom} />
 
