@@ -1,15 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { clsx } from 'clsx';
 import {
 	Map as MapIcon,
 	Search,
 	Layers,
 	BookOpen,
-	ChevronRight,
-	ChevronDown,
-	Eye,
-	EyeOff,
-	Crosshair,
 	Navigation,
 	LocateFixed,
 	PanelLeftClose,
@@ -18,139 +13,24 @@ import {
 	X,
 } from 'lucide-react';
 import { useAtlas } from '../context/AtlasContext';
-
-// --- Compact Sidebar Components ---
-
-const SidebarItem = ({ label, isVisible, onToggle, onNavigate, icon: Icon }) => (
-	<div className='flex items-center gap-1 md:py-0.5 hover:bg-black/5 group rounded-md transition-colors min-w-0'>
-		<button
-			onClick={(e) => {
-				e.stopPropagation();
-				onToggle();
-			}}
-			className={clsx(
-				'p-2 md:p-0.5 rounded transition-colors shrink-0 outline-none',
-				isVisible ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground/40 hover:text-muted-foreground'
-			)}>
-			{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
-		</button>
-
-		<button
-			onClick={onNavigate}
-			className='flex-1 flex items-center text-left min-w-0 gap-2 py-1 md:py-0.5 outline-none'>
-			{Icon && <Icon size={12} className='text-muted-foreground/70 shrink-0' />}
-			<span
-				className={clsx(
-					'text-sm md:text-xs truncate transition-opacity',
-					!isVisible && 'opacity-50 text-muted-foreground'
-				)}>
-				{label}
-			</span>
-		</button>
-
-		<button
-			onClick={(e) => {
-				e.stopPropagation();
-				onNavigate();
-			}}
-			className='hidden md:block p-0.5 text-muted-foreground/0 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0 transition-all'
-			title='Fly To'>
-			<Crosshair size={12} />
-		</button>
-	</div>
-);
-
-const SidebarGroup = ({ label, items, visibility, onToggleItem, onToggleGroup, onFlyTo }) => {
-	const [isExpanded, setIsExpanded] = useState(true);
-
-	const visibleCount = items.filter((i) => visibility[i.id]).length;
-	const isAllVisible = visibleCount === items.length;
-	const isNoneVisible = visibleCount === 0;
-	const isMixed = !isAllVisible && !isNoneVisible;
-
-	const handleGroupToggle = (e) => {
-		e.stopPropagation();
-		onToggleGroup(
-			items.map((i) => i.id),
-			isMixed ? true : !isAllVisible
-		);
-	};
-
-	return (
-		<div className='mb-0.5'>
-			<div className='flex items-center gap-1 px-2 py-2 md:py-1 sticky top-0 bg-muted/95 backdrop-blur-sm z-10 select-none group/header hover:bg-black/5 rounded-md'>
-				<button
-					onClick={() => setIsExpanded(!isExpanded)}
-					className='p-1 text-muted-foreground hover:text-foreground transition-colors'>
-					{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-				</button>
-
-				<span
-					className='flex-1 text-xs md:text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer truncate'
-					onClick={() => setIsExpanded(!isExpanded)}>
-					{label} <span className='opacity-50 ml-1'>({items.length})</span>
-				</span>
-
-				<button
-					onClick={handleGroupToggle}
-					className={clsx(
-						'p-1 rounded transition-colors',
-						isAllVisible ? 'text-primary' : isMixed ? 'text-primary/70' : 'text-muted-foreground/30'
-					)}>
-					{isAllVisible ? <Eye size={12} /> : isMixed ? <Eye size={12} className='opacity-50' /> : <EyeOff size={12} />}
-				</button>
-			</div>
-
-			{isExpanded && (
-				<div className='pl-1 space-y-0.5 ml-2 border-l border-border/40'>
-					{items.map((item) => (
-						<SidebarItem
-							key={item.id}
-							label={item.label}
-							isVisible={!!visibility[item.id]}
-							onToggle={() => onToggleItem(item.id)}
-							onNavigate={() => onFlyTo(item.position)}
-						/>
-					))}
-				</div>
-			)}
-		</div>
-	);
-};
-
-// --- Main Sidebar ---
+import { useAtlasSearch } from '../utils/useAtlasSearch';
+import { SidebarItem } from './sidebar/SidebarItem';
+import { SidebarGroup } from './sidebar/SidebarGroup';
 
 export const AtlasSidebar = () => {
 	const { mapData, isLoading, activeTab, setActiveTab, visibility, toggleItem, toggleGroup, flyTo } = useAtlas();
-	const [searchTerm, setSearchTerm] = useState('');
+	const { searchTerm, setSearchTerm, filteredData } = useAtlasSearch(mapData);
+
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 	const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
 
-	// Filtering Logic
-	const filteredData = useMemo(() => {
-		if (!mapData) return null;
-
-		const filterFn = (item) => item.label && item.label.toLowerCase().includes(searchTerm.toLowerCase());
-
-		return {
-			groups: mapData.groups
-				.map((g) => ({
-					...g,
-					items: g.items.filter(filterFn),
-				}))
-				.filter((g) => g.items.length > 0),
-
-			sessions: mapData.sessions.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase())),
-
-			overlays: mapData.overlays.filter((o) => o.name.toLowerCase().includes(searchTerm.toLowerCase())),
-
-			// This is the key part that was likely missing or causing issues
-			areas: (mapData.areas || []).filter((a) => a.label && a.label.toLowerCase().includes(searchTerm.toLowerCase())),
-		};
-	}, [mapData, searchTerm]);
-
 	if (isLoading || !filteredData) return null;
 	const title = mapData.config.label || mapData.config.title || 'Atlas';
+
+	const handleFlyTo = (pos) => {
+		flyTo(pos);
+		if (window.innerWidth < 768) setIsMobileOpen(false);
+	};
 
 	const Tab = ({ id, icon: Icon, label }) => (
 		<button
@@ -169,11 +49,11 @@ export const AtlasSidebar = () => {
 	return (
 		<>
 			{/* Mobile Trigger */}
-			<div className='absolute top-4 right-4 z-[400] md:hidden'>
+			<div className='absolute top-4 left-4 z-[400] md:hidden'>
 				{!isMobileOpen && (
 					<button
 						onClick={() => setIsMobileOpen(true)}
-						className='p-2 bg-background border border-border shadow-lg rounded-md'>
+						className='p-2 bg-background border border-border shadow-lg rounded-md text-foreground'>
 						<Menu size={20} />
 					</button>
 				)}
@@ -248,10 +128,7 @@ export const AtlasSidebar = () => {
 									visibility={visibility}
 									onToggleItem={toggleItem}
 									onToggleGroup={toggleGroup}
-									onFlyTo={(pos) => {
-										flyTo(pos);
-										if (window.innerWidth < 768) setIsMobileOpen(false);
-									}}
+									onFlyTo={handleFlyTo}
 								/>
 							))}
 							{filteredData.groups.length === 0 && (
@@ -270,10 +147,7 @@ export const AtlasSidebar = () => {
 									icon={Navigation}
 									isVisible={visibility[`session-${session.name}`]}
 									onToggle={() => toggleItem(`session-${session.name}`)}
-									onNavigate={() => {
-										flyTo(session.points?.[0]?.coordinates);
-										if (window.innerWidth < 768) setIsMobileOpen(false);
-									}}
+									onNavigate={() => handleFlyTo(session.points?.[0]?.coordinates)}
 								/>
 							))}
 						</div>
@@ -295,10 +169,7 @@ export const AtlasSidebar = () => {
 											visibility={visibility}
 											onToggleItem={toggleItem}
 											onToggleGroup={toggleGroup}
-											onFlyTo={(pos) => {
-												flyTo(pos);
-												if (window.innerWidth < 768) setIsMobileOpen(false);
-											}}
+											onFlyTo={handleFlyTo}
 										/>
 									) : (
 										<div className='px-3 py-1 text-xs text-muted-foreground italic opacity-70'>No regions found.</div>
@@ -318,10 +189,7 @@ export const AtlasSidebar = () => {
 										icon={Layers}
 										isVisible={visibility[`overlay-${o.name}`]}
 										onToggle={() => toggleItem(`overlay-${o.name}`)}
-										onNavigate={() => {
-											flyTo(o.bounds?.[0]);
-											if (window.innerWidth < 768) setIsMobileOpen(false);
-										}}
+										onNavigate={() => handleFlyTo(o.bounds?.[0])}
 									/>
 								))}
 								{filteredData.overlays.length === 0 && (
