@@ -106,8 +106,8 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 				<MapContainer
 					crs={L.CRS.Simple}
 					bounds={dimensions}
-					zoom={-2}
-					minZoom={-3}
+					zoom={0}
+					minZoom={-2}
 					scrollWheelZoom={true}
 					attributionControl={false}
 					style={{

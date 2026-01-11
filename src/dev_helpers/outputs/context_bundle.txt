@@ -7947,6 +7947,7 @@ export const getStrategy = (type) => {
     "category": "C02 > Encounters",
     "path": "images/c02/encounters/",
     "files": [
+      "crossroads_battle_header.webp",
       "demonic_ambush_header.webp",
       "demonic_ambush_map.webp",
       "hydra_swamp_header.webp",
@@ -9494,7 +9495,7 @@ export const AtlasSidebar = () => {
 	return (
 		<>
 			{/* Mobile Trigger */}
-			<div className='absolute top-4 left-4 z-[400] md:hidden'>
+			<div className='absolute top-4 right-4 z-[400] md:hidden'>
 				{!isMobileOpen && (
 					<button
 						onClick={() => setIsMobileOpen(true)}
@@ -9726,7 +9727,7 @@ export const MapCanvas = () => {
 		<div ref={wrapperRef} className='flex-1 relative h-full bg-background'>
 			<MapContainer
 				center={[0, 0]}
-				zoom={0}
+				zoom={Math.ceil(config.sizes.maxZoom / 2)}
 				crs={L.CRS.Simple}
 				minZoom={0}
 				maxZoom={config.sizes.maxZoom}
@@ -9805,7 +9806,7 @@ export const MapTools = ({ bounds, containerRef }) => {
 	);
 
 	return (
-		<div className='leaflet-top leaflet-left'>
+		<div className='hidden md:flex md:flex-col leaflet-top leaflet-left'>
 			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-border/50'>
 				<Btn onClick={handleCenter} icon={Crosshair} title='Center Map' />
 				<Btn
@@ -17542,8 +17543,8 @@ export const EntityMiniMap = ({ imageUrl, markers = [] }) => {
 				<MapContainer
 					crs={L.CRS.Simple}
 					bounds={dimensions}
-					zoom={-2}
-					minZoom={-3}
+					zoom={0}
+					minZoom={-2}
 					scrollWheelZoom={true}
 					attributionControl={false}
 					style={{
@@ -20539,7 +20540,6 @@ import { EntityBody } from '@/features/wiki/components/EntityBody';
 
 export default function StandardLayout({ viewModel }) {
 	if (!viewModel) return null;
-
 	return (
 		<div className='w-full px-4 sm:px-6 py-10'>
 			<div className='max-w-6xl mx-auto'>
@@ -21091,7 +21091,6 @@ const formatRelationshipType = (type) => {
 --- END OF features\wiki\utils\relationshipMapper.js ---
 
 --- FILE: features\wiki\utils\wikiEntryMapper.js ---
-// features/wiki/utils/wikiEntryMapper.js
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 export const transformWikiEntry = (data, type, additionalData = {}) => {
@@ -21173,14 +21172,16 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 					type: action.actor?.type || 'default',
 					iconUrl: resolveImageUrl(actorAttrs, 'icon'),
 				},
-				target: action.target?.id
-					? {
-							id: action.target.id,
-							name: action.target.name,
-							type: action.target.type,
-							iconUrl: resolveImageUrl(targetAttrs, 'icon'),
-					  }
-					: null,
+				// CHANGED: Allow target if it has ID OR Name (fixes manual/ad-hoc targets)
+				target:
+					action.target && (action.target.id || action.target.name)
+						? {
+								id: action.target.id,
+								name: action.target.name || 'Unknown Target',
+								type: action.target.type || 'default',
+								iconUrl: resolveImageUrl(targetAttrs, 'icon'),
+						  }
+						: null,
 			};
 		});
 
