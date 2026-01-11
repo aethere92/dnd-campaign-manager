@@ -52,7 +52,7 @@ export const MapTools = ({ bounds, containerRef }) => {
 	);
 
 	return (
-		<div className='leaflet-top leaflet-left'>
+		<div className='hidden md:flex md:flex-col leaflet-top leaflet-left'>
 			<div className='leaflet-control leaflet-bar !border-0 !shadow-xl !m-3 rounded-md overflow-hidden border border-border/50'>
 				<Btn onClick={handleCenter} icon={Crosshair} title='Center Map' />
 				<Btn

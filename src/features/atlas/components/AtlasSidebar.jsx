@@ -49,7 +49,7 @@ export const AtlasSidebar = () => {
 	return (
 		<>
 			{/* Mobile Trigger */}
-			<div className='absolute top-4 left-4 z-[400] md:hidden'>
+			<div className='absolute top-4 right-4 z-[400] md:hidden'>
 				{!isMobileOpen && (
 					<button
 						onClick={() => setIsMobileOpen(true)}

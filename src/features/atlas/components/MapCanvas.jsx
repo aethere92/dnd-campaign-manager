@@ -65,7 +65,7 @@ export const MapCanvas = () => {
 		<div ref={wrapperRef} className='flex-1 relative h-full bg-background'>
 			<MapContainer
 				center={[0, 0]}
-				zoom={0}
+				zoom={Math.ceil(config.sizes.maxZoom / 2)}
 				crs={L.CRS.Simple}
 				minZoom={0}
 				maxZoom={config.sizes.maxZoom}
