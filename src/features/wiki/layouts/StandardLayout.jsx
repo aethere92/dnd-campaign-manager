@@ -5,7 +5,6 @@ import { EntityBody } from '@/features/wiki/components/EntityBody';
 
 export default function StandardLayout({ viewModel }) {
 	if (!viewModel) return null;
-
 	return (
 		<div className='w-full px-4 sm:px-6 py-10'>
 			<div className='max-w-6xl mx-auto'>

@@ -1,4 +1,3 @@
-// features/wiki/utils/wikiEntryMapper.js
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
 
 export const transformWikiEntry = (data, type, additionalData = {}) => {
@@ -80,14 +79,16 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 					type: action.actor?.type || 'default',
 					iconUrl: resolveImageUrl(actorAttrs, 'icon'),
 				},
-				target: action.target?.id
-					? {
-							id: action.target.id,
-							name: action.target.name,
-							type: action.target.type,
-							iconUrl: resolveImageUrl(targetAttrs, 'icon'),
-					  }
-					: null,
+				// CHANGED: Allow target if it has ID OR Name (fixes manual/ad-hoc targets)
+				target:
+					action.target && (action.target.id || action.target.name)
+						? {
+								id: action.target.id,
+								name: action.target.name || 'Unknown Target',
+								type: action.target.type || 'default',
+								iconUrl: resolveImageUrl(targetAttrs, 'icon'),
+						  }
+						: null,
 			};
 		});
 
