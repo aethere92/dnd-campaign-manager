@@ -5,17 +5,17 @@ import { overlays } from './overlays.js';
 
 export const KORINIS_ISLAND = {
 	metadata: {
-		path: 'maps/world_maps/korinis_island',
-		mapId: 'korinis_island',
+		path: 'https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis',
+		mapId: 'khorinis',
 		sizes: {
-			maxZoom: 5,
+			maxZoom: 7,
 			imageWidth: 32069,
-			imageHeight: 19161
-		}
+			imageHeight: 19161,
+		},
 	},
 	annotations: annotations,
 	paths: paths,
 	areas: areas,
 	overlays: overlays,
-	parentId: 'world_maps'
+	parentId: 'faerun_map',
 };

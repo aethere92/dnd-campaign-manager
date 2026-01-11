@@ -1,0 +1,331 @@
+{
+    "areas": {},
+    "paths": [
+        {
+            "name": "Session 1 Recap",
+            "points": [
+                {
+                    "text": "Landed on beach.",
+                    "coordinates": [
+                        -164.75,
+                        90.375
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -144.75,
+                        111.25
+                    ]
+                },
+                {
+                    "text": "Went up to the mountain path",
+                    "coordinates": [
+                        -144.75,
+                        111.25
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -136,
+                        113.5
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -133.25,
+                        107.25
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -130,
+                        103
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -126.75,
+                        106
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -125.25,
+                        111.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -123.75,
+                        114.5
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -120,
+                        116
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -116.25,
+                        116
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -112,
+                        113.25
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -107.75,
+                        113.25
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -104.75,
+                        117.5
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -99.25,
+                        114.5
+                    ]
+                },
+                {
+                    "text": "Fought dinosaurs",
+                    "coordinates": [
+                        -96.75,
+                        120.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -85.5,
+                        122
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -81.5,
+                        128.5
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -77,
+                        135.5
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -71.5,
+                        138.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -69.25,
+                        143
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -75.25,
+                        144.5
+                    ]
+                },
+                {
+                    "text": "Reached lake.",
+                    "coordinates": [
+                        -81,
+                        148
+                    ]
+                },
+                {
+                    "text": "Climbed onto platforms.",
+                    "coordinates": [
+                        -73.75,
+                        153
+                    ]
+                },
+                {
+                    "text": "Entered door, met Finneas, fought undeads.",
+                    "coordinates": [
+                        -63.3125,
+                        157.375
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -71.75,
+                        162.25
+                    ]
+                },
+                {
+                    "text": "Left, shot flare to notify the crew we found water.",
+                    "coordinates": [
+                        -85,
+                        152.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -88,
+                        144.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -91.5,
+                        138.75
+                    ]
+                },
+                {
+                    "text": "Took another path down the mountain, found dead crew member parties bodies and looted them.",
+                    "coordinates": [
+                        -98.75,
+                        138
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -104.75,
+                        140.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -107.5,
+                        137.25
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -111.25,
+                        125.75
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -111.25,
+                        119.25
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -112.875,
+                        117
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -118.25,
+                        118.8125
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -124,
+                        117.5
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -127.3125,
+                        109.125
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -131.25,
+                        109
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -136.625,
+                        116.375
+                    ]
+                },
+                {
+                    "text": "Saw the ship preparing to depart without waiting for us.",
+                    "coordinates": [
+                        -149.3125,
+                        115
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -158.6875,
+                        109.1875
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -158.6875,
+                        109.1875
+                    ]
+                },
+                {
+                    "coordinates": [
+                        -173.4375,
+                        96.875
+                    ]
+                },
+                {
+                    "text": "Made a run for it and reached the ship back in time so we didn't get left behind.",
+                    "coordinates": [
+                        -175.875,
+                        62.625
+                    ]
+                }
+            ],
+            "sessionId": 1
+        }
+    ],
+    "overlays": [],
+    "annotations": {
+        "combat_encounters": {
+            "name": "Combat encounters",
+            "items": [
+                {
+                    "lat": -63.3125,
+                    "lng": 157.375,
+                    "type": "place",
+                    "label": "Finneas combat encounter",
+                    "mapLink": "finneas_encounter"
+                },
+                {
+                    "lat": -96.75,
+                    "lng": 120.75,
+                    "type": "place",
+                    "label": "Dinosaurs combat encounter"
+                }
+            ]
+        },
+        "points_of_interest": {
+            "name": "Points of Interest",
+            "items": [
+                {
+                    "lat": -164.6875,
+                    "lng": 101.5625,
+                    "type": "place",
+                    "label": "Landing zone"
+                },
+                {
+                    "lat": -183.5,
+                    "lng": 8,
+                    "type": "text",
+                    "label": "Back to world map",
+                    "mapLink": "world_maps",
+                    "fontSize": 15
+                }
+            ]
+        }
+    }
+}

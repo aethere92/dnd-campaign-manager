@@ -3,14 +3,16 @@ import { annotations } from './annotations.js';
 
 export const WORLD_MAPS = {
 	metadata: {
-		path: 'maps/world_maps/world_map',
-		mapId: 'world_maps',
+		mapId: 'faerun_map',
+		path: 'https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/faerun',
+		fileExtension: 'webp',
 		sizes: {
-			maxZoom: 5,
-			imageWidth: 8192,
-			imageHeight: 8192
-		}
+			maxZoom: 7,
+			imageWidth: 18607,
+			imageHeight: 15017,
+		},
+		label: 'Faerûn',
 	},
 	annotations: annotations,
-	paths: paths
+	paths: paths,
 };

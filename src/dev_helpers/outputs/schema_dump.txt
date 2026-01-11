@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/10/2026, 11:27:06 AM
+   Generated: 1/11/2026, 4:41:05 PM
 =========================================
 
 -----------------------------------------
@@ -311,14 +311,15 @@ TABLE: factions [⚠️ RLS DISABLED]
     }
   },
   {
-    "id": "e09a7bfa-fde1-44a6-80f0-7b8f216deaf1",
+    "id": "fe902f1d-1aeb-4029-97f4-1e247aa902ac",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "The Lion's Guard",
-    "description": "The elite military force of the city of Brindol, commanded by Captain Hans Mariner. They are the \"big guns\" of the region, far better equipped and trained than the local militia.",
-    "created_at": "2025-12-07T14:08:43.651Z",
-    "updated_at": "2026-01-02T11:03:50.033Z",
+    "name": "Red Wizards of Thay",
+    "description": "A notorious magocracy of evil wizards from the distant land of Thay. They have not been encountered directly, but they featured prominently in Soshi's apocalyptic vision. They were seen working alongside the Arcane Brotherhood and the Clan of the Blue Bear to conduct a massive ritual siege against the city of Neverwinter, using prisoners as magical fuel to tear down the walls. Their involvement confirms the global scale of the conspiracy.",
+    "created_at": "2025-11-21T17:00:01.009Z",
+    "updated_at": "2026-01-07T14:27:19.286Z",
     "attributes": {
-      "affinity": "Neutral"
+      "icon": "images/c02/factions/thay_red_wizards_icon.webp",
+      "affinity": "Enemy"
     }
   }
 ]
@@ -413,125 +414,114 @@ TABLE: maps [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "75f5ea76-e844-4299-98c5-c4099c629b41",
+    "id": "082ec861-317a-4656-ad18-7a19f9497e48",
     "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "key": "korinis_teleporter_c",
-    "title": "korinis_teleporter_c",
+    "key": "khorinis_spider_cave",
+    "title": "khorinis_spider_cave",
     "config": {
-      "path": "maps/interiors/korinis_island/pyramid_teleporter/teleporter_c",
-      "mapId": "korinis_teleporter_c",
+      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis_island/penal_colony_spider_cave",
+      "mapId": "khorinis_spider_cave",
       "sizes": {
-        "maxZoom": 3,
-        "imageWidth": 1800,
-        "imageHeight": 1200
+        "maxZoom": 4,
+        "imageWidth": 2048,
+        "imageHeight": 3072
       },
-      "parentId": "korinis_island"
+      "parentId": "khorinis",
+      "fileExtension": "webp"
     },
     "data": {
-      "areas": {},
-      "paths": [],
-      "overlays": [],
-      "annotations": {
-        "navigation_arrows": {
-          "name": "Navigation arrows",
-          "items": [
-            {
-              "lat": -38.625,
-              "lng": 63.125,
-              "map": {
-                "exitZoom": 4,
-                "exitCoordinates": [
-                  -195,
-                  656
-                ]
-              },
-              "type": "place",
-              "label": "To Korinis Island",
-              "mapLink": "korinis_island"
-            }
-          ]
-        },
-        "points_of_interest": {
-          "name": "Points of Interest",
-          "items": [
-            {
-              "lat": -110,
-              "lng": 196.625,
-              "map": {
-                "exitZoom": 2,
-                "exitCoordinates": [
-                  -370,
-                  610
-                ]
-              },
-              "type": "place",
-              "label": "Teleporter to A (Pyramid)",
-              "mapLink": "korinis_pyramid"
-            }
-          ]
+      "areas": {
+        "regions": {
+          "name": "Regions",
+          "items": []
         }
-      }
-    },
-    "created_at": "2026-01-07T19:18:00.553Z",
-    "updated_at": "2026-01-07T19:18:00.614Z"
-  },
-  {
-    "id": "e7db069d-ffcd-4aad-beb4-c7db5c5869f9",
-    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "key": "korinis_pyramid",
-    "title": "korinis_pyramid",
-    "config": {
-      "path": "maps/interiors/korinis_island/water_mages_pyramid",
-      "mapId": "korinis_pyramid",
-      "sizes": {
-        "maxZoom": 3,
-        "imageWidth": 7800,
-        "imageHeight": 4800
       },
-      "parentId": "korinis_island"
-    },
-    "data": {
-      "areas": {},
       "paths": [],
       "overlays": [],
       "annotations": {
         "navigation": {
-          "name": "Navigation arrows",
+          "name": "Navigation",
           "items": [
             {
-              "lat": -579.5,
-              "lng": 882,
+              "lat": -189.5,
+              "lng": 63.75,
               "map": {
                 "exitZoom": 4,
                 "exitCoordinates": [
-                  -43,
-                  580
+                  -395,
+                  710
                 ]
               },
               "type": "people",
-              "label": "To Korinis Island",
-              "mapLink": "korinis_island"
+              "color": "#059669",
+              "label": "To Penal Colony",
+              "mapLink": "khorinis"
             },
             {
-              "lat": -520.5,
-              "lng": 348,
+              "lat": -6.75,
+              "lng": 105,
               "map": {
-                "exitZoom": 3,
+                "exitZoom": 4,
                 "exitCoordinates": [
-                  -63.38,
-                  89.25
+                  -395,
+                  710
                 ]
               },
-              "type": "place",
-              "label": "Final Location",
-              "mapLink": "final_location"
+              "type": "people",
+              "color": "#10b981",
+              "label": "To Shortcut Terrace",
+              "mapLink": "khorinis"
             }
           ]
         }
       }
     },
-    "created_at": "2026-01-07T19:18:00.651Z",
-    "updated_at": "2026-01-07T19:18:00.722Z"
+    "created_at": "2026-01-07T19:18:00.850Z",
+    "updated_at": "2026-01-11T07:23:21.438Z"
+  },
+  {
+    "id": "c65e65c8-dc37-4f5e-9a7c-f1be1fadc220",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "key": "finneas_encounter",
+    "title": "finneas_encounter",
+    "config": {
+      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/unnamed_island/finneas_dungeon",
+      "mapId": "finneas_encounter",
+      "sizes": {
+        "maxZoom": 4,
+        "imageWidth": 3120,
+        "imageHeight": 1920
+      },
+      "parentId": "unnamed_island_01",
+      "fileExtension": "webp"
+    },
+    "data": {
+      "areas": {
+        "regions": {
+          "name": "Regions",
+          "items": []
+        }
+      },
+      "paths": [],
+      "overlays": [],
+      "annotations": {
+        "default": {
+          "name": "Default",
+          "items": [
+            {
+              "lat": -60.6875,
+              "lng": 8.8125,
+              "type": "place",
+              "color": "#059669",
+              "label": "Exit to Island",
+              "mapLink": "unnamed_island_01"
+            }
+          ]
+        }
+      }
+    },
+    "created_at": "2026-01-07T19:18:01.351Z",
+    "updated_at": "2026-01-11T07:21:10.897Z"
   }
 ]
 
@@ -1272,6 +1262,21 @@ VIEW: view_narrative_arc_summary
   WHERE (se.session_id = s.id)) all_mentions ON (true))
   LEFT JOIN entities e_target ON ((all_mentions.to_entity_id = e_target.id)))
   GROUP BY arc.id, arc.campaign_id, arc.title, arc.description, arc."order", arc.attributes;
+
+VIEW: view_session_events_admin
+-----------------------------------------
+ SELECT se.id,
+  se.session_id,
+  se.event_order,
+  se.event_type,
+  se.title,
+  se.description,
+  se.created_at,
+  COALESCE(jsonb_agg(jsonb_build_object('id', er.id, 'target', jsonb_build_object('id', target.id, 'name', target.name, 'type', target.type))) FILTER (WHERE (er.id IS NOT NULL)), '[]'::jsonb) AS relationships
+  FROM ((session_events se
+  LEFT JOIN entity_relationships er ON ((se.id = er.from_entity_id)))
+  LEFT JOIN entities target ON ((er.to_entity_id = target.id)))
+  GROUP BY se.id;
 
 =========================================
    FUNCTIONS

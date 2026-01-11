@@ -46,7 +46,7 @@ export default function MapManagerPage() {
 	// --- RENDER: EDITOR MODE ---
 	if (selectedMap) {
 		return (
-			<div className='h-[calc(100vh-64px)] flex flex-col'>
+			<div className='h-[100vh] flex flex-col'>
 				<div className='bg-background border-b border-border p-2 flex items-center gap-4'>
 					<Button variant='ghost' size='sm' icon={ArrowLeft} onClick={() => setSelectedMap(null)}>
 						Back to List

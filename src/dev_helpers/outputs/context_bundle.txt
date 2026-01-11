@@ -105,6 +105,9 @@ INSTRUCTIONS FOR AI:
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
       config/
         mapConfig.js
       context/
@@ -119,6 +122,7 @@ INSTRUCTIONS FOR AI:
       utils/
         mapNavigation.js
         markerUtils.js
+        useAtlasSearch.jsx
     campaign/
       CampaignContext.jsx
       useCampaignData.js
@@ -5932,6 +5936,16 @@ import {
 	Star,
 	MapPin,
 	RotateCcw,
+	Skull,
+	Castle,
+	User,
+	Tent,
+	Sparkles,
+	Home,
+	Sword,
+	Anchor,
+	Mountain,
+	Scroll,
 } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
@@ -5944,9 +5958,21 @@ import clsx from 'clsx';
 const ICON_OPTIONS = [
 	{ value: 'default', label: 'Pin', icon: MapPin },
 	{ value: 'flag', label: 'Flag', icon: Flag },
-	{ value: 'star', label: 'Star', icon: Star },
 	{ value: 'circle', label: 'Circle', icon: Circle },
 	{ value: 'square', label: 'Square', icon: Square },
+	{ value: 'star', label: 'Star', icon: Star },
+	{ value: 'mappin', label: 'MapPin', icon: MapPin },
+	{ value: 'rotateccw', label: 'RotateCcw', icon: RotateCcw },
+	{ value: 'skull', label: 'Skull', icon: Skull },
+	{ value: 'castle', label: 'Castle', icon: Castle },
+	{ value: 'user', label: 'User', icon: User },
+	{ value: 'tent', label: 'Tent', icon: Tent },
+	{ value: 'sparkles', label: 'Sparkles', icon: Sparkles },
+	{ value: 'home', label: 'Home', icon: Home },
+	{ value: 'sword', label: 'Sword', icon: Sword },
+	{ value: 'anchor', label: 'Anchor', icon: Anchor },
+	{ value: 'mountain', label: 'Mountain', icon: Mountain },
+	{ value: 'scroll', label: 'Scroll', icon: Scroll },
 ];
 
 const Header = ({ title, onDelete, onClose }) => (
@@ -8601,7 +8627,7 @@ export default function MapManagerPage() {
 	// --- RENDER: EDITOR MODE ---
 	if (selectedMap) {
 		return (
-			<div className='h-[calc(100vh-64px)] flex flex-col'>
+			<div className='h-[100vh] flex flex-col'>
 				<div className='bg-background border-b border-border p-2 flex items-center gap-4'>
 					<Button variant='ghost' size='sm' icon={ArrowLeft} onClick={() => setSelectedMap(null)}>
 						Back to List
@@ -9337,12 +9363,10 @@ export function useMapData() {
 --- END OF features\atlas\useMapData.js ---
 
 --- FILE: features\atlas\api\mapService.js ---
-// features/atlas/api/mapService.js
 import { supabase } from '@/shared/api/supabaseClient';
 
 /**
  * Fetches a specific map by its URL key for the active campaign.
- * STRICT MODE: Only fetches from DB. No fallback to local files.
  */
 export const fetchMapByKey = async (campaignId, mapKey) => {
 	if (!campaignId || !mapKey) return null;
@@ -9355,40 +9379,77 @@ export const fetchMapByKey = async (campaignId, mapKey) => {
 		.maybeSingle();
 
 	if (error) {
-		console.error('[Atlas] Error fetching map:', error);
+		console.error('[MapService] Error fetching map:', error);
 		return null;
 	}
 
-	if (!data) {
-		console.warn(`[Atlas] Map '${mapKey}' not found in database.`);
-		return null;
-	}
+	if (!data) return null;
 
-	// Merge config (metadata) and data (content) into a single View Model
-	// This creates a unified structure for the frontend
+	// Reconstruct the object structure
 	return {
-		id: data.id,
-		key: data.key,
-		...data.config, // sizes, path, parentId, etc.
-		...data.data, // markers, paths, areas, overlays
+		// Merge 'config' (metadata + parentId) back to the root level
+		// so the UI can find mapConfig.parentId if needed
+		...data.config,
+		metadata: data.config, // Keep a specific metadata key for compatibility
+
+		// Spread the content data (annotations, paths, etc)
+		...data.data,
 	};
+};
+
+export const upsertMap = async (campaignId, mapKey, title, config, contentData) => {
+	const payload = {
+		campaign_id: campaignId,
+		key: mapKey,
+		title: title,
+		config: config,
+		data: contentData,
+		updated_at: new Date(),
+	};
+
+	const { data, error } = await supabase
+		.from('maps')
+		.upsert(payload, { onConflict: 'campaign_id, key' })
+		.select()
+		.single();
+
+	if (error) throw error;
+	return data;
+};
+
+export const fetchCampaignMaps = async (campaignId) => {
+	const { data, error } = await supabase.from('maps').select('id, key, title').eq('campaign_id', campaignId);
+
+	if (error) throw error;
+	return data;
+};
+
+/**
+ * Updates only the content data (markers, paths, etc) of a map.
+ */
+export const updateMapData = async (mapId, contentData) => {
+	const { error } = await supabase
+		.from('maps')
+		.update({
+			data: contentData,
+			updated_at: new Date(),
+		})
+		.eq('id', mapId);
+
+	if (error) throw error;
+	return true;
 };
 
 --- END OF features\atlas\api\mapService.js ---
 
 --- FILE: features\atlas\components\AtlasSidebar.jsx ---
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { clsx } from 'clsx';
 import {
 	Map as MapIcon,
 	Search,
 	Layers,
 	BookOpen,
-	ChevronRight,
-	ChevronDown,
-	Eye,
-	EyeOff,
-	Crosshair,
 	Navigation,
 	LocateFixed,
 	PanelLeftClose,
@@ -9397,139 +9458,24 @@ import {
 	X,
 } from 'lucide-react';
 import { useAtlas } from '../context/AtlasContext';
-
-// --- Compact Sidebar Components ---
-
-const SidebarItem = ({ label, isVisible, onToggle, onNavigate, icon: Icon }) => (
-	<div className='flex items-center gap-1 md:py-0.5 hover:bg-black/5 group rounded-md transition-colors min-w-0'>
-		<button
-			onClick={(e) => {
-				e.stopPropagation();
-				onToggle();
-			}}
-			className={clsx(
-				'p-2 md:p-0.5 rounded transition-colors shrink-0 outline-none',
-				isVisible ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground/40 hover:text-muted-foreground'
-			)}>
-			{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
-		</button>
-
-		<button
-			onClick={onNavigate}
-			className='flex-1 flex items-center text-left min-w-0 gap-2 py-1 md:py-0.5 outline-none'>
-			{Icon && <Icon size={12} className='text-muted-foreground/70 shrink-0' />}
-			<span
-				className={clsx(
-					'text-sm md:text-xs truncate transition-opacity',
-					!isVisible && 'opacity-50 text-muted-foreground'
-				)}>
-				{label}
-			</span>
-		</button>
-
-		<button
-			onClick={(e) => {
-				e.stopPropagation();
-				onNavigate();
-			}}
-			className='hidden md:block p-0.5 text-muted-foreground/0 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0 transition-all'
-			title='Fly To'>
-			<Crosshair size={12} />
-		</button>
-	</div>
-);
-
-const SidebarGroup = ({ label, items, visibility, onToggleItem, onToggleGroup, onFlyTo }) => {
-	const [isExpanded, setIsExpanded] = useState(true);
-
-	const visibleCount = items.filter((i) => visibility[i.id]).length;
-	const isAllVisible = visibleCount === items.length;
-	const isNoneVisible = visibleCount === 0;
-	const isMixed = !isAllVisible && !isNoneVisible;
-
-	const handleGroupToggle = (e) => {
-		e.stopPropagation();
-		onToggleGroup(
-			items.map((i) => i.id),
-			isMixed ? true : !isAllVisible
-		);
-	};
-
-	return (
-		<div className='mb-0.5'>
-			<div className='flex items-center gap-1 px-2 py-2 md:py-1 sticky top-0 bg-muted/95 backdrop-blur-sm z-10 select-none group/header hover:bg-black/5 rounded-md'>
-				<button
-					onClick={() => setIsExpanded(!isExpanded)}
-					className='p-1 text-muted-foreground hover:text-foreground transition-colors'>
-					{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-				</button>
-
-				<span
-					className='flex-1 text-xs md:text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer truncate'
-					onClick={() => setIsExpanded(!isExpanded)}>
-					{label} <span className='opacity-50 ml-1'>({items.length})</span>
-				</span>
-
-				<button
-					onClick={handleGroupToggle}
-					className={clsx(
-						'p-1 rounded transition-colors',
-						isAllVisible ? 'text-primary' : isMixed ? 'text-primary/70' : 'text-muted-foreground/30'
-					)}>
-					{isAllVisible ? <Eye size={12} /> : isMixed ? <Eye size={12} className='opacity-50' /> : <EyeOff size={12} />}
-				</button>
-			</div>
-
-			{isExpanded && (
-				<div className='pl-1 space-y-0.5 ml-2 border-l border-border/40'>
-					{items.map((item) => (
-						<SidebarItem
-							key={item.id}
-							label={item.label}
-							isVisible={!!visibility[item.id]}
-							onToggle={() => onToggleItem(item.id)}
-							onNavigate={() => onFlyTo(item.position)}
-						/>
-					))}
-				</div>
-			)}
-		</div>
-	);
-};
-
-// --- Main Sidebar ---
+import { useAtlasSearch } from '../utils/useAtlasSearch';
+import { SidebarItem } from './sidebar/SidebarItem';
+import { SidebarGroup } from './sidebar/SidebarGroup';
 
 export const AtlasSidebar = () => {
 	const { mapData, isLoading, activeTab, setActiveTab, visibility, toggleItem, toggleGroup, flyTo } = useAtlas();
-	const [searchTerm, setSearchTerm] = useState('');
+	const { searchTerm, setSearchTerm, filteredData } = useAtlasSearch(mapData);
+
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
 	const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
 
-	// Filtering Logic
-	const filteredData = useMemo(() => {
-		if (!mapData) return null;
-
-		const filterFn = (item) => item.label && item.label.toLowerCase().includes(searchTerm.toLowerCase());
-
-		return {
-			groups: mapData.groups
-				.map((g) => ({
-					...g,
-					items: g.items.filter(filterFn),
-				}))
-				.filter((g) => g.items.length > 0),
-
-			sessions: mapData.sessions.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase())),
-
-			overlays: mapData.overlays.filter((o) => o.name.toLowerCase().includes(searchTerm.toLowerCase())),
-
-			// This is the key part that was likely missing or causing issues
-			areas: (mapData.areas || []).filter((a) => a.label && a.label.toLowerCase().includes(searchTerm.toLowerCase())),
-		};
-	}, [mapData, searchTerm]);
-
 	if (isLoading || !filteredData) return null;
 	const title = mapData.config.label || mapData.config.title || 'Atlas';
+
+	const handleFlyTo = (pos) => {
+		flyTo(pos);
+		if (window.innerWidth < 768) setIsMobileOpen(false);
+	};
 
 	const Tab = ({ id, icon: Icon, label }) => (
 		<button
@@ -9548,11 +9494,11 @@ export const AtlasSidebar = () => {
 	return (
 		<>
 			{/* Mobile Trigger */}
-			<div className='absolute top-4 right-4 z-[400] md:hidden'>
+			<div className='absolute top-4 left-4 z-[400] md:hidden'>
 				{!isMobileOpen && (
 					<button
 						onClick={() => setIsMobileOpen(true)}
-						className='p-2 bg-background border border-border shadow-lg rounded-md'>
+						className='p-2 bg-background border border-border shadow-lg rounded-md text-foreground'>
 						<Menu size={20} />
 					</button>
 				)}
@@ -9627,10 +9573,7 @@ export const AtlasSidebar = () => {
 									visibility={visibility}
 									onToggleItem={toggleItem}
 									onToggleGroup={toggleGroup}
-									onFlyTo={(pos) => {
-										flyTo(pos);
-										if (window.innerWidth < 768) setIsMobileOpen(false);
-									}}
+									onFlyTo={handleFlyTo}
 								/>
 							))}
 							{filteredData.groups.length === 0 && (
@@ -9649,10 +9592,7 @@ export const AtlasSidebar = () => {
 									icon={Navigation}
 									isVisible={visibility[`session-${session.name}`]}
 									onToggle={() => toggleItem(`session-${session.name}`)}
-									onNavigate={() => {
-										flyTo(session.points?.[0]?.coordinates);
-										if (window.innerWidth < 768) setIsMobileOpen(false);
-									}}
+									onNavigate={() => handleFlyTo(session.points?.[0]?.coordinates)}
 								/>
 							))}
 						</div>
@@ -9674,10 +9614,7 @@ export const AtlasSidebar = () => {
 											visibility={visibility}
 											onToggleItem={toggleItem}
 											onToggleGroup={toggleGroup}
-											onFlyTo={(pos) => {
-												flyTo(pos);
-												if (window.innerWidth < 768) setIsMobileOpen(false);
-											}}
+											onFlyTo={handleFlyTo}
 										/>
 									) : (
 										<div className='px-3 py-1 text-xs text-muted-foreground italic opacity-70'>No regions found.</div>
@@ -9697,10 +9634,7 @@ export const AtlasSidebar = () => {
 										icon={Layers}
 										isVisible={visibility[`overlay-${o.name}`]}
 										onToggle={() => toggleItem(`overlay-${o.name}`)}
-										onNavigate={() => {
-											flyTo(o.bounds?.[0]);
-											if (window.innerWidth < 768) setIsMobileOpen(false);
-										}}
+										onNavigate={() => handleFlyTo(o.bounds?.[0])}
 									/>
 								))}
 								{filteredData.overlays.length === 0 && (
@@ -10534,6 +10468,119 @@ export const MapRecaps = ({ sessions }) => {
 
 --- END OF features\atlas\components\layers\MapRecaps.jsx ---
 
+--- FILE: features\atlas\components\sidebar\SidebarGroup.jsx ---
+import React, { useState } from 'react';
+import { clsx } from 'clsx';
+import { ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { SidebarItem } from './SidebarItem';
+
+export const SidebarGroup = ({ label, items, visibility, onToggleItem, onToggleGroup, onFlyTo }) => {
+	const [isExpanded, setIsExpanded] = useState(true);
+
+	const visibleCount = items.filter((i) => visibility[i.id]).length;
+	const isAllVisible = visibleCount === items.length;
+	const isNoneVisible = visibleCount === 0;
+	const isMixed = !isAllVisible && !isNoneVisible;
+
+	const handleGroupToggle = (e) => {
+		e.stopPropagation();
+		// If mixed, turn ON. If all on, turn OFF.
+		onToggleGroup(
+			items.map((i) => i.id),
+			isMixed ? true : !isAllVisible
+		);
+	};
+
+	return (
+		<div className='mb-0.5'>
+			<div className='flex items-center gap-1 px-2 py-2 md:py-1 sticky top-0 bg-muted/95 backdrop-blur-sm z-10 select-none group/header hover:bg-black/5 rounded-md'>
+				<button
+					onClick={() => setIsExpanded(!isExpanded)}
+					className='p-1 text-muted-foreground hover:text-foreground transition-colors'>
+					{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+				</button>
+
+				<span
+					className='flex-1 text-xs md:text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer truncate'
+					onClick={() => setIsExpanded(!isExpanded)}>
+					{label} <span className='opacity-50 ml-1'>({items.length})</span>
+				</span>
+
+				<button
+					onClick={handleGroupToggle}
+					className={clsx(
+						'p-1 rounded transition-colors',
+						isAllVisible ? 'text-primary' : isMixed ? 'text-primary/70' : 'text-muted-foreground/30'
+					)}>
+					{isAllVisible ? <Eye size={12} /> : isMixed ? <Eye size={12} className='opacity-50' /> : <EyeOff size={12} />}
+				</button>
+			</div>
+
+			{isExpanded && (
+				<div className='pl-1 space-y-0.5 ml-2 border-l border-border/40'>
+					{items.map((item) => (
+						<SidebarItem
+							key={item.id}
+							label={item.label}
+							isVisible={!!visibility[item.id]}
+							onToggle={() => onToggleItem(item.id)}
+							onNavigate={() => onFlyTo(item.position)}
+						/>
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\atlas\components\sidebar\SidebarGroup.jsx ---
+
+--- FILE: features\atlas\components\sidebar\SidebarItem.jsx ---
+import React from 'react';
+import { clsx } from 'clsx';
+import { Eye, EyeOff, Crosshair } from 'lucide-react';
+
+export const SidebarItem = ({ label, isVisible, onToggle, onNavigate, icon: Icon }) => (
+	<div className='flex items-center gap-1 px-2 py-2 md:py-0.5 hover:bg-black/5 group rounded-md transition-colors min-w-0'>
+		<button
+			onClick={(e) => {
+				e.stopPropagation();
+				onToggle();
+			}}
+			className={clsx(
+				'p-2 md:p-0.5 rounded transition-colors shrink-0 outline-none',
+				isVisible ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground/40 hover:text-muted-foreground'
+			)}>
+			{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+		</button>
+
+		<button
+			onClick={onNavigate}
+			className='flex-1 flex items-center text-left min-w-0 gap-2 py-1 md:py-0.5 outline-none'>
+			{Icon && <Icon size={12} className='text-muted-foreground/70 shrink-0' />}
+			<span
+				className={clsx(
+					'text-sm md:text-xs truncate transition-opacity',
+					!isVisible && 'opacity-50 text-muted-foreground'
+				)}>
+				{label}
+			</span>
+		</button>
+
+		<button
+			onClick={(e) => {
+				e.stopPropagation();
+				onNavigate();
+			}}
+			className='hidden md:block p-0.5 text-muted-foreground/0 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0 transition-all'
+			title='Fly To'>
+			<Crosshair size={12} />
+		</button>
+	</div>
+);
+
+--- END OF features\atlas\components\sidebar\SidebarItem.jsx ---
+
 --- FILE: features\atlas\config\mapConfig.js ---
 
 --- END OF features\atlas\config\mapConfig.js ---
@@ -11224,10 +11271,13 @@ import {
 	Square,
 	Star,
 	Flag,
+	RotateCcw, // Added this import
 } from 'lucide-react';
 
 // 1. Extended Icon Map
+// Maps both semantic categories (e.g., 'combat') and direct icon names (e.g., 'skull')
 const ICON_MAP = {
+	// Semantic Categories
 	combat: Skull,
 	danger: Skull,
 	encounter: Sword,
@@ -11243,11 +11293,25 @@ const ICON_MAP = {
 	landmark: MapPin,
 	dungeon: Mountain,
 	quest: Scroll,
+
+	// Direct Dropdown Matches
+	default: MapPin,
+	mappin: MapPin,
 	flag: Flag,
 	circle: Circle,
 	square: Square,
 	star: Star,
-	default: MapPin,
+	rotateccw: RotateCcw, // New mapping
+	skull: Skull,
+	castle: Castle,
+	user: User,
+	tent: Tent,
+	sparkles: Sparkles,
+	home: Home,
+	sword: Sword,
+	anchor: Anchor,
+	mountain: Mountain,
+	scroll: Scroll,
 };
 
 // Singleton for invisible/interactive-only markers
@@ -11307,7 +11371,7 @@ export const createFlatMarker = (IconComponent, color = '#d97706') => {
 
 	return L.divIcon({
 		className: 'custom-flat-marker',
-		html: `<div style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transform: transition: transform 0.2s;">${iconHtml}</div>`,
+		html: `<div style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transition: transform 0.2s;">${iconHtml}</div>`,
 		iconSize: [24, 24],
 		iconAnchor: [12, 12],
 		popupAnchor: [0, -12],
@@ -11366,9 +11430,13 @@ export const resolveMarkerIcon = (marker) => {
 	// 4. Determine Icon Component
 	let IconComponent = ICON_MAP.default;
 
-	// Check specific custom icon setting first
+	// Check specific custom icon setting first (matches your Dropdown values)
 	if (customIcon && ICON_MAP[customIcon]) {
 		IconComponent = ICON_MAP[customIcon];
+	}
+	// Also check 'icon' property in case DB saves it there instead of customIcon
+	else if (icon && ICON_MAP[icon]) {
+		IconComponent = ICON_MAP[icon];
 	}
 	// Fallback to category mapping
 	else {
@@ -11466,6 +11534,39 @@ export const createMidpointIcon = () =>
 	});
 
 --- END OF features\atlas\utils\markerUtils.js ---
+
+--- FILE: features\atlas\utils\useAtlasSearch.jsx ---
+import { useState, useMemo } from 'react';
+
+export const useAtlasSearch = (mapData) => {
+	const [searchTerm, setSearchTerm] = useState('');
+
+	const filteredData = useMemo(() => {
+		if (!mapData) return null;
+
+		const term = searchTerm.toLowerCase();
+		const filterFn = (item) => item.label && item.label.toLowerCase().includes(term);
+
+		return {
+			groups: mapData.groups
+				.map((g) => ({
+					...g,
+					items: g.items.filter(filterFn),
+				}))
+				.filter((g) => g.items.length > 0),
+
+			sessions: mapData.sessions.filter((s) => s.name.toLowerCase().includes(term)),
+
+			overlays: mapData.overlays.filter((o) => o.name.toLowerCase().includes(term)),
+
+			areas: (mapData.areas || []).filter((a) => a.label && a.label.toLowerCase().includes(term)),
+		};
+	}, [mapData, searchTerm]);
+
+	return { searchTerm, setSearchTerm, filteredData };
+};
+
+--- END OF features\atlas\utils\useAtlasSearch.jsx ---
 
 --- FILE: features\campaign\CampaignContext.jsx ---
 import { createContext, useContext, useMemo } from 'react';
@@ -21910,7 +22011,7 @@ export default function DevAdminButton() {
 	return (
 		<Link
 			to='/dm'
-			className='fixed bottom-6 left-6 lg:left-[unset] lg:right-6 z-50 flex items-center gap-2 px-4 py-1 bg-muted  rounded-full shadow-xl hover:bg-background hover:scale-105 transition-all border border-stone-300'
+			className='fixed bottom-6 left-6 lg:left-[unset] lg:right-6 z-[999] flex items-center gap-2 px-4 py-1 bg-muted  rounded-full shadow-xl hover:bg-background hover:scale-105 transition-all border border-stone-300'
 			title='Open DM Console (Dev Mode Only)'>
 			<Wrench size={14} />
 			<span className='hidden md:inline'>Dev</span>

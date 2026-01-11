@@ -99,6 +99,9 @@ PARTIAL BUNDLE: FEATURES SMART-TOOLTIP
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
       config/
         mapConfig.js
       context/
@@ -113,6 +116,7 @@ PARTIAL BUNDLE: FEATURES SMART-TOOLTIP
       utils/
         mapNavigation.js
         markerUtils.js
+        useAtlasSearch.jsx
     campaign/
       CampaignContext.jsx
       useCampaignData.js

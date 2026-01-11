@@ -99,6 +99,9 @@ PARTIAL BUNDLE: APP
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
       config/
         mapConfig.js
       context/
@@ -113,6 +116,7 @@ PARTIAL BUNDLE: APP
       utils/
         mapNavigation.js
         markerUtils.js
+        useAtlasSearch.jsx
     campaign/
       CampaignContext.jsx
       useCampaignData.js

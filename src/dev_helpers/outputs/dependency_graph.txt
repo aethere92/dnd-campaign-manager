@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-10 11:27:13
+Generated: 2026-01-11 16:40:03
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -356,6 +356,9 @@ features\atlas\api\mapService.js:
 
 features\atlas\components\AtlasSidebar.jsx:
   → ../context/AtlasContext
+  → ../utils/useAtlasSearch
+  → ./sidebar/SidebarGroup
+  → ./sidebar/SidebarItem
   → clsx
   → react
 
@@ -414,6 +417,17 @@ features\atlas\components\layers\MapRecaps.jsx:
   → react
   → react-leaflet
 
+features\atlas\components\sidebar\SidebarGroup.jsx:
+  → ./SidebarItem
+  → clsx
+  → lucide-react
+  → react
+
+features\atlas\components\sidebar\SidebarItem.jsx:
+  → clsx
+  → lucide-react
+  → react
+
 features\atlas\components\useMapCanvasViewModel.js:
   → lucide-react
   → react
@@ -449,6 +463,9 @@ features\atlas\utils\markerUtils.js:
   → leaflet
   → react
   → react-dom/server
+
+features\atlas\utils\useAtlasSearch.jsx:
+  → react
 
 features\campaign\CampaignContext.jsx:
   → ./useCampaignData
