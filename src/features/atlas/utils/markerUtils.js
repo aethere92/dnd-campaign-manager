@@ -25,6 +25,27 @@ import {
 	Droplet,
 	Feather,
 	Book,
+	Heart,
+	MessageCircle,
+	Bell,
+	Mail,
+	Camera,
+	Music,
+	Video,
+	Image,
+	FileText,
+	Folder,
+	Download,
+	Upload,
+	Share2,
+	Settings,
+	Search,
+	Filter,
+	Plus,
+	Minus,
+	Check,
+	X,
+	ChevronUp,
 
 	// RPG / Fantasy
 	Skull,
@@ -43,11 +64,59 @@ import {
 	RotateCcw,
 	AlertCircle,
 	Type,
-
-	// NEW REQUESTS
 	Trees,
 	Globe,
 	Landmark,
+	Compass,
+	Map,
+	Navigation,
+	Shield as ShieldAlt,
+	Swords,
+	Wand2,
+	Trophy,
+	Award,
+	Gift,
+	Package,
+	Box,
+	Crosshair,
+
+	// Nature & Places
+	Sun,
+	Moon,
+	Cloud,
+	CloudRain,
+	Snowflake,
+	Wind,
+	Palmtree,
+	Leaf,
+	Coffee,
+	Beer,
+	Utensils,
+	ShoppingCart,
+	Store,
+	Building,
+	Church,
+	Hospital,
+	School,
+	Plane,
+	Car,
+	Bike,
+	Train,
+	Ship,
+	Rocket,
+
+	// Activities
+	Dumbbell,
+	Gamepad2,
+	Puzzle,
+	Paintbrush,
+	Wrench,
+	Briefcase,
+	GraduationCap,
+	Heart as HeartAlt,
+	Users,
+	UserPlus,
+	Activity,
 } from 'lucide-react';
 
 // --- 1. SHAPE DEFINITIONS ---
@@ -102,8 +171,11 @@ export const MARKER_SHAPES = {
 
 // --- 2. ICON REGISTRY ---
 export const ICON_MAP = {
+	// Core
 	default: MapPin,
 	text: Type,
+
+	// Shapes & Markers
 	star: Star,
 	flag: Flag,
 	circle: Circle,
@@ -112,36 +184,123 @@ export const ICON_MAP = {
 	bookmark: Bookmark,
 	help: HelpCircle,
 	target: Target,
+	hexagon: Hexagon,
+	crosshair: Crosshair,
+
+	// RPG / Fantasy
 	skull: Skull,
 	sword: Sword,
+	swords: Swords,
 	shield: Shield,
+	shieldalt: ShieldAlt,
 	castle: Castle,
 	home: Home,
 	tent: Tent,
-	user: User,
 	sparkles: Sparkles,
-	anchor: Anchor,
-	mountain: Mountain,
-	scroll: Scroll,
 	ghost: Ghost,
 	gem: Gem,
 	crown: Crown,
 	key: Key,
 	lock: Lock,
-	eye: Eye,
-	zap: Zap,
+	wand: Wand2,
+	trophy: Trophy,
+	award: Award,
+
+	// Characters
+	user: User,
+	users: Users,
+	userplus: UserPlus,
+
+	// Tools & Items
+	scroll: Scroll,
+	hammer: Hammer,
+	axe: Axe,
+	wrench: Wrench,
+	coins: Coins,
+	book: Book,
+	gift: Gift,
+	package: Package,
+	box: Box,
+
+	// Nature & Environment
+	anchor: Anchor,
+	mountain: Mountain,
+	trees: Trees,
+	tree: Palmtree,
+	leaf: Leaf,
 	flame: Flame,
 	droplet: Droplet,
 	feather: Feather,
-	book: Book,
-	hammer: Hammer,
-	axe: Axe,
-	coins: Coins,
-	rotate: RotateCcw,
-	alert: AlertCircle,
-	trees: Trees,
+	sun: Sun,
+	moon: Moon,
+	cloud: Cloud,
+	rain: CloudRain,
+	snowflake: Snowflake,
+	wind: Wind,
+
+	// Places & Navigation
 	globe: Globe,
 	landmark: Landmark,
+	compass: Compass,
+	map: Map,
+	navigation: Navigation,
+	building: Building,
+	church: Church,
+	hospital: Hospital,
+	school: School,
+	store: Store,
+	coffee: Coffee,
+
+	// Transport
+	plane: Plane,
+	car: Car,
+	bike: Bike,
+	train: Train,
+	ship: Ship,
+	rocket: Rocket,
+
+	// Communication
+	eye: Eye,
+	bell: Bell,
+	mail: Mail,
+	message: MessageCircle,
+
+	// Media & Files
+	camera: Camera,
+	music: Music,
+	video: Video,
+	image: Image,
+	file: FileText,
+	folder: Folder,
+
+	// Actions
+	zap: Zap,
+	rotate: RotateCcw,
+	alert: AlertCircle,
+	download: Download,
+	upload: Upload,
+	share: Share2,
+	settings: Settings,
+	search: Search,
+	filter: Filter,
+	plus: Plus,
+	minus: Minus,
+	check: Check,
+	x: X,
+	chevron: ChevronUp,
+
+	// Activities
+	heart: Heart,
+	dumbbell: Dumbbell,
+	gamepad: Gamepad2,
+	puzzle: Puzzle,
+	paintbrush: Paintbrush,
+	briefcase: Briefcase,
+	graduation: GraduationCap,
+	cart: ShoppingCart,
+	utensils: Utensils,
+	beer: Beer,
+	activity: Activity,
 };
 
 const getContrastColor = (hex) => {
@@ -351,26 +510,32 @@ export const createMidpointIcon = () =>
 		iconAnchor: [4, 4],
 	});
 
-// 1. Solid Handle (Existing Points) - White with Black Border
-export const createPathHandleIcon = (isSelected) =>
-	L.divIcon({
+export const createPathHandleIcon = (isSelected, hasText) => {
+	// Logic: Blue if has text, Orange if selected, Black otherwise
+	const borderColor = isSelected ? '#d97706' : hasText ? '#3b82f6' : '#000000';
+	const borderWidth = hasText ? '3px' : '2px';
+	const scale = isSelected ? 'scale(1.2)' : 'scale(1)';
+
+	return L.divIcon({
 		className: 'path-handle-icon',
 		html: `
-        <div style="
-            width: 12px; 
-            height: 12px; 
-            background: #ffffff; 
-            border: 2px solid ${isSelected ? '#d97706' : '#000000'}; 
-            border-radius: 50%; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-            transition: transform 0.1s;
-        "></div>
-    `,
+            <div style="
+                width: 12px; 
+                height: 12px; 
+                background: #ffffff; 
+                border: ${borderWidth} solid ${borderColor}; 
+                border-radius: 50%; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+                transform: ${scale};
+                transition: transform 0.1s, border-color 0.2s;
+            "></div>
+        `,
 		iconSize: [12, 12],
 		iconAnchor: [6, 6],
 	});
+};
 
-// 2. Ghost Handle (Midpoints) - Semi-transparent, appears on hover
+// 2. Ghost Handle (Midpoints)
 export const createPathMidpointIcon = () =>
 	L.divIcon({
 		className: 'path-midpoint-icon',

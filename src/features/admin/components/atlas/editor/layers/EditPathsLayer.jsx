@@ -8,10 +8,9 @@ import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
 // Helper to find center between two coords
 const getMidpoint = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 
-const PathItem = ({ path, isSelected, isInteractive, dispatch }) => {
+const PathItem = ({ path, isSelected, isInteractive, selection, dispatch }) => {
+	// 1. Calculate Geometry
 	const rawPositions = path.points.map((p) => p.coordinates);
-
-	// Calculate Smooth Geometry for Display
 	const positions = useMemo(() => {
 		if (path.curviness > 0 && rawPositions.length > 1) {
 			return getSmoothPath(rawPositions, path.curviness);
@@ -23,7 +22,7 @@ const PathItem = ({ path, isSelected, isInteractive, dispatch }) => {
 
 	return (
 		<React.Fragment>
-			{/* 1. The Visible Line */}
+			{/* The Line */}
 			{positions.length > 0 && (
 				<Polyline
 					positions={positions}
@@ -39,6 +38,7 @@ const PathItem = ({ path, isSelected, isInteractive, dispatch }) => {
 						click: (e) => {
 							if (!isInteractive) return;
 							L.DomEvent.stopPropagation(e);
+							// Select the path container
 							dispatch({ type: 'SELECT_ITEM', payload: { type: 'path', id: path._id } });
 						},
 					}}>
@@ -54,47 +54,50 @@ const PathItem = ({ path, isSelected, isInteractive, dispatch }) => {
 				</Polyline>
 			)}
 
-			{/* 2. EDITING UI (Only when selected) */}
+			{/* EDIT HANDLES (Only when path is selected) */}
 			{isSelected && (
 				<>
 					{/* A. Vertex Handles (Existing Points) */}
-					{path.points.map((pt, idx) => (
-						<Marker
-							key={`v-${idx}`}
-							position={pt.coordinates}
-							icon={createPathHandleIcon(false)} // Solid White/Black
-							draggable={true}
-							zIndexOffset={1000}
-							eventHandlers={{
-								dragend: (e) => {
-									const { lat, lng } = e.target.getLatLng();
-									dispatch({
-										type: 'UPDATE_PATH_POINT',
-										id: path._id,
-										index: idx,
-										updates: { coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))] },
-									});
-								},
-								click: (e) => {
-									L.DomEvent.stopPropagation(e);
-									// Select for text editing
-									dispatch({
-										type: 'SELECT_ITEM',
-										payload: { type: 'path', id: path._id, index: idx },
-									});
-								},
-								contextmenu: (e) => {
-									L.DomEvent.stopPropagation(e);
-									// Right Click to Delete
-									dispatch({ type: 'DELETE_PATH_POINT', id: path._id, index: idx });
-								},
-							}}
-						/>
-					))}
-
-					{/* B. Midpoint Handles (Ghost Points) */}
 					{path.points.map((pt, idx) => {
-						// Don't render after the last point
+						const hasText = !!pt.text && pt.text.trim().length > 0;
+						const isPointSelected = selection?.index === idx;
+
+						return (
+							<Marker
+								key={`v-${idx}`}
+								position={pt.coordinates}
+								icon={createPathHandleIcon(isPointSelected, hasText)}
+								draggable={true}
+								zIndexOffset={1000}
+								eventHandlers={{
+									dragend: (e) => {
+										const { lat, lng } = e.target.getLatLng();
+										dispatch({
+											type: 'UPDATE_PATH_POINT',
+											id: path._id,
+											index: idx,
+											updates: { coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))] },
+										});
+									},
+									click: (e) => {
+										L.DomEvent.stopPropagation(e);
+										// Select Point for Editing
+										dispatch({
+											type: 'SELECT_ITEM',
+											payload: { type: 'path', id: path._id, index: idx },
+										});
+									},
+									contextmenu: (e) => {
+										L.DomEvent.stopPropagation(e);
+										dispatch({ type: 'DELETE_PATH_POINT', id: path._id, index: idx });
+									},
+								}}
+							/>
+						);
+					})}
+
+					{/* B. Midpoint Handles (Ghost Points for Insertion) */}
+					{path.points.map((pt, idx) => {
 						if (idx === path.points.length - 1) return null;
 
 						const nextPt = path.points[idx + 1];
@@ -104,24 +107,19 @@ const PathItem = ({ path, isSelected, isInteractive, dispatch }) => {
 							<Marker
 								key={`m-${idx}`}
 								position={mid}
-								icon={createPathMidpointIcon()} // Semi-transparent
+								icon={createPathMidpointIcon()}
 								zIndexOffset={900}
 								opacity={0.6}
 								eventHandlers={{
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
-										// Insert new point at index + 1
+										// Insert new point
 										dispatch({
 											type: 'INSERT_PATH_POINT',
 											id: path._id,
 											index: idx + 1,
 											coordinates: mid,
 										});
-									},
-									dragstart: (e) => {
-										// UX Polish: Dragging a ghost immediately creates it
-										// (This is tricky in Leaflet without complex state,
-										//  so click-to-create is safer for v1)
 									},
 								}}
 							/>
@@ -136,6 +134,7 @@ const PathItem = ({ path, isSelected, isInteractive, dispatch }) => {
 export default function EditPathsLayer() {
 	const { state, dispatch } = useAtlasEditor();
 	const { paths, selection, activeTool, visibility } = state;
+
 	const isInteractive = activeTool === 'paths';
 
 	if (!visibility.paths) return null;
@@ -147,6 +146,7 @@ export default function EditPathsLayer() {
 					key={path._id}
 					path={path}
 					isSelected={selection?.type === 'path' && selection.id === path._id}
+					selection={selection} // <--- Passed down here
 					isInteractive={isInteractive}
 					dispatch={dispatch}
 				/>
