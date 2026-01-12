@@ -2,208 +2,340 @@ import React from 'react';
 import L from 'leaflet';
 import { renderToString } from 'react-dom/server';
 import {
-	Skull,
+	// Generics
 	MapPin,
+	Shield,
+	Circle,
+	Square,
+	Triangle,
+	Bookmark,
+	Flag,
+	Star,
+	Ghost,
+	HelpCircle,
+	Hexagon,
+	Target,
+	Gem,
+	Crown,
+	Key,
+	Lock,
+	Eye,
+	Zap,
+	Flame,
+	Droplet,
+	Feather,
+	Book,
+
+	// RPG / Fantasy
+	Skull,
+	Sword,
 	Castle,
 	User,
 	Tent,
 	Sparkles,
 	Home,
-	Sword,
 	Anchor,
 	Mountain,
 	Scroll,
-	Circle,
-	Square,
-	Star,
-	Flag,
-	RotateCcw, // Added this import
+	Hammer,
+	Axe,
+	Coins,
+	RotateCcw,
+	AlertCircle,
+	Type,
+
+	// NEW REQUESTS
+	Trees,
+	Globe,
+	Landmark,
 } from 'lucide-react';
 
-// 1. Extended Icon Map
-// Maps both semantic categories (e.g., 'combat') and direct icon names (e.g., 'skull')
-const ICON_MAP = {
-	// Semantic Categories
-	combat: Skull,
-	danger: Skull,
-	encounter: Sword,
-	city: Castle,
-	town: Home,
-	village: Home,
-	npc: User,
-	people: User,
-	camp: Tent,
-	magic: Sparkles,
-	shrine: Sparkles,
-	port: Anchor,
-	landmark: MapPin,
-	dungeon: Mountain,
-	quest: Scroll,
+// --- 1. SHAPE DEFINITIONS ---
+export const MARKER_SHAPES = {
+	pin: {
+		label: 'Pin',
+		// Exact SVG from User
+		viewBox: '0 0 32 36',
+		width: 32,
+		height: 36,
+		iconY: 15,
+		type: 'dual',
+		path: 'M16 36C16 36 32 26.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.5 16 36 16 36Z',
+		innerPath: 'M16 33C16 33 29 24.5 29 16C29 8.8203 23.1797 3 16 3C8.8203 3 3 8.8203 3 16C3 24.5 16 33 16 33Z',
+	},
+	shield: {
+		label: 'Shield',
+		path: 'M15 1L3 5v8c0 7 5 13.5 12 15 7-1.5 12-8 12-15V5l-9-4z',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+	},
+	circle: {
+		label: 'Circle',
+		path: 'M15 2C7.8 2 2 7.8 2 15s5.8 13 13 13 13-5.8 13-13S22.2 2 15 2z',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+	},
+	square: {
+		label: 'Square',
+		path: 'M4 4h22v22H4z',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+	},
+	diamond: {
+		label: 'Diamond',
+		path: 'M15 2L2 15l13 13 13-13L15 2z',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+	},
+};
 
-	// Direct Dropdown Matches
+// --- 2. ICON REGISTRY ---
+export const ICON_MAP = {
 	default: MapPin,
-	mappin: MapPin,
+	text: Type,
+	star: Star,
 	flag: Flag,
 	circle: Circle,
 	square: Square,
-	star: Star,
-	rotateccw: RotateCcw, // New mapping
+	triangle: Triangle,
+	bookmark: Bookmark,
+	help: HelpCircle,
+	target: Target,
 	skull: Skull,
-	castle: Castle,
-	user: User,
-	tent: Tent,
-	sparkles: Sparkles,
-	home: Home,
 	sword: Sword,
+	shield: Shield,
+	castle: Castle,
+	home: Home,
+	tent: Tent,
+	user: User,
+	sparkles: Sparkles,
 	anchor: Anchor,
 	mountain: Mountain,
 	scroll: Scroll,
+	ghost: Ghost,
+	gem: Gem,
+	crown: Crown,
+	key: Key,
+	lock: Lock,
+	eye: Eye,
+	zap: Zap,
+	flame: Flame,
+	droplet: Droplet,
+	feather: Feather,
+	book: Book,
+	hammer: Hammer,
+	axe: Axe,
+	coins: Coins,
+	rotate: RotateCcw,
+	alert: AlertCircle,
+	trees: Trees,
+	globe: Globe,
+	landmark: Landmark,
 };
 
-// Singleton for invisible/interactive-only markers
-export const invisibleIcon = L.divIcon({
-	className: 'bg-transparent border-none',
-	html: '<div style="width: 100%; height: 100%;"></div>',
-	iconSize: [20, 20],
-	iconAnchor: [10, 10],
-	popupAnchor: [0, -10],
-});
-
-/**
- * Creates a "Pin" style marker using a Lucide React Icon
- */
-export const createPinMarker = (IconComponent, color = '#d97706') => {
-	const iconHtml = renderToString(
-		React.createElement(IconComponent, {
-			size: 14,
-			strokeWidth: 3,
-			color: 'white',
-		})
-	);
-
-	return L.divIcon({
-		className: 'custom-marker-container',
-		html: `
-            <div class="relative group" style="width: 32px; height: 36px;">
-                <svg width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.2));">
-                    <path d="M16 36C16 36 32 26.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.5 16 36 16 36Z" fill="white"/>
-                    <path d="M16 33C16 33 29 24.5 29 16C29 8.8203 23.1797 3 16 3C8.8203 3 3 8.8203 3 16C3 24.5 16 33 16 33Z" fill="${color}"/>
-                    <circle cx="16" cy="16" r="10" fill="white" fill-opacity="0.2"/>
-                </svg>
-                <div class="absolute top-[8px] left-[8px] w-[16px] h-[16px] flex items-center justify-center pointer-events-none transition-transform group-hover:-translate-y-0.5">
-                    ${iconHtml}
-                </div>
-            </div>
-        `,
-		iconSize: [32, 36],
-		iconAnchor: [16, 36],
-		popupAnchor: [0, -36],
-	});
+const getContrastColor = (hex) => {
+	if (!hex || !hex.startsWith('#')) return '#ffffff';
+	const r = parseInt(hex.substr(1, 2), 16);
+	const g = parseInt(hex.substr(3, 2), 16);
+	const b = parseInt(hex.substr(5, 2), 16);
+	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+	return yiq >= 128 ? '#000000' : '#ffffff';
 };
 
-/**
- * Creates a "Flat" style marker (Just the icon, no pin background)
- */
-export const createFlatMarker = (IconComponent, color = '#d97706') => {
-	const iconHtml = renderToString(
-		React.createElement(IconComponent, {
-			size: 24,
-			strokeWidth: 2.5,
-			color: color,
-			fill: color,
-			fillOpacity: 0.2,
-		})
-	);
-
-	return L.divIcon({
-		className: 'custom-flat-marker',
-		html: `<div style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transition: transform 0.2s;">${iconHtml}</div>`,
-		iconSize: [24, 24],
-		iconAnchor: [12, 12],
-		popupAnchor: [0, -12],
-	});
-};
-
-// Text Label Marker Generator
-export const createTextMarker = (label, fontSize, color = '#2c1a0e') => {
-	const sizeStyle = fontSize ? `${fontSize}px` : '1.5rem';
-	return L.divIcon({
-		className: 'map-text-marker',
-		html: `
-            <div style="transform: translate(-50%, -50%); width: max-content; text-align: center; display: flex; justify-content: center; align-items: center;">
-                <span style="font-family: 'Inter', sans-serif; text-transform: uppercase; font-weight: 600; font-size: ${sizeStyle}; color: ${color}; text-shadow: 0 0 4px #fff, 0 0 8px #fff; pointer-events: auto; cursor: pointer; white-space: nowrap;">
-                    ${label}
-                </span>
-            </div>`,
-		iconSize: [0, 0],
-		iconAnchor: [0, 0],
-		popupAnchor: [0, -10],
-	});
-};
-
-/**
- * Resolve Category Default Colors
- */
-const getCategoryColor = (category) => {
-	const cat = category?.toLowerCase() || '';
-	if (cat.includes('combat') || cat.includes('danger')) return '#dc2626'; // Red
-	if (cat.includes('magic') || cat.includes('shrine')) return '#7c3aed'; // Purple
-	if (['city', 'location', 'town', 'points of interest'].includes(cat)) return '#059669'; // Emerald
-	if (cat.includes('city') || cat.includes('town')) return '#1e40af'; // Blue
-	if (['npcs', 'people'].includes(cat)) return '#d97706'; // Orange
-	return '#d97706'; // Default Amber
-};
-
-/**
- * Logic Hub: Resolves the appropriate Leaflet icon
- */
+// --- 3. MAIN RENDERER ---
 export const resolveMarkerIcon = (marker) => {
-	const { icon, type, label, fontSize, category, color, iconType, customIcon } = marker;
+	const {
+		shape = 'pin',
+		icon = 'default',
+		color = '#d97706',
+		variant = 'large', // large | small | icon | text
+		label,
+		labelDisplay = 'hover',
+		scale = 1,
+	} = marker;
 
-	// 1. Text Marker
-	if (type === 'text' || icon === 'text') {
-		return createTextMarker(label, fontSize, color || '#2c1a0e');
+	// --- A. TEXT ONLY ---
+	if (variant === 'text') {
+		return L.divIcon({
+			className: 'custom-text-marker',
+			html: `
+                <div style="
+                    transform: translate(-50%, -50%) scale(var(--label-scale, 1)); 
+                    text-align: center;
+                    pointer-events: auto;
+                    width: max-content;
+                ">
+                    <span style="
+                        font-family: 'Inter', sans-serif;
+                        font-weight: 700;
+                        font-size: ${16 * scale}px; 
+                        color: ${color};
+                        text-shadow: 0 0 3px #000, 0 0 5px #000;
+                        white-space: nowrap;
+                    ">${label || 'Untitled'}</span>
+                </div>
+            `,
+			iconSize: [0, 0],
+			iconAnchor: [0, 0],
+		});
 	}
 
-	// 2. Invisible
-	if (!icon && !category && !customIcon) {
-		return invisibleIcon;
-	}
+	// --- B. GRAPHICAL VARIANTS ---
+	const ShapeDef = MARKER_SHAPES[shape] || MARKER_SHAPES.pin;
+	const iconKey = marker.customIcon || icon || 'default';
+	const IconComponent = ICON_MAP[iconKey] || ICON_MAP.default;
 
-	// 3. Determine Color (Manual override > Category default)
-	const finalColor = color || getCategoryColor(category);
+	// --- C. RENDER LOGIC ---
+	let html = '';
+	const finalScale = scale * (variant === 'small' ? 0.6 : 1);
+	const width = ShapeDef.width;
+	const height = ShapeDef.height;
 
-	// 4. Determine Icon Component
-	let IconComponent = ICON_MAP.default;
+	// Anchors
+	const anchor =
+		shape === 'pin' && variant === 'large'
+			? [(width * finalScale) / 2, height * finalScale]
+			: [(width * finalScale) / 2, (height * finalScale) / 2];
 
-	// Check specific custom icon setting first (matches your Dropdown values)
-	if (customIcon && ICON_MAP[customIcon]) {
-		IconComponent = ICON_MAP[customIcon];
-	}
-	// Also check 'icon' property in case DB saves it there instead of customIcon
-	else if (icon && ICON_MAP[icon]) {
-		IconComponent = ICON_MAP[icon];
-	}
-	// Fallback to category mapping
-	else {
-		const normalizedCat = category?.toLowerCase() || 'default';
-		for (const [key, comp] of Object.entries(ICON_MAP)) {
-			if (normalizedCat.includes(key)) {
-				IconComponent = comp;
-				break;
-			}
+	if (variant === 'icon') {
+		// --- ICON ONLY (Sticker Style) ---
+		// 1. Black Border (Thick Stroke)
+		const bgIconHtml = renderToString(
+			React.createElement(IconComponent, {
+				size: 26, // Base Size
+				strokeWidth: 6, // Thick Black Border (Creates the halo)
+				color: '#000000',
+				fill: 'none',
+				strokeLinejoin: 'round',
+				strokeLinecap: 'round',
+				style: { position: 'absolute', top: -1, left: -1 },
+			})
+		);
+		// 2. Colored Body (Medium Stroke)
+		const fgIconHtml = renderToString(
+			React.createElement(IconComponent, {
+				size: 24,
+				strokeWidth: 3, // Thinner Colored Stroke (Sits inside the black)
+				color: color || '#d97706', // Fallback color
+				fill: 'none',
+				strokeLinejoin: 'round',
+				strokeLinecap: 'round',
+				style: { position: 'relative', zIndex: 999 },
+			})
+		);
+
+		html = `
+            <div class="marker-icon-only transition-transform hover:scale-110" 
+                 style="position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+                        transform: scale(${scale}); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));">
+                ${bgIconHtml}
+                ${fgIconHtml}
+            </div>
+        `;
+	} else {
+		// --- SHAPE MODE (Pin/Shield/etc) ---
+		// Contrast Logic only applies to Shapes
+		const contrastColor = getContrastColor(color);
+
+		const innerIconHtml = renderToString(
+			React.createElement(IconComponent, {
+				size: 14,
+				strokeWidth: 2.5,
+				color: contrastColor,
+				fill: contrastColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+			})
+		);
+
+		let svgContent = '';
+		if (ShapeDef.type === 'dual') {
+			// Pin (User SVG)
+			svgContent = `
+                <path d="${ShapeDef.path}" fill="white" />
+                <path d="${ShapeDef.innerPath}" fill="${color}" />
+                <circle cx="16" cy="16" r="10" fill="white" fill-opacity="0.2" style="pointer-events: none;" />
+            `;
+		} else {
+			// Other Shapes (Auto-Border)
+			svgContent = `
+                <path d="${ShapeDef.path}" fill="${color}" stroke="white" stroke-width="2.5" stroke-linejoin="round" />
+            `;
 		}
+
+		html = `
+            <div class="marker-shape relative group transition-transform hover:-translate-y-1 origin-bottom"
+                 style="width: ${width}px; height: ${height}px; transform: scale(${finalScale});">
+                
+                <svg viewBox="${
+									ShapeDef.viewBox
+								}" width="100%" height="100%" style="overflow: visible; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));">
+                    ${svgContent}
+                </svg>
+
+                ${
+									variant !== 'small'
+										? `
+                    <div style="
+                        position: absolute; 
+                        top: ${ShapeDef.iconY}px; 
+                        left: 50%; 
+                        transform: translate(-50%, -50%); 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        pointer-events: none;
+                        width: 16px; 
+                        height: 16px;
+                    ">
+                        ${innerIconHtml}
+                    </div>
+                `
+										: ''
+								}
+            </div>
+        `;
 	}
 
-	// 5. Render Style (Pin vs Flat)
-	if (iconType === 'flat') {
-		return createFlatMarker(IconComponent, finalColor);
+	// --- D. LABEL ---
+	if (label && labelDisplay !== 'none') {
+		const labelClass =
+			labelDisplay === 'hover'
+				? 'opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0'
+				: 'opacity-100';
+
+		const topOffset = shape === 'pin' && variant === 'large' ? '100%' : '60%';
+
+		html += `
+            <div class="marker-label absolute left-1/2 -translate-x-1/2 
+                        bg-black/90 text-white text-[10px] font-bold px-2 py-0.5 rounded 
+                        whitespace-nowrap pointer-events-none transition-all duration-200
+                        ${labelClass} backdrop-blur-md shadow-sm z-50 border border-white/10"
+                 style="top: ${topOffset}; margin-top: 4px; font-family: 'Inter', sans-serif;">
+                ${label}
+            </div>
+        `;
 	}
 
-	return createPinMarker(IconComponent, finalColor);
+	return L.divIcon({
+		className: 'custom-composite-marker group',
+		html: `<div style="transform: scale(var(--label-scale, 1)); transform-origin: center bottom;">${html}</div>`,
+		iconSize: [width * finalScale, height * finalScale],
+		iconAnchor: anchor,
+		popupAnchor: [0, -anchor[1]],
+	});
 };
 
-// For session paths/dots
+export const createLabelIcon = (text, options) => L.divIcon({});
 export const createDotIcon = (color) =>
 	L.divIcon({
 		className: 'path-dot',
@@ -211,70 +343,48 @@ export const createDotIcon = (color) =>
 		iconSize: [12, 12],
 		iconAnchor: [6, 6],
 	});
-
-export const createLabelIcon = (text, options = {}) => {
-	const {
-		color = '#ffffff',
-		fontSize = 16,
-		rotation = 0,
-		isSelected = false,
-		bgColor = 'transparent',
-		bgOpacity = 0,
-	} = options;
-
-	const hexToRgb = (hex) => {
-		const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-		return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0,0,0';
-	};
-
-	const bgRgba = bgOpacity > 0 && bgColor ? `rgba(${hexToRgb(bgColor)}, ${bgOpacity})` : 'transparent';
-	const padding = '4px 12px';
-
-	return L.divIcon({
-		className: 'area-label-icon',
-		html: `
-            <div style="
-                position: relative;
-                width: max-content;
-                /* Scale Logic: Controlled by MapZoomHandler */
-                transform: translate(-50%, -50%) rotate(${rotation}deg) scale(var(--label-scale, 1));
-                transform-origin: center center;
-                will-change: transform; /* Performance optimization for zoom */
-                
-                color: ${color};
-                font-size: ${fontSize}px;
-                font-family: 'Cinzel', 'Inter', ui-serif, Georgia, serif; 
-                font-weight: 700;
-                text-align: center;
-                white-space: nowrap;
-                
-                cursor: ${isSelected ? 'move' : 'pointer'};
-                border: ${isSelected ? '2px dashed #3b82f6' : '1px solid transparent'};
-                padding: ${padding};
-                background-color: ${bgRgba};
-                border-radius: 6px;
-                pointer-events: auto;
-                
-                text-shadow: ${bgOpacity < 0.3 ? '0 1px 4px rgba(0,0,0,0.9)' : 'none'};
-                box-shadow: ${isSelected ? '0 4px 12px rgba(0,0,0,0.3)' : 'none'};
-                user-select: none;
-                transition: border-color 0.2s, box-shadow 0.2s;
-            ">
-                ${text}
-            </div>
-        `,
-		iconSize: [0, 0],
-		iconAnchor: [0, 0],
-	});
-};
-
-/**
- * Midpoint handle for splitting lines
- */
 export const createMidpointIcon = () =>
 	L.divIcon({
 		className: 'midpoint-handle',
 		html: `<div style="width: 8px; height: 8px; background: rgba(255,255,255,0.5); border: 1px solid #3b82f6; border-radius: 50%; opacity: 0.6; transition: opacity 0.2s;"></div>`,
 		iconSize: [8, 8],
 		iconAnchor: [4, 4],
+	});
+
+// 1. Solid Handle (Existing Points) - White with Black Border
+export const createPathHandleIcon = (isSelected) =>
+	L.divIcon({
+		className: 'path-handle-icon',
+		html: `
+        <div style="
+            width: 12px; 
+            height: 12px; 
+            background: #ffffff; 
+            border: 2px solid ${isSelected ? '#d97706' : '#000000'}; 
+            border-radius: 50%; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
+        "></div>
+    `,
+		iconSize: [12, 12],
+		iconAnchor: [6, 6],
+	});
+
+// 2. Ghost Handle (Midpoints) - Semi-transparent, appears on hover
+export const createPathMidpointIcon = () =>
+	L.divIcon({
+		className: 'path-midpoint-icon',
+		html: `
+        <div style="
+            width: 10px; 
+            height: 10px; 
+            background: #ffffff; 
+            border: 2px solid #000000; 
+            border-radius: 50%; 
+            opacity: 0.5;
+            cursor: pointer;
+        "></div>
+    `,
+		iconSize: [10, 10],
+		iconAnchor: [5, 5],
 	});

@@ -143,6 +143,31 @@ const reducer = (state, action) => {
 			};
 		}
 
+		case 'INSERT_PATH_POINT': {
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					const newPoints = [...p.points];
+					// Insert at specific index (e.g., between point 0 and 1)
+					newPoints.splice(action.index, 0, { coordinates: action.coordinates });
+					return { ...p, points: newPoints };
+				}),
+			};
+		}
+		case 'DELETE_PATH_POINT': {
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					// Prevent deleting if only 2 points left
+					if (p.points.length <= 2) return p;
+					const newPoints = p.points.filter((_, i) => i !== action.index);
+					return { ...p, points: newPoints };
+				}),
+			};
+		}
+
 		// --- CRUD: AREAS (Enhanced) ---
 		case 'ADD_AREA':
 			return {
