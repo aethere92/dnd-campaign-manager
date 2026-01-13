@@ -26,8 +26,6 @@ const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible,
 					{title}
 					<span className='ml-auto text-[10px] bg-muted px-1.5 rounded'>{items.length}</span>
 				</button>
-
-				{/* Global Toggle for Type */}
 				<button
 					onClick={(e) => {
 						e.stopPropagation();
@@ -41,7 +39,6 @@ const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible,
 					{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
 				</button>
 			</div>
-
 			{isOpen && isVisible && (
 				<div className='space-y-0.5 mt-1'>
 					{items.map((item) => {
@@ -67,23 +64,14 @@ const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible,
 };
 
 export default function EditorLayerList() {
-	const { state, dispatch } = useAtlasEditor();
+	const { state, actions } = useAtlasEditor();
 	const { markers, paths, areas, overlays, selection, visibility } = state;
 	const [search, setSearch] = useState('');
-
-	const handleSelect = (type, id) => {
-		dispatch({ type: 'SELECT_ITEM', payload: { type, id } });
-	};
-
-	const handleToggle = (type) => {
-		dispatch({ type: 'TOGGLE_VISIBILITY', payload: type });
-	};
 
 	const filter = (list) => list.filter((i) => (i.label || i.name || '').toLowerCase().includes(search.toLowerCase()));
 
 	return (
 		<div className='flex flex-col h-full bg-background/95 backdrop-blur border-r border-border w-64 z-10'>
-			{/* Header */}
 			<div className='p-3 border-b border-border'>
 				<div className='relative'>
 					<Search className='absolute left-2.5 top-2 text-muted-foreground' size={12} />
@@ -96,48 +84,46 @@ export default function EditorLayerList() {
 					/>
 				</div>
 			</div>
-
-			{/* List */}
 			<div className='flex-1 overflow-y-auto custom-scrollbar py-2'>
 				<Group
 					title='Markers'
 					icon={MapPin}
 					items={filter(markers)}
 					type='marker'
-					onSelect={handleSelect}
+					onSelect={actions.selectItem}
 					selection={selection}
 					isVisible={visibility.markers}
-					onToggle={() => handleToggle('markers')}
+					onToggle={() => actions.toggleVisibility('markers')}
 				/>
 				<Group
 					title='Paths'
 					icon={Footprints}
 					items={filter(paths)}
 					type='path'
-					onSelect={handleSelect}
+					onSelect={actions.selectItem}
 					selection={selection}
 					isVisible={visibility.paths}
-					onToggle={() => handleToggle('paths')}
+					onToggle={() => actions.toggleVisibility('paths')}
 				/>
 				<Group
 					title='Regions'
 					icon={Hexagon}
 					items={filter(areas)}
 					type='area'
-					onSelect={handleSelect}
+					onSelect={actions.selectItem}
 					selection={selection}
 					isVisible={visibility.areas}
-					onToggle={() => handleToggle('areas')}
+					onToggle={() => actions.toggleVisibility('areas')}
 				/>
 				<Group
 					title='Overlays'
 					icon={ImageIcon}
 					items={filter(overlays)}
 					type='overlay'
-					onSelect={handleSelect}
+					onSelect={actions.selectItem}
 					selection={selection}
 					isVisible={visibility.overlays}
-					onToggle={() => handleToggle('overlays')}
+					onToggle={() => actions.toggleVisibility('overlays')}
 				/>
 			</div>
 		</div>

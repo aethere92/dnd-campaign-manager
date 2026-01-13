@@ -5,8 +5,8 @@ import { useAtlasEditor } from '../AtlasEditorContext';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
 export default function EditMarkersLayer() {
-	const { state, dispatch } = useAtlasEditor();
-	const { markers, selection, activeTool, visibility } = state;
+	const { state, actions } = useAtlasEditor();
+	const { markers, selection, visibility } = state;
 
 	if (!visibility.markers) return null;
 
@@ -25,15 +25,11 @@ export default function EditMarkersLayer() {
 						eventHandlers={{
 							click: (e) => {
 								L.DomEvent.stopPropagation(e);
-								dispatch({ type: 'SELECT_ITEM', payload: { type: 'marker', id: m._id } });
+								actions.selectItem('marker', m._id);
 							},
 							dragend: (e) => {
 								const { lat, lng } = e.target.getLatLng();
-								dispatch({
-									type: 'UPDATE_MARKER',
-									id: m._id,
-									updates: { lat: Number(lat.toFixed(4)), lng: Number(lng.toFixed(4)) },
-								});
+								actions.updateMarker(m._id, { lat, lng });
 							},
 						}}
 					/>

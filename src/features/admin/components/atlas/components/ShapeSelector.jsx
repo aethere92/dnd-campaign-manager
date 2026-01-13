@@ -14,15 +14,16 @@ export default function ShapeSelector({ value, onChange, color = '#999' }) {
 						onClick={() => onChange(key)}
 						title={def.label}
 						className={clsx(
-							'aspect-square rounded-md border flex items-center justify-center transition-all hover:bg-muted',
-							isActive ? 'bg-primary/10 border-primary ring-1 ring-primary' : 'bg-card border-border'
+							'aspect-square rounded-lg border flex items-center justify-center transition-all hover:bg-muted/50',
+							isActive ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border text-muted-foreground'
 						)}>
 						<svg
 							viewBox={def.viewBox}
-							className='w-6 h-6 transition-colors'
+							className='w-6 h-6 transition-all'
 							style={{
-								fill: isActive ? color : '#e5e7eb',
-								stroke: isActive ? 'none' : '#9ca3af',
+								fill: isActive ? color : 'currentColor',
+								stroke: isActive ? 'none' : 'currentColor',
+								opacity: isActive ? 1 : 0.5,
 								strokeWidth: 2,
 							}}>
 							<path d={def.path} />

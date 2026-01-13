@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/11/2026, 9:55:30 PM
+   Generated: 1/13/2026, 6:57:19 PM
 =========================================
 
 -----------------------------------------
@@ -107,22 +107,67 @@ TABLE: characters [⚠️ RLS DISABLED]
     }
   },
   {
-    "id": "6e7b19f2-d755-4c8e-858c-ec998ff1382f",
-    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "name": "Nora",
-    "created_at": "2025-12-10T17:18:35.168Z",
-    "updated_at": "2026-01-07T18:51:01.921Z",
-    "description": null,
+    "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Olek",
+    "created_at": "2025-11-21T11:18:32.073Z",
+    "updated_at": "2026-01-13T15:50:04.281Z",
+    "description": "He is devotion given form - an angelic soul clad in armor, kind and just, friendly and ever ready for conversation. Olek is honorable to his very core, though humble in his ways, never one to boast or seek glory. His story is unlike any other. As a child, he and his sibling were raised not by kin of their own kind, but by wolves, deep within the forest. How they came to be there, he cannot say. The memory is lost to time or fate. But the pack was family, and he knew love in fur and fang. Then... [TRUNCATED AT 100 WORDS]",
     "attributes": {
-      "icon": "images/c01/chars/nora_portrait.webp",
-      "race": "Half-Elf",
-      "class": "Ranger",
+      "icon": "images/c02/chars/olek_icon.webp",
+      "race": "Aasimar",
+      "class": "Paladin / Warlock",
       "level": "8",
-      "speed": "35ft.",
+      "speed": "40ft.",
+      "gender": "Male",
+      "skills": [
+        "Acrobatics (-1)",
+        "Animal Handling (+4)",
+        "Arcana (+0)",
+        "Athletics (+5)",
+        "Deception (+4)",
+        "History (+0)",
+        "Insight (+4)",
+        "Intimidation (+4)",
+        "Investigation (+0)",
+        "Medicine (+1)",
+        "Nature (+0)",
+        "Perception (+4)",
+        "Performance (+4)",
+        "Persuasion (+7)",
+        "Religion (+0)",
+        "Sleight of Hand (-1)",
+        "Stealth (-1)",
+        "Survival (+1)"
+      ],
       "is_active": "true",
-      "languages": "Common, Deep Speech, Draconic, Dwarvish, Elvish, Giant, Sylvan",
-      "hit points": "95",
-      "armor class": "16"
+      "languages": "Common, Common Sign Language, Goblin",
+      "hit points": "67",
+      "initiative": "+2",
+      "armor class": "19",
+      "proficiency": "+3",
+      "saving throw": [
+        "STR +6",
+        "DEX +3",
+        "CON +6",
+        "INT +4",
+        "WIS +8",
+        "CHA +11"
+      ],
+      "ability score": [
+        "STR 14 (+2)",
+        "DEX 8 (-1)",
+        "CON 14 (+2)",
+        "INT 10 (+0)",
+        "WIS 12 (+1)",
+        "CHA 18 (+4)"
+      ],
+      "background_image": "images/c02/chars/olek_header.webp",
+      "additional senses": [
+        "Passive Perception 14",
+        "Passive Investigation 10",
+        "Passive Insight 14"
+      ]
     }
   }
 ]
@@ -414,25 +459,6 @@ TABLE: maps [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "f7311854-9a16-4098-8322-376140491e7d",
-    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "key": "khorinis",
-    "title": "khorinis",
-    "config": {
-      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis_transparent",
-      "mapId": "khorinis",
-      "sizes": {
-        "maxZoom": 6,
-        "imageWidth": 16035,
-        "imageHeight": 9581
-      },
-      "parentId": "world_maps",
-      "fileExtension": "webp"
-    },
-    "created_at": "2026-01-07T19:18:01.054Z",
-    "updated_at": "2026-01-11T07:32:41.420Z"
-  },
-  {
     "id": "082ec861-317a-4656-ad18-7a19f9497e48",
     "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
     "key": "khorinis_spider_cave",
@@ -497,6 +523,77 @@ TABLE: maps [⚠️ RLS DISABLED]
     },
     "created_at": "2026-01-07T19:18:00.850Z",
     "updated_at": "2026-01-11T07:23:21.438Z"
+  },
+  {
+    "id": "75f5ea76-e844-4299-98c5-c4099c629b41",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "key": "khorinis_teleporter_c",
+    "title": "khorinis_teleporter_c",
+    "config": {
+      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis_island/teleporter_c",
+      "mapId": "khorinis_teleporter_c",
+      "sizes": {
+        "maxZoom": 3,
+        "imageWidth": 1800,
+        "imageHeight": 1200
+      },
+      "parentId": "khorinis",
+      "fileExtension": "webp"
+    },
+    "data": {
+      "areas": {
+        "regions": {
+          "name": "Regions",
+          "items": []
+        }
+      },
+      "paths": [],
+      "overlays": [],
+      "annotations": {
+        "navigation_arrows": {
+          "name": "Navigation Arrows",
+          "items": [
+            {
+              "lat": -38.625,
+              "lng": 63.125,
+              "map": {
+                "exitZoom": 4,
+                "exitCoordinates": [
+                  -195,
+                  656
+                ]
+              },
+              "type": "place",
+              "color": "#059669",
+              "label": "To Korinis Island",
+              "mapLink": "khorinis"
+            }
+          ]
+        },
+        "points_of_interest": {
+          "name": "Points Of Interest",
+          "items": [
+            {
+              "lat": -104.75,
+              "lng": 197.25,
+              "map": {
+                "exitZoom": 2,
+                "exitCoordinates": [
+                  -370,
+                  610
+                ]
+              },
+              "type": "place",
+              "color": "#059669",
+              "label": "Teleporter to A (Pyramid)",
+              "mapLink": "khorinis_pyramid"
+            }
+          ]
+        }
+      }
+    },
+    "created_at": "2026-01-07T19:18:00.553Z",
+    "updated_at": "2026-01-11T16:19:27.487Z"
   }
 ]
 

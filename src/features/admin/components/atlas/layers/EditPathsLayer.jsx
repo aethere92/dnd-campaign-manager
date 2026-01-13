@@ -3,22 +3,28 @@ import { Polyline, Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createPathHandleIcon, createPathMidpointIcon } from '@/features/atlas/utils/markerUtils';
-import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
+import { getSmoothPath } from '@/features/atlas/utils/pathUtils'; // Import the new math
 
-// Helper to find center between two coords
 const getMidpoint = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 
-const PathItem = ({ path, isSelected, isInteractive, selection, dispatch }) => {
+const PathItem = ({ path, isSelected, isInteractive, selection, actions }) => {
 	// 1. Calculate Geometry
 	const rawPositions = path.points.map((p) => p.coordinates);
+
+	// 2. Smooth if needed
 	const positions = useMemo(() => {
-		if (path.curviness > 0 && rawPositions.length > 1) {
+		// Only curve if we have at least 3 points and curviness > 0
+		if (path.curviness > 0 && rawPositions.length >= 3) {
+			// Map 0.1-1.0 input to a reasonable tension (0.1 is tight, 1.0 is loose)
 			return getSmoothPath(rawPositions, path.curviness);
 		}
 		return rawPositions;
 	}, [rawPositions, path.curviness]);
 
 	if (positions.length === 0 && !isSelected) return null;
+
+	// 3. Label Style
+	const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
 
 	return (
 		<React.Fragment>
@@ -38,26 +44,25 @@ const PathItem = ({ path, isSelected, isInteractive, selection, dispatch }) => {
 						click: (e) => {
 							if (!isInteractive) return;
 							L.DomEvent.stopPropagation(e);
-							// Select the path container
-							dispatch({ type: 'SELECT_ITEM', payload: { type: 'path', id: path._id } });
+							actions.selectItem('path', path._id);
 						},
 					}}>
 					{path.name && path.labelDisplay !== 'none' && (
 						<Tooltip
 							permanent={path.labelDisplay === 'always'}
 							direction='center'
-							className='path-tooltip'
-							opacity={path.labelDisplay === 'hover' ? 0.9 : 1}>
-							<span className='font-bold text-xs font-serif'>{path.name}</span>
+							className={tooltipClass}
+							opacity={path.labelStyle === 'ghost' ? 1 : 0.9}>
+							<span>{path.name}</span>
 						</Tooltip>
 					)}
 				</Polyline>
 			)}
 
-			{/* EDIT HANDLES (Only when path is selected) */}
+			{/* EDIT HANDLES - Only visible when selected */}
 			{isSelected && (
 				<>
-					{/* A. Vertex Handles (Existing Points) */}
+					{/* Vertices */}
 					{path.points.map((pt, idx) => {
 						const hasText = !!pt.text && pt.text.trim().length > 0;
 						const isPointSelected = selection?.index === idx;
@@ -72,34 +77,24 @@ const PathItem = ({ path, isSelected, isInteractive, selection, dispatch }) => {
 								eventHandlers={{
 									dragend: (e) => {
 										const { lat, lng } = e.target.getLatLng();
-										dispatch({
-											type: 'UPDATE_PATH_POINT',
-											id: path._id,
-											index: idx,
-											updates: { coordinates: [Number(lat.toFixed(4)), Number(lng.toFixed(4))] },
-										});
+										actions.updatePathPoint(path._id, idx, { coordinates: [lat, lng] });
 									},
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
-										// Select Point for Editing
-										dispatch({
-											type: 'SELECT_ITEM',
-											payload: { type: 'path', id: path._id, index: idx },
-										});
+										actions.selectItem('path', path._id, idx);
 									},
 									contextmenu: (e) => {
 										L.DomEvent.stopPropagation(e);
-										dispatch({ type: 'DELETE_PATH_POINT', id: path._id, index: idx });
+										actions.deletePathPoint(path._id, idx);
 									},
 								}}
 							/>
 						);
 					})}
 
-					{/* B. Midpoint Handles (Ghost Points for Insertion) */}
+					{/* Midpoints (Insert) */}
 					{path.points.map((pt, idx) => {
 						if (idx === path.points.length - 1) return null;
-
 						const nextPt = path.points[idx + 1];
 						const mid = getMidpoint(pt.coordinates, nextPt.coordinates);
 
@@ -113,13 +108,7 @@ const PathItem = ({ path, isSelected, isInteractive, selection, dispatch }) => {
 								eventHandlers={{
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
-										// Insert new point
-										dispatch({
-											type: 'INSERT_PATH_POINT',
-											id: path._id,
-											index: idx + 1,
-											coordinates: mid,
-										});
+										actions.insertPathPoint(path._id, idx + 1, mid);
 									},
 								}}
 							/>
@@ -132,9 +121,8 @@ const PathItem = ({ path, isSelected, isInteractive, selection, dispatch }) => {
 };
 
 export default function EditPathsLayer() {
-	const { state, dispatch } = useAtlasEditor();
+	const { state, actions } = useAtlasEditor();
 	const { paths, selection, activeTool, visibility } = state;
-
 	const isInteractive = activeTool === 'paths';
 
 	if (!visibility.paths) return null;
@@ -146,9 +134,9 @@ export default function EditPathsLayer() {
 					key={path._id}
 					path={path}
 					isSelected={selection?.type === 'path' && selection.id === path._id}
-					selection={selection} // <--- Passed down here
+					selection={selection}
 					isInteractive={isInteractive}
-					dispatch={dispatch}
+					actions={actions}
 				/>
 			))}
 		</>

@@ -5,6 +5,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  merge_specific_files.py
   todo.md
   app/
     App.jsx
@@ -53,21 +54,37 @@ PARTIAL BUNDLE: FEATURES ATLAS
         SmartImageInput.jsx
         TacticalMapManager.jsx
         atlas/
-          AtlasForms.jsx
-          editor/
-            AtlasEditor.jsx
-            AtlasEditorContext.jsx
-            components/
-              EditorLayerList.jsx
-              EditorMapEvents.jsx
-              EditorSidebar.jsx
-              EditorToolbar.jsx
-              VertexHandle.jsx
-            layers/
-              EditAreasLayer.jsx
-              EditMarkersLayer.jsx
-              EditOverlaysLayer.jsx
-              EditPathsLayer.jsx
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
       config/
         adminStrategies.js
         imageManifest.json
@@ -116,6 +133,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
       utils/
         mapNavigation.js
         markerUtils.js
+        pathUtils.js
         useAtlasSearch.jsx
     campaign/
       CampaignContext.jsx
@@ -150,6 +168,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
         GraphLegend.jsx
       config/
         graphStyles.js
+      hooks/
       utils/
         graphMapper.js
     navigation/
@@ -1527,10 +1546,86 @@ export const MapOverlays = ({ overlays }) => {
 --- END OF features\atlas\components\layers\MapOverlays.jsx ---
 
 --- FILE: features\atlas\components\layers\MapRecaps.jsx ---
-import { Fragment } from 'react';
-import { Polyline, Marker, Popup } from 'react-leaflet';
+import React, { useMemo } from 'react';
+import { Polyline, Marker, Popup, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
 import { Calendar } from 'lucide-react';
 import { createDotIcon } from '@/features/atlas/utils/markerUtils';
+import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
+
+const PathRenderer = ({ session }) => {
+	// 1. Calculate Geometry (Smooth vs Raw)
+	const rawPositions = session.points.map((p) => p.coordinates);
+
+	const positions = useMemo(() => {
+		if (session.curviness > 0 && rawPositions.length > 1) {
+			return getSmoothPath(rawPositions, session.curviness);
+		}
+		return rawPositions;
+	}, [rawPositions, session.curviness]);
+
+	if (!positions || positions.length === 0) return null;
+
+	// 2. Resolve Styles
+	const color = session.color || '#d97706';
+	const weight = session.weight || 4;
+	const opacity = session.opacity || 0.8;
+	const dashArray = session.dashArray || null;
+
+	return (
+		<React.Fragment>
+			{/* The Path Itself */}
+			<Polyline
+				positions={positions}
+				pathOptions={{
+					color,
+					weight,
+					opacity,
+					dashArray,
+					lineCap: 'round',
+					lineJoin: 'round',
+				}}>
+				{/* Main Path Label (e.g. "Journey to Brindol") */}
+				{session.name && session.labelDisplay !== 'none' && (
+					<Tooltip
+						permanent={session.labelDisplay === 'always'}
+						direction='center'
+						className='path-tooltip'
+						opacity={session.labelDisplay === 'hover' ? 0.9 : 1}
+						sticky>
+						<span className='font-bold text-xs font-serif'>{session.name}</span>
+					</Tooltip>
+				)}
+			</Polyline>
+
+			{/* Narrative Points (The "Recap" Bubbles) */}
+			{session.points.map((point, idx) => {
+				if (!point.text) return null; // Only render if text exists
+
+				return (
+					<Marker
+						key={`${session.name}-p-${idx}`}
+						position={point.coordinates}
+						icon={createDotIcon(color)} // Small dot to indicate a story moment
+					>
+						<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
+							<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
+								{/* Header */}
+								<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
+									<Calendar size={12} className='text-primary' />
+									<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>{session.name}</span>
+								</div>
+
+								{/* Content */}
+								<div className='p-3 text-xs text-foreground/90 leading-snug'>{point.text}</div>
+							</div>
+						</Popup>
+					</Marker>
+				);
+			})}
+		</React.Fragment>
+	);
+};
 
 export const MapRecaps = ({ sessions }) => {
 	if (!sessions || sessions.length === 0) return null;
@@ -1538,36 +1633,7 @@ export const MapRecaps = ({ sessions }) => {
 	return (
 		<>
 			{sessions.map((session, idx) => (
-				<Fragment key={session.name}>
-					<Polyline
-						positions={session.points.map((p) => p.coordinates)}
-						pathOptions={{ color: session.lineColor || '#d97706', weight: 3, dashArray: '8, 8', opacity: 0.7 }}
-					/>
-
-					{session.points
-						.filter((p) => p.text)
-						.map((point, pIdx) => (
-							<Marker
-								key={`${session.name}-p-${pIdx}`}
-								position={point.coordinates}
-								icon={createDotIcon(session.lineColor || '#d97706')}>
-								<Popup closeButton={false} className='leaflet-popup-clean'>
-									<div className='flex flex-col w-[200px] font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
-										{/* Header */}
-										<div className='px-3 py-2 bg-amber-500/10/80 border-b border-primary/20 flex items-center gap-2'>
-											<Calendar size={12} className='text-primary' />
-											<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>
-												{session.name}
-											</span>
-										</div>
-
-										{/* Content */}
-										<div className='p-3 px-5 text-xs text-foreground/90 leading-snug'>{point.text}</div>
-									</div>
-								</Popup>
-							</Marker>
-						))}
-				</Fragment>
+				<PathRenderer key={session.id || idx} session={session} />
 			))}
 		</>
 	);
@@ -2362,264 +2428,296 @@ export const getMapConfig = (mapKey, campaignData) => {
 import React from 'react';
 import L from 'leaflet';
 import { renderToString } from 'react-dom/server';
-import {
-	Skull,
-	MapPin,
-	Castle,
-	User,
-	Tent,
-	Sparkles,
-	Home,
-	Sword,
-	Anchor,
-	Mountain,
-	Scroll,
-	Circle,
-	Square,
-	Star,
-	Flag,
-	RotateCcw, // Added this import
-} from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 
-// 1. Extended Icon Map
-// Maps both semantic categories (e.g., 'combat') and direct icon names (e.g., 'skull')
-const ICON_MAP = {
-	// Semantic Categories
-	combat: Skull,
-	danger: Skull,
-	encounter: Sword,
-	city: Castle,
-	town: Home,
-	village: Home,
-	npc: User,
-	people: User,
-	camp: Tent,
-	magic: Sparkles,
-	shrine: Sparkles,
-	port: Anchor,
-	landmark: MapPin,
-	dungeon: Mountain,
-	quest: Scroll,
-
-	// Direct Dropdown Matches
-	default: MapPin,
-	mappin: MapPin,
-	flag: Flag,
-	circle: Circle,
-	square: Square,
-	star: Star,
-	rotateccw: RotateCcw, // New mapping
-	skull: Skull,
-	castle: Castle,
-	user: User,
-	tent: Tent,
-	sparkles: Sparkles,
-	home: Home,
-	sword: Sword,
-	anchor: Anchor,
-	mountain: Mountain,
-	scroll: Scroll,
+// ==========================================
+// 1. SHAPE DEFINITIONS
+// ==========================================
+export const MARKER_SHAPES = {
+	pin: {
+		label: 'Pin',
+		viewBox: '0 0 32 36',
+		width: 32,
+		height: 36,
+		iconY: 15,
+		type: 'dual',
+		path: 'M16 36C16 36 32 26.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.5 16 36 16 36Z',
+		innerPath: 'M16 33C16 33 29 24.5 29 16C29 8.8203 23.1797 3 16 3C8.8203 3 3 8.8203 3 16C3 24.5 16 33 16 33Z',
+	},
+	shield: {
+		label: 'Shield',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+		path: 'M15 1L3 5v8c0 7 5 13.5 12 15 7-1.5 12-8 12-15V5l-9-4z',
+	},
+	circle: {
+		label: 'Circle',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+		path: 'M15 2C7.8 2 2 7.8 2 15s5.8 13 13 13 13-5.8 13-13S22.2 2 15 2z',
+	},
+	square: {
+		label: 'Square',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+		path: 'M4 4h22v22H4z',
+	},
+	diamond: {
+		label: 'Diamond',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+		path: 'M15 2L2 15l13 13 13-13L15 2z',
+	},
+	arch: {
+		label: 'Arch',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 14,
+		type: 'standard',
+		path: 'M4 30V15C4 8.92487 8.92487 4 15 4C21.0751 4 26 8.92487 26 15V30H4Z',
+	},
+	banner: {
+		label: 'Banner',
+		viewBox: '0 0 30 30',
+		width: 30,
+		height: 30,
+		iconY: 12,
+		type: 'standard',
+		path: 'M4 2v26l11-6 11 6V2H4z',
+	},
+	hexagon: {
+		label: 'Hex',
+		viewBox: '0 0 24 24',
+		width: 30,
+		height: 30,
+		iconY: 12,
+		type: 'standard',
+		path: 'M21 16V8l-9-5l-9 5v8l9 5l9-5z',
+	},
+	tower: {
+		label: 'Tower',
+		viewBox: '0 0 24 24',
+		width: 30,
+		height: 30,
+		iconY: 16,
+		type: 'standard',
+		path: 'M12 2L6 8v14h12V8L12 2z',
+	},
+	house: {
+		label: 'House',
+		viewBox: '0 0 24 24',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+		path: 'M3 10l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V10z',
+	},
+	sign: {
+		label: 'Sign',
+		viewBox: '0 0 24 24',
+		width: 30,
+		height: 30,
+		iconY: 9,
+		type: 'standard',
+		path: 'M12 22v-6h5V4H7v12h5v6z',
+	},
+	tent: {
+		label: 'Tent',
+		viewBox: '0 0 24 24',
+		width: 30,
+		height: 30,
+		iconY: 15,
+		type: 'standard',
+		path: 'M3 21l9-18 9 18H3z',
+	},
 };
 
-// Singleton for invisible/interactive-only markers
-export const invisibleIcon = L.divIcon({
-	className: 'bg-transparent border-none',
-	html: '<div style="width: 100%; height: 100%;"></div>',
-	iconSize: [20, 20],
-	iconAnchor: [10, 10],
-	popupAnchor: [0, -10],
-});
+// ==========================================
+// 2. ICON HELPERS
+// ==========================================
+export const getIconComponent = (name) => {
+	if (!name) return LucideIcons.MapPin;
+	if (LucideIcons[name]) return LucideIcons[name];
 
-/**
- * Creates a "Pin" style marker using a Lucide React Icon
- */
-export const createPinMarker = (IconComponent, color = '#d97706') => {
-	const iconHtml = renderToString(
+	const lower = name.toLowerCase();
+	const found = Object.keys(LucideIcons).find((k) => k.toLowerCase() === lower);
+	return found ? LucideIcons[found] : LucideIcons.HelpCircle;
+};
+
+export const getAllIconNames = () => Object.keys(LucideIcons).filter((k) => k !== 'createLucideIcon' && k !== 'icons');
+
+const getContrastColor = (hex) => {
+	if (!hex || !hex.startsWith('#')) return '#ffffff';
+	const r = parseInt(hex.substr(1, 2), 16);
+	const g = parseInt(hex.substr(3, 2), 16);
+	const b = parseInt(hex.substr(5, 2), 16);
+	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+	return yiq >= 128 ? '#000000' : '#ffffff';
+};
+
+// ==========================================
+// 3. MAIN MARKER RENDERER
+// ==========================================
+export const resolveMarkerIcon = (marker) => {
+	const {
+		shape = 'pin',
+		icon = 'MapPin',
+		color = '#d97706',
+		variant = 'large',
+		label,
+		labelDisplay = 'hover',
+		scale = 1,
+	} = marker;
+
+	// --- A. TEXT VARIANT ---
+	if (variant === 'text') {
+		return L.divIcon({
+			className: 'custom-text-marker',
+			html: `
+                <div style="transform: translate(-50%, -50%) scale(${scale}); text-align: center; width: max-content;">
+                    <span style="font-family: sans-serif; font-weight: 800; font-size: 14px; color: ${color}; 
+                    text-shadow: 0 0 2px #000, 0 0 4px #000; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em;">
+                        ${label || 'Untitled'}
+                    </span>
+                </div>
+            `,
+			iconSize: [0, 0],
+			iconAnchor: [0, 0],
+		});
+	}
+
+	// --- B. SETUP ---
+	const ShapeDef = MARKER_SHAPES[shape] || MARKER_SHAPES.pin;
+	const IconComponent = getIconComponent(icon);
+	const finalScale = scale * (variant === 'small' ? 0.6 : 1);
+	const width = ShapeDef.width;
+	const height = ShapeDef.height;
+
+	// Anchor Logic
+	const anchor =
+		shape === 'pin' && variant === 'large'
+			? [(width * finalScale) / 2, height * finalScale]
+			: [(width * finalScale) / 2, (height * finalScale) / 2];
+
+	// --- C. ICON ONLY ---
+	if (variant === 'icon') {
+		const iconHtml = renderToString(
+			React.createElement(IconComponent, {
+				size: 24,
+				strokeWidth: 2.5,
+				color: color,
+				fill: 'currentColor',
+				fillOpacity: 0.2,
+			})
+		);
+		return L.divIcon({
+			className: 'marker-icon-only',
+			html: `<div style="transform: scale(${scale}); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));">${iconHtml}</div>`,
+			iconSize: [24, 24],
+			iconAnchor: [12, 12],
+		});
+	}
+
+	// --- D. SHAPE VARIANT ---
+	const contrastColor = getContrastColor(color);
+	const innerIconHtml = renderToString(
 		React.createElement(IconComponent, {
 			size: 14,
-			strokeWidth: 3,
-			color: 'white',
-		})
-	);
-
-	return L.divIcon({
-		className: 'custom-marker-container',
-		html: `
-            <div class="relative group" style="width: 32px; height: 36px;">
-                <svg width="32" height="36" viewBox="0 0 32 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.2));">
-                    <path d="M16 36C16 36 32 26.5 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 26.5 16 36 16 36Z" fill="white"/>
-                    <path d="M16 33C16 33 29 24.5 29 16C29 8.8203 23.1797 3 16 3C8.8203 3 3 8.8203 3 16C3 24.5 16 33 16 33Z" fill="${color}"/>
-                    <circle cx="16" cy="16" r="10" fill="white" fill-opacity="0.2"/>
-                </svg>
-                <div class="absolute top-[8px] left-[8px] w-[16px] h-[16px] flex items-center justify-center pointer-events-none transition-transform group-hover:-translate-y-0.5">
-                    ${iconHtml}
-                </div>
-            </div>
-        `,
-		iconSize: [32, 36],
-		iconAnchor: [16, 36],
-		popupAnchor: [0, -36],
-	});
-};
-
-/**
- * Creates a "Flat" style marker (Just the icon, no pin background)
- */
-export const createFlatMarker = (IconComponent, color = '#d97706') => {
-	const iconHtml = renderToString(
-		React.createElement(IconComponent, {
-			size: 24,
 			strokeWidth: 2.5,
-			color: color,
-			fill: color,
-			fillOpacity: 0.2,
+			color: contrastColor,
 		})
 	);
 
-	return L.divIcon({
-		className: 'custom-flat-marker',
-		html: `<div style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); transition: transform 0.2s;">${iconHtml}</div>`,
-		iconSize: [24, 24],
-		iconAnchor: [12, 12],
-		popupAnchor: [0, -12],
-	});
-};
+	let svgContent = '';
+	if (ShapeDef.type === 'dual') {
+		svgContent = `
+            <path d="${ShapeDef.path}" fill="white" />
+            <path d="${ShapeDef.innerPath}" fill="${color}" />
+            <circle cx="16" cy="16" r="10" fill="white" fill-opacity="0.2" style="pointer-events: none;" />
+        `;
+	} else {
+		svgContent = `<path d="${ShapeDef.path}" fill="${color}" stroke="white" stroke-width="2" stroke-linejoin="round" />`;
+	}
 
-// Text Label Marker Generator
-export const createTextMarker = (label, fontSize, color = '#2c1a0e') => {
-	const sizeStyle = fontSize ? `${fontSize}px` : '1.5rem';
-	return L.divIcon({
-		className: 'map-text-marker',
-		html: `
-            <div style="transform: translate(-50%, -50%); width: max-content; text-align: center; display: flex; justify-content: center; align-items: center;">
-                <span style="font-family: 'Inter', sans-serif; text-transform: uppercase; font-weight: 600; font-size: ${sizeStyle}; color: ${color}; text-shadow: 0 0 4px #fff, 0 0 8px #fff; pointer-events: auto; cursor: pointer; white-space: nowrap;">
+	const html = `
+        <div class="marker-shape relative transition-transform"
+             style="width: ${width}px; height: ${height}px; transform: scale(${finalScale}); filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3));">
+            <svg viewBox="${ShapeDef.viewBox}" width="100%" height="100%" style="overflow: visible;">${svgContent}</svg>
+            ${
+							variant !== 'small'
+								? `
+                <div style="position: absolute; top: ${ShapeDef.iconY}px; left: 50%; transform: translate(-50%, -50%); 
+                            display: flex; align-items: center; justify-content: center; width: 16px; height: 16px;">
+                    ${innerIconHtml}
+                </div>`
+								: ''
+						}
+        </div>
+    `;
+
+	// --- E. LABEL ---
+	let labelHtml = '';
+	if (label && labelDisplay !== 'none') {
+		const visibleClass = labelDisplay === 'hover' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100';
+		const topOffset = shape === 'pin' && variant === 'large' ? '100%' : '50%';
+		labelHtml = `
+            <div class="absolute left-1/2 -translate-x-1/2 ${visibleClass} transition-opacity duration-200 z-50 pointer-events-none"
+                 style="top: ${topOffset}; margin-top: 6px;">
+                <span class="bg-zinc-900/90 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md whitespace-nowrap border border-white/10">
                     ${label}
                 </span>
-            </div>`,
-		iconSize: [0, 0],
-		iconAnchor: [0, 0],
-		popupAnchor: [0, -10],
+            </div>
+        `;
+	}
+
+	return L.divIcon({
+		className: 'custom-composite-marker group',
+		html: `<div style="position: relative;">${html}${labelHtml}</div>`,
+		iconSize: [width * finalScale, height * finalScale],
+		iconAnchor: anchor,
 	});
 };
 
-/**
- * Resolve Category Default Colors
- */
-const getCategoryColor = (category) => {
-	const cat = category?.toLowerCase() || '';
-	if (cat.includes('combat') || cat.includes('danger')) return '#dc2626'; // Red
-	if (cat.includes('magic') || cat.includes('shrine')) return '#7c3aed'; // Purple
-	if (['city', 'location', 'town', 'points of interest'].includes(cat)) return '#059669'; // Emerald
-	if (cat.includes('city') || cat.includes('town')) return '#1e40af'; // Blue
-	if (['npcs', 'people'].includes(cat)) return '#d97706'; // Orange
-	return '#d97706'; // Default Amber
-};
+export { LucideIcons };
 
-/**
- * Logic Hub: Resolves the appropriate Leaflet icon
- */
-export const resolveMarkerIcon = (marker) => {
-	const { icon, type, label, fontSize, category, color, iconType, customIcon } = marker;
+// ==========================================
+// 4. EDITOR HANDLES (RESTORED)
+// ==========================================
 
-	// 1. Text Marker
-	if (type === 'text' || icon === 'text') {
-		return createTextMarker(label, fontSize, color || '#2c1a0e');
-	}
-
-	// 2. Invisible
-	if (!icon && !category && !customIcon) {
-		return invisibleIcon;
-	}
-
-	// 3. Determine Color (Manual override > Category default)
-	const finalColor = color || getCategoryColor(category);
-
-	// 4. Determine Icon Component
-	let IconComponent = ICON_MAP.default;
-
-	// Check specific custom icon setting first (matches your Dropdown values)
-	if (customIcon && ICON_MAP[customIcon]) {
-		IconComponent = ICON_MAP[customIcon];
-	}
-	// Also check 'icon' property in case DB saves it there instead of customIcon
-	else if (icon && ICON_MAP[icon]) {
-		IconComponent = ICON_MAP[icon];
-	}
-	// Fallback to category mapping
-	else {
-		const normalizedCat = category?.toLowerCase() || 'default';
-		for (const [key, comp] of Object.entries(ICON_MAP)) {
-			if (normalizedCat.includes(key)) {
-				IconComponent = comp;
-				break;
-			}
-		}
-	}
-
-	// 5. Render Style (Pin vs Flat)
-	if (iconType === 'flat') {
-		return createFlatMarker(IconComponent, finalColor);
-	}
-
-	return createPinMarker(IconComponent, finalColor);
-};
-
-// For session paths/dots
-export const createDotIcon = (color) =>
-	L.divIcon({
-		className: 'path-dot',
-		html: `<div style="background-color: ${color};" class="w-3 h-3 rounded-full border-2 border-white shadow-sm"></div>`,
-		iconSize: [12, 12],
-		iconAnchor: [6, 6],
-	});
-
-export const createLabelIcon = (text, options = {}) => {
-	const {
-		color = '#ffffff',
-		fontSize = 16,
-		rotation = 0,
-		isSelected = false,
-		bgColor = 'transparent',
-		bgOpacity = 0,
-	} = options;
-
-	const hexToRgb = (hex) => {
-		const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-		return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0,0,0';
-	};
-
-	const bgRgba = bgOpacity > 0 && bgColor ? `rgba(${hexToRgb(bgColor)}, ${bgOpacity})` : 'transparent';
-	const padding = '4px 12px';
+export const createLabelIcon = (text, options) => {
+	// This handles the Area Labels
+	const { color = '#fff', fontSize = 16, rotation = 0, bgColor = '#000', bgOpacity = 0, isSelected } = options || {};
 
 	return L.divIcon({
 		className: 'area-label-icon',
 		html: `
             <div style="
-                position: relative;
+                transform: translate(-50%, -50%) rotate(${rotation}deg); 
+                text-align: center; 
+                pointer-events: auto; 
                 width: max-content;
-                /* Scale Logic: Controlled by MapZoomHandler */
-                transform: translate(-50%, -50%) rotate(${rotation}deg) scale(var(--label-scale, 1));
-                transform-origin: center center;
-                will-change: transform; /* Performance optimization for zoom */
-                
                 color: ${color};
                 font-size: ${fontSize}px;
-                font-family: 'Cinzel', 'Inter', ui-serif, Georgia, serif; 
-                font-weight: 700;
-                text-align: center;
-                white-space: nowrap;
-                
-                cursor: ${isSelected ? 'move' : 'pointer'};
-                border: ${isSelected ? '2px dashed #3b82f6' : '1px solid transparent'};
-                padding: ${padding};
-                background-color: ${bgRgba};
-                border-radius: 6px;
-                pointer-events: auto;
-                
-                text-shadow: ${bgOpacity < 0.3 ? '0 1px 4px rgba(0,0,0,0.9)' : 'none'};
-                box-shadow: ${isSelected ? '0 4px 12px rgba(0,0,0,0.3)' : 'none'};
-                user-select: none;
-                transition: border-color 0.2s, box-shadow 0.2s;
+                font-weight: bold;
+                text-shadow: 0 0 3px black;
+                background: ${bgOpacity > 0 ? bgColor : 'transparent'};
+                padding: ${bgOpacity > 0 ? '2px 6px' : '0'};
+                border-radius: 4px;
+                opacity: ${bgOpacity > 0 ? bgOpacity : 1};
+                border: ${isSelected ? '1px dashed #3b82f6' : 'none'};
             ">
                 ${text}
             </div>
@@ -2629,9 +2727,14 @@ export const createLabelIcon = (text, options = {}) => {
 	});
 };
 
-/**
- * Midpoint handle for splitting lines
- */
+export const createDotIcon = (color) =>
+	L.divIcon({
+		className: 'path-dot',
+		html: `<div style="background-color: ${color};" class="w-3 h-3 rounded-full border-2 border-white shadow-sm"></div>`,
+		iconSize: [12, 12],
+		iconAnchor: [6, 6],
+	});
+
 export const createMidpointIcon = () =>
 	L.divIcon({
 		className: 'midpoint-handle',
@@ -2640,7 +2743,198 @@ export const createMidpointIcon = () =>
 		iconAnchor: [4, 4],
 	});
 
+// THIS IS THE FUNCTION THAT WAS MISSING:
+export const createHandleIcon = (isSelected, isSpecial = false) => {
+	const color = isSpecial ? '#3b82f6' : isSelected ? '#d97706' : '#333';
+	return L.divIcon({
+		className: 'vertex-handle',
+		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+		iconSize: [10, 10],
+		iconAnchor: [5, 5],
+	});
+};
+
+export const createPathHandleIcon = (isSelected, hasText) => {
+	const borderColor = isSelected ? '#d97706' : hasText ? '#3b82f6' : '#000000';
+	const borderWidth = hasText ? '3px' : '2px';
+	const scale = isSelected ? 'scale(1.2)' : 'scale(1)';
+
+	return L.divIcon({
+		className: 'path-handle-icon',
+		html: `
+            <div style="
+                width: 12px; 
+                height: 12px; 
+                background: #ffffff; 
+                border: ${borderWidth} solid ${borderColor}; 
+                border-radius: 50%; 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+                transform: ${scale};
+                transition: transform 0.1s, border-color 0.2s;
+            "></div>
+        `,
+		iconSize: [12, 12],
+		iconAnchor: [6, 6],
+	});
+};
+
+export const createPathMidpointIcon = () =>
+	L.divIcon({
+		className: 'path-midpoint-icon',
+		html: `
+        <div style="
+            width: 10px; 
+            height: 10px; 
+            background: #ffffff; 
+            border: 2px solid #000000; 
+            border-radius: 50%; 
+            opacity: 0.5;
+            cursor: pointer;
+        "></div>
+    `,
+		iconSize: [10, 10],
+		iconAnchor: [5, 5],
+	});
+
 --- END OF features\atlas\utils\markerUtils.js ---
+
+--- FILE: features\atlas\utils\pathUtils.js ---
+/**
+ * Calculates a smooth path using Catmull-Rom splines.
+ * @param {Array} points - Array of [lat, lng] arrays
+ * @param {number} tension - 0 (straight) to 1 (very curved)
+ * @param {number} numOfSegments - Resolution
+ * @param {boolean} closed - If true, connects end to start smoothly (for Polygons)
+ */
+export const getSmoothPath = (points, tension = 0.5, numOfSegments = 10, closed = false) => {
+	// 1. Validation
+	if (!points || points.length < 3 || tension <= 0) return points;
+
+	const res = [];
+	const size = points.length;
+
+	// For closed loops, we iterate through ALL points
+	// For open paths, we stop before the last one
+	const loopCount = closed ? size : size - 1;
+
+	for (let i = 0; i < loopCount; i++) {
+		// Define Control Points
+		// p0: Previous point
+		// p1: Current point
+		// p2: Next point
+		// p3: Next-Next point
+
+		let p0, p1, p2, p3;
+
+		if (closed) {
+			// Closed Loop Logic (Wrap around indices)
+			p0 = points[(i - 1 + size) % size];
+			p1 = points[i];
+			p2 = points[(i + 1) % size];
+			p3 = points[(i + 2) % size];
+		} else {
+			// Open Path Logic (Clamp ends)
+			p0 = points[i === 0 ? 0 : i - 1];
+			p1 = points[i];
+			p2 = points[i + 1];
+			p3 = points[i + 1 === size - 1 ? size - 1 : i + 2];
+		}
+
+		// Interpolate
+		for (let t = 0; t < numOfSegments; t++) {
+			// Calculate segment only (exclude last point unless it's the very end of open path)
+			const t1 = t / numOfSegments;
+			const t2 = t1 * t1;
+			const t3 = t2 * t1;
+
+			const tau = 0.5; // Standard Catmull-Rom alpha
+
+			const calc = (z0, z1, z2, z3) => {
+				return (
+					0.5 * (2 * z1 + (-z0 + z2) * t1 + (2 * z0 - 5 * z1 + 4 * z2 - z3) * t2 + (-z0 + 3 * z1 - 3 * z2 + z3) * t3)
+				);
+			};
+
+			const x = calc(p0[0], p1[0], p2[0], p3[0]);
+			const y = calc(p0[1], p1[1], p2[1], p3[1]);
+
+			res.push([x, y]);
+		}
+	}
+
+	// For open paths, ensure the final point is added
+	if (!closed) {
+		res.push(points[size - 1]);
+	}
+
+	return res;
+};
+
+/**
+ * Rounds the corners of a polygon/polyline.
+ * @param {Array} points - Array of [lat, lng]
+ * @param {number} tension - 0 to 1 (controls how much of the corner is cut)
+ * @param {boolean} closed - Whether the path is a closed loop
+ */
+export const getRoundedPath = (points, tension = 0, closed = false) => {
+	// 1. Validation
+	if (!points || points.length < 3 || tension <= 0) return points;
+
+	// Limit tension to max 0.5 (half segment length) to prevent crossing
+	const cutRatio = tension * 0.5;
+
+	const res = [];
+	const len = points.length;
+
+	// Logic: For each vertex, calculate two new points along the adjacent edges
+	// and replace the vertex with those two points (Chaikin's algorithm variation)
+	// Or simpler: Linear interpolation cut.
+
+	const loopCount = closed ? len : len - 1;
+
+	for (let i = 0; i < loopCount; i++) {
+		const curr = points[i];
+		const next = points[(i + 1) % len]; // Wrap around for closed
+
+		if (!closed && i === len - 1) {
+			// Last point of open path, just add it
+			break;
+		}
+
+		// We don't just add points; we generate the "cut" segment between i and i+1
+		// But Chaikin iterates vertices. Let's look at segments.
+
+		// P_current to P_next.
+		// We want a point at start + ratio, and end - ratio.
+
+		// Math for Linear Interpolation: P = P0 + t * (P1 - P0)
+		const p1 = [curr[0] + (next[0] - curr[0]) * cutRatio, curr[1] + (next[1] - curr[1]) * cutRatio];
+
+		const p2 = [next[0] - (next[0] - curr[0]) * cutRatio, next[1] - (next[1] - curr[1]) * cutRatio];
+
+		res.push(p1);
+		res.push(p2);
+	}
+
+	if (!closed) {
+		// For open paths, the first and last points should stay fixed
+		// The loop above cuts segments.
+		// Let's refine: The standard Chaikin cuts corners.
+		// We need to construct a new array.
+
+		// Simpler implementation for "Visual Rounding" via SVG/Canvas usually uses Quadratic curves.
+		// Since Leaflet uses points, we just increase resolution at corners.
+		// But for low-poly rounding, just cutting the corner is enough visually.
+
+		// Re-inject start/end for open paths
+		const final = [points[0], ...res, points[len - 1]];
+		return final;
+	}
+
+	return res;
+};
+
+--- END OF features\atlas\utils\pathUtils.js ---
 
 --- FILE: features\atlas\utils\useAtlasSearch.jsx ---
 import { useState, useMemo } from 'react';

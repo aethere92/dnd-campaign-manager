@@ -53,7 +53,7 @@ export const AtlasProvider = ({ children }) => {
 
 	// 2. Initialize Visibility Helper
 	const initializeVisibility = (data) => {
-		const initial = { areas: true };
+		const initial = { areas: false };
 
 		// Markers
 		if (data.annotations) {
@@ -73,7 +73,7 @@ export const AtlasProvider = ({ children }) => {
 				if (cat.items) {
 					cat.items.forEach((item, index) => {
 						const id = item.id || generateId('area', key, index, item.name);
-						initial[id] = true;
+						initial[id] = false;
 					});
 				}
 			});

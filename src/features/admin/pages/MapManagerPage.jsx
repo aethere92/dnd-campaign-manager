@@ -3,7 +3,7 @@ import { useCampaign } from '@/features/campaign/CampaignContext';
 import { fetchCampaignMaps, fetchMapByKey } from '@/features/atlas/api/mapService';
 import { Map as MapIcon, Loader2, Edit3, ArrowLeft } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
-import AtlasEditor from '@/features/admin/components/atlas/editor/AtlasEditor'; // We will create this next
+import AtlasEditor from '@/features/admin/components/atlas/AtlasEditor'; // We will create this next
 import { ADMIN_HEADER_CLASS } from '@/features/admin/components/AdminFormStyles';
 
 export default function MapManagerPage() {

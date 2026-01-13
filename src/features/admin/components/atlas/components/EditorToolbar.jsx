@@ -18,10 +18,9 @@ const ToolBtn = ({ icon: Icon, label, active, onClick }) => (
 );
 
 export default function EditorToolbar() {
-	const { state, dispatch, saveMap } = useAtlasEditor();
+	const { state, actions, saveMap } = useAtlasEditor();
 	const { activeTool, isSaving, mode } = state;
 
-	// Handlers for "New Item" buttons
 	const handleNewPath = () => {
 		const newPath = {
 			_id: crypto.randomUUID(),
@@ -30,7 +29,7 @@ export default function EditorToolbar() {
 			opacity: 1,
 			points: [],
 		};
-		dispatch({ type: 'ADD_PATH', payload: newPath });
+		actions.addPath(newPath);
 	};
 
 	const handleNewArea = () => {
@@ -41,7 +40,7 @@ export default function EditorToolbar() {
 			lineColor: 'transparent',
 			points: [],
 		};
-		dispatch({ type: 'ADD_AREA', payload: newArea });
+		actions.addArea(newArea);
 	};
 
 	const handleNewOverlay = () => {
@@ -52,49 +51,46 @@ export default function EditorToolbar() {
 			bounds: [
 				[0, 0],
 				[-100, 100],
-			], // Default box
+			],
 		};
-		dispatch({ type: 'ADD_OVERLAY', payload: newOverlay });
+		actions.addOverlay(newOverlay);
 	};
 
 	return (
 		<div className='absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-auto'>
-			{/* SAVE */}
 			<div className='bg-background/95 backdrop-blur border border-border p-2 rounded-lg shadow-xl'>
 				<Button size='sm' variant='primary' icon={isSaving ? Loader2 : Save} onClick={saveMap} disabled={isSaving}>
 					{isSaving ? 'Saving' : 'Save'}
 				</Button>
 			</div>
 
-			{/* TOOLS */}
 			<div className='bg-background/95 backdrop-blur border border-border p-1 rounded-lg shadow-xl flex flex-col gap-1'>
 				<ToolBtn
 					icon={MapPin}
 					label='Markers'
 					active={activeTool === 'markers'}
-					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'markers' })}
+					onClick={() => actions.setTool('markers')}
 				/>
 				<ToolBtn
 					icon={Footprints}
 					label='Paths'
 					active={activeTool === 'paths'}
-					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'paths' })}
+					onClick={() => actions.setTool('paths')}
 				/>
 				<ToolBtn
 					icon={Hexagon}
 					label='Regions'
 					active={activeTool === 'areas'}
-					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'areas' })}
+					onClick={() => actions.setTool('areas')}
 				/>
 				<ToolBtn
 					icon={ImageIcon}
 					label='Overlays'
 					active={activeTool === 'overlays'}
-					onClick={() => dispatch({ type: 'SET_TOOL', payload: 'overlays' })}
+					onClick={() => actions.setTool('overlays')}
 				/>
 			</div>
 
-			{/* ACTIONS */}
 			{activeTool === 'paths' && (
 				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewPath} className='shadow-xl'>
 					New Path
@@ -111,11 +107,10 @@ export default function EditorToolbar() {
 				</Button>
 			)}
 
-			{/* DRAWING MODE INDICATOR */}
 			{mode === 'draw' && (
 				<div
 					className='bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl animate-pulse text-center cursor-pointer'
-					onClick={() => dispatch({ type: 'SET_MODE', payload: 'select' })}>
+					onClick={() => actions.setMode('select')}>
 					DRAWING ACTIVE
 					<br />
 					<span className='underline opacity-80'>Stop</span>

@@ -5,6 +5,7 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  merge_specific_files.py
   todo.md
   app/
     App.jsx
@@ -53,21 +54,37 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
         SmartImageInput.jsx
         TacticalMapManager.jsx
         atlas/
-          AtlasForms.jsx
-          editor/
-            AtlasEditor.jsx
-            AtlasEditorContext.jsx
-            components/
-              EditorLayerList.jsx
-              EditorMapEvents.jsx
-              EditorSidebar.jsx
-              EditorToolbar.jsx
-              VertexHandle.jsx
-            layers/
-              EditAreasLayer.jsx
-              EditMarkersLayer.jsx
-              EditOverlaysLayer.jsx
-              EditPathsLayer.jsx
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
       config/
         adminStrategies.js
         imageManifest.json
@@ -116,6 +133,7 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
       utils/
         mapNavigation.js
         markerUtils.js
+        pathUtils.js
         useAtlasSearch.jsx
     campaign/
       CampaignContext.jsx
@@ -150,6 +168,7 @@ PARTIAL BUNDLE: FEATURES TABLE-OF-CONTENTS
         GraphLegend.jsx
       config/
         graphStyles.js
+      hooks/
       utils/
         graphMapper.js
     navigation/

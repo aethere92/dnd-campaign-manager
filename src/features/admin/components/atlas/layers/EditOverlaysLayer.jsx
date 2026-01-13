@@ -5,90 +5,45 @@ import { useAtlasEditor } from '../AtlasEditorContext';
 import { createHandleIcon } from '../components/VertexHandle';
 
 export default function EditOverlaysLayer() {
-	const { state, dispatch } = useAtlasEditor();
+	const { state, actions } = useAtlasEditor();
 	const { overlays, selection, activeTool, visibility } = state;
 	const isInteractive = activeTool === 'overlays';
 
-	const getUrl = (path) => (path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`);
+	// FIX: Robust URL resolver that handles null/undefined/non-strings
+	const getUrl = (path) => {
+		if (!path || typeof path !== 'string') return '';
+		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
+	};
 
 	if (!visibility.overlays) return null;
-
-	// --- LOGIC: HANDLE DRAG ---
-	// Update logic for corner handles
-	const onResize = (id, handle, newLat, newLng, oldBounds) => {
-		// oldBounds is [[lat1, lng1], [lat2, lng2]]
-		// usually [TL, BR] or [SW, NE]
-		const [p1, p2] = oldBounds;
-
-		let newBounds = [...oldBounds];
-
-		if (handle === 'tl') {
-			// Top Left: Modify Index 0
-			newBounds = [[newLat, newLng], p2];
-		} else if (handle === 'br') {
-			// Bottom Right: Modify Index 1
-			newBounds = [p1, [newLat, newLng]];
-		} else if (handle === 'tr') {
-			// Top Right: Lat from 0, Lng from 1
-			// We want new point to be [newLat, newLng]
-			// So P1 (TL) gets newLat, P2 (BR) gets newLng
-			newBounds = [
-				[newLat, p1[1]],
-				[p2[0], newLng],
-			];
-		} else if (handle === 'bl') {
-			// Bottom Left: Lat from 1, Lng from 0
-			newBounds = [
-				[p1[0], newLng],
-				[newLat, p2[1]],
-			];
-		}
-
-		dispatch({
-			type: 'UPDATE_OVERLAY',
-			id: id,
-			updates: { bounds: newBounds },
-		});
-	};
-
-	// Logic for moving the whole image
-	const onMove = (id, newCenter, oldCenter, oldBounds) => {
-		const latDiff = newCenter.lat - oldCenter.lat;
-		const lngDiff = newCenter.lng - oldCenter.lng;
-
-		const newBounds = [
-			[oldBounds[0][0] + latDiff, oldBounds[0][1] + lngDiff],
-			[oldBounds[1][0] + latDiff, oldBounds[1][1] + lngDiff],
-		];
-
-		dispatch({
-			type: 'UPDATE_OVERLAY',
-			id: id,
-			updates: { bounds: newBounds },
-		});
-	};
 
 	return (
 		<>
 			{overlays.map((overlay) => {
 				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
+				const imagePath = getUrl(overlay.image);
 
 				// Bounds: [[lat1, lng1], [lat2, lng2]]
 				const b = overlay.bounds;
+				// Safety check for bounds to prevent arithmetic crash
+				if (!b || b.length < 2 || !b[0] || !b[1]) return null;
+
 				const centerLat = (b[0][0] + b[1][0]) / 2;
 				const centerLng = (b[0][1] + b[1][1]) / 2;
 
 				return (
 					<React.Fragment key={overlay._id}>
-						{/* THE IMAGE */}
-						<ImageOverlay
-							url={getUrl(overlay.image)}
-							bounds={overlay.bounds}
-							opacity={isSelected ? 0.8 : 1}
-							interactive={false} // Let the invisible Rect handle clicks
-						/>
+						{/* IMAGE - Only render if we have a path */}
+						{imagePath && (
+							<ImageOverlay
+								url={imagePath}
+								bounds={overlay.bounds}
+								opacity={isSelected ? 0.8 : 1}
+								interactive={false}
+							/>
+						)}
 
-						{/* CLICK / DRAG HIT BOX */}
+						{/* HIT BOX */}
 						<Rectangle
 							bounds={overlay.bounds}
 							pathOptions={{
@@ -101,7 +56,7 @@ export default function EditOverlaysLayer() {
 								click: (e) => {
 									if (!isInteractive) return;
 									L.DomEvent.stopPropagation(e);
-									dispatch({ type: 'SELECT_ITEM', payload: { type: 'overlay', id: overlay._id } });
+									actions.selectItem('overlay', overlay._id);
 								},
 							}}
 						/>
@@ -122,7 +77,7 @@ export default function EditOverlaysLayer() {
 									eventHandlers={{
 										dragend: (e) => {
 											const newCenter = e.target.getLatLng();
-											onMove(overlay._id, newCenter, { lat: centerLat, lng: centerLng }, overlay.bounds);
+											actions.moveOverlay(overlay._id, newCenter, { lat: centerLat, lng: centerLng }, overlay.bounds);
 										},
 										click: (e) => L.DomEvent.stopPropagation(e),
 									}}
@@ -135,12 +90,9 @@ export default function EditOverlaysLayer() {
 									draggable={true}
 									icon={createHandleIcon(true, true)}
 									eventHandlers={{
-										drag: (e) => {
-											// Optional: Live update if performant enough, else use dragend
-										},
 										dragend: (e) => {
 											const { lat, lng } = e.target.getLatLng();
-											onResize(overlay._id, 'tl', lat, lng, overlay.bounds);
+											actions.resizeOverlay(overlay._id, 'tl', lat, lng, overlay.bounds);
 										},
 										click: (e) => L.DomEvent.stopPropagation(e),
 									}}
@@ -153,7 +105,7 @@ export default function EditOverlaysLayer() {
 									eventHandlers={{
 										dragend: (e) => {
 											const { lat, lng } = e.target.getLatLng();
-											onResize(overlay._id, 'br', lat, lng, overlay.bounds);
+											actions.resizeOverlay(overlay._id, 'br', lat, lng, overlay.bounds);
 										},
 										click: (e) => L.DomEvent.stopPropagation(e),
 									}}

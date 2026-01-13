@@ -5,6 +5,7 @@ PARTIAL BUNDLE: APP
 ### PROJECT MAP (FILE STRUCTURE)
 ./
   main.jsx
+  merge_specific_files.py
   todo.md
   app/
     App.jsx
@@ -53,21 +54,37 @@ PARTIAL BUNDLE: APP
         SmartImageInput.jsx
         TacticalMapManager.jsx
         atlas/
-          AtlasForms.jsx
-          editor/
-            AtlasEditor.jsx
-            AtlasEditorContext.jsx
-            components/
-              EditorLayerList.jsx
-              EditorMapEvents.jsx
-              EditorSidebar.jsx
-              EditorToolbar.jsx
-              VertexHandle.jsx
-            layers/
-              EditAreasLayer.jsx
-              EditMarkersLayer.jsx
-              EditOverlaysLayer.jsx
-              EditPathsLayer.jsx
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
       config/
         adminStrategies.js
         imageManifest.json
@@ -116,6 +133,7 @@ PARTIAL BUNDLE: APP
       utils/
         mapNavigation.js
         markerUtils.js
+        pathUtils.js
         useAtlasSearch.jsx
     campaign/
       CampaignContext.jsx
@@ -150,6 +168,7 @@ PARTIAL BUNDLE: APP
         GraphLegend.jsx
       config/
         graphStyles.js
+      hooks/
       utils/
         graphMapper.js
     navigation/
@@ -893,6 +912,46 @@ export const RouteLoading = ({ text }) => (
 .leaflet-popup-content {
 	padding: 0 !important;
 	margin: 0 !important;
+}
+/* --- Atlas Editor Overrides --- */
+
+/* 1. Remove Selection Outlines (The orange/black box) */
+path.leaflet-interactive:focus {
+	outline: none !important;
+}
+
+/* 2. Ghost Text (LegendKeeper Style) */
+.leaflet-tooltip-ghost {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	color: rgba(255, 255, 255, 0.95) !important;
+
+	font-weight: 800;
+	font-size: 15px;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+
+	/* High Contrast Stroke */
+	text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+/* Hide the little triangle arrow */
+.leaflet-tooltip-ghost::before {
+	display: none !important;
+}
+
+/* 3. Box Style (Standard) */
+.leaflet-tooltip-box {
+	background-color: white;
+	border: 1px solid #ccc;
+	color: #333;
+	font-weight: 700;
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	text-transform: uppercase;
 }
 
 --- END OF app\styles\global.css ---

@@ -1,75 +1,116 @@
-// Lightweight Catmull-Rom Spline implementation for smoothing paths
-export const getSmoothPath = (points, tension = 0.5, numSegments = 16) => {
-	if (!points || points.length < 2) return points;
-	if (tension === 0) return points; // Straight line
+/**
+ * Calculates a smooth path using Cardinal Splines.
+ * @param {Array} points - Array of [lat, lng] arrays
+ * @param {number} tension - 0.0 (loose) to 1.0 (tight/straight)
+ * @param {number} numOfSegments - Resolution
+ * @param {boolean} closed - If true, connects end to start smoothly
+ */
+export const getSmoothPath = (points, tension = 0.5, numOfSegments = 10, closed = false) => {
+	if (!points || points.length < 3) return points;
 
 	const res = [];
 
-	// Helper to format point for math
-	const _pts = points.map((p) => ({
-		x: Array.isArray(p) ? p[0] : p.lat,
-		y: Array.isArray(p) ? p[1] : p.lng,
-	}));
+	// Convert normalized 0-1 "curviness" to Cardinal Spline tension
+	// Input 0 (Straight) -> Tension 1.0
+	// Input 1 (Curved) -> Tension 0.0 (Standard Catmull-Rom is 0.5, but we want looser for maps)
+	const t = 1.0 - Math.max(0, Math.min(1, tension));
 
-	// Add explicit start/end control points by duplicating ends
-	const pts = [_pts[0], ..._pts, _pts[_pts.length - 1]];
+	const pts = closed ? [...points, points[0], points[1]] : [...points];
+	// Add guard points for open paths
+	if (!closed) {
+		pts.unshift(points[0]);
+		pts.push(points[points.length - 1]);
+	} else {
+		pts.unshift(points[points.length - 2]);
+	}
 
-	for (let i = 0; i < pts.length - 3; i++) {
-		const p0 = pts[i];
-		const p1 = pts[i + 1];
-		const p2 = pts[i + 2];
-		const p3 = pts[i + 3];
+	for (let i = 1; i < pts.length - 2; i++) {
+		const p0 = pts[i - 1];
+		const p1 = pts[i];
+		const p2 = pts[i + 1];
+		const p3 = pts[i + 2];
 
-		for (let t = 0; t <= numSegments; t++) {
-			const t1 = t / numSegments;
-			const t2 = t1 * t1;
-			const t3 = t2 * t1;
+		for (let j = 0; j < numOfSegments; j++) {
+			// Don't add the last point of the segment to avoid duplicates with the next segment's start
+			// unless it's the very last segment of the path
+			if (j === 0 && i > 1) continue;
 
-			// Catmull-Rom calculation
-			const x =
-				0.5 *
-				(2 * p1.x +
-					(-p0.x + p2.x) * t1 +
-					(2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
-					(-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+			const st = j / numOfSegments;
 
-			const y =
-				0.5 *
-				(2 * p1.y +
-					(-p0.y + p2.y) * t1 +
-					(2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
-					(-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3);
+			// Cardinal Spline Basis Function
+			const t2 = st * st;
+			const t3 = t2 * st;
 
-			// Don't add duplicate points
-			if (res.length === 0 || (res[res.length - 1][0] !== x && res[res.length - 1][1] !== y)) {
-				res.push([x, y]);
-			}
+			// s = (1 - tension) / 2
+			const s = (1 - t) / 2;
+
+			const calc = (v0, v1, v2, v3) => {
+				return (
+					(-s * t3 + 2 * s * t2 - s * st) * v0 +
+					((2 - s) * t3 + (s - 3) * t2 + 1) * v1 +
+					((s - 2) * t3 + (3 - 2 * s) * t2 + s * st) * v2 +
+					(s * t3 - s * t2) * v3
+				);
+			};
+
+			const x = calc(p0[0], p1[0], p2[0], p3[0]);
+			const y = calc(p0[1], p1[1], p2[1], p3[1]);
+
+			res.push([x, y]);
 		}
 	}
 
-	// Ensure the very last point is exact
-	const last = points[points.length - 1];
-	res.push(Array.isArray(last) ? last : [last.lat, last.lng]);
+	// Ensure the final point is exact
+	if (!closed) res.push(points[points.length - 1]);
 
 	return res;
 };
 
-// Preset Configs
-export const PATH_STYLES = {
-	patterns: {
-		solid: '',
-		dashed: '12, 12',
-		dotted: '1, 8',
-	},
-	widths: {
-		thin: 2,
-		medium: 5,
-		thick: 8,
-		extra: 12,
-	},
-	curviness: {
-		none: 0,
-		low: 0.3,
-		high: 0.8,
-	},
+/**
+ * Rounds the corners of a polygon using Quadratic Bezier curves.
+ * @param {Array} points - Array of [lat, lng]
+ * @param {number} radius - 0 to 1 (mapped to a smoothing factor)
+ * @param {boolean} closed - Whether the path is a closed loop
+ */
+export const getRoundedPath = (points, radius = 0, closed = false) => {
+	if (!points || points.length < 3 || radius <= 0) return points;
+
+	const distFactor = Math.min(0.5, radius * 0.5);
+
+	const res = [];
+	const len = points.length;
+	const loopCount = closed ? len : len - 1;
+
+	for (let i = 0; i < loopCount; i++) {
+		const curr = points[i];
+		const prev = points[(i - 1 + len) % len];
+		const next = points[(i + 1) % len];
+
+		if (!closed && (i === 0 || i === len - 1)) {
+			res.push(curr);
+			continue;
+		}
+
+		const pStart = [curr[0] + (prev[0] - curr[0]) * distFactor, curr[1] + (prev[1] - curr[1]) * distFactor];
+
+		const pEnd = [curr[0] + (next[0] - curr[0]) * distFactor, curr[1] + (next[1] - curr[1]) * distFactor];
+
+		const segments = 5;
+		for (let j = 0; j <= segments; j++) {
+			const t = j / segments;
+			const invT = 1 - t;
+			const lat = invT * invT * pStart[0] + 2 * invT * t * curr[0] + t * t * pEnd[0];
+			const lng = invT * invT * pStart[1] + 2 * invT * t * curr[1] + t * t * pEnd[1];
+			if (res.length === 0 || res[res.length - 1][0] !== lat || res[res.length - 1][1] !== lng) {
+				res.push([lat, lng]);
+			}
+		}
+	}
+
+	if (!closed) {
+		res.unshift(points[0]);
+		res.push(points[len - 1]);
+	}
+
+	return res;
 };

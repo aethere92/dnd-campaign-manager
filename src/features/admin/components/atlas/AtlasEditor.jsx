@@ -3,7 +3,8 @@ import { MapContainer, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
-import { MapZoomHandler } from '@/features/atlas/components/MapZoomHandler';
+import { MapZoomHandler } from './components/MapZoomHandler';
+import AtlasContextMenu from './components/EditorContextMenu';
 
 // UI
 import EditorToolbar from './components/EditorToolbar';
@@ -21,7 +22,6 @@ function AtlasEditorInner() {
 	const { state } = useAtlasEditor();
 	const { mapConfig } = state;
 
-	// ... tileConfig and bounds logic (same as before) ...
 	const tileConfig = useMemo(() => {
 		if (!mapConfig) return null;
 		const fileExt = mapConfig.fileExtension || 'png';
@@ -46,7 +46,7 @@ function AtlasEditorInner() {
 		];
 	}, [mapConfig]);
 
-	if (!bounds || !tileConfig) return <div>Invalid Configuration</div>;
+	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration or Missing Metadata</div>;
 
 	return (
 		<div className='flex h-full w-full relative overflow-hidden bg-[#1a1412]'>
@@ -57,7 +57,6 @@ function AtlasEditorInner() {
 
 			{/* 2. Main Map Area */}
 			<div className='flex-1 h-full relative z-0'>
-				{/* Toolbar floats on top of map */}
 				<EditorToolbar />
 
 				<MapContainer
@@ -79,6 +78,7 @@ function AtlasEditorInner() {
 					<EditPathsLayer />
 					<EditMarkersLayer />
 				</MapContainer>
+				<AtlasContextMenu />
 			</div>
 
 			{/* 3. Right Sidebar: Forms */}

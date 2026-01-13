@@ -448,3 +448,43 @@
 	padding: 0 !important;
 	margin: 0 !important;
 }
+/* --- Atlas Editor Overrides --- */
+
+/* 1. Remove Selection Outlines (The orange/black box) */
+path.leaflet-interactive:focus {
+	outline: none !important;
+}
+
+/* 2. Ghost Text (LegendKeeper Style) */
+.leaflet-tooltip-ghost {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	color: rgba(255, 255, 255, 0.95) !important;
+
+	font-weight: 800;
+	font-size: 15px;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+
+	/* High Contrast Stroke */
+	text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+/* Hide the little triangle arrow */
+.leaflet-tooltip-ghost::before {
+	display: none !important;
+}
+
+/* 3. Box Style (Standard) */
+.leaflet-tooltip-box {
+	background-color: white;
+	border: 1px solid #ccc;
+	color: #333;
+	font-weight: 700;
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	text-transform: uppercase;
+}
