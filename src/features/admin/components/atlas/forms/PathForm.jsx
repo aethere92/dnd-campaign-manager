@@ -1,5 +1,6 @@
+// --- FILE: forms/PathForm.jsx ---
 import React from 'react';
-import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon } from 'lucide-react';
+import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon, AlignCenter } from 'lucide-react'; // Added AlignCenter
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 
@@ -40,6 +41,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 		curviness: 0,
 		labelDisplay: 'hover',
 		labelStyle: 'box',
+		textAlongLine: false, // NEW DEFAULT
 		...data,
 	};
 
@@ -82,6 +84,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 
 				<div className='space-y-4'>
 					<label className={LABEL_CLASS}>Line Style</label>
+					{/* ... (Existing Line Style Buttons kept same) ... */}
 					<div className='grid grid-cols-3 gap-2'>
 						{[
 							{
@@ -135,6 +138,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 								<label className={LABEL_CLASS}>Stroke Color</label>
 								<SmartColorPicker value={safeData.color} onChange={(val) => onChange('color', val)} />
 							</div>
+							{/* ... Thickness and Curviness controls kept same ... */}
 							<div className='space-y-2'>
 								<div className='flex justify-between'>
 									<label className={LABEL_CLASS}>Thickness</label>
@@ -187,11 +191,15 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 						</div>
 						<div className='space-y-2'>
 							<label className={LABEL_CLASS}>Style</label>
+							{/* Modified Style Selector to include Curved Option */}
 							<div className='flex bg-card border border-border rounded-md p-1'>
 								<button
-									onClick={() => onChange('labelStyle', 'box')}
-									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
-										safeData.labelStyle !== 'ghost'
+									onClick={() => {
+										onChange('labelStyle', 'box');
+										onChange('textAlongLine', false);
+									}}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.labelStyle === 'box' && !safeData.textAlongLine
 											? 'bg-primary text-white shadow-sm'
 											: 'text-muted-foreground hover:bg-muted'
 									}`}
@@ -199,14 +207,25 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 									<LayoutTemplate size={14} />
 								</button>
 								<button
-									onClick={() => onChange('labelStyle', 'ghost')}
-									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
-										safeData.labelStyle === 'ghost'
+									onClick={() => {
+										onChange('labelStyle', 'ghost');
+										onChange('textAlongLine', false);
+									}}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.labelStyle === 'ghost' && !safeData.textAlongLine
 											? 'bg-primary text-white shadow-sm'
 											: 'text-muted-foreground hover:bg-muted'
 									}`}
-									title='Text Only (Ghost)'>
+									title='Text Only'>
 									<TypeIcon size={14} />
+								</button>
+								<button
+									onClick={() => onChange('textAlongLine', true)}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.textAlongLine ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:bg-muted'
+									}`}
+									title='Curved on Line'>
+									<AlignCenter size={14} />
 								</button>
 							</div>
 						</div>

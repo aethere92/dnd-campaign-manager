@@ -12,6 +12,7 @@ atlas/
   AtlasEditor.jsx
   AtlasEditorContext.jsx
   components/
+    EditorContextMenu.jsx
     EditorLayerList.jsx
     EditorMapEvents.jsx
     EditorSidebar.jsx
@@ -52,6 +53,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
 import { MapZoomHandler } from './components/MapZoomHandler';
+import AtlasContextMenu from './components/EditorContextMenu';
 
 // UI
 import EditorToolbar from './components/EditorToolbar';
@@ -125,6 +127,7 @@ function AtlasEditorInner() {
 					<EditPathsLayer />
 					<EditMarkersLayer />
 				</MapContainer>
+				<AtlasContextMenu />
 			</div>
 
 			{/* 3. Right Sidebar: Forms */}
@@ -205,6 +208,250 @@ export const useAtlasEditor = () => {
 };
 
 --- END OF AtlasEditorContext.jsx ---
+
+--- FILE: components\EditorContextMenu.jsx ---
+import React, { useEffect, useRef } from 'react';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { MapPin, Footprints, Hexagon, Type, X, Edit2, Copy, Trash2, EyeOff } from 'lucide-react';
+import clsx from 'clsx';
+
+// ==========================================
+// 1. RADIAL MENU (Creation)
+// ==========================================
+const RadialMenu = ({ x, y, latlng, onClose, actions }) => {
+	const handleCreate = (type) => {
+		const id = crypto.randomUUID();
+		const { lat, lng } = latlng;
+
+		// 1. PIN (Marker)
+		if (type === 'pin') {
+			actions.setTool('markers');
+			actions.addMarker({
+				_id: id,
+				lat,
+				lng,
+				label: 'New Marker',
+				category: 'default',
+				color: '#d97706',
+				variant: 'large',
+				shape: 'pin',
+			});
+		}
+		// 2. LABEL (Text Marker)
+		else if (type === 'label') {
+			actions.setTool('markers');
+			actions.addMarker({
+				_id: id,
+				lat,
+				lng,
+				label: 'New Label',
+				category: 'default',
+				color: '#ffffff',
+				variant: 'text',
+				scale: 1.5,
+			});
+		}
+		// 3. REGION (Area) - Starts drawing immediately
+		else if (type === 'area') {
+			actions.setTool('areas');
+			actions.addArea({
+				_id: id,
+				name: 'New Region',
+				interiorColor: '#ff0000',
+				points: [{ coordinates: [lat, lng] }], // Start with first point
+			});
+			// Auto-select to trigger draw mode in reducer
+		}
+		// 4. PATH - Starts drawing immediately
+		else if (type === 'path') {
+			actions.setTool('paths');
+			actions.addPath({
+				_id: id,
+				name: 'New Path',
+				color: '#d97706',
+				points: [{ coordinates: [lat, lng], text: '' }], // Start with first point
+			});
+		}
+
+		onClose();
+	};
+
+	const MenuItem = ({ icon: Icon, label, onClick, className }) => (
+		<button
+			onClick={(e) => {
+				e.stopPropagation();
+				onClick();
+			}}
+			className={clsx(
+				'flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-full hover:scale-110 transition-all active:scale-95 text-muted-foreground hover:text-primary absolute',
+				className
+			)}>
+			<Icon size={20} strokeWidth={2} />
+			<span className='text-[9px] font-bold uppercase tracking-wider'>{label}</span>
+		</button>
+	);
+
+	// Half size of 160px = 80px offset
+	return (
+		<div
+			className='fixed z-[9999] w-40 h-40 rounded-full bg-background/95 backdrop-blur-sm shadow-2xl border border-border flex items-center justify-center animate-in zoom-in-75 duration-150 origin-center'
+			style={{ top: y - 80, left: x - 80 }}
+			onContextMenu={(e) => e.preventDefault()}>
+			{/* Slices positioned absolutely */}
+			<MenuItem className='top-1' icon={MapPin} label='Pin' onClick={() => handleCreate('pin')} />
+			<MenuItem className='right-1' icon={Hexagon} label='Region' onClick={() => handleCreate('area')} />
+			<MenuItem className='bottom-1' icon={Type} label='Label' onClick={() => handleCreate('label')} />
+			<MenuItem className='left-1' icon={Footprints} label='Path' onClick={() => handleCreate('path')} />
+
+			{/* Center Close Button */}
+			<button
+				onClick={onClose}
+				className='w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-colors border border-border z-10 shadow-sm'>
+				<X size={16} />
+			</button>
+
+			{/* Visual Crosshair Lines */}
+			<div className='absolute w-full h-px bg-border/50 top-1/2 left-0 -z-10' />
+			<div className='absolute h-full w-px bg-border/50 left-1/2 top-0 -z-10' />
+		</div>
+	);
+};
+
+// ==========================================
+// 2. LIST MENU (Entity Editing)
+// ==========================================
+const EntityMenu = ({ x, y, target, onClose, actions }) => {
+	const { type, id, data } = target;
+
+	const handleColor = (color) => {
+		if (type === 'marker') actions.updateMarker(id, { color });
+		else if (type === 'area') actions.updateArea(id, { interiorColor: color, lineColor: color });
+		else if (type === 'path') actions.updatePath(id, { color });
+	};
+
+	const handleDelete = () => {
+		if (type === 'marker') actions.deleteMarker(id);
+		if (type === 'area') actions.deleteArea(id);
+		if (type === 'path') actions.deletePath(id);
+		onClose();
+	};
+
+	const handleDuplicate = () => {
+		const newId = crypto.randomUUID();
+		const offset = 0.5; // Slight offset to see copy
+
+		if (type === 'marker') {
+			actions.addMarker({
+				...data,
+				_id: newId,
+				lat: data.lat + offset,
+				lng: data.lng + offset,
+				label: `${data.label} (Copy)`,
+			});
+		} else if (type === 'area') {
+			const newPoints = data.points.map((p) => ({
+				...p,
+				coordinates: [p.coordinates[0] + offset, p.coordinates[1] + offset],
+			}));
+			actions.addArea({ ...data, _id: newId, points: newPoints, name: `${data.name} (Copy)` });
+		}
+		onClose();
+	};
+
+	const colors = ['#64748b', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#d946ef'];
+
+	return (
+		<div
+			className='fixed z-[9999] w-48 bg-card border border-border shadow-xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+			style={{ top: y, left: x }}
+			onContextMenu={(e) => e.preventDefault()}>
+			<div className='p-2 border-b border-border bg-muted/30 grid grid-cols-4 gap-1'>
+				{colors.map((c) => (
+					<button
+						key={c}
+						onClick={() => handleColor(c)}
+						className='w-6 h-6 rounded-full hover:scale-110 transition-transform border border-black/10 shadow-sm mx-auto'
+						style={{ backgroundColor: c }}
+					/>
+				))}
+			</div>
+			<div className='py-1'>
+				<button
+					onClick={() => {
+						actions.selectItem(type, id);
+						onClose();
+					}}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium'>
+					<Edit2 size={14} /> Edit {type}
+				</button>
+				<button
+					onClick={handleDuplicate}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium'>
+					<Copy size={14} /> Duplicate
+				</button>
+				<div className='h-px bg-border my-1' />
+				<button
+					onClick={handleDelete}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-red-500/10 text-xs font-medium text-red-600'>
+					<Trash2 size={14} /> Remove
+				</button>
+			</div>
+		</div>
+	);
+};
+
+// ==========================================
+// 3. MAIN CONTAINER
+// ==========================================
+export default function EditorContextMenu() {
+	const { state, actions } = useAtlasEditor();
+	const { contextMenu } = state;
+	const ref = useRef(null);
+
+	// Close on outside click
+	useEffect(() => {
+		if (!contextMenu) return;
+		const clickCheck = (e) => {
+			if (ref.current && !ref.current.contains(e.target)) {
+				actions.closeContextMenu();
+			}
+		};
+		window.addEventListener('mousedown', clickCheck);
+		return () => window.removeEventListener('mousedown', clickCheck);
+	}, [contextMenu, actions]);
+
+	if (!contextMenu) return null;
+
+	// Safety bounds to keep menu on screen
+	const { x, y } = contextMenu.position;
+	const safeX = Math.min(window.innerWidth - 200, Math.max(10, x));
+	const safeY = Math.min(window.innerHeight - 200, Math.max(10, y));
+
+	return (
+		<div ref={ref}>
+			{contextMenu.type === 'map' && (
+				<RadialMenu
+					x={safeX}
+					y={safeY}
+					latlng={contextMenu.latlng}
+					onClose={actions.closeContextMenu}
+					actions={actions}
+				/>
+			)}
+			{contextMenu.type === 'entity' && (
+				<EntityMenu
+					x={safeX}
+					y={safeY}
+					target={contextMenu.target}
+					onClose={actions.closeContextMenu}
+					actions={actions}
+				/>
+			)}
+		</div>
+	);
+}
+
+--- END OF components\EditorContextMenu.jsx ---
 
 --- FILE: components\EditorLayerList.jsx ---
 import React, { useState } from 'react';
@@ -351,6 +598,7 @@ export default function EditorMapEvents() {
 
 	useMapEvents({
 		click(e) {
+			actions.closeContextMenu();
 			// Precision fixed in Service Layer, but we pass raw here
 			const pos = [e.latlng.lat, e.latlng.lng];
 
@@ -381,6 +629,15 @@ export default function EditorMapEvents() {
 			else {
 				actions.deselect();
 			}
+		},
+		contextmenu(e) {
+			e.originalEvent.preventDefault(); // Stop browser menu
+
+			actions.openContextMenu({
+				type: 'map', // Tells logic to show Radial Menu
+				position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+				latlng: { lat: e.latlng.lat, lng: e.latlng.lng }, // Pass map coordinates for creation
+			});
 		},
 	});
 	return null;
@@ -771,22 +1028,27 @@ export default function PathStylePopup({ data, onChange }) {
 --- FILE: components\PatternDefs.jsx ---
 import React from 'react';
 
-/**
- * Generates SVG Pattern Definitions for Leaflet
- * Renders a hidden SVG containing <defs> for hatch and dot patterns
- */
 export const PatternDefs = ({ areas }) => {
-	// 1. Find all unique pattern/color combinations needed
 	const patterns = new Map();
 
 	areas.forEach((area) => {
 		if (area.fillType === 'hatch' || area.fillType === 'dots') {
 			const color = area.interiorColor || '#d97706';
 			const type = area.fillType;
-			const id = `pattern-${type}-${color.replace('#', '')}`;
+			const opacity = area.fillOpacity ?? 0.2;
+
+			// Use defaults if new props aren't set
+			const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
+			const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+
+			const safeColor = color.replace('#', '');
+			const safeOpacity = Math.round(opacity * 100);
+
+			// Generate ID based on all visual properties
+			const id = `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`;
 
 			if (!patterns.has(id)) {
-				patterns.set(id, { id, type, color });
+				patterns.set(id, { id, type, color, opacity, spacing, weight });
 			}
 		}
 	});
@@ -796,16 +1058,33 @@ export const PatternDefs = ({ areas }) => {
 	return (
 		<svg style={{ height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
 			<defs>
-				{Array.from(patterns.values()).map(({ id, type, color }) => (
+				{Array.from(patterns.values()).map(({ id, type, color, opacity, spacing, weight }) => (
 					<pattern
 						key={id}
 						id={id}
 						patternUnits='userSpaceOnUse'
-						width={type === 'hatch' ? 10 : 16}
-						height={type === 'hatch' ? 10 : 16}
-						patternTransform='rotate(45)'>
-						{type === 'hatch' && <line x1='0' y1='0' x2='0' y2='10' stroke={color} strokeWidth='2' />}
-						{type === 'dots' && <circle cx='2' cy='2' r='1.5' fill={color} />}
+						width={spacing}
+						height={spacing}
+						patternTransform={type === 'hatch' ? 'rotate(45)' : ''}>
+						{type === 'hatch' && (
+							<line
+								x1='0'
+								y1='0'
+								x2='0'
+								y2={spacing}
+								stroke={color}
+								strokeWidth={weight}
+								strokeOpacity={opacity}
+								strokeLinecap='square'
+							/>
+						)}
+						{type === 'dots' && (
+							// Staggered Dot Pattern
+							<>
+								<circle cx={spacing * 0.25} cy={spacing * 0.25} r={weight} fill={color} fillOpacity={opacity} />
+								<circle cx={spacing * 0.75} cy={spacing * 0.75} r={weight} fill={color} fillOpacity={opacity} />
+							</>
+						)}
 					</pattern>
 				))}
 			</defs>
@@ -1094,253 +1373,403 @@ export default function VisualIconPicker({ value, onChange }) {
 --- END OF components\VisualIconPicker.jsx ---
 
 --- FILE: forms\AreaForm.jsx ---
-import React from 'react';
-import { Trash2, X, Hexagon, Type, Layout, Square, CircleDashed } from 'lucide-react';
+import React, { useState } from 'react';
+import { Trash2, X, Hexagon, Square, CircleDashed, Type, Palette, Settings2, RotateCw } from 'lucide-react';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
+import clsx from 'clsx';
 
-const LABEL_CLASS = 'text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block tracking-wide';
-const SECTION_CLASS = 'space-y-4 p-4 rounded-xl border border-border bg-card/50';
+// --- UI HELPERS ---
 
 const Header = ({ title, onDelete, onClose }) => (
-	<div className='flex justify-between items-center px-5 py-4 border-b border-border bg-background shrink-0 sticky top-0 z-10'>
-		<span className='font-bold text-sm uppercase flex items-center gap-2'>{title}</span>
+	<div className='flex justify-between items-center px-4 py-3 border-b border-border bg-background shrink-0 sticky top-0 z-10'>
+		<span className='font-bold text-xs uppercase tracking-wider flex items-center gap-2 text-muted-foreground'>
+			<Hexagon size={14} />
+			{title}
+		</span>
 		<div className='flex gap-1'>
 			{onDelete && (
 				<button
 					onClick={onDelete}
-					className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'
-					title='Delete'>
-					<Trash2 size={16} />
+					className='p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'>
+					<Trash2 size={14} />
 				</button>
 			)}
-			<button
-				onClick={onClose}
-				className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-md transition-colors'
-				title='Close'>
-				<X size={16} />
+			<button onClick={onClose} className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors'>
+				<X size={14} />
 			</button>
 		</div>
 	</div>
 );
 
-const toHex = (c) => (/^#[0-9A-F]{6}$/i.test(c) ? c : '#d97706');
+const PropRow = ({ label, children, className }) => (
+	<div className={clsx('flex items-center justify-between min-h-[32px] gap-3', className)}>
+		<span className='text-[11px] font-medium text-muted-foreground shrink-0 w-20 truncate' title={label}>
+			{label}
+		</span>
+		<div className='flex items-center gap-2 flex-1 justify-end min-w-0'>{children}</div>
+	</div>
+);
+
+const ToggleGroup = ({ options, value, onChange }) => (
+	<div className='flex bg-muted/50 p-0.5 rounded-md border border-border/50 shrink-0'>
+		{options.map((opt) => (
+			<button
+				key={opt.value}
+				onClick={() => onChange(opt.value)}
+				className={clsx(
+					'p-1 rounded-[3px] transition-all',
+					value === opt.value ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:bg-black/5'
+				)}
+				title={opt.label}>
+				{opt.icon}
+			</button>
+		))}
+	</div>
+);
+
+const TabButton = ({ active, onClick, icon: Icon, label }) => (
+	<button
+		onClick={onClick}
+		className={clsx(
+			'flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-colors',
+			active ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:bg-muted'
+		)}>
+		<Icon size={14} />
+		{label}
+	</button>
+);
+
+const safeHex = (c, fallback = '#d97706') => (/^#[0-9A-F]{6}$/i.test(c) ? c : fallback);
 
 export default function AreaForm({ data, onChange, onDelete, onClose }) {
 	if (!data) return null;
+	const [tab, setTab] = useState('style'); // 'style' | 'text' | 'settings'
 
 	const safeData = {
 		name: '',
-		lineColor: toHex('#d97706'),
-		interiorColor: toHex('#d97706'),
+		lineColor: '#d97706',
+		weight: 2,
+		interiorColor: '#d97706',
 		fillOpacity: 0.2,
 		fillType: 'solid',
 		borderStyle: 'solid',
 		curviness: 0,
+		fillSpacing: 10,
+		fillWeight: 2,
 		labelDisplay: 'always',
-		labelColor: toHex('#ffffff'),
+		labelColor: '#ffffff',
 		fontSize: 16,
 		textRotation: 0,
-		labelBgColor: toHex('#000000'),
+		labelBgColor: '#000000',
 		labelBgOpacity: 0,
+		labelRadius: 4,
+		labelHasBorder: false,
+		labelBorderColor: '#ffffff',
+		paddingX: 8,
+		paddingY: 4,
 		...data,
 	};
 
+	const update = (field, val) => onChange(field, val);
+
 	return (
-		<div className='flex flex-col h-full bg-muted/10 w-full'>
-			<Header title='Edit Region' onDelete={onDelete} onClose={onClose} />
-			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
-				{/* 1. IDENTITY */}
-				<div className={SECTION_CLASS}>
-					<div className='flex gap-3'>
-						<div className='w-12 h-12 rounded-lg shrink-0 flex items-center justify-center border border-border bg-card shadow-sm'>
-							<div className='w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary'>
-								<Hexagon size={18} />
-							</div>
-						</div>
-						<div className='flex-1 space-y-2'>
-							<input
-								className='w-full bg-card border border-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary placeholder:font-normal'
-								value={safeData.name}
-								onChange={(e) => onChange('name', e.target.value)}
-								placeholder='Region Name...'
-								autoFocus
-							/>
-							<div className='flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-xs text-muted-foreground'>
-								<Layout size={12} />
-								<span>Polygon Object</span>
-							</div>
-						</div>
-					</div>
-				</div>
+		<div className='flex flex-col h-full bg-card/50 w-full'>
+			<Header title='Region' onDelete={onDelete} onClose={onClose} />
 
-				{/* 2. FILL SETTINGS (FIXED LAYOUT) */}
-				<div className='space-y-4'>
-					<label className={LABEL_CLASS}>Fill Settings</label>
-					<div className='grid grid-cols-3 gap-2'>
-						{[
-							{ label: 'Solid', value: 'solid', icon: <Square size={16} fill='currentColor' /> },
-							{
-								label: 'Lines',
-								value: 'hatch',
-								icon: (
-									<div
-										className='w-4 h-4 rounded-sm'
-										style={{
-											background:
-												'repeating-linear-gradient(45deg, currentColor, currentColor 1px, transparent 1px, transparent 4px)',
-										}}
-									/>
-								),
-							},
-							{ label: 'Dots', value: 'dots', icon: <CircleDashed size={16} /> },
-						].map((opt) => (
-							<button
-								key={opt.value}
-								onClick={() => onChange('fillType', opt.value)}
-								className={`flex flex-col items-center justify-center gap-1.5 h-14 rounded-lg border transition-all ${
-									safeData.fillType === opt.value
-										? 'bg-primary/10 border-primary text-primary'
-										: 'bg-card border-border hover:bg-muted text-muted-foreground'
-								}`}>
-								{opt.icon}
-								<span className='text-[9px] uppercase font-bold'>{opt.label}</span>
-							</button>
-						))}
-					</div>
+			<div className='p-4 pb-0'>
+				<input
+					className='w-full bg-muted/30 border border-border rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary placeholder:font-normal transition-all'
+					value={safeData.name}
+					onChange={(e) => update('name', e.target.value)}
+					placeholder='Region Name...'
+				/>
+			</div>
 
-					<div className={SECTION_CLASS}>
-						{/* FIX: Stacked vertically to prevent overlap */}
-						<div className='flex flex-col gap-4'>
-							<div className='space-y-2'>
-								<label className={LABEL_CLASS}>Fill Color</label>
-								<SmartColorPicker value={safeData.interiorColor} onChange={(val) => onChange('interiorColor', val)} />
-							</div>
-							<div className='space-y-2'>
-								<div className='flex justify-between'>
-									<label className={LABEL_CLASS}>Fill Opacity</label>
-									<span className='text-[10px] font-mono text-muted-foreground'>{safeData.fillOpacity}</span>
-								</div>
+			<div className='flex border-b border-border mt-4 px-2'>
+				<TabButton active={tab === 'style'} onClick={() => setTab('style')} icon={Palette} label='Style' />
+				<TabButton active={tab === 'text'} onClick={() => setTab('text')} icon={Type} label='Text' />
+				<TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={Settings2} label='Misc' />
+			</div>
+
+			<div className='p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				{tab === 'style' && (
+					<div className='space-y-4 divide-y divide-border/40'>
+						<div className='space-y-3'>
+							<h4 className='text-[10px] font-bold uppercase text-muted-foreground/70 tracking-wider'>Fill</h4>
+							<PropRow label='Color'>
+								<SmartColorPicker
+									value={safeHex(safeData.interiorColor)}
+									onChange={(val) => update('interiorColor', val)}
+								/>
+								<ToggleGroup
+									value={safeData.fillType}
+									onChange={(v) => update('fillType', v)}
+									options={[
+										{ value: 'solid', icon: <Square size={14} fill='currentColor' />, label: 'Solid' },
+										{
+											value: 'hatch',
+											icon: (
+												<div className='w-3.5 h-3.5 bg-[linear-gradient(45deg,currentColor_25%,transparent_25%,transparent_50%,currentColor_50%,currentColor_75%,transparent_75%,transparent)] bg-[length:4px_4px]' />
+											),
+											label: 'Hatch',
+										},
+										{ value: 'dots', icon: <CircleDashed size={14} />, label: 'Dots' },
+									]}
+								/>
+							</PropRow>
+
+							{(safeData.fillType === 'hatch' || safeData.fillType === 'dots') && (
+								<>
+									<PropRow label={safeData.fillType === 'hatch' ? 'Spacing' : 'Density'}>
+										<input
+											type='range'
+											min='4'
+											max='40'
+											step='1'
+											value={safeData.fillSpacing}
+											onChange={(e) => update('fillSpacing', parseInt(e.target.value))}
+											className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+										/>
+										<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+											{safeData.fillSpacing}
+										</span>
+									</PropRow>
+									<PropRow label={safeData.fillType === 'hatch' ? 'Thickness' : 'Dot Size'}>
+										<input
+											type='range'
+											min='1'
+											max='10'
+											step='0.5'
+											value={safeData.fillWeight}
+											onChange={(e) => update('fillWeight', parseFloat(e.target.value))}
+											className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+										/>
+										<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+											{safeData.fillWeight}
+										</span>
+									</PropRow>
+								</>
+							)}
+
+							<PropRow label='Opacity'>
 								<input
 									type='range'
 									min='0'
 									max='1'
-									step='0.1'
+									step='0.05'
 									value={safeData.fillOpacity}
-									onChange={(e) => onChange('fillOpacity', parseFloat(e.target.value))}
-									className='w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									onChange={(e) => update('fillOpacity', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
 								/>
-							</div>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+									{Math.round(safeData.fillOpacity * 100)}%
+								</span>
+							</PropRow>
 						</div>
-					</div>
-				</div>
 
-				{/* 3. BORDER & SHAPE */}
-				<div className='space-y-4'>
-					<label className={LABEL_CLASS}>Border & Shape</label>
-					<div className='grid grid-cols-4 gap-2'>
-						{[
-							{ label: 'Solid', value: 'solid', icon: <div className='w-6 h-0.5 bg-current' /> },
-							{
-								label: 'Dashed',
-								value: 'dashed',
-								icon: <div className='w-6 h-0.5 border-t-2 border-dashed border-current' />,
-							},
-							{
-								label: 'Dotted',
-								value: 'dotted',
-								icon: <div className='w-6 h-0.5 border-t-2 border-dotted border-current' />,
-							},
-							{ label: 'None', value: 'none', icon: <X size={16} /> },
-						].map((opt) => (
-							<button
-								key={opt.value}
-								onClick={() => onChange('borderStyle', opt.value)}
-								className={`flex flex-col items-center justify-center gap-1.5 h-14 rounded-lg border transition-all ${
-									safeData.borderStyle === opt.value
-										? 'bg-primary/10 border-primary text-primary'
-										: 'bg-card border-border hover:bg-muted text-muted-foreground'
-								}`}>
-								{opt.icon}
-								<span className='text-[9px] uppercase font-bold'>{opt.label}</span>
-							</button>
-						))}
-					</div>
-
-					<div className={SECTION_CLASS}>
-						<div className='space-y-4'>
+						<div className='pt-4 space-y-3'>
+							<h4 className='text-[10px] font-bold uppercase text-muted-foreground/70 tracking-wider'>Border</h4>
+							<PropRow label='Style'>
+								<SmartColorPicker value={safeHex(safeData.lineColor)} onChange={(val) => update('lineColor', val)} />
+								<ToggleGroup
+									value={safeData.borderStyle}
+									onChange={(v) => update('borderStyle', v)}
+									options={[
+										{ value: 'solid', icon: <div className='w-3 h-0.5 bg-current' />, label: 'Solid' },
+										{
+											value: 'dashed',
+											icon: <div className='w-3 h-0.5 border-t border-dashed border-current' />,
+											label: 'Dashed',
+										},
+										{ value: 'none', icon: <X size={14} />, label: 'None' },
+									]}
+								/>
+							</PropRow>
 							{safeData.borderStyle !== 'none' && (
-								<div className='space-y-2'>
-									<label className={LABEL_CLASS}>Stroke Color</label>
-									<SmartColorPicker value={safeData.lineColor} onChange={(val) => onChange('lineColor', val)} />
-								</div>
-							)}
-							<div className='space-y-2'>
-								<div className='flex justify-between'>
-									<label className={LABEL_CLASS}>Corner Rounding</label>
-									<span className='text-[10px] font-mono text-muted-foreground'>
-										{safeData.curviness === 0 ? 'Sharp' : 'Smooth'}
+								<PropRow label='Width'>
+									<input
+										type='range'
+										min='1'
+										max='20'
+										step='1'
+										value={safeData.weight || 2}
+										onChange={(e) => update('weight', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+									<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+										{safeData.weight}px
 									</span>
-								</div>
+								</PropRow>
+							)}
+							<PropRow label='Rounding'>
 								<input
 									type='range'
 									min='0'
 									max='1'
 									step='0.1'
 									value={safeData.curviness}
-									onChange={(e) => onChange('curviness', parseFloat(e.target.value))}
-									className='w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									onChange={(e) => update('curviness', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
 								/>
-							</div>
+							</PropRow>
 						</div>
 					</div>
-				</div>
+				)}
 
-				{/* 4. TYPOGRAPHY */}
-				<div className={SECTION_CLASS}>
-					<div className='flex items-center gap-2 mb-3'>
-						<Type size={14} className='text-muted-foreground' />
-						<label className='text-[10px] font-bold uppercase text-muted-foreground tracking-wide'>Typography</label>
-					</div>
-
-					<div className='space-y-4'>
-						<div className='space-y-2'>
-							<label className={LABEL_CLASS}>Visibility</label>
-							<select
-								className={ADMIN_INPUT_CLASS}
-								value={safeData.labelDisplay}
-								onChange={(e) => onChange('labelDisplay', e.target.value)}>
-								<option value='always'>Always Visible</option>
-								<option value='hover'>On Hover</option>
-								<option value='none'>Hidden</option>
-							</select>
-						</div>
-						<div className='grid grid-cols-2 gap-4'>
-							<div className='col-span-2'>
-								<label className={LABEL_CLASS}>Text Color</label>
-								<SmartColorPicker value={safeData.labelColor} onChange={(val) => onChange('labelColor', val)} />
-							</div>
-							<div>
-								<label className={LABEL_CLASS}>Size (px)</label>
+				{tab === 'text' && (
+					<div className='space-y-4 divide-y divide-border/40'>
+						<div className='space-y-3'>
+							<PropRow label='Visibility'>
+								<select
+									className='bg-muted/30 border border-border rounded text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary w-full'
+									value={safeData.labelDisplay}
+									onChange={(e) => update('labelDisplay', e.target.value)}>
+									<option value='always'>Always Show</option>
+									<option value='hover'>Show on Hover</option>
+									<option value='none'>Hidden</option>
+								</select>
+							</PropRow>
+							<PropRow label='Size'>
 								<input
-									type='number'
-									className={ADMIN_INPUT_CLASS}
+									type='range'
+									min='8'
+									max='64'
+									step='1'
 									value={safeData.fontSize}
-									onChange={(e) => onChange('fontSize', Number(e.target.value))}
+									onChange={(e) => update('fontSize', parseInt(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
 								/>
-							</div>
-							<div>
-								<label className={LABEL_CLASS}>Rotate (°)</label>
-								<input
-									type='number'
-									className={ADMIN_INPUT_CLASS}
-									value={safeData.textRotation}
-									onChange={(e) => onChange('textRotation', parseFloat(e.target.value))}
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>{safeData.fontSize}</span>
+							</PropRow>
+							<PropRow label='Rotation'>
+								<div className='flex items-center gap-2 flex-1'>
+									<RotateCw size={12} className='text-muted-foreground' />
+									<input
+										type='range'
+										min='0'
+										max='360'
+										step='5'
+										value={safeData.textRotation}
+										onChange={(e) => update('textRotation', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+									<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+										{safeData.textRotation}°
+									</span>
+								</div>
+							</PropRow>
+							<PropRow label='Color'>
+								<SmartColorPicker
+									value={safeHex(safeData.labelColor, '#ffffff')}
+									onChange={(val) => update('labelColor', val)}
 								/>
+							</PropRow>
+							{/* NEW: Padding Controls */}
+							<div className='pb-4'>
+								<PropRow label='Padding'>
+									<div className='flex gap-2 w-full flex-wrap'>
+										<div className='flex-1 flex items-center gap-1'>
+											<span className='text-[9px] text-muted-foreground uppercase'>H</span>
+											<input
+												type='range'
+												min='0'
+												max='32'
+												step='1'
+												value={safeData.paddingX}
+												onChange={(e) => update('paddingX', parseInt(e.target.value))}
+												className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+											/>
+										</div>
+										<div className='flex-1 flex items-center gap-1'>
+											<span className='text-[9px] text-muted-foreground uppercase'>V</span>
+											<input
+												type='range'
+												min='0'
+												max='32'
+												step='1'
+												value={safeData.paddingY}
+												onChange={(e) => update('paddingY', parseInt(e.target.value))}
+												className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+											/>
+										</div>
+									</div>
+								</PropRow>
 							</div>
 						</div>
+
+						<div className='pt-4 space-y-3'>
+							<h4 className='text-[10px] font-bold uppercase text-muted-foreground/70 tracking-wider'>
+								Background & Border
+							</h4>
+							<PropRow label='Bg Color'>
+								<SmartColorPicker
+									value={safeHex(safeData.labelBgColor, '#000000')}
+									onChange={(val) => update('labelBgColor', val)}
+								/>
+							</PropRow>
+							<PropRow label='Bg Opacity'>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.1'
+									value={safeData.labelBgOpacity}
+									onChange={(e) => update('labelBgOpacity', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+									{Math.round(safeData.labelBgOpacity * 100)}%
+								</span>
+							</PropRow>
+							<PropRow label='Radius'>
+								<input
+									type='range'
+									min='0'
+									max='20'
+									step='1'
+									value={safeData.labelRadius}
+									onChange={(e) => update('labelRadius', parseInt(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+									{safeData.labelRadius}
+								</span>
+							</PropRow>
+							<PropRow label='Show Border'>
+								<div className='flex items-center gap-2 justify-end w-full'>
+									{safeData.labelHasBorder && (
+										<SmartColorPicker
+											value={safeHex(safeData.labelBorderColor, safeData.labelColor)}
+											onChange={(val) => update('labelBorderColor', val)}
+										/>
+									)}
+									<button
+										onClick={() => update('labelHasBorder', !safeData.labelHasBorder)}
+										className={clsx(
+											'w-8 h-4 rounded-full transition-colors relative border',
+											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border'
+										)}>
+										<div
+											className={clsx(
+												'absolute top-0.5 bottom-0.5 w-3 bg-white rounded-full transition-all shadow-sm',
+												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5'
+											)}
+										/>
+									</button>
+								</div>
+							</PropRow>
+						</div>
 					</div>
-				</div>
+				)}
+
+				{tab === 'settings' && (
+					<div className='space-y-4'>
+						<div className='p-3 bg-blue-500/10 border border-blue-500/20 rounded-md text-xs text-blue-600'>
+							<strong>Tip:</strong> Drag the center point of the region to move the text label manually.
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -1350,7 +1779,7 @@ export default function AreaForm({ data, onChange, onDelete, onClose }) {
 
 --- FILE: forms\MarkerForm.jsx ---
 import React, { useState, useEffect } from 'react';
-import { Trash2, X, MapPin, Circle, Image as ImageIcon, Type, Minus, Plus, Tag } from 'lucide-react';
+import { Trash2, X, MapPin, Circle, Image as ImageIcon, Type, Minus, Plus, Tag, Palette, RotateCw } from 'lucide-react';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 import ShapeSelector from '../components/ShapeSelector';
@@ -1358,6 +1787,7 @@ import VisualIconPicker from '../components/VisualIconPicker';
 import TileSelector from '../components/TileSelector';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { fetchCampaignMaps } from '@/features/atlas/api/mapService';
+import clsx from 'clsx';
 
 const LABEL_CLASS = 'text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block tracking-wide';
 const SECTION_CLASS = 'space-y-4 p-4 rounded-xl border border-border bg-card/50';
@@ -1369,15 +1799,13 @@ const Header = ({ title, onDelete, onClose }) => (
 			{onDelete && (
 				<button
 					onClick={onDelete}
-					className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'
-					title='Delete'>
+					className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'>
 					<Trash2 size={16} />
 				</button>
 			)}
 			<button
 				onClick={onClose}
-				className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-md transition-colors'
-				title='Close'>
+				className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-md transition-colors'>
 				<X size={16} />
 			</button>
 		</div>
@@ -1402,6 +1830,15 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 		labelDisplay: 'hover',
 		scale: 1,
 		mapLink: '',
+		// Text Specifics
+		labelBgColor: '#000000',
+		labelBgOpacity: 0,
+		labelRadius: 4,
+		labelHasBorder: false,
+		labelBorderColor: '#ffffff',
+		textRotation: 0,
+		paddingX: 8,
+		paddingY: 4,
 		...data,
 	};
 
@@ -1410,21 +1847,26 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 			<Header title='Edit Marker' onDelete={onDelete} onClose={onClose} />
 
 			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				{/* NAME & CATEGORY */}
 				<div className={SECTION_CLASS}>
 					<div className='flex gap-3'>
 						<div className='w-12 h-12 rounded-lg shrink-0 flex items-center justify-center border border-border bg-card shadow-sm'>
 							<div
-								className='w-6 h-6 rounded-full border border-black/10'
-								style={{ backgroundColor: safeData.color }}
-							/>
+								className='w-6 h-6 flex items-center justify-center font-bold text-xs'
+								style={{ color: safeData.color }}>
+								{safeData.variant === 'text' ? (
+									'T'
+								) : (
+									<div className='w-4 h-4 rounded-full' style={{ backgroundColor: safeData.color }} />
+								)}
+							</div>
 						</div>
 						<div className='flex-1 space-y-2'>
 							<input
-								className='w-full bg-card border border-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary placeholder:font-normal'
+								className='w-full bg-card border border-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary'
 								value={safeData.label}
 								onChange={(e) => onChange('label', e.target.value)}
 								placeholder='Marker Name...'
-								autoFocus
 							/>
 							<div className='flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg'>
 								<Tag size={12} className='text-muted-foreground' />
@@ -1437,8 +1879,9 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 									<option value='cities'>Cities</option>
 									<option value='npcs'>NPCs</option>
 									<option value='shops'>Shops</option>
-									<option value='loot'>Loot</option>
-									<option value='quest'>Quest</option>
+									<option value='pois'>Points of Interest</option>
+									<option value='quests'>Quests</option>
+									<option value='encounters'>Encounters</option>
 								</select>
 							</div>
 						</div>
@@ -1459,6 +1902,9 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 					/>
 				</div>
 
+				{/* VISUAL SETTINGS */}
+
+				{/* 1. SHAPE VARIANTS */}
 				{['large', 'small'].includes(safeData.variant) && (
 					<div className='space-y-4 bg-card p-4 rounded-xl border border-border'>
 						<div className='space-y-2'>
@@ -1466,14 +1912,13 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 							<ShapeSelector value={safeData.shape} onChange={(v) => onChange('shape', v)} color={safeData.color} />
 						</div>
 						<div className='h-px bg-border/50' />
-
-						<div className='grid grid-cols-2 gap-6 relative'>
-							<div className='space-y-2 relative z-20'>
+						<div className='grid grid-cols-1 gap-4'>
+							<div className='space-y-2'>
 								<label className={LABEL_CLASS}>Color</label>
 								<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
 							</div>
 							{safeData.variant === 'large' && (
-								<div className='space-y-2 relative z-10'>
+								<div className='space-y-2'>
 									<label className={LABEL_CLASS}>Icon</label>
 									<VisualIconPicker value={safeData.icon} onChange={(v) => onChange('icon', v)} />
 								</div>
@@ -1482,77 +1927,205 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 					</div>
 				)}
 
+				{/* 2. ICON VARIANT */}
 				{safeData.variant === 'icon' && (
 					<div className='space-y-4 bg-card p-4 rounded-xl border border-border'>
-						<div className='grid grid-cols-1 gap-4'>
-							<div className='space-y-2'>
-								<label className={LABEL_CLASS}>Select Icon</label>
-								<VisualIconPicker value={safeData.icon} onChange={(v) => onChange('icon', v)} />
-							</div>
-							<div className='space-y-2'>
-								<label className={LABEL_CLASS}>Color</label>
-								<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
-							</div>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Select Icon</label>
+							<VisualIconPicker value={safeData.icon} onChange={(v) => onChange('icon', v)} />
+						</div>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Tint Color</label>
+							<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
 						</div>
 					</div>
 				)}
 
-				<div className={SECTION_CLASS}>
-					<div className='space-y-4'>
-						<div>
-							<div className='flex justify-between mb-2'>
-								<label className={LABEL_CLASS}>Size / Scale</label>
-								<span className='text-[10px] font-mono text-muted-foreground'>{safeData.scale.toFixed(1)}x</span>
+				{/* 3. TEXT VARIANT (RICH) */}
+				{safeData.variant === 'text' && (
+					<div className='space-y-4 bg-card p-4 rounded-xl border border-border'>
+						<div className='space-y-2'>
+							<div className='flex items-center gap-2 mb-2'>
+								<Palette size={14} className='text-muted-foreground' />
+								<label className={LABEL_CLASS} style={{ marginBottom: 0 }}>
+									Text Color
+								</label>
 							</div>
-							<div className='flex items-center gap-3 bg-muted/30 p-2 rounded-lg border border-border'>
-								<button
-									onClick={() => onChange('scale', Math.max(0.5, safeData.scale - 0.1))}
-									className='p-1 hover:text-primary'>
-									<Minus size={14} />
-								</button>
-								<input
-									type='range'
-									min='0.5'
-									max='2.0'
-									step='0.1'
-									value={safeData.scale}
-									onChange={(e) => onChange('scale', parseFloat(e.target.value))}
-									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
-								/>
-								<button
-									onClick={() => onChange('scale', Math.min(2.0, safeData.scale + 0.1))}
-									className='p-1 hover:text-primary'>
-									<Plus size={14} />
-								</button>
+							<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
+						</div>
+
+						<div className='h-px bg-border/50' />
+
+						{/* NEW: Padding Controls */}
+						<div className='space-y-2'>
+							<div className='flex justify-between items-center'>
+								<span className='text-[10px] font-medium text-muted-foreground'>Padding</span>
+							</div>
+							<div className='flex gap-4 w-full'>
+								<div className='flex-1 flex items-center gap-2'>
+									<span className='text-[9px] text-muted-foreground font-bold'>HORZ</span>
+									<input
+										type='range'
+										min='0'
+										max='32'
+										step='1'
+										value={safeData.paddingX}
+										onChange={(e) => onChange('paddingX', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+								</div>
+								<div className='flex-1 flex items-center gap-2'>
+									<span className='text-[9px] text-muted-foreground font-bold'>VERT</span>
+									<input
+										type='range'
+										min='0'
+										max='32'
+										step='1'
+										value={safeData.paddingY}
+										onChange={(e) => onChange('paddingY', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+								</div>
 							</div>
 						</div>
 
-						<div className='grid grid-cols-2 gap-4 pt-2'>
-							<div className='space-y-2'>
-								<label className={LABEL_CLASS}>Label Display</label>
-								<select
-									className={ADMIN_INPUT_CLASS}
-									value={safeData.labelDisplay}
-									onChange={(e) => onChange('labelDisplay', e.target.value)}>
-									<option value='always'>Always Visible</option>
-									<option value='hover'>On Hover</option>
-									<option value='none'>Hidden</option>
-								</select>
+						<div className='space-y-3'>
+							<div className='flex justify-between items-center'>
+								<span className='text-[10px] font-medium text-muted-foreground'>Background</span>
+								<SmartColorPicker
+									value={safeData.labelBgColor || '#000000'}
+									onChange={(v) => onChange('labelBgColor', v)}
+								/>
 							</div>
-							<div className='space-y-2'>
-								<label className={LABEL_CLASS}>Link Map</label>
-								<select
-									className={ADMIN_INPUT_CLASS}
-									value={safeData.mapLink || ''}
-									onChange={(e) => onChange('mapLink', e.target.value)}>
-									<option value=''>-- None --</option>
-									{mapOptions.map((m) => (
-										<option key={m.key} value={m.key}>
-											{m.title}
-										</option>
-									))}
-								</select>
+							<div className='flex items-center gap-3'>
+								<span className='text-[10px] font-medium text-muted-foreground w-12'>Opacity</span>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.1'
+									value={safeData.labelBgOpacity ?? 0}
+									onChange={(e) => onChange('labelBgOpacity', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
 							</div>
+						</div>
+
+						<div className='h-px bg-border/50' />
+
+						<div className='space-y-3'>
+							<div className='flex items-center justify-between'>
+								<span className='text-[10px] font-medium text-muted-foreground'>Border</span>
+								<div className='flex items-center gap-2'>
+									{safeData.labelHasBorder && (
+										<SmartColorPicker
+											value={safeData.labelBorderColor || safeData.color}
+											onChange={(v) => onChange('labelBorderColor', v)}
+										/>
+									)}
+									<button
+										onClick={() => onChange('labelHasBorder', !safeData.labelHasBorder)}
+										className={clsx(
+											'w-8 h-4 rounded-full transition-colors relative border',
+											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border'
+										)}>
+										<div
+											className={clsx(
+												'absolute top-0.5 bottom-0.5 w-3 bg-white rounded-full transition-all shadow-sm',
+												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5'
+											)}
+										/>
+									</button>
+								</div>
+							</div>
+
+							<div className='flex items-center gap-3'>
+								<span className='text-[10px] font-medium text-muted-foreground w-12'>Radius</span>
+								<input
+									type='range'
+									min='0'
+									max='20'
+									step='1'
+									value={safeData.labelRadius ?? 4}
+									onChange={(e) => onChange('labelRadius', parseInt(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+							</div>
+						</div>
+
+						<div className='h-px bg-border/50' />
+
+						<div className='flex items-center gap-3'>
+							<RotateCw size={14} className='text-muted-foreground' />
+							<input
+								type='range'
+								min='0'
+								max='360'
+								step='5'
+								value={safeData.textRotation ?? 0}
+								onChange={(e) => onChange('textRotation', parseInt(e.target.value))}
+								className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+							/>
+							<span className='text-[10px] font-mono text-muted-foreground'>{safeData.textRotation}°</span>
+						</div>
+					</div>
+				)}
+
+				{/* SCALING & LINKING */}
+				<div className={SECTION_CLASS}>
+					<div className='space-y-2'>
+						<div className='flex justify-between'>
+							<label className={LABEL_CLASS}>Size / Scale</label>
+							<span className='text-[10px] font-mono text-muted-foreground'>{safeData.scale.toFixed(1)}x</span>
+						</div>
+						<div className='flex items-center gap-3 bg-muted/30 p-2 rounded-lg border border-border'>
+							<button
+								onClick={() => onChange('scale', Math.max(0.5, safeData.scale - 0.1))}
+								className='p-1 hover:text-primary'>
+								<Minus size={14} />
+							</button>
+							<input
+								type='range'
+								min='0.5'
+								max='2.0'
+								step='0.1'
+								value={safeData.scale}
+								onChange={(e) => onChange('scale', parseFloat(e.target.value))}
+								className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+							/>
+							<button
+								onClick={() => onChange('scale', Math.min(2.0, safeData.scale + 0.1))}
+								className='p-1 hover:text-primary'>
+								<Plus size={14} />
+							</button>
+						</div>
+					</div>
+
+					<div className='grid grid-cols-2 gap-4 pt-2'>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Label Display</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={safeData.labelDisplay}
+								onChange={(e) => onChange('labelDisplay', e.target.value)}>
+								<option value='always'>Always Visible</option>
+								<option value='hover'>On Hover</option>
+								<option value='none'>Hidden</option>
+							</select>
+						</div>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Link Map</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={safeData.mapLink || ''}
+								onChange={(e) => onChange('mapLink', e.target.value)}>
+								<option value=''>-- None --</option>
+								{mapOptions.map((m) => (
+									<option key={m.key} value={m.key}>
+										{m.title}
+									</option>
+								))}
+							</select>
 						</div>
 					</div>
 				</div>
@@ -1949,6 +2522,9 @@ export const useAtlasActions = (dispatch) => {
 
 				dispatch({ type: 'UPDATE_OVERLAY', id, updates: { bounds: newBounds } });
 			},
+
+			openContextMenu: (payload) => dispatch({ type: 'OPEN_CONTEXT_MENU', payload }),
+			closeContextMenu: () => dispatch({ type: 'CLOSE_CONTEXT_MENU' }),
 		}),
 		[dispatch]
 	);
@@ -1974,22 +2550,42 @@ const initialState = {
 		areas: true,
 		overlays: true,
 	},
+	contextMenu: null, // { type: 'map'|'entity', position: {x,y}, latlng: {lat,lng}, target: {type, id, ...data} }
+	mapId: null,
+	mapConfig: null,
 };
 
 const reducer = (state, action) => {
 	switch (action.type) {
-		// --- GLOBAL ---
+		// ==========================================
+		// GLOBAL / UI STATE
+		// ==========================================
 		case 'INIT_DATA':
 			return { ...state, ...action.payload };
 
 		case 'SET_MODE':
-			return { ...state, mode: action.payload };
+			return {
+				...state,
+				mode: action.payload,
+				contextMenu: null, // Close menu on mode change
+			};
 
 		case 'SET_TOOL':
-			return { ...state, activeTool: action.payload, selection: null, mode: 'select' };
+			return {
+				...state,
+				activeTool: action.payload,
+				selection: null,
+				mode: 'select',
+				contextMenu: null,
+			};
 
 		case 'SELECT_ITEM':
-			return { ...state, selection: action.payload, mode: 'select' }; // Reset draw mode on select
+			return {
+				...state,
+				selection: action.payload,
+				mode: 'select', // Reset draw mode on select
+				contextMenu: null,
+			};
 
 		case 'TOGGLE_VISIBILITY':
 			return {
@@ -1998,17 +2594,28 @@ const reducer = (state, action) => {
 					...state.visibility,
 					[action.payload]: !state.visibility[action.payload],
 				},
+				contextMenu: null,
 			};
 
 		case 'SET_SAVING':
 			return { ...state, isSaving: action.payload };
 
-		// --- MARKERS ---
+		// --- CONTEXT MENU ---
+		case 'OPEN_CONTEXT_MENU':
+			return { ...state, contextMenu: action.payload };
+
+		case 'CLOSE_CONTEXT_MENU':
+			return { ...state, contextMenu: null };
+
+		// ==========================================
+		// MARKERS
+		// ==========================================
 		case 'ADD_MARKER':
 			return {
 				...state,
 				markers: [...state.markers, action.payload],
 				selection: { type: 'marker', id: action.payload._id },
+				contextMenu: null,
 			};
 		case 'UPDATE_MARKER':
 			return {
@@ -2019,16 +2626,20 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				markers: state.markers.filter((m) => m._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 
-		// --- PATHS ---
+		// ==========================================
+		// PATHS
+		// ==========================================
 		case 'ADD_PATH':
 			return {
 				...state,
 				paths: [...state.paths, action.payload],
 				selection: { type: 'path', id: action.payload._id },
 				mode: 'draw', // Auto enter draw mode
+				contextMenu: null,
 			};
 		case 'UPDATE_PATH':
 			return {
@@ -2039,7 +2650,8 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				paths: state.paths.filter((p) => p._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 		case 'UPDATE_PATH_POINT':
 			return {
@@ -2079,14 +2691,38 @@ const reducer = (state, action) => {
 				}),
 			};
 
-		// --- AREAS ---
-		case 'ADD_AREA':
+		// ==========================================
+		// AREAS (REGIONS)
+		// ==========================================
+		case 'ADD_AREA': {
+			// <--- ADDED OPEN BRACE
+			const areaDefaults = {
+				lineColor: '#d97706',
+				weight: 2,
+				borderStyle: 'solid',
+				fillType: 'solid',
+				interiorColor: '#ff0000',
+				fillOpacity: 0.2,
+				labelDisplay: 'always',
+				labelColor: '#ffffff',
+				fontSize: 16,
+				paddingX: 8,
+				paddingY: 4,
+				labelBgColor: '#000000',
+				labelBgOpacity: 0,
+				labelRadius: 4,
+				labelHasBorder: false,
+				labelBorderColor: '#ffffff',
+			};
+
 			return {
 				...state,
-				areas: [...state.areas, action.payload],
+				areas: [...state.areas, { ...areaDefaults, ...action.payload }],
 				selection: { type: 'area', id: action.payload._id },
 				mode: 'draw',
+				contextMenu: null,
 			};
+		}
 		case 'UPDATE_AREA':
 			return {
 				...state,
@@ -2096,7 +2732,8 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				areas: state.areas.filter((a) => a._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 		case 'UPDATE_AREA_POINT':
 			return {
@@ -2113,8 +2750,6 @@ const reducer = (state, action) => {
 				...state,
 				areas: state.areas.map((a) => {
 					if (a._id !== action.id) return a;
-					// Fix: Ensure coordinates is wrapped in object if your structure requires it,
-					// though mapper normalizes this.
 					return { ...a, points: [...a.points, { coordinates: action.coordinates }] };
 				}),
 			};
@@ -2137,12 +2772,15 @@ const reducer = (state, action) => {
 				}),
 			};
 
-		// --- OVERLAYS ---
+		// ==========================================
+		// OVERLAYS
+		// ==========================================
 		case 'ADD_OVERLAY':
 			return {
 				...state,
 				overlays: [...state.overlays, action.payload],
 				selection: { type: 'overlay', id: action.payload._id },
+				contextMenu: null,
 			};
 		case 'UPDATE_OVERLAY':
 			return {
@@ -2153,7 +2791,8 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				overlays: state.overlays.filter((o) => o._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 
 		default:
@@ -2162,7 +2801,7 @@ const reducer = (state, action) => {
 };
 
 export const useAtlasReducer = (preloadedState) => {
-	// Merge defaults (visibility, tools) with DB data (markers, mapConfig)
+	// Merge defaults with any loaded DB data
 	const effectiveState = { ...initialState, ...preloadedState };
 
 	const [state, dispatch] = useReducer(reducer, effectiveState);
@@ -2172,13 +2811,13 @@ export const useAtlasReducer = (preloadedState) => {
 --- END OF hooks\useAtlasReducer.js ---
 
 --- FILE: layers\EditAreasLayer.jsx ---
-import React, { useMemo } from 'react';
-import { Polygon, Marker, Tooltip } from 'react-leaflet';
+import React, { useMemo, useState } from 'react';
+import { Polygon, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createHandleIcon, createMidpointIcon, createLabelIcon } from '@/features/atlas/utils/markerUtils';
 import { getRoundedPath } from '@/features/atlas/utils/pathUtils';
-import { PatternDefs } from '../components/PatternDefs'; // Import the new component
+import { PatternDefs } from '../components/PatternDefs';
 
 const getMidpoint = (p1, p2) => [
 	(p1.coordinates[0] + p2.coordinates[0]) / 2,
@@ -2196,14 +2835,14 @@ const getCentroid = (points) => {
 	return [lat / points.length, lng / points.length];
 };
 
-// --- NEW COMPONENT: AreaItem ---
-// This isolates hooks (useMemo) per item, preventing the "More hooks rendered" crash
 const AreaItem = ({ area, selection, activeTool, actions }) => {
+	const [isHovered, setIsHovered] = useState(false);
+
 	const isSelected = selection?.type === 'area' && selection.id === area._id;
 	const isInteractive = activeTool === 'areas';
 	const rawPoints = (area.points || []).map((p) => p.coordinates);
 
-	// 1. Geometry Calculation (Memoized safely inside component)
+	// 1. Geometry Calculation
 	const positions = useMemo(() => {
 		if (rawPoints.length < 3) return rawPoints;
 		if (area.curviness > 0) return getRoundedPath(rawPoints, area.curviness, true);
@@ -2214,23 +2853,84 @@ const AreaItem = ({ area, selection, activeTool, actions }) => {
 
 	// 2. Pattern Logic
 	let fillColor = area.interiorColor || '#ff0000';
+	let fillOpacity = area.fillOpacity ?? 0.2;
+
 	if (area.fillType === 'hatch' || area.fillType === 'dots') {
 		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
-		fillColor = `url(#pattern-${area.fillType}-${cleanColor})`;
+		const safeOpacity = Math.round(fillOpacity * 100);
+		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity})`;
+		fillOpacity = 1;
+
+		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
+		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
+
+		// MATCH THE ID GENERATION IN PATTERN DEFS EXACTLY
+		const id = `pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight}`;
+		fillColor = `url(#${id})`;
+		fillOpacity = 1;
 	}
 
-	const hasValidGeometry = positions.length > 0;
+	// 3. Label Visibility
+	let labelOpacity = 0;
+	if (area.labelDisplay === 'always') labelOpacity = 1;
+	else if (area.labelDisplay === 'hover' && (isHovered || isSelected)) labelOpacity = 1;
+	if (isSelected) labelOpacity = 1;
+	if (!area.name) labelOpacity = 0;
+
+	// 4. MEMOIZED ICONS (CRITICAL FIX FOR DRAG)
+	const labelIcon = useMemo(
+		() =>
+			createLabelIcon(area.name, {
+				color: area.labelColor,
+				fontSize: area.fontSize,
+				rotation: area.textRotation,
+				bgColor: area.labelBgColor,
+				bgOpacity: area.labelBgOpacity,
+				hasBorder: area.labelHasBorder,
+				borderRadius: area.labelRadius,
+				borderColor: area.labelBorderColor,
+				paddingX: area.paddingX,
+				paddingY: area.paddingY,
+				isSelected: isSelected && isInteractive,
+			}),
+		[
+			area.name,
+			area.labelColor,
+			area.fontSize,
+			area.textRotation,
+			area.labelBgColor,
+			area.labelBgOpacity,
+			area.labelHasBorder,
+			area.labelRadius,
+			area.labelBorderColor,
+			area.paddingX,
+			area.paddingY,
+			isSelected,
+			isInteractive,
+		]
+	);
+
+	const handleIcon = useMemo(() => createHandleIcon(true), []);
+	const midpointIcon = useMemo(() => createMidpointIcon(), []);
+
+	// 5. Handlers
+	const handleLabelDrag = (e) => {
+		const { lat, lng } = e.target.getLatLng();
+		// Use requestAnimationFrame or debounce if this is still heavy,
+		// but normally updating Redux/State on dragend is safer than drag
+		actions.updateArea(area._id, { labelPosition: [lat, lng] });
+	};
 
 	return (
 		<React.Fragment>
-			{hasValidGeometry && (
+			{positions.length > 0 && (
 				<Polygon
 					positions={positions}
 					pathOptions={{
 						color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#d97706',
 						fillColor: fillColor,
-						fillOpacity: area.fillType !== 'solid' ? 1 : area.fillOpacity ?? 0.2,
-						weight: 2,
+						fillOpacity: fillOpacity,
+						weight: area.weight || 2,
 						dashArray: area.borderStyle === 'dashed' ? '10, 10' : area.borderStyle === 'dotted' ? '2, 6' : null,
 						lineJoin: 'round',
 					}}
@@ -2240,34 +2940,35 @@ const AreaItem = ({ area, selection, activeTool, actions }) => {
 							L.DomEvent.stopPropagation(e);
 							actions.selectItem('area', area._id);
 						},
+						contextmenu: (e) => {
+							L.DomEvent.stopPropagation(e);
+							e.originalEvent.preventDefault();
+							actions.openContextMenu({
+								type: 'entity',
+								position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+								target: { type: 'area', id: area._id, data: area },
+							});
+						},
+						mouseover: () => setIsHovered(true),
+						mouseout: () => setIsHovered(false),
 					}}
 				/>
 			)}
 
-			{/* Label */}
-			{hasValidGeometry && area.name && area.labelDisplay !== 'none' && (
+			{/* Label Marker */}
+			{area.name && labelOpacity > 0 && (
 				<Marker
 					position={center}
-					icon={createLabelIcon(area.name, {
-						color: area.labelColor,
-						fontSize: area.fontSize,
-						rotation: area.textRotation,
-						bgColor: area.labelBgColor,
-						bgOpacity: area.labelBgOpacity,
-						isSelected: isSelected && isInteractive,
-					})}
+					icon={labelIcon}
 					draggable={isSelected && isInteractive}
-					opacity={area.labelDisplay === 'hover' && !isSelected ? 0 : 1}
+					opacity={labelOpacity}
 					eventHandlers={{
 						click: (e) => {
 							if (!isInteractive) return;
 							L.DomEvent.stopPropagation(e);
 							actions.selectItem('area', area._id);
 						},
-						dragend: (e) => {
-							const { lat, lng } = e.target.getLatLng();
-							actions.updateArea(area._id, { labelPosition: [lat, lng] });
-						},
+						dragend: handleLabelDrag, // Only update on drop to save performance
 					}}
 				/>
 			)}
@@ -2279,7 +2980,7 @@ const AreaItem = ({ area, selection, activeTool, actions }) => {
 						<React.Fragment key={`v-${idx}`}>
 							<Marker
 								position={pt.coordinates}
-								icon={createHandleIcon(true)}
+								icon={handleIcon}
 								draggable={true}
 								eventHandlers={{
 									dragend: (e) => {
@@ -2295,7 +2996,7 @@ const AreaItem = ({ area, selection, activeTool, actions }) => {
 							/>
 							<Marker
 								position={getMidpoint(pt, area.points[(idx + 1) % area.points.length])}
-								icon={createMidpointIcon()}
+								icon={midpointIcon}
 								eventHandlers={{
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
@@ -2318,9 +3019,7 @@ const AreaItem = ({ area, selection, activeTool, actions }) => {
 export default function EditAreasLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { areas, selection, activeTool, visibility } = state;
-
 	if (!visibility.areas) return null;
-
 	return (
 		<>
 			<PatternDefs areas={areas} />
@@ -2355,7 +3054,8 @@ export default function EditMarkersLayer() {
 					<Marker
 						key={m._id}
 						position={[m.lat, m.lng]}
-						icon={resolveMarkerIcon(m)}
+						// Pass selection state to resolver for dashed border on text
+						icon={resolveMarkerIcon({ ...m, isSelected })}
 						draggable={true}
 						opacity={isSelected ? 1 : 0.8}
 						eventHandlers={{
@@ -2366,6 +3066,15 @@ export default function EditMarkersLayer() {
 							dragend: (e) => {
 								const { lat, lng } = e.target.getLatLng();
 								actions.updateMarker(m._id, { lat, lng });
+							},
+							contextmenu: (e) => {
+								L.DomEvent.stopPropagation(e);
+								e.originalEvent.preventDefault();
+								actions.openContextMenu({
+									type: 'entity',
+									position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+									target: { type: 'marker', id: m._id, data: m },
+								});
 							},
 						}}
 					/>
@@ -2389,7 +3098,11 @@ export default function EditOverlaysLayer() {
 	const { overlays, selection, activeTool, visibility } = state;
 	const isInteractive = activeTool === 'overlays';
 
-	const getUrl = (path) => (path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`);
+	// FIX: Robust URL resolver that handles null/undefined/non-strings
+	const getUrl = (path) => {
+		if (!path || typeof path !== 'string') return '';
+		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
+	};
 
 	if (!visibility.overlays) return null;
 
@@ -2397,21 +3110,27 @@ export default function EditOverlaysLayer() {
 		<>
 			{overlays.map((overlay) => {
 				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
+				const imagePath = getUrl(overlay.image);
 
 				// Bounds: [[lat1, lng1], [lat2, lng2]]
 				const b = overlay.bounds;
+				// Safety check for bounds to prevent arithmetic crash
+				if (!b || b.length < 2 || !b[0] || !b[1]) return null;
+
 				const centerLat = (b[0][0] + b[1][0]) / 2;
 				const centerLng = (b[0][1] + b[1][1]) / 2;
 
 				return (
 					<React.Fragment key={overlay._id}>
-						{/* IMAGE */}
-						<ImageOverlay
-							url={getUrl(overlay.image)}
-							bounds={overlay.bounds}
-							opacity={isSelected ? 0.8 : 1}
-							interactive={false}
-						/>
+						{/* IMAGE - Only render if we have a path */}
+						{imagePath && (
+							<ImageOverlay
+								url={imagePath}
+								bounds={overlay.bounds}
+								opacity={isSelected ? 0.8 : 1}
+								interactive={false}
+							/>
+						)}
 
 						{/* HIT BOX */}
 						<Rectangle

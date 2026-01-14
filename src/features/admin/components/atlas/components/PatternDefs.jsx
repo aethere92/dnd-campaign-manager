@@ -1,36 +1,48 @@
-import React from 'react';
+// --- FILE: components/PatternDefs.jsx ---
+import React, { useMemo } from 'react';
 
-export const PatternDefs = ({ areas }) => {
-	const patterns = new Map();
+// Extract logic to avoid re-creation on every render
+const generatePatternId = (area) => {
+	const color = area.interiorColor || '#d97706';
+	const type = area.fillType;
+	const opacity = area.fillOpacity ?? 0.2;
+	const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
+	const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+	const safeColor = color.replace('#', '');
+	const safeOpacity = Math.round(opacity * 100);
 
-	areas.forEach((area) => {
-		if (area.fillType === 'hatch' || area.fillType === 'dots') {
-			const color = area.interiorColor || '#d97706';
-			const type = area.fillType;
-			const opacity = area.fillOpacity ?? 0.2;
+	return {
+		id: `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`,
+		type,
+		color,
+		opacity,
+		spacing,
+		weight,
+	};
+};
 
-			// Use defaults if new props aren't set
-			const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
-			const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+const PatternDefsComponent = ({ areas }) => {
+	const patterns = useMemo(() => {
+		const uniquePatterns = new Map();
 
-			const safeColor = color.replace('#', '');
-			const safeOpacity = Math.round(opacity * 100);
-
-			// Generate ID based on all visual properties
-			const id = `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`;
-
-			if (!patterns.has(id)) {
-				patterns.set(id, { id, type, color, opacity, spacing, weight });
+		areas.forEach((area) => {
+			if (area.fillType === 'hatch' || area.fillType === 'dots') {
+				const def = generatePatternId(area);
+				if (!uniquePatterns.has(def.id)) {
+					uniquePatterns.set(def.id, def);
+				}
 			}
-		}
-	});
+		});
 
-	if (patterns.size === 0) return null;
+		return Array.from(uniquePatterns.values());
+	}, [areas]);
+
+	if (patterns.length === 0) return null;
 
 	return (
 		<svg style={{ height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
 			<defs>
-				{Array.from(patterns.values()).map(({ id, type, color, opacity, spacing, weight }) => (
+				{patterns.map(({ id, type, color, opacity, spacing, weight }) => (
 					<pattern
 						key={id}
 						id={id}
@@ -51,7 +63,6 @@ export const PatternDefs = ({ areas }) => {
 							/>
 						)}
 						{type === 'dots' && (
-							// Staggered Dot Pattern
 							<>
 								<circle cx={spacing * 0.25} cy={spacing * 0.25} r={weight} fill={color} fillOpacity={opacity} />
 								<circle cx={spacing * 0.75} cy={spacing * 0.75} r={weight} fill={color} fillOpacity={opacity} />
@@ -63,3 +74,7 @@ export const PatternDefs = ({ areas }) => {
 		</svg>
 	);
 };
+
+// Only re-render if the areas array length changes or reference changes
+// This is safe because if an area updates its fill, the areas array ref changes in the reducer
+export const PatternDefs = React.memo(PatternDefsComponent);

@@ -1,59 +1,59 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-13 22:30:11
+Generated: 2026-01-14 21:05:26
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 26
-Total lines: 2,686
-Non-empty lines: 2,437
-Comment lines: 93
-Total size: 85,919 bytes (83.91 KB)
-Average lines per file: 103.3
+Total files: 27
+Total lines: 3,401
+Non-empty lines: 3,102
+Comment lines: 127
+Total size: 109,384 bytes (106.82 KB)
+Average lines per file: 126.0
 
 
 ### STATISTICS BY FILE TYPE
 
 .js:
   Files: 4
-  Lines: 468
-  Size: 13,353 bytes (13.04 KB)
+  Lines: 534
+  Size: 15,181 bytes (14.83 KB)
 
 .jsx:
-  Files: 22
-  Lines: 2,218
-  Size: 72,566 bytes (70.87 KB)
+  Files: 23
+  Lines: 2,867
+  Size: 94,203 bytes (92.00 KB)
 
 
 ### LARGEST FILES (by lines)
 
-forms\AreaForm.jsx: 252 lines
+forms\AreaForm.jsx: 402 lines
+forms\MarkerForm.jsx: 356 lines
+hooks\useAtlasReducer.js: 275 lines
+components\EditorContextMenu.jsx: 241 lines
 forms\PathForm.jsx: 219 lines
-forms\MarkerForm.jsx: 212 lines
-hooks\useAtlasReducer.js: 212 lines
+layers\EditAreasLayer.jsx: 219 lines
 components\VisualIconPicker.jsx: 160 lines
-layers\EditAreasLayer.jsx: 159 lines
 components\EditorSidebar.jsx: 158 lines
 layers\EditPathsLayer.jsx: 145 lines
 components\EditorLayerList.jsx: 132 lines
 components\EditorToolbar.jsx: 122 lines
+layers\EditOverlaysLayer.jsx: 121 lines
 services\atlasMapper.js: 114 lines
-layers\EditOverlaysLayer.jsx: 111 lines
-AtlasEditor.jsx: 95 lines
-hooks\useAtlasActions.js: 92 lines
+AtlasEditor.jsx: 97 lines
+hooks\useAtlasActions.js: 95 lines
 forms\OverlayForm.jsx: 73 lines
 components\PathStylePopup.jsx: 70 lines
+components\PatternDefs.jsx: 66 lines
 AtlasEditorContext.jsx: 60 lines
-services\geometryUtils.js: 50 lines
-components\EditorMapEvents.jsx: 44 lines
-components\PatternDefs.jsx: 44 lines
+components\EditorMapEvents.jsx: 54 lines
 
 
 ### STATISTICS BY CATEGORY
 
 root:
-  Files: 26
-  Lines: 2,686
-  Size: 85,919 bytes (83.91 KB)
+  Files: 27
+  Lines: 3,401
+  Size: 109,384 bytes (106.82 KB)
 

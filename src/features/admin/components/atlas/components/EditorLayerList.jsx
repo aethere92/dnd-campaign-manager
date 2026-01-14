@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// --- FILE: components/EditorLayerList.jsx ---
+import React, { useState, useMemo } from 'react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import {
 	ChevronDown,
@@ -13,7 +14,8 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
+// Memoize Group to prevent re-rendering list items when typing in other forms
+const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
 	const [isOpen, setIsOpen] = useState(true);
 	if (!items || items.length === 0) return null;
 
@@ -61,14 +63,25 @@ const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible,
 			)}
 		</div>
 	);
-};
+});
 
 export default function EditorLayerList() {
 	const { state, actions } = useAtlasEditor();
 	const { markers, paths, areas, overlays, selection, visibility } = state;
 	const [search, setSearch] = useState('');
 
-	const filter = (list) => list.filter((i) => (i.label || i.name || '').toLowerCase().includes(search.toLowerCase()));
+	// Optimize filtering with useMemo
+	const filteredData = useMemo(() => {
+		const term = search.toLowerCase();
+		const filterFn = (i) => (i.label || i.name || '').toLowerCase().includes(term);
+
+		return {
+			markers: markers.filter(filterFn),
+			paths: paths.filter(filterFn),
+			areas: areas.filter(filterFn),
+			overlays: overlays.filter(filterFn),
+		};
+	}, [search, markers, paths, areas, overlays]);
 
 	return (
 		<div className='flex flex-col h-full bg-background/95 backdrop-blur border-r border-border w-64 z-10'>
@@ -88,7 +101,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Markers'
 					icon={MapPin}
-					items={filter(markers)}
+					items={filteredData.markers}
 					type='marker'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -98,7 +111,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Paths'
 					icon={Footprints}
-					items={filter(paths)}
+					items={filteredData.paths}
 					type='path'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -108,7 +121,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Regions'
 					icon={Hexagon}
-					items={filter(areas)}
+					items={filteredData.areas}
 					type='area'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -118,7 +131,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Overlays'
 					icon={ImageIcon}
-					items={filter(overlays)}
+					items={filteredData.overlays}
 					type='overlay'
 					onSelect={actions.selectItem}
 					selection={selection}
