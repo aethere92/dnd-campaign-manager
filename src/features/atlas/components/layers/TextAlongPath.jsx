@@ -1,10 +1,9 @@
-// --- FILE: features/atlas/components/layers/TextAlongPath.jsx ---
 import { useEffect, useId, useRef, useCallback } from 'react';
 import { useMap } from 'react-leaflet';
 
 export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) => {
 	const map = useMap();
-	// Strip colons for valid CSS selectors
+	// Strip colons for valid selector IDs
 	const uniqueId = useId().replace(/:/g, '');
 	const domId = `path-link-${uniqueId}`;
 
@@ -21,13 +20,13 @@ export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) =>
 		const svgContainer = pathElement.parentNode;
 		if (!svgContainer) return;
 
-		// 1. Geometry & Direction
+		// 1. Analyze Geometry & Direction
 		const rings = layer._parts;
 		if (!rings || rings.length === 0) return;
 		const points = rings[0];
 		if (!points || points.length < 2) return;
 
-		// Check if line goes Right-to-Left (East to West)
+		// If line goes Right-to-Left (East to West), reverse it so text isn't upside down
 		const isBackwards = points[points.length - 1].x < points[0].x;
 
 		let d = '';
@@ -41,7 +40,7 @@ export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) =>
 			}
 		}
 
-		// 2. Guide Path (Hidden)
+		// 2. Create/Update Hidden Guide Path
 		let guide = guidePathRef.current;
 		if (!guide) {
 			guide = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -53,10 +52,9 @@ export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) =>
 		}
 		guide.setAttribute('d', d);
 
-		// 3. Spacing Logic
+		// 3. Sparse Calculation Logic
 		const pathLength = guide.getTotalLength();
 
-		// Canvas measure for accuracy
 		const canvas = document.createElement('canvas');
 		const ctx = canvas.getContext('2d');
 		const fontSize = style.fontSize || 12;
@@ -64,32 +62,29 @@ export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) =>
 		ctx.font = `${fontWeight} ${fontSize}px sans-serif`;
 		const textWidth = ctx.measureText(text).width;
 
-		// CONFIG: Only repeat if we have LOTS of room.
-		// Use 600px OR 5x the text width, whichever is larger.
-		const minGap = Math.max(600, textWidth * 5);
+		// --- SPARSITY TUNING ---
+		// A segment is the space allocated to ONE label.
+		// We set this very high to prevent clutter.
+		// 1200px (roughly a screen width) OR 10x the text width, whichever is bigger.
+		const minSegmentLength = Math.max(1200, textWidth * 10);
 
-		// Use EM Quads (\u2001) or Em Spaces (\u2003) for reliable wide gaps
-		// This creates a gap that scales with font-size
-		const spacer = '\u2003\u2003\u2003\u2003\u2003   •   \u2003\u2003\u2003\u2003\u2003';
-		const spacerWidth = 200; // Approximate visual width of the spacer string above
+		// How many segments fit?
+		let labelCount = Math.floor(pathLength / minSegmentLength);
 
-		let finalContent = text;
+		// Always show at least 1, but cap at 4 to prevent spam on massive zoom-ins
+		labelCount = Math.max(1, Math.min(labelCount, 4));
 
-		// Only repeat if the path can fit: Text + Gap + Text
-		if (pathLength > textWidth * 2 + spacerWidth) {
-			// Calculate max fit
-			const segmentSize = textWidth + minGap;
-			const count = Math.floor(pathLength / segmentSize);
-
-			// Cap at reasonable number to prevent lag/spam
-			const safeCount = Math.min(count, 5);
-
-			if (safeCount > 1) {
-				finalContent = new Array(safeCount).fill(text).join(spacer);
-			}
+		// Distribution:
+		// 1 -> 50%
+		// 2 -> 33%, 66%
+		// 3 -> 25%, 50%, 75%
+		const offsets = [];
+		const interval = 100 / (labelCount + 1);
+		for (let i = 1; i <= labelCount; i++) {
+			offsets.push(`${interval * i}%`);
 		}
 
-		// 4. Create/Update Text Node
+		// 4. Create/Update Text Wrapper
 		let textNode = textNodeRef.current;
 		if (!textNode) {
 			const NS = 'http://www.w3.org/2000/svg';
@@ -112,40 +107,40 @@ export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) =>
 			paintOrder: 'stroke',
 			strokeLinejoin: 'round',
 			strokeLinecap: 'round',
-			textShadow: 'none',
 			textRendering: 'geometricPrecision',
 			letterSpacing: '0.05em',
-			whiteSpace: 'pre', // <--- CRITICAL: Respects the spaces/gaps we added
+			whiteSpace: 'pre',
 			transition: 'opacity 0.2s ease-in-out',
 			opacity: visible ? style.opacity || 1 : 0,
 		});
 
-		// 6. Update Content
+		// 6. Generate <textPath> elements
 		const NS = 'http://www.w3.org/2000/svg';
-		// Clear children safely
+
+		// Clear existing children
 		while (textNode.firstChild) {
 			textNode.removeChild(textNode.firstChild);
 		}
 
-		const textPath = document.createElementNS(NS, 'textPath');
-		textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#guide-${domId}`);
-		textPath.setAttribute('startOffset', '50%');
-		textPath.setAttribute('text-anchor', 'middle');
-		// alignment-baseline helps vertical centering on some browsers
-		textPath.setAttribute('alignment-baseline', 'middle');
-		textPath.textContent = finalContent;
+		offsets.forEach((offset) => {
+			const textPath = document.createElementNS(NS, 'textPath');
+			textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#guide-${domId}`);
 
-		textNode.appendChild(textPath);
+			textPath.setAttribute('startOffset', offset);
+			textPath.setAttribute('text-anchor', 'middle');
+			textPath.setAttribute('alignment-baseline', 'middle');
+
+			textPath.textContent = text;
+			textNode.appendChild(textPath);
+		});
 	}, [layerRef, text, domId, style, visible]);
 
 	// --- Lifecycle ---
 
 	useEffect(() => {
 		requestAnimationFrame(updateGeometry);
-
 		const onMapUpdate = () => requestAnimationFrame(updateGeometry);
 
-		// Leaflet events
 		map.on('zoomend', onMapUpdate);
 		map.on('moveend', onMapUpdate);
 
@@ -155,7 +150,7 @@ export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) =>
 		};
 	}, [map, updateGeometry]);
 
-	// Strict Cleanup
+	// Cleanup
 	useEffect(() => {
 		return () => {
 			if (textNodeRef.current) textNodeRef.current.remove();
