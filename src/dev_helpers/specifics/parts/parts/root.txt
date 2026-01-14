@@ -1,0 +1,3525 @@
+================================================================
+PARTIAL BUNDLE: ROOT
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+atlas/
+  AtlasEditor.jsx
+  AtlasEditorContext.jsx
+  components/
+    EditorContextMenu.jsx
+    EditorLayerList.jsx
+    EditorMapEvents.jsx
+    EditorSidebar.jsx
+    EditorToolbar.jsx
+    MapZoomHandler.jsx
+    PathStylePopup.jsx
+    PatternDefs.jsx
+    SegmentedControl.jsx
+    ShapeSelector.jsx
+    TileSelector.jsx
+    VertexHandle.jsx
+    VisualIconPicker.jsx
+  forms/
+    AreaForm.jsx
+    MarkerForm.jsx
+    OverlayForm.jsx
+    PathForm.jsx
+  hooks/
+    useAtlasActions.js
+    useAtlasReducer.js
+  layers/
+    EditAreasLayer.jsx
+    EditMarkersLayer.jsx
+    EditOverlaysLayer.jsx
+    EditPathsLayer.jsx
+  services/
+    atlasMapper.js
+    geometryUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: AtlasEditor.jsx ---
+import React, { useMemo } from 'react';
+import { MapContainer, TileLayer } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
+import { MapZoomHandler } from './components/MapZoomHandler';
+import AtlasContextMenu from './components/EditorContextMenu';
+
+// UI
+import EditorToolbar from './components/EditorToolbar';
+import EditorSidebar from './components/EditorSidebar';
+import EditorLayerList from './components/EditorLayerList';
+import EditorMapEvents from './components/EditorMapEvents';
+
+// Layers
+import EditMarkersLayer from './layers/EditMarkersLayer';
+import EditPathsLayer from './layers/EditPathsLayer';
+import EditAreasLayer from './layers/EditAreasLayer';
+import EditOverlaysLayer from './layers/EditOverlaysLayer';
+
+function AtlasEditorInner() {
+	const { state } = useAtlasEditor();
+	const { mapConfig } = state;
+
+	const tileConfig = useMemo(() => {
+		if (!mapConfig) return null;
+		const fileExt = mapConfig.fileExtension || 'png';
+		const isAbsolute = mapConfig.path.startsWith('http');
+		const baseUrl = isAbsolute
+			? mapConfig.path
+			: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${mapConfig.path}`;
+
+		return {
+			url: `${baseUrl}/{z}/{x}_{y}.${fileExt}`,
+			maxZoom: mapConfig.sizes?.maxZoom || 4,
+			minZoom: 0,
+		};
+	}, [mapConfig]);
+
+	const bounds = useMemo(() => {
+		if (!mapConfig?.sizes) return null;
+		const scaleFactor = Math.pow(2, mapConfig.sizes.maxZoom);
+		return [
+			[-mapConfig.sizes.imageHeight / scaleFactor, 0],
+			[0, mapConfig.sizes.imageWidth / scaleFactor],
+		];
+	}, [mapConfig]);
+
+	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration or Missing Metadata</div>;
+
+	return (
+		<div className='flex h-full w-full relative overflow-hidden bg-[#1a1412]'>
+			{/* 1. Left Sidebar: Layer List */}
+			<div className='hidden lg:block shrink-0 relative z-[500]'>
+				<EditorLayerList />
+			</div>
+
+			{/* 2. Main Map Area */}
+			<div className='flex-1 h-full relative z-0'>
+				<EditorToolbar />
+
+				<MapContainer
+					center={[0, 0]}
+					zoom={0}
+					crs={L.CRS.Simple}
+					minZoom={tileConfig.minZoom}
+					maxZoom={tileConfig.maxZoom}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					zoomControl={false}
+					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					<MapZoomHandler referenceZoom={3} />
+					<TileLayer url={tileConfig.url} noWrap={true} bounds={bounds} maxNativeZoom={tileConfig.maxZoom} />
+
+					<EditorMapEvents />
+					<EditOverlaysLayer />
+					<EditAreasLayer />
+					<EditPathsLayer />
+					<EditMarkersLayer />
+				</MapContainer>
+				<AtlasContextMenu />
+			</div>
+
+			{/* 3. Right Sidebar: Forms */}
+			<EditorSidebar />
+		</div>
+	);
+}
+
+export default function AtlasEditor({ initialData }) {
+	return (
+		<AtlasEditorProvider initialData={initialData}>
+			<AtlasEditorInner />
+		</AtlasEditorProvider>
+	);
+}
+
+--- END OF AtlasEditor.jsx ---
+
+--- FILE: AtlasEditorContext.jsx ---
+import React, { createContext, useContext, useMemo } from 'react';
+import { useAtlasReducer } from './hooks/useAtlasReducer';
+import { useAtlasActions } from './hooks/useAtlasActions';
+import { normalizeMapData, serializeMapData } from './services/atlasMapper';
+import { updateMapData } from '@/features/atlas/api/mapService';
+
+const AtlasEditorContext = createContext(null);
+
+export const AtlasEditorProvider = ({ initialData, children }) => {
+	// 1. Initialize State
+	// We use useMemo to prevent re-normalizing on every render if initialData is stable
+	const normalizedInitialState = useMemo(() => {
+		return {
+			...normalizeMapData(initialData),
+			mapId: initialData.id,
+			mapConfig: initialData.metadata,
+		};
+	}, [initialData]);
+
+	// 2. Load Reducer
+	const [state, dispatch] = useAtlasReducer(normalizedInitialState);
+
+	// 3. Load Actions
+	const actions = useAtlasActions(dispatch);
+
+	// 4. Define Save Handler
+	const saveMap = async () => {
+		dispatch({ type: 'SET_SAVING', payload: true });
+		try {
+			const payload = serializeMapData(state);
+			await updateMapData(state.mapId, payload);
+			alert('Map saved successfully.');
+		} catch (e) {
+			console.error(e);
+			alert('Save failed: ' + e.message);
+		} finally {
+			dispatch({ type: 'SET_SAVING', payload: false });
+		}
+	};
+
+	// 5. Construct Context Value
+	const value = useMemo(
+		() => ({
+			state,
+			dispatch,
+			actions,
+			saveMap,
+		}),
+		[state, actions]
+	);
+
+	return <AtlasEditorContext.Provider value={value}>{children}</AtlasEditorContext.Provider>;
+};
+
+export const useAtlasEditor = () => {
+	const ctx = useContext(AtlasEditorContext);
+	if (!ctx) throw new Error('useAtlasEditor must be used within AtlasEditorProvider');
+	return ctx;
+};
+
+--- END OF AtlasEditorContext.jsx ---
+
+--- FILE: components\EditorContextMenu.jsx ---
+import React, { useEffect, useRef } from 'react';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { MapPin, Footprints, Hexagon, Type, X, Edit2, Copy, Trash2, EyeOff } from 'lucide-react';
+import clsx from 'clsx';
+
+// ==========================================
+// 1. RADIAL MENU (Creation)
+// ==========================================
+const RadialMenu = ({ x, y, latlng, onClose, actions }) => {
+	const handleCreate = (type) => {
+		const id = crypto.randomUUID();
+		const { lat, lng } = latlng;
+
+		// 1. PIN (Marker)
+		if (type === 'pin') {
+			actions.setTool('markers');
+			actions.addMarker({
+				_id: id,
+				lat,
+				lng,
+				label: 'New Marker',
+				category: 'default',
+				color: '#d97706',
+				variant: 'large',
+				shape: 'pin',
+			});
+		}
+		// 2. LABEL (Text Marker)
+		else if (type === 'label') {
+			actions.setTool('markers');
+			actions.addMarker({
+				_id: id,
+				lat,
+				lng,
+				label: 'New Label',
+				category: 'default',
+				color: '#ffffff',
+				variant: 'text',
+				scale: 1.5,
+			});
+		}
+		// 3. REGION (Area) - Starts drawing immediately
+		else if (type === 'area') {
+			actions.setTool('areas');
+			actions.addArea({
+				_id: id,
+				name: 'New Region',
+				interiorColor: '#ff0000',
+				points: [{ coordinates: [lat, lng] }], // Start with first point
+			});
+			// Auto-select to trigger draw mode in reducer
+		}
+		// 4. PATH - Starts drawing immediately
+		else if (type === 'path') {
+			actions.setTool('paths');
+			actions.addPath({
+				_id: id,
+				name: 'New Path',
+				color: '#d97706',
+				points: [{ coordinates: [lat, lng], text: '' }], // Start with first point
+			});
+		}
+
+		onClose();
+	};
+
+	const MenuItem = ({ icon: Icon, label, onClick, className }) => (
+		<button
+			onClick={(e) => {
+				e.stopPropagation();
+				onClick();
+			}}
+			className={clsx(
+				'flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-full hover:scale-110 transition-all active:scale-95 text-muted-foreground hover:text-primary absolute',
+				className
+			)}>
+			<Icon size={20} strokeWidth={2} />
+			<span className='text-[9px] font-bold uppercase tracking-wider'>{label}</span>
+		</button>
+	);
+
+	// Half size of 160px = 80px offset
+	return (
+		<div
+			className='fixed z-[9999] w-40 h-40 rounded-full bg-background/95 backdrop-blur-sm shadow-2xl border border-border flex items-center justify-center animate-in zoom-in-75 duration-150 origin-center'
+			style={{ top: y - 80, left: x - 80 }}
+			onContextMenu={(e) => e.preventDefault()}>
+			{/* Slices positioned absolutely */}
+			<MenuItem className='top-1' icon={MapPin} label='Pin' onClick={() => handleCreate('pin')} />
+			<MenuItem className='right-1' icon={Hexagon} label='Region' onClick={() => handleCreate('area')} />
+			<MenuItem className='bottom-1' icon={Type} label='Label' onClick={() => handleCreate('label')} />
+			<MenuItem className='left-1' icon={Footprints} label='Path' onClick={() => handleCreate('path')} />
+
+			{/* Center Close Button */}
+			<button
+				onClick={onClose}
+				className='w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-colors border border-border z-10 shadow-sm'>
+				<X size={16} />
+			</button>
+
+			{/* Visual Crosshair Lines */}
+			<div className='absolute w-full h-px bg-border/50 top-1/2 left-0 -z-10' />
+			<div className='absolute h-full w-px bg-border/50 left-1/2 top-0 -z-10' />
+		</div>
+	);
+};
+
+// ==========================================
+// 2. LIST MENU (Entity Editing)
+// ==========================================
+const EntityMenu = ({ x, y, target, onClose, actions }) => {
+	const { type, id, data } = target;
+
+	const handleColor = (color) => {
+		if (type === 'marker') actions.updateMarker(id, { color });
+		else if (type === 'area') actions.updateArea(id, { interiorColor: color, lineColor: color });
+		else if (type === 'path') actions.updatePath(id, { color });
+	};
+
+	const handleDelete = () => {
+		if (type === 'marker') actions.deleteMarker(id);
+		if (type === 'area') actions.deleteArea(id);
+		if (type === 'path') actions.deletePath(id);
+		onClose();
+	};
+
+	const handleDuplicate = () => {
+		const newId = crypto.randomUUID();
+		const offset = 0.5; // Slight offset to see copy
+
+		if (type === 'marker') {
+			actions.addMarker({
+				...data,
+				_id: newId,
+				lat: data.lat + offset,
+				lng: data.lng + offset,
+				label: `${data.label} (Copy)`,
+			});
+		} else if (type === 'area') {
+			const newPoints = data.points.map((p) => ({
+				...p,
+				coordinates: [p.coordinates[0] + offset, p.coordinates[1] + offset],
+			}));
+			actions.addArea({ ...data, _id: newId, points: newPoints, name: `${data.name} (Copy)` });
+		}
+		onClose();
+	};
+
+	const colors = ['#64748b', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#a855f7', '#d946ef'];
+
+	return (
+		<div
+			className='fixed z-[9999] w-48 bg-card border border-border shadow-xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+			style={{ top: y, left: x }}
+			onContextMenu={(e) => e.preventDefault()}>
+			<div className='p-2 border-b border-border bg-muted/30 grid grid-cols-4 gap-1'>
+				{colors.map((c) => (
+					<button
+						key={c}
+						onClick={() => handleColor(c)}
+						className='w-6 h-6 rounded-full hover:scale-110 transition-transform border border-black/10 shadow-sm mx-auto'
+						style={{ backgroundColor: c }}
+					/>
+				))}
+			</div>
+			<div className='py-1'>
+				<button
+					onClick={() => {
+						actions.selectItem(type, id);
+						onClose();
+					}}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium'>
+					<Edit2 size={14} /> Edit {type}
+				</button>
+				<button
+					onClick={handleDuplicate}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium'>
+					<Copy size={14} /> Duplicate
+				</button>
+				<div className='h-px bg-border my-1' />
+				<button
+					onClick={handleDelete}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-red-500/10 text-xs font-medium text-red-600'>
+					<Trash2 size={14} /> Remove
+				</button>
+			</div>
+		</div>
+	);
+};
+
+// ==========================================
+// 3. MAIN CONTAINER
+// ==========================================
+export default function EditorContextMenu() {
+	const { state, actions } = useAtlasEditor();
+	const { contextMenu } = state;
+	const ref = useRef(null);
+
+	// Close on outside click
+	useEffect(() => {
+		if (!contextMenu) return;
+		const clickCheck = (e) => {
+			if (ref.current && !ref.current.contains(e.target)) {
+				actions.closeContextMenu();
+			}
+		};
+		window.addEventListener('mousedown', clickCheck);
+		return () => window.removeEventListener('mousedown', clickCheck);
+	}, [contextMenu, actions]);
+
+	if (!contextMenu) return null;
+
+	// Safety bounds to keep menu on screen
+	const { x, y } = contextMenu.position;
+	const safeX = Math.min(window.innerWidth - 200, Math.max(10, x));
+	const safeY = Math.min(window.innerHeight - 200, Math.max(10, y));
+
+	return (
+		<div ref={ref}>
+			{contextMenu.type === 'map' && (
+				<RadialMenu
+					x={safeX}
+					y={safeY}
+					latlng={contextMenu.latlng}
+					onClose={actions.closeContextMenu}
+					actions={actions}
+				/>
+			)}
+			{contextMenu.type === 'entity' && (
+				<EntityMenu
+					x={safeX}
+					y={safeY}
+					target={contextMenu.target}
+					onClose={actions.closeContextMenu}
+					actions={actions}
+				/>
+			)}
+		</div>
+	);
+}
+
+--- END OF components\EditorContextMenu.jsx ---
+
+--- FILE: components\EditorLayerList.jsx ---
+import React, { useState } from 'react';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import {
+	ChevronDown,
+	ChevronRight,
+	MapPin,
+	Footprints,
+	Hexagon,
+	Image as ImageIcon,
+	Search,
+	Eye,
+	EyeOff,
+} from 'lucide-react';
+import clsx from 'clsx';
+
+const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
+	const [isOpen, setIsOpen] = useState(true);
+	if (!items || items.length === 0) return null;
+
+	return (
+		<div className='mb-2'>
+			<div className='flex items-center w-full px-3 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground bg-muted/20 hover:bg-muted/50 transition-colors group'>
+				<button onClick={() => setIsOpen(!isOpen)} className='flex items-center flex-1 text-left'>
+					<span className='mr-2 opacity-70'>{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
+					<Icon size={14} className='mr-2' />
+					{title}
+					<span className='ml-auto text-[10px] bg-muted px-1.5 rounded'>{items.length}</span>
+				</button>
+				<button
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggle();
+					}}
+					className={clsx(
+						'p-1 ml-2 rounded hover:bg-background transition-colors',
+						isVisible ? 'text-primary' : 'text-muted-foreground opacity-50'
+					)}
+					title={isVisible ? 'Hide Layer' : 'Show Layer'}>
+					{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+				</button>
+			</div>
+			{isOpen && isVisible && (
+				<div className='space-y-0.5 mt-1'>
+					{items.map((item) => {
+						const isSelected = selection?.type === type && selection.id === item._id;
+						return (
+							<button
+								key={item._id}
+								onClick={() => onSelect(type, item._id)}
+								className={clsx(
+									'flex items-center w-full text-left px-8 py-1.5 text-xs transition-colors border-l-2',
+									isSelected
+										? 'bg-primary/10 border-primary text-primary font-medium'
+										: 'border-transparent text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+								)}>
+								<span className='truncate'>{item.label || item.name || 'Untitled'}</span>
+							</button>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
+};
+
+export default function EditorLayerList() {
+	const { state, actions } = useAtlasEditor();
+	const { markers, paths, areas, overlays, selection, visibility } = state;
+	const [search, setSearch] = useState('');
+
+	const filter = (list) => list.filter((i) => (i.label || i.name || '').toLowerCase().includes(search.toLowerCase()));
+
+	return (
+		<div className='flex flex-col h-full bg-background/95 backdrop-blur border-r border-border w-64 z-10'>
+			<div className='p-3 border-b border-border'>
+				<div className='relative'>
+					<Search className='absolute left-2.5 top-2 text-muted-foreground' size={12} />
+					<input
+						type='text'
+						placeholder='Filter layers...'
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						className='w-full bg-muted/50 border border-border rounded-md pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary'
+					/>
+				</div>
+			</div>
+			<div className='flex-1 overflow-y-auto custom-scrollbar py-2'>
+				<Group
+					title='Markers'
+					icon={MapPin}
+					items={filter(markers)}
+					type='marker'
+					onSelect={actions.selectItem}
+					selection={selection}
+					isVisible={visibility.markers}
+					onToggle={() => actions.toggleVisibility('markers')}
+				/>
+				<Group
+					title='Paths'
+					icon={Footprints}
+					items={filter(paths)}
+					type='path'
+					onSelect={actions.selectItem}
+					selection={selection}
+					isVisible={visibility.paths}
+					onToggle={() => actions.toggleVisibility('paths')}
+				/>
+				<Group
+					title='Regions'
+					icon={Hexagon}
+					items={filter(areas)}
+					type='area'
+					onSelect={actions.selectItem}
+					selection={selection}
+					isVisible={visibility.areas}
+					onToggle={() => actions.toggleVisibility('areas')}
+				/>
+				<Group
+					title='Overlays'
+					icon={ImageIcon}
+					items={filter(overlays)}
+					type='overlay'
+					onSelect={actions.selectItem}
+					selection={selection}
+					isVisible={visibility.overlays}
+					onToggle={() => actions.toggleVisibility('overlays')}
+				/>
+			</div>
+		</div>
+	);
+}
+
+--- END OF components\EditorLayerList.jsx ---
+
+--- FILE: components\EditorMapEvents.jsx ---
+import { useMapEvents } from 'react-leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+
+export default function EditorMapEvents() {
+	const { state, actions } = useAtlasEditor();
+	const { mode, selection, activeTool } = state;
+
+	useMapEvents({
+		click(e) {
+			actions.closeContextMenu();
+			// Precision fixed in Service Layer, but we pass raw here
+			const pos = [e.latlng.lat, e.latlng.lng];
+
+			// Drawing Logic
+			if (mode === 'draw' && selection) {
+				if (selection.type === 'path') {
+					actions.appendPathPoint(selection.id, pos);
+				} else if (selection.type === 'area') {
+					actions.appendAreaPoint(selection.id, pos);
+				}
+			}
+			// Creation Logic
+			else if (activeTool === 'markers' && !selection) {
+				const newMarker = {
+					_id: crypto.randomUUID(),
+					label: 'New Marker',
+					lat: pos[0],
+					lng: pos[1],
+					category: 'default',
+					color: '#d97706',
+					scale: 1,
+					variant: 'large',
+					shape: 'pin',
+				};
+				actions.addMarker(newMarker);
+			}
+			// Deselect Logic
+			else {
+				actions.deselect();
+			}
+		},
+		contextmenu(e) {
+			e.originalEvent.preventDefault(); // Stop browser menu
+
+			actions.openContextMenu({
+				type: 'map', // Tells logic to show Radial Menu
+				position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+				latlng: { lat: e.latlng.lat, lng: e.latlng.lng }, // Pass map coordinates for creation
+			});
+		},
+	});
+	return null;
+}
+
+--- END OF components\EditorMapEvents.jsx ---
+
+--- FILE: components\EditorSidebar.jsx ---
+import React from 'react';
+import { useAtlasEditor } from '../AtlasEditorContext';
+// UPDATE these lines at the top of EditorSidebar.jsx
+import MarkerForm from '@/features/admin/components/atlas/forms/MarkerForm';
+import PathForm from '@/features/admin/components/atlas/forms/PathForm';
+import AreaForm from '@/features/admin/components/atlas/forms/AreaForm';
+import { OverlayForm } from '@/features/admin/components/atlas/forms/OverlayForm'; // New Import
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import { Trash2, X, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+
+// Wrapper
+const SidebarWrapper = ({ children, title, onClose, actions }) => (
+	<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] pointer-events-auto animate-in slide-in-from-right-4 duration-200'>
+		<div className='flex justify-between items-center p-4 border-b border-border bg-muted/40 shrink-0'>
+			<span className='font-bold text-sm uppercase flex items-center gap-2'>{title}</span>
+			<div className='flex gap-1 items-center'>
+				{actions}
+				<button
+					onClick={onClose}
+					className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors'
+					title='Close'>
+					<X size={16} />
+				</button>
+			</div>
+		</div>
+		<div className='p-5 space-y-4 overflow-y-auto flex-1 custom-scrollbar'>{children}</div>
+	</div>
+);
+
+export default function EditorSidebar() {
+	const { state, actions } = useAtlasEditor();
+	const { selection, markers, paths, areas, overlays } = state;
+
+	if (!selection) return null;
+
+	const handleClose = () => actions.deselect();
+
+	const handleDelete = () => {
+		if (!confirm('Delete this item?')) return;
+
+		switch (selection.type) {
+			case 'marker':
+				actions.deleteMarker(selection.id);
+				break;
+			case 'path':
+				actions.deletePath(selection.id);
+				break;
+			case 'area':
+				actions.deleteArea(selection.id);
+				break;
+			case 'overlay':
+				actions.deleteOverlay(selection.id);
+				break;
+		}
+	};
+
+	// --- PATH POINT EDITOR ---
+	if (selection.type === 'path' && selection.index !== undefined) {
+		const pathData = paths.find((p) => p._id === selection.id);
+		if (!pathData) return null;
+
+		const point = pathData.points[selection.index];
+		const totalPoints = pathData.points.length;
+
+		return (
+			<SidebarWrapper
+				title={`Path Node #${selection.index + 1}`}
+				onClose={() => actions.selectItem('path', selection.id)} // Back to parent
+				actions={
+					<div className='flex mr-2 bg-muted rounded border border-border'>
+						<button
+							disabled={selection.index === 0}
+							onClick={() => actions.selectItem('path', selection.id, selection.index - 1)}
+							className='p-1 hover:text-primary disabled:opacity-30'>
+							<ChevronLeft size={14} />
+						</button>
+						<button
+							disabled={selection.index === totalPoints - 1}
+							onClick={() => actions.selectItem('path', selection.id, selection.index + 1)}
+							className='p-1 hover:text-primary disabled:opacity-30 border-l border-border'>
+							<ChevronRight size={14} />
+						</button>
+					</div>
+				}>
+				<div className='space-y-4'>
+					<div className='bg-primary/10 border border-primary/20 p-3 rounded-md text-xs text-primary flex gap-2'>
+						<MessageSquare size={16} className='shrink-0' />
+						<span>Add narrative text here. This will appear as a clickable dot on the map.</span>
+					</div>
+
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Narrative Text</label>
+						<textarea
+							className={ADMIN_INPUT_CLASS}
+							rows={6}
+							value={point.text || ''}
+							placeholder='e.g. "The party was ambushed by goblins here..."'
+							onChange={(e) => actions.updatePathPoint(selection.id, selection.index, { text: e.target.value })}
+						/>
+					</div>
+
+					<div className='pt-4 border-t border-border'>
+						<Button
+							variant='secondary'
+							size='sm'
+							fullWidth
+							onClick={() => {
+								if (confirm('Delete this point?')) {
+									actions.deletePathPoint(selection.id, selection.index);
+									handleClose();
+								}
+							}}
+							className='text-red-500 hover:bg-red-500/10'>
+							Delete Point
+						</Button>
+					</div>
+				</div>
+			</SidebarWrapper>
+		);
+	}
+
+	// --- STANDARD ENTITY FORMS ---
+	let data = null;
+	let FormComponent = null;
+	let updateFn = null;
+
+	if (selection.type === 'marker') {
+		data = markers.find((m) => m._id === selection.id);
+		FormComponent = MarkerForm;
+		updateFn = (f, v) => actions.updateMarker(selection.id, { [f]: v });
+	} else if (selection.type === 'path') {
+		data = paths.find((p) => p._id === selection.id);
+		FormComponent = PathForm;
+		updateFn = (f, v) => actions.updatePath(selection.id, { [f]: v });
+	} else if (selection.type === 'area') {
+		data = areas.find((a) => a._id === selection.id);
+		FormComponent = AreaForm;
+		updateFn = (f, v) => actions.updateArea(selection.id, { [f]: v });
+	} else if (selection.type === 'overlay') {
+		data = overlays.find((o) => o._id === selection.id);
+		// OverlayForm uses `actions` directly, not the generic updateFn pattern
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+				<OverlayForm data={data} actions={actions} onClose={handleClose} />
+			</div>
+		);
+	}
+
+	if (!data || !FormComponent) return null;
+
+	return (
+		<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+			<FormComponent data={data} onChange={updateFn} onDelete={handleDelete} onClose={handleClose} />
+		</div>
+	);
+}
+
+--- END OF components\EditorSidebar.jsx ---
+
+--- FILE: components\EditorToolbar.jsx ---
+import React from 'react';
+import { Save, Loader2, MapPin, Footprints, Hexagon, Image as ImageIcon, Plus } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import clsx from 'clsx';
+
+const ToolBtn = ({ icon: Icon, label, active, onClick }) => (
+	<button
+		onClick={onClick}
+		className={clsx(
+			'flex items-center gap-2 p-2 rounded-md transition-all text-xs font-bold uppercase',
+			active ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'
+		)}
+		title={label}>
+		<Icon size={18} />
+		<span className='hidden md:inline'>{label}</span>
+	</button>
+);
+
+export default function EditorToolbar() {
+	const { state, actions, saveMap } = useAtlasEditor();
+	const { activeTool, isSaving, mode } = state;
+
+	const handleNewPath = () => {
+		const newPath = {
+			_id: crypto.randomUUID(),
+			name: 'New Path',
+			lineColor: '#d97706',
+			opacity: 1,
+			points: [],
+		};
+		actions.addPath(newPath);
+	};
+
+	const handleNewArea = () => {
+		const newArea = {
+			_id: crypto.randomUUID(),
+			name: 'New Region',
+			interiorColor: '#ff0000',
+			lineColor: 'transparent',
+			points: [],
+		};
+		actions.addArea(newArea);
+	};
+
+	const handleNewOverlay = () => {
+		const newOverlay = {
+			_id: crypto.randomUUID(),
+			name: 'New Overlay',
+			image: '',
+			bounds: [
+				[0, 0],
+				[-100, 100],
+			],
+		};
+		actions.addOverlay(newOverlay);
+	};
+
+	return (
+		<div className='absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-auto'>
+			<div className='bg-background/95 backdrop-blur border border-border p-2 rounded-lg shadow-xl'>
+				<Button size='sm' variant='primary' icon={isSaving ? Loader2 : Save} onClick={saveMap} disabled={isSaving}>
+					{isSaving ? 'Saving' : 'Save'}
+				</Button>
+			</div>
+
+			<div className='bg-background/95 backdrop-blur border border-border p-1 rounded-lg shadow-xl flex flex-col gap-1'>
+				<ToolBtn
+					icon={MapPin}
+					label='Markers'
+					active={activeTool === 'markers'}
+					onClick={() => actions.setTool('markers')}
+				/>
+				<ToolBtn
+					icon={Footprints}
+					label='Paths'
+					active={activeTool === 'paths'}
+					onClick={() => actions.setTool('paths')}
+				/>
+				<ToolBtn
+					icon={Hexagon}
+					label='Regions'
+					active={activeTool === 'areas'}
+					onClick={() => actions.setTool('areas')}
+				/>
+				<ToolBtn
+					icon={ImageIcon}
+					label='Overlays'
+					active={activeTool === 'overlays'}
+					onClick={() => actions.setTool('overlays')}
+				/>
+			</div>
+
+			{activeTool === 'paths' && (
+				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewPath} className='shadow-xl'>
+					New Path
+				</Button>
+			)}
+			{activeTool === 'areas' && (
+				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewArea} className='shadow-xl'>
+					New Region
+				</Button>
+			)}
+			{activeTool === 'overlays' && (
+				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewOverlay} className='shadow-xl'>
+					New Overlay
+				</Button>
+			)}
+
+			{mode === 'draw' && (
+				<div
+					className='bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl animate-pulse text-center cursor-pointer'
+					onClick={() => actions.setMode('select')}>
+					DRAWING ACTIVE
+					<br />
+					<span className='underline opacity-80'>Stop</span>
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF components\EditorToolbar.jsx ---
+
+--- FILE: components\MapZoomHandler.jsx ---
+import { useEffect } from 'react';
+import { useMap } from 'react-leaflet';
+
+export const MapZoomHandler = ({ referenceZoom = 2 }) => {
+	const map = useMap();
+	useEffect(() => {
+		const updateSize = () => {
+			const zoom = map.getZoom();
+			const scale = Math.pow(2, referenceZoom - zoom);
+			document.documentElement.style.setProperty('--map-scale', scale);
+		};
+		map.on('zoom', updateSize);
+		updateSize();
+		return () => map.off('zoom', updateSize);
+	}, [map, referenceZoom]);
+	return null;
+};
+
+--- END OF components\MapZoomHandler.jsx ---
+
+--- FILE: components\PathStylePopup.jsx ---
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Settings2, Minus, X } from 'lucide-react';
+import clsx from 'clsx';
+
+export default function PathStylePopup({ data, onChange }) {
+	const [isOpen, setIsOpen] = useState(false);
+	const [position, setPosition] = useState({ top: 0, left: 0 });
+	const buttonRef = useRef(null);
+
+	useEffect(() => {
+		if (isOpen && buttonRef.current) {
+			const rect = buttonRef.current.getBoundingClientRect();
+			setPosition({ top: rect.top, left: rect.left - 260 });
+		}
+	}, [isOpen]);
+
+	const Btn = ({ active, onClick, children }) => (
+		<button
+			type='button'
+			onClick={onClick}
+			className={clsx(
+				'flex-1 h-8 rounded-md flex items-center justify-center transition-all border',
+				active
+					? 'bg-background border-primary text-primary shadow-sm'
+					: 'bg-transparent border-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground'
+			)}>
+			{children}
+		</button>
+	);
+
+	return (
+		<>
+			<button
+				ref={buttonRef}
+				type='button'
+				onClick={() => setIsOpen(!isOpen)}
+				className='w-8 h-8 flex items-center justify-center rounded-md border border-border bg-background hover:bg-muted transition-colors'>
+				<Settings2 size={16} className='text-muted-foreground' />
+			</button>
+			{isOpen &&
+				createPortal(
+					<div
+						className='fixed z-[9999] w-64 bg-card border border-border shadow-2xl rounded-xl p-4 animate-in fade-in zoom-in-95 duration-100'
+						style={{ top: position.top, left: position.left }}>
+						<div className='flex justify-between items-center mb-4 pb-2 border-b border-border'>
+							<span className='font-bold text-xs'>Path Style</span>
+							<button onClick={() => setIsOpen(false)}>
+								<X size={14} className='text-muted-foreground' />
+							</button>
+						</div>
+						{/* Width options */}
+						<div className='mb-4'>
+							<label className='text-[10px] font-bold uppercase text-muted-foreground mb-2 block'>Width</label>
+							<div className='flex gap-2 bg-muted/30 p-1 rounded-lg border border-border'>
+								{[2, 5, 8, 12].map((w) => (
+									<Btn key={w} active={data.weight === w} onClick={() => onChange('weight', w)}>
+										<div style={{ height: w / 2, width: 12, backgroundColor: 'currentColor', borderRadius: 2 }} />
+									</Btn>
+								))}
+							</div>
+						</div>
+						{/* Add other options (Curviness, Pattern, Opacity) here similar to original */}
+					</div>,
+					document.body
+				)}
+		</>
+	);
+}
+
+--- END OF components\PathStylePopup.jsx ---
+
+--- FILE: components\PatternDefs.jsx ---
+import React from 'react';
+
+export const PatternDefs = ({ areas }) => {
+	const patterns = new Map();
+
+	areas.forEach((area) => {
+		if (area.fillType === 'hatch' || area.fillType === 'dots') {
+			const color = area.interiorColor || '#d97706';
+			const type = area.fillType;
+			const opacity = area.fillOpacity ?? 0.2;
+
+			// Use defaults if new props aren't set
+			const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
+			const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+
+			const safeColor = color.replace('#', '');
+			const safeOpacity = Math.round(opacity * 100);
+
+			// Generate ID based on all visual properties
+			const id = `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`;
+
+			if (!patterns.has(id)) {
+				patterns.set(id, { id, type, color, opacity, spacing, weight });
+			}
+		}
+	});
+
+	if (patterns.size === 0) return null;
+
+	return (
+		<svg style={{ height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
+			<defs>
+				{Array.from(patterns.values()).map(({ id, type, color, opacity, spacing, weight }) => (
+					<pattern
+						key={id}
+						id={id}
+						patternUnits='userSpaceOnUse'
+						width={spacing}
+						height={spacing}
+						patternTransform={type === 'hatch' ? 'rotate(45)' : ''}>
+						{type === 'hatch' && (
+							<line
+								x1='0'
+								y1='0'
+								x2='0'
+								y2={spacing}
+								stroke={color}
+								strokeWidth={weight}
+								strokeOpacity={opacity}
+								strokeLinecap='square'
+							/>
+						)}
+						{type === 'dots' && (
+							// Staggered Dot Pattern
+							<>
+								<circle cx={spacing * 0.25} cy={spacing * 0.25} r={weight} fill={color} fillOpacity={opacity} />
+								<circle cx={spacing * 0.75} cy={spacing * 0.75} r={weight} fill={color} fillOpacity={opacity} />
+							</>
+						)}
+					</pattern>
+				))}
+			</defs>
+		</svg>
+	);
+};
+
+--- END OF components\PatternDefs.jsx ---
+
+--- FILE: components\SegmentedControl.jsx ---
+import React from 'react';
+import clsx from 'clsx';
+
+export default function SegmentedControl({ options, value, onChange }) {
+	return (
+		<div className='flex bg-muted/50 p-1 rounded-lg border border-border'>
+			{options.map((opt) => (
+				<button
+					key={opt.value}
+					type='button'
+					onClick={() => onChange(opt.value)}
+					className={clsx(
+						'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all',
+						value === opt.value
+							? 'bg-background text-primary shadow-sm ring-1 ring-black/5'
+							: 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+					)}>
+					{opt.icon && <opt.icon size={12} />}
+					{opt.label}
+				</button>
+			))}
+		</div>
+	);
+}
+
+--- END OF components\SegmentedControl.jsx ---
+
+--- FILE: components\ShapeSelector.jsx ---
+import React from 'react';
+import { MARKER_SHAPES } from '@/features/atlas/utils/markerUtils';
+import clsx from 'clsx';
+
+export default function ShapeSelector({ value, onChange, color = '#999' }) {
+	return (
+		<div className='grid grid-cols-4 gap-2'>
+			{Object.entries(MARKER_SHAPES).map(([key, def]) => {
+				const isActive = value === key;
+				return (
+					<button
+						key={key}
+						type='button'
+						onClick={() => onChange(key)}
+						title={def.label}
+						className={clsx(
+							'aspect-square rounded-lg border flex items-center justify-center transition-all hover:bg-muted/50',
+							isActive ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border text-muted-foreground'
+						)}>
+						<svg
+							viewBox={def.viewBox}
+							className='w-6 h-6 transition-all'
+							style={{
+								fill: isActive ? color : 'currentColor',
+								stroke: isActive ? 'none' : 'currentColor',
+								opacity: isActive ? 1 : 0.5,
+								strokeWidth: 2,
+							}}>
+							<path d={def.path} />
+						</svg>
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
+--- END OF components\ShapeSelector.jsx ---
+
+--- FILE: components\TileSelector.jsx ---
+import React from 'react';
+import clsx from 'clsx';
+
+export default function TileSelector({ options, value, onChange }) {
+	return (
+		<div className='grid grid-cols-4 gap-2'>
+			{options.map((opt) => {
+				const isActive = value === opt.value;
+				const Icon = opt.icon;
+				return (
+					<button
+						key={opt.value}
+						type='button'
+						onClick={() => onChange(opt.value)}
+						className={clsx(
+							'flex flex-col items-center justify-center gap-1.5 p-2 rounded-lg border transition-all h-20',
+							isActive
+								? 'bg-primary/10 border-primary text-primary shadow-[inset_0_0_0_1px_rgba(217,119,6,0.5)]'
+								: 'bg-card border-border hover:bg-muted/50 hover:border-primary/50 text-muted-foreground'
+						)}>
+						<Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+						<span className='text-[10px] font-bold uppercase tracking-wide'>{opt.label}</span>
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
+--- END OF components\TileSelector.jsx ---
+
+--- FILE: components\VertexHandle.jsx ---
+import L from 'leaflet';
+
+export const createHandleIcon = (isSelected, isSpecial = false) => {
+	const color = isSpecial ? '#3b82f6' : isSelected ? '#d97706' : '#333';
+	return L.divIcon({
+		className: 'vertex-handle',
+		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+		iconSize: [10, 10],
+		iconAnchor: [5, 5],
+	});
+};
+
+--- END OF components\VertexHandle.jsx ---
+
+--- FILE: components\VisualIconPicker.jsx ---
+import React, { useState, useRef, useLayoutEffect, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Search, ChevronDown, X } from 'lucide-react';
+import { LucideIcons, getAllIconNames } from '@/features/atlas/utils/markerUtils';
+import clsx from 'clsx';
+
+export default function VisualIconPicker({ value, onChange }) {
+	const [isOpen, setIsOpen] = useState(false);
+	const [search, setSearch] = useState('');
+	const [position, setPosition] = useState(null);
+	const [visibleCount, setVisibleCount] = useState(100);
+	const buttonRef = useRef(null);
+	const listRef = useRef(null);
+
+	const ActiveIcon = LucideIcons[value] || LucideIcons.HelpCircle;
+	const allIcons = useMemo(() => getAllIconNames(), []);
+
+	const filteredIcons = useMemo(() => {
+		const lower = search.toLowerCase();
+		return allIcons.filter((k) => k.toLowerCase().includes(lower));
+	}, [search, allIcons]);
+
+	const displayIcons = filteredIcons.slice(0, visibleCount);
+
+	const handleScroll = (e) => {
+		const { scrollTop, scrollHeight, clientHeight } = e.target;
+		if (scrollTop + clientHeight >= scrollHeight - 50) {
+			setVisibleCount((prev) => Math.min(prev + 100, filteredIcons.length));
+		}
+	};
+
+	useLayoutEffect(() => {
+		setVisibleCount(100);
+		if (listRef.current) listRef.current.scrollTop = 0;
+	}, [search]);
+
+	useLayoutEffect(() => {
+		if (isOpen && buttonRef.current) {
+			const rect = buttonRef.current.getBoundingClientRect();
+			const viewportWidth = window.innerWidth;
+			const viewportHeight = window.innerHeight;
+			const POPUP_W = 300;
+			const POPUP_H = 360;
+
+			let left = rect.left;
+			if (left + POPUP_W > viewportWidth - 10) left = viewportWidth - POPUP_W - 10;
+
+			let top = rect.bottom + 8;
+			if (top + POPUP_H > viewportHeight) top = rect.top - POPUP_H - 8;
+
+			setPosition({ top, left, width: POPUP_W });
+		} else {
+			setPosition(null);
+		}
+	}, [isOpen]);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const fn = (e) => {
+			if (!e.target.closest('.icon-picker-portal') && !buttonRef.current.contains(e.target)) {
+				setIsOpen(false);
+			}
+		};
+		window.addEventListener('mousedown', fn);
+		return () => window.removeEventListener('mousedown', fn);
+	}, [isOpen]);
+
+	return (
+		<div className='relative w-full z-10'>
+			{/* FIXED: Changed from button to div to prevent nesting error */}
+			<div
+				ref={buttonRef}
+				onClick={() => setIsOpen(!isOpen)}
+				role='button'
+				tabIndex={0}
+				className='flex items-center gap-3 w-full p-2.5 border border-border rounded-lg hover:bg-muted/50 transition-colors bg-card text-left group cursor-pointer'>
+				<div className='w-8 h-8 flex items-center justify-center bg-muted rounded-md border border-border/50 text-foreground group-hover:border-primary/50 transition-colors shrink-0'>
+					<ActiveIcon size={16} />
+				</div>
+
+				<div className='flex-1 min-w-0'>
+					<div className='text-[10px] uppercase font-bold text-muted-foreground'>Icon</div>
+					<div className='text-xs font-semibold truncate'>{value || 'Select...'}</div>
+				</div>
+
+				{/* Clear Button */}
+				<button
+					onClick={(e) => {
+						e.stopPropagation();
+						onChange('default');
+					}}
+					className='text-muted-foreground hover:text-red-500 hidden group-hover:block p-1'
+					title='Clear Icon'
+					type='button'>
+					<X size={14} />
+				</button>
+
+				<ChevronDown size={14} className='text-muted-foreground opacity-50 block group-hover:hidden' />
+			</div>
+
+			{isOpen &&
+				position &&
+				createPortal(
+					<div
+						className='icon-picker-portal fixed z-[9999] bg-popover border border-border shadow-2xl rounded-xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-100'
+						style={{ top: position.top, left: position.left, width: position.width, maxHeight: '360px', opacity: 1 }}>
+						<div className='p-3 border-b border-border bg-muted/30'>
+							<div className='relative'>
+								<Search className='absolute left-2.5 top-2.5 text-muted-foreground' size={14} />
+								<input
+									autoFocus
+									type='text'
+									placeholder='Search icons...'
+									className='w-full pl-8 pr-8 py-2 text-xs bg-background border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary'
+									value={search}
+									onChange={(e) => setSearch(e.target.value)}
+								/>
+								{search && (
+									<button
+										onClick={() => setSearch('')}
+										className='absolute right-2 top-2.5 text-muted-foreground hover:text-foreground'>
+										<X size={12} />
+									</button>
+								)}
+							</div>
+						</div>
+
+						<div
+							ref={listRef}
+							onScroll={handleScroll}
+							className='p-2 grid grid-cols-6 gap-1 overflow-y-auto custom-scrollbar bg-card content-start h-full'>
+							{displayIcons.map((key) => {
+								const Icon = LucideIcons[key];
+								return (
+									<button
+										key={key}
+										type='button'
+										onClick={() => {
+											onChange(key);
+											setIsOpen(false);
+										}}
+										className={clsx(
+											'aspect-square rounded-md flex items-center justify-center transition-all',
+											value === key
+												? 'bg-primary text-primary-foreground shadow-sm ring-1 ring-primary'
+												: 'text-muted-foreground hover:bg-muted hover:text-foreground'
+										)}
+										title={key}>
+										<Icon size={18} strokeWidth={value === key ? 2.5 : 2} />
+									</button>
+								);
+							})}
+						</div>
+					</div>,
+					document.body
+				)}
+		</div>
+	);
+}
+
+--- END OF components\VisualIconPicker.jsx ---
+
+--- FILE: forms\AreaForm.jsx ---
+import React, { useState } from 'react';
+import { Trash2, X, Hexagon, Square, CircleDashed, Type, Palette, Settings2, RotateCw } from 'lucide-react';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
+import clsx from 'clsx';
+
+// --- UI HELPERS ---
+
+const Header = ({ title, onDelete, onClose }) => (
+	<div className='flex justify-between items-center px-4 py-3 border-b border-border bg-background shrink-0 sticky top-0 z-10'>
+		<span className='font-bold text-xs uppercase tracking-wider flex items-center gap-2 text-muted-foreground'>
+			<Hexagon size={14} />
+			{title}
+		</span>
+		<div className='flex gap-1'>
+			{onDelete && (
+				<button
+					onClick={onDelete}
+					className='p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'>
+					<Trash2 size={14} />
+				</button>
+			)}
+			<button onClick={onClose} className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors'>
+				<X size={14} />
+			</button>
+		</div>
+	</div>
+);
+
+const PropRow = ({ label, children, className }) => (
+	<div className={clsx('flex items-center justify-between min-h-[32px] gap-3', className)}>
+		<span className='text-[11px] font-medium text-muted-foreground shrink-0 w-20 truncate' title={label}>
+			{label}
+		</span>
+		<div className='flex items-center gap-2 flex-1 justify-end min-w-0'>{children}</div>
+	</div>
+);
+
+const ToggleGroup = ({ options, value, onChange }) => (
+	<div className='flex bg-muted/50 p-0.5 rounded-md border border-border/50 shrink-0'>
+		{options.map((opt) => (
+			<button
+				key={opt.value}
+				onClick={() => onChange(opt.value)}
+				className={clsx(
+					'p-1 rounded-[3px] transition-all',
+					value === opt.value ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:bg-black/5'
+				)}
+				title={opt.label}>
+				{opt.icon}
+			</button>
+		))}
+	</div>
+);
+
+const TabButton = ({ active, onClick, icon: Icon, label }) => (
+	<button
+		onClick={onClick}
+		className={clsx(
+			'flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-colors',
+			active ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:bg-muted'
+		)}>
+		<Icon size={14} />
+		{label}
+	</button>
+);
+
+const safeHex = (c, fallback = '#d97706') => (/^#[0-9A-F]{6}$/i.test(c) ? c : fallback);
+
+export default function AreaForm({ data, onChange, onDelete, onClose }) {
+	if (!data) return null;
+	const [tab, setTab] = useState('style'); // 'style' | 'text' | 'settings'
+
+	const safeData = {
+		name: '',
+		lineColor: '#d97706',
+		weight: 2,
+		interiorColor: '#d97706',
+		fillOpacity: 0.2,
+		fillType: 'solid',
+		borderStyle: 'solid',
+		curviness: 0,
+		fillSpacing: 10,
+		fillWeight: 2,
+		labelDisplay: 'always',
+		labelColor: '#ffffff',
+		fontSize: 16,
+		textRotation: 0,
+		labelBgColor: '#000000',
+		labelBgOpacity: 0,
+		labelRadius: 4,
+		labelHasBorder: false,
+		labelBorderColor: '#ffffff',
+		paddingX: 8,
+		paddingY: 4,
+		...data,
+	};
+
+	const update = (field, val) => onChange(field, val);
+
+	return (
+		<div className='flex flex-col h-full bg-card/50 w-full'>
+			<Header title='Region' onDelete={onDelete} onClose={onClose} />
+
+			<div className='p-4 pb-0'>
+				<input
+					className='w-full bg-muted/30 border border-border rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary placeholder:font-normal transition-all'
+					value={safeData.name}
+					onChange={(e) => update('name', e.target.value)}
+					placeholder='Region Name...'
+				/>
+			</div>
+
+			<div className='flex border-b border-border mt-4 px-2'>
+				<TabButton active={tab === 'style'} onClick={() => setTab('style')} icon={Palette} label='Style' />
+				<TabButton active={tab === 'text'} onClick={() => setTab('text')} icon={Type} label='Text' />
+				<TabButton active={tab === 'settings'} onClick={() => setTab('settings')} icon={Settings2} label='Misc' />
+			</div>
+
+			<div className='p-4 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				{tab === 'style' && (
+					<div className='space-y-4 divide-y divide-border/40'>
+						<div className='space-y-3'>
+							<h4 className='text-[10px] font-bold uppercase text-muted-foreground/70 tracking-wider'>Fill</h4>
+							<PropRow label='Color'>
+								<SmartColorPicker
+									value={safeHex(safeData.interiorColor)}
+									onChange={(val) => update('interiorColor', val)}
+								/>
+								<ToggleGroup
+									value={safeData.fillType}
+									onChange={(v) => update('fillType', v)}
+									options={[
+										{ value: 'solid', icon: <Square size={14} fill='currentColor' />, label: 'Solid' },
+										{
+											value: 'hatch',
+											icon: (
+												<div className='w-3.5 h-3.5 bg-[linear-gradient(45deg,currentColor_25%,transparent_25%,transparent_50%,currentColor_50%,currentColor_75%,transparent_75%,transparent)] bg-[length:4px_4px]' />
+											),
+											label: 'Hatch',
+										},
+										{ value: 'dots', icon: <CircleDashed size={14} />, label: 'Dots' },
+									]}
+								/>
+							</PropRow>
+
+							{(safeData.fillType === 'hatch' || safeData.fillType === 'dots') && (
+								<>
+									<PropRow label={safeData.fillType === 'hatch' ? 'Spacing' : 'Density'}>
+										<input
+											type='range'
+											min='4'
+											max='40'
+											step='1'
+											value={safeData.fillSpacing}
+											onChange={(e) => update('fillSpacing', parseInt(e.target.value))}
+											className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+										/>
+										<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+											{safeData.fillSpacing}
+										</span>
+									</PropRow>
+									<PropRow label={safeData.fillType === 'hatch' ? 'Thickness' : 'Dot Size'}>
+										<input
+											type='range'
+											min='1'
+											max='10'
+											step='0.5'
+											value={safeData.fillWeight}
+											onChange={(e) => update('fillWeight', parseFloat(e.target.value))}
+											className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+										/>
+										<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+											{safeData.fillWeight}
+										</span>
+									</PropRow>
+								</>
+							)}
+
+							<PropRow label='Opacity'>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.05'
+									value={safeData.fillOpacity}
+									onChange={(e) => update('fillOpacity', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+									{Math.round(safeData.fillOpacity * 100)}%
+								</span>
+							</PropRow>
+						</div>
+
+						<div className='pt-4 space-y-3'>
+							<h4 className='text-[10px] font-bold uppercase text-muted-foreground/70 tracking-wider'>Border</h4>
+							<PropRow label='Style'>
+								<SmartColorPicker value={safeHex(safeData.lineColor)} onChange={(val) => update('lineColor', val)} />
+								<ToggleGroup
+									value={safeData.borderStyle}
+									onChange={(v) => update('borderStyle', v)}
+									options={[
+										{ value: 'solid', icon: <div className='w-3 h-0.5 bg-current' />, label: 'Solid' },
+										{
+											value: 'dashed',
+											icon: <div className='w-3 h-0.5 border-t border-dashed border-current' />,
+											label: 'Dashed',
+										},
+										{ value: 'none', icon: <X size={14} />, label: 'None' },
+									]}
+								/>
+							</PropRow>
+							{safeData.borderStyle !== 'none' && (
+								<PropRow label='Width'>
+									<input
+										type='range'
+										min='1'
+										max='20'
+										step='1'
+										value={safeData.weight || 2}
+										onChange={(e) => update('weight', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+									<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+										{safeData.weight}px
+									</span>
+								</PropRow>
+							)}
+							<PropRow label='Rounding'>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.1'
+									value={safeData.curviness}
+									onChange={(e) => update('curviness', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+							</PropRow>
+						</div>
+					</div>
+				)}
+
+				{tab === 'text' && (
+					<div className='space-y-4 divide-y divide-border/40'>
+						<div className='space-y-3'>
+							<PropRow label='Visibility'>
+								<select
+									className='bg-muted/30 border border-border rounded text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary w-full'
+									value={safeData.labelDisplay}
+									onChange={(e) => update('labelDisplay', e.target.value)}>
+									<option value='always'>Always Show</option>
+									<option value='hover'>Show on Hover</option>
+									<option value='none'>Hidden</option>
+								</select>
+							</PropRow>
+							<PropRow label='Size'>
+								<input
+									type='range'
+									min='8'
+									max='64'
+									step='1'
+									value={safeData.fontSize}
+									onChange={(e) => update('fontSize', parseInt(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>{safeData.fontSize}</span>
+							</PropRow>
+							<PropRow label='Rotation'>
+								<div className='flex items-center gap-2 flex-1'>
+									<RotateCw size={12} className='text-muted-foreground' />
+									<input
+										type='range'
+										min='0'
+										max='360'
+										step='5'
+										value={safeData.textRotation}
+										onChange={(e) => update('textRotation', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+									<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+										{safeData.textRotation}°
+									</span>
+								</div>
+							</PropRow>
+							<PropRow label='Color'>
+								<SmartColorPicker
+									value={safeHex(safeData.labelColor, '#ffffff')}
+									onChange={(val) => update('labelColor', val)}
+								/>
+							</PropRow>
+							{/* NEW: Padding Controls */}
+							<div className='pb-4'>
+								<PropRow label='Padding'>
+									<div className='flex gap-2 w-full flex-wrap'>
+										<div className='flex-1 flex items-center gap-1'>
+											<span className='text-[9px] text-muted-foreground uppercase'>H</span>
+											<input
+												type='range'
+												min='0'
+												max='32'
+												step='1'
+												value={safeData.paddingX}
+												onChange={(e) => update('paddingX', parseInt(e.target.value))}
+												className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+											/>
+										</div>
+										<div className='flex-1 flex items-center gap-1'>
+											<span className='text-[9px] text-muted-foreground uppercase'>V</span>
+											<input
+												type='range'
+												min='0'
+												max='32'
+												step='1'
+												value={safeData.paddingY}
+												onChange={(e) => update('paddingY', parseInt(e.target.value))}
+												className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+											/>
+										</div>
+									</div>
+								</PropRow>
+							</div>
+						</div>
+
+						<div className='pt-4 space-y-3'>
+							<h4 className='text-[10px] font-bold uppercase text-muted-foreground/70 tracking-wider'>
+								Background & Border
+							</h4>
+							<PropRow label='Bg Color'>
+								<SmartColorPicker
+									value={safeHex(safeData.labelBgColor, '#000000')}
+									onChange={(val) => update('labelBgColor', val)}
+								/>
+							</PropRow>
+							<PropRow label='Bg Opacity'>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.1'
+									value={safeData.labelBgOpacity}
+									onChange={(e) => update('labelBgOpacity', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+									{Math.round(safeData.labelBgOpacity * 100)}%
+								</span>
+							</PropRow>
+							<PropRow label='Radius'>
+								<input
+									type='range'
+									min='0'
+									max='20'
+									step='1'
+									value={safeData.labelRadius}
+									onChange={(e) => update('labelRadius', parseInt(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+								<span className='text-[10px] font-mono text-muted-foreground w-8 text-right'>
+									{safeData.labelRadius}
+								</span>
+							</PropRow>
+							<PropRow label='Show Border'>
+								<div className='flex items-center gap-2 justify-end w-full'>
+									{safeData.labelHasBorder && (
+										<SmartColorPicker
+											value={safeHex(safeData.labelBorderColor, safeData.labelColor)}
+											onChange={(val) => update('labelBorderColor', val)}
+										/>
+									)}
+									<button
+										onClick={() => update('labelHasBorder', !safeData.labelHasBorder)}
+										className={clsx(
+											'w-8 h-4 rounded-full transition-colors relative border',
+											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border'
+										)}>
+										<div
+											className={clsx(
+												'absolute top-0.5 bottom-0.5 w-3 bg-white rounded-full transition-all shadow-sm',
+												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5'
+											)}
+										/>
+									</button>
+								</div>
+							</PropRow>
+						</div>
+					</div>
+				)}
+
+				{tab === 'settings' && (
+					<div className='space-y-4'>
+						<div className='p-3 bg-blue-500/10 border border-blue-500/20 rounded-md text-xs text-blue-600'>
+							<strong>Tip:</strong> Drag the center point of the region to move the text label manually.
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF forms\AreaForm.jsx ---
+
+--- FILE: forms\MarkerForm.jsx ---
+import React, { useState, useEffect } from 'react';
+import { Trash2, X, MapPin, Circle, Image as ImageIcon, Type, Minus, Plus, Tag, Palette, RotateCw } from 'lucide-react';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
+import ShapeSelector from '../components/ShapeSelector';
+import VisualIconPicker from '../components/VisualIconPicker';
+import TileSelector from '../components/TileSelector';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { fetchCampaignMaps } from '@/features/atlas/api/mapService';
+import clsx from 'clsx';
+
+const LABEL_CLASS = 'text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block tracking-wide';
+const SECTION_CLASS = 'space-y-4 p-4 rounded-xl border border-border bg-card/50';
+
+const Header = ({ title, onDelete, onClose }) => (
+	<div className='flex justify-between items-center px-5 py-4 border-b border-border bg-background shrink-0 sticky top-0 z-10'>
+		<span className='font-bold text-sm uppercase flex items-center gap-2'>{title}</span>
+		<div className='flex gap-1'>
+			{onDelete && (
+				<button
+					onClick={onDelete}
+					className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'>
+					<Trash2 size={16} />
+				</button>
+			)}
+			<button
+				onClick={onClose}
+				className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-md transition-colors'>
+				<X size={16} />
+			</button>
+		</div>
+	</div>
+);
+
+export default function MarkerForm({ data, onChange, onDelete, onClose }) {
+	const { campaignId } = useCampaign();
+	const [mapOptions, setMapOptions] = useState([]);
+
+	useEffect(() => {
+		if (campaignId) fetchCampaignMaps(campaignId).then(setMapOptions);
+	}, [campaignId]);
+
+	const safeData = {
+		label: '',
+		color: '#d97706',
+		variant: 'large',
+		shape: 'pin',
+		icon: 'MapPin',
+		category: 'default',
+		labelDisplay: 'hover',
+		scale: 1,
+		mapLink: '',
+		// Text Specifics
+		labelBgColor: '#000000',
+		labelBgOpacity: 0,
+		labelRadius: 4,
+		labelHasBorder: false,
+		labelBorderColor: '#ffffff',
+		textRotation: 0,
+		paddingX: 8,
+		paddingY: 4,
+		...data,
+	};
+
+	return (
+		<div className='flex flex-col h-full bg-muted/10 w-full'>
+			<Header title='Edit Marker' onDelete={onDelete} onClose={onClose} />
+
+			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				{/* NAME & CATEGORY */}
+				<div className={SECTION_CLASS}>
+					<div className='flex gap-3'>
+						<div className='w-12 h-12 rounded-lg shrink-0 flex items-center justify-center border border-border bg-card shadow-sm'>
+							<div
+								className='w-6 h-6 flex items-center justify-center font-bold text-xs'
+								style={{ color: safeData.color }}>
+								{safeData.variant === 'text' ? (
+									'T'
+								) : (
+									<div className='w-4 h-4 rounded-full' style={{ backgroundColor: safeData.color }} />
+								)}
+							</div>
+						</div>
+						<div className='flex-1 space-y-2'>
+							<input
+								className='w-full bg-card border border-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary'
+								value={safeData.label}
+								onChange={(e) => onChange('label', e.target.value)}
+								placeholder='Marker Name...'
+							/>
+							<div className='flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg'>
+								<Tag size={12} className='text-muted-foreground' />
+								<select
+									className='bg-transparent text-xs w-full focus:outline-none text-muted-foreground font-medium'
+									value={safeData.category}
+									onChange={(e) => onChange('category', e.target.value)}>
+									<option value='default'>Default</option>
+									<option value='locations'>Locations</option>
+									<option value='cities'>Cities</option>
+									<option value='npcs'>NPCs</option>
+									<option value='shops'>Shops</option>
+									<option value='pois'>Points of Interest</option>
+									<option value='quests'>Quests</option>
+									<option value='encounters'>Encounters</option>
+								</select>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className='space-y-2'>
+					<label className={LABEL_CLASS}>Appearance</label>
+					<TileSelector
+						value={safeData.variant}
+						onChange={(v) => onChange('variant', v)}
+						options={[
+							{ value: 'large', label: 'Large', icon: MapPin },
+							{ value: 'small', label: 'Small', icon: Circle },
+							{ value: 'icon', label: 'Icon', icon: ImageIcon },
+							{ value: 'text', label: 'Text', icon: Type },
+						]}
+					/>
+				</div>
+
+				{/* VISUAL SETTINGS */}
+
+				{/* 1. SHAPE VARIANTS */}
+				{['large', 'small'].includes(safeData.variant) && (
+					<div className='space-y-4 bg-card p-4 rounded-xl border border-border'>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Shape</label>
+							<ShapeSelector value={safeData.shape} onChange={(v) => onChange('shape', v)} color={safeData.color} />
+						</div>
+						<div className='h-px bg-border/50' />
+						<div className='grid grid-cols-1 gap-4'>
+							<div className='space-y-2'>
+								<label className={LABEL_CLASS}>Color</label>
+								<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
+							</div>
+							{safeData.variant === 'large' && (
+								<div className='space-y-2'>
+									<label className={LABEL_CLASS}>Icon</label>
+									<VisualIconPicker value={safeData.icon} onChange={(v) => onChange('icon', v)} />
+								</div>
+							)}
+						</div>
+					</div>
+				)}
+
+				{/* 2. ICON VARIANT */}
+				{safeData.variant === 'icon' && (
+					<div className='space-y-4 bg-card p-4 rounded-xl border border-border'>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Select Icon</label>
+							<VisualIconPicker value={safeData.icon} onChange={(v) => onChange('icon', v)} />
+						</div>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Tint Color</label>
+							<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
+						</div>
+					</div>
+				)}
+
+				{/* 3. TEXT VARIANT (RICH) */}
+				{safeData.variant === 'text' && (
+					<div className='space-y-4 bg-card p-4 rounded-xl border border-border'>
+						<div className='space-y-2'>
+							<div className='flex items-center gap-2 mb-2'>
+								<Palette size={14} className='text-muted-foreground' />
+								<label className={LABEL_CLASS} style={{ marginBottom: 0 }}>
+									Text Color
+								</label>
+							</div>
+							<SmartColorPicker value={safeData.color} onChange={(v) => onChange('color', v)} />
+						</div>
+
+						<div className='h-px bg-border/50' />
+
+						{/* NEW: Padding Controls */}
+						<div className='space-y-2'>
+							<div className='flex justify-between items-center'>
+								<span className='text-[10px] font-medium text-muted-foreground'>Padding</span>
+							</div>
+							<div className='flex gap-4 w-full'>
+								<div className='flex-1 flex items-center gap-2'>
+									<span className='text-[9px] text-muted-foreground font-bold'>HORZ</span>
+									<input
+										type='range'
+										min='0'
+										max='32'
+										step='1'
+										value={safeData.paddingX}
+										onChange={(e) => onChange('paddingX', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+								</div>
+								<div className='flex-1 flex items-center gap-2'>
+									<span className='text-[9px] text-muted-foreground font-bold'>VERT</span>
+									<input
+										type='range'
+										min='0'
+										max='32'
+										step='1'
+										value={safeData.paddingY}
+										onChange={(e) => onChange('paddingY', parseInt(e.target.value))}
+										className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div className='space-y-3'>
+							<div className='flex justify-between items-center'>
+								<span className='text-[10px] font-medium text-muted-foreground'>Background</span>
+								<SmartColorPicker
+									value={safeData.labelBgColor || '#000000'}
+									onChange={(v) => onChange('labelBgColor', v)}
+								/>
+							</div>
+							<div className='flex items-center gap-3'>
+								<span className='text-[10px] font-medium text-muted-foreground w-12'>Opacity</span>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.1'
+									value={safeData.labelBgOpacity ?? 0}
+									onChange={(e) => onChange('labelBgOpacity', parseFloat(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+							</div>
+						</div>
+
+						<div className='h-px bg-border/50' />
+
+						<div className='space-y-3'>
+							<div className='flex items-center justify-between'>
+								<span className='text-[10px] font-medium text-muted-foreground'>Border</span>
+								<div className='flex items-center gap-2'>
+									{safeData.labelHasBorder && (
+										<SmartColorPicker
+											value={safeData.labelBorderColor || safeData.color}
+											onChange={(v) => onChange('labelBorderColor', v)}
+										/>
+									)}
+									<button
+										onClick={() => onChange('labelHasBorder', !safeData.labelHasBorder)}
+										className={clsx(
+											'w-8 h-4 rounded-full transition-colors relative border',
+											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border'
+										)}>
+										<div
+											className={clsx(
+												'absolute top-0.5 bottom-0.5 w-3 bg-white rounded-full transition-all shadow-sm',
+												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5'
+											)}
+										/>
+									</button>
+								</div>
+							</div>
+
+							<div className='flex items-center gap-3'>
+								<span className='text-[10px] font-medium text-muted-foreground w-12'>Radius</span>
+								<input
+									type='range'
+									min='0'
+									max='20'
+									step='1'
+									value={safeData.labelRadius ?? 4}
+									onChange={(e) => onChange('labelRadius', parseInt(e.target.value))}
+									className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+							</div>
+						</div>
+
+						<div className='h-px bg-border/50' />
+
+						<div className='flex items-center gap-3'>
+							<RotateCw size={14} className='text-muted-foreground' />
+							<input
+								type='range'
+								min='0'
+								max='360'
+								step='5'
+								value={safeData.textRotation ?? 0}
+								onChange={(e) => onChange('textRotation', parseInt(e.target.value))}
+								className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+							/>
+							<span className='text-[10px] font-mono text-muted-foreground'>{safeData.textRotation}°</span>
+						</div>
+					</div>
+				)}
+
+				{/* SCALING & LINKING */}
+				<div className={SECTION_CLASS}>
+					<div className='space-y-2'>
+						<div className='flex justify-between'>
+							<label className={LABEL_CLASS}>Size / Scale</label>
+							<span className='text-[10px] font-mono text-muted-foreground'>{safeData.scale.toFixed(1)}x</span>
+						</div>
+						<div className='flex items-center gap-3 bg-muted/30 p-2 rounded-lg border border-border'>
+							<button
+								onClick={() => onChange('scale', Math.max(0.5, safeData.scale - 0.1))}
+								className='p-1 hover:text-primary'>
+								<Minus size={14} />
+							</button>
+							<input
+								type='range'
+								min='0.5'
+								max='2.0'
+								step='0.1'
+								value={safeData.scale}
+								onChange={(e) => onChange('scale', parseFloat(e.target.value))}
+								className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+							/>
+							<button
+								onClick={() => onChange('scale', Math.min(2.0, safeData.scale + 0.1))}
+								className='p-1 hover:text-primary'>
+								<Plus size={14} />
+							</button>
+						</div>
+					</div>
+
+					<div className='grid grid-cols-2 gap-4 pt-2'>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Label Display</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={safeData.labelDisplay}
+								onChange={(e) => onChange('labelDisplay', e.target.value)}>
+								<option value='always'>Always Visible</option>
+								<option value='hover'>On Hover</option>
+								<option value='none'>Hidden</option>
+							</select>
+						</div>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Link Map</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={safeData.mapLink || ''}
+								onChange={(e) => onChange('mapLink', e.target.value)}>
+								<option value=''>-- None --</option>
+								{mapOptions.map((m) => (
+									<option key={m.key} value={m.key}>
+										{m.title}
+									</option>
+								))}
+							</select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF forms\MarkerForm.jsx ---
+
+--- FILE: forms\OverlayForm.jsx ---
+import React from 'react';
+import SmartImageInput from '@/features/admin/components/SmartImageInput';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import { Trash2, X } from 'lucide-react';
+
+const Header = ({ title, onDelete, onClose }) => (
+	<div className='flex justify-between items-center p-4 border-b border-border bg-muted/40 shrink-0'>
+		<span className='font-bold text-sm uppercase flex items-center gap-2'>
+			<div className='w-1.5 h-4 bg-primary rounded-full' />
+			{title}
+		</span>
+		<div className='flex gap-1'>
+			{onDelete && (
+				<button
+					onClick={onDelete}
+					className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+					title='Delete Item'>
+					<Trash2 size={16} />
+				</button>
+			)}
+			<button
+				onClick={onClose}
+				className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors'
+				title='Close'>
+				<X size={16} />
+			</button>
+		</div>
+	</div>
+);
+
+export const OverlayForm = ({ data, actions, onClose }) => {
+	if (!data) return null;
+
+	const handleChange = (field, value) => {
+		actions.updateOverlay(data._id, { [field]: value });
+	};
+
+	return (
+		<div className='flex flex-col h-full bg-card shadow-2xl z-[1001] w-full border-l border-border'>
+			<Header title='Overlay Properties' onDelete={() => actions.deleteOverlay(data._id)} onClose={onClose} />
+
+			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				<div className='space-y-3'>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Name</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={data.name || ''}
+							onChange={(e) => handleChange('name', e.target.value)}
+							placeholder='Overlay Name...'
+						/>
+					</div>
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Image Source</label>
+						<SmartImageInput
+							value={data.image || ''}
+							onChange={(val) => handleChange('image', val)}
+							placeholder='Select or paste image URL...'
+						/>
+					</div>
+				</div>
+
+				<div className='p-4 bg-blue-500/10 border border-blue-500/20 rounded-md'>
+					<p className='text-xs text-blue-400'>
+						<strong>Tip:</strong> Drag the corners of the image on the map to resize it. Drag the center handle to move
+						it.
+					</p>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+--- END OF forms\OverlayForm.jsx ---
+
+--- FILE: forms\PathForm.jsx ---
+import React from 'react';
+import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon } from 'lucide-react';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
+
+const LABEL_CLASS = 'text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block tracking-wide';
+const SECTION_CLASS = 'space-y-4 p-4 rounded-xl border border-border bg-card/50';
+
+const Header = ({ title, onDelete, onClose }) => (
+	<div className='flex justify-between items-center px-5 py-4 border-b border-border bg-background shrink-0 sticky top-0 z-10'>
+		<span className='font-bold text-sm uppercase flex items-center gap-2'>{title}</span>
+		<div className='flex gap-1'>
+			{onDelete && (
+				<button
+					onClick={onDelete}
+					className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors'
+					title='Delete'>
+					<Trash2 size={16} />
+				</button>
+			)}
+			<button
+				onClick={onClose}
+				className='w-7 h-7 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-md transition-colors'
+				title='Close'>
+				<X size={16} />
+			</button>
+		</div>
+	</div>
+);
+
+export default function PathForm({ data, onChange, onDelete, onClose }) {
+	if (!data) return null;
+
+	const safeData = {
+		name: '',
+		color: '#d97706',
+		opacity: 1,
+		weight: 5,
+		dashArray: '',
+		curviness: 0,
+		labelDisplay: 'hover',
+		labelStyle: 'box',
+		...data,
+	};
+
+	return (
+		<div className='flex flex-col h-full bg-muted/10 w-full'>
+			<Header title='Edit Path' onDelete={onDelete} onClose={onClose} />
+			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				<div className={SECTION_CLASS}>
+					<div className='flex gap-3'>
+						<div className='w-12 h-12 rounded-lg shrink-0 flex items-center justify-center border border-border bg-card shadow-sm'>
+							<div className='w-8 h-8 flex items-center justify-center relative'>
+								<svg viewBox='0 0 24 24' className='w-6 h-6 overflow-visible'>
+									<path
+										d={safeData.curviness > 0 ? 'M2,20 Q12,4 22,20' : 'M2,20 L12,4 L22,20'}
+										fill='none'
+										stroke={safeData.color}
+										strokeWidth={safeData.weight > 5 ? 3 : 1.5}
+										strokeDasharray={safeData.dashArray ? '4,2' : 'none'}
+										strokeLinecap='round'
+										strokeLinejoin='round'
+									/>
+								</svg>
+							</div>
+						</div>
+						<div className='flex-1 space-y-2'>
+							<input
+								className='w-full bg-card border border-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary placeholder:font-normal'
+								value={safeData.name}
+								onChange={(e) => onChange('name', e.target.value)}
+								placeholder='Path Name...'
+								autoFocus
+							/>
+							<div className='flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-xs text-muted-foreground'>
+								<Footprints size={12} />
+								<span>Path Object</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className='space-y-4'>
+					<label className={LABEL_CLASS}>Line Style</label>
+					<div className='grid grid-cols-3 gap-2'>
+						{[
+							{
+								label: 'Solid',
+								value: '',
+								svg: <line x1='4' y1='12' x2='20' y2='12' stroke='currentColor' strokeWidth='2' />,
+							},
+							{
+								label: 'Dashed',
+								value: '20, 15',
+								svg: (
+									<line x1='4' y1='12' x2='20' y2='12' stroke='currentColor' strokeWidth='2' strokeDasharray='4,3' />
+								),
+							},
+							{
+								label: 'Dotted',
+								value: '1, 10',
+								svg: (
+									<line
+										x1='4'
+										y1='12'
+										x2='20'
+										y2='12'
+										stroke='currentColor'
+										strokeWidth='3'
+										strokeDasharray='1,6'
+										strokeLinecap='round'
+									/>
+								),
+							},
+						].map((opt) => (
+							<button
+								key={opt.label}
+								onClick={() => onChange('dashArray', opt.value)}
+								className={`flex flex-col items-center justify-center gap-1 h-14 rounded-lg border transition-all ${
+									safeData.dashArray === opt.value
+										? 'bg-primary/10 border-primary text-primary'
+										: 'bg-card border-border hover:bg-muted text-muted-foreground'
+								}`}>
+								<svg width='24' height='24' viewBox='0 0 24 24'>
+									{opt.svg}
+								</svg>
+								<span className='text-[9px] uppercase font-bold'>{opt.label}</span>
+							</button>
+						))}
+					</div>
+
+					<div className={SECTION_CLASS}>
+						<div className='space-y-4'>
+							<div className='space-y-2'>
+								<label className={LABEL_CLASS}>Stroke Color</label>
+								<SmartColorPicker value={safeData.color} onChange={(val) => onChange('color', val)} />
+							</div>
+							<div className='space-y-2'>
+								<div className='flex justify-between'>
+									<label className={LABEL_CLASS}>Thickness</label>
+									<span className='text-[10px] font-mono text-muted-foreground'>{safeData.weight}px</span>
+								</div>
+								<input
+									type='range'
+									min='1'
+									max='20'
+									step='1'
+									value={safeData.weight}
+									onChange={(e) => onChange('weight', parseInt(e.target.value))}
+									className='w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+							</div>
+							<div className='space-y-2'>
+								<div className='flex justify-between'>
+									<label className={LABEL_CLASS}>Curviness</label>
+									<span className='text-[10px] font-mono text-muted-foreground'>
+										{safeData.curviness === 0 ? 'Straight' : 'Curved'}
+									</span>
+								</div>
+								<input
+									type='range'
+									min='0'
+									max='1'
+									step='0.1'
+									value={safeData.curviness}
+									onChange={(e) => onChange('curviness', parseFloat(e.target.value))}
+									className='w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className={SECTION_CLASS}>
+					<label className={LABEL_CLASS}>Label Settings</label>
+					<div className='grid grid-cols-2 gap-4'>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Visibility</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={safeData.labelDisplay}
+								onChange={(e) => onChange('labelDisplay', e.target.value)}>
+								<option value='always'>Always</option>
+								<option value='hover'>Hover</option>
+								<option value='none'>Hidden</option>
+							</select>
+						</div>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Style</label>
+							<div className='flex bg-card border border-border rounded-md p-1'>
+								<button
+									onClick={() => onChange('labelStyle', 'box')}
+									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
+										safeData.labelStyle !== 'ghost'
+											? 'bg-primary text-white shadow-sm'
+											: 'text-muted-foreground hover:bg-muted'
+									}`}
+									title='Box Background'>
+									<LayoutTemplate size={14} />
+								</button>
+								<button
+									onClick={() => onChange('labelStyle', 'ghost')}
+									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
+										safeData.labelStyle === 'ghost'
+											? 'bg-primary text-white shadow-sm'
+											: 'text-muted-foreground hover:bg-muted'
+									}`}
+									title='Text Only (Ghost)'>
+									<TypeIcon size={14} />
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF forms\PathForm.jsx ---
+
+--- FILE: hooks\useAtlasActions.js ---
+import { useMemo } from 'react';
+import { calculateNewOverlayBounds } from '../services/geometryUtils';
+
+export const useAtlasActions = (dispatch) => {
+	return useMemo(
+		() => ({
+			// --- SELECTION & MODES ---
+			selectItem: (type, id, index) => dispatch({ type: 'SELECT_ITEM', payload: { type, id, index } }),
+
+			deselect: () => dispatch({ type: 'SELECT_ITEM', payload: null }),
+
+			setTool: (tool) => dispatch({ type: 'SET_TOOL', payload: tool }),
+
+			setMode: (mode) => dispatch({ type: 'SET_MODE', payload: mode }),
+
+			toggleVisibility: (layer) => dispatch({ type: 'TOGGLE_VISIBILITY', payload: layer }),
+
+			// --- MARKERS ---
+			addMarker: (marker) => dispatch({ type: 'ADD_MARKER', payload: marker }),
+
+			updateMarker: (id, updates) => dispatch({ type: 'UPDATE_MARKER', id, updates }),
+
+			deleteMarker: (id) => dispatch({ type: 'DELETE_MARKER', id }),
+
+			// --- PATHS ---
+			addPath: (path) => dispatch({ type: 'ADD_PATH', payload: path }),
+
+			updatePath: (id, updates) => dispatch({ type: 'UPDATE_PATH', id, updates }),
+
+			deletePath: (id) => dispatch({ type: 'DELETE_PATH', id }),
+
+			// Path Points
+			updatePathPoint: (id, index, updates) => dispatch({ type: 'UPDATE_PATH_POINT', id, index, updates }),
+
+			appendPathPoint: (id, coordinates) => dispatch({ type: 'APPEND_PATH_POINT', id, coordinates }),
+
+			insertPathPoint: (id, index, coordinates) => dispatch({ type: 'INSERT_PATH_POINT', id, index, coordinates }),
+
+			deletePathPoint: (id, index) => dispatch({ type: 'DELETE_PATH_POINT', id, index }),
+
+			// --- AREAS ---
+			addArea: (area) => dispatch({ type: 'ADD_AREA', payload: area }),
+
+			updateArea: (id, updates) => dispatch({ type: 'UPDATE_AREA', id, updates }),
+
+			deleteArea: (id) => dispatch({ type: 'DELETE_AREA', id }),
+
+			// Area Vertices
+			updateAreaPoint: (id, index, coordinates) => dispatch({ type: 'UPDATE_AREA_POINT', id, index, coordinates }),
+
+			appendAreaPoint: (id, coordinates) => dispatch({ type: 'APPEND_AREA_POINT', id, coordinates }),
+
+			insertAreaPoint: (id, index, coordinates) => dispatch({ type: 'INSERT_AREA_POINT', id, index, coordinates }),
+
+			deleteAreaPoint: (id, index) => dispatch({ type: 'DELETE_AREA_POINT', id, index }),
+
+			// --- OVERLAYS (The Complex Logic) ---
+			addOverlay: (overlay) => dispatch({ type: 'ADD_OVERLAY', payload: overlay }),
+
+			updateOverlay: (id, updates) => dispatch({ type: 'UPDATE_OVERLAY', id, updates }),
+
+			deleteOverlay: (id) => dispatch({ type: 'DELETE_OVERLAY', id }),
+
+			/**
+			 * specialized action to handle resizing logic
+			 * @param {string} id
+			 * @param {string} handle - 'tl', 'tr', 'bl', 'br'
+			 * @param {number} lat
+			 * @param {number} lng
+			 * @param {Array} currentBounds
+			 */
+			resizeOverlay: (id, handle, lat, lng, currentBounds) => {
+				const newBounds = calculateNewOverlayBounds(handle, lat, lng, currentBounds);
+				dispatch({ type: 'UPDATE_OVERLAY', id, updates: { bounds: newBounds } });
+			},
+
+			moveOverlay: (id, newCenter, oldCenter, oldBounds) => {
+				const latDiff = newCenter.lat - oldCenter.lat;
+				const lngDiff = newCenter.lng - oldCenter.lng;
+
+				const newBounds = [
+					[oldBounds[0][0] + latDiff, oldBounds[0][1] + lngDiff],
+					[oldBounds[1][0] + latDiff, oldBounds[1][1] + lngDiff],
+				];
+
+				dispatch({ type: 'UPDATE_OVERLAY', id, updates: { bounds: newBounds } });
+			},
+
+			openContextMenu: (payload) => dispatch({ type: 'OPEN_CONTEXT_MENU', payload }),
+			closeContextMenu: () => dispatch({ type: 'CLOSE_CONTEXT_MENU' }),
+		}),
+		[dispatch]
+	);
+};
+
+--- END OF hooks\useAtlasActions.js ---
+
+--- FILE: hooks\useAtlasReducer.js ---
+import { useReducer } from 'react';
+
+const initialState = {
+	markers: [],
+	paths: [],
+	areas: [],
+	overlays: [],
+	selection: null, // { type, id, index? }
+	mode: 'select', // 'select' | 'draw'
+	activeTool: 'markers',
+	isSaving: false,
+	visibility: {
+		markers: true,
+		paths: true,
+		areas: true,
+		overlays: true,
+	},
+	contextMenu: null, // { type: 'map'|'entity', position: {x,y}, latlng: {lat,lng}, target: {type, id, ...data} }
+	mapId: null,
+	mapConfig: null,
+};
+
+const reducer = (state, action) => {
+	switch (action.type) {
+		// ==========================================
+		// GLOBAL / UI STATE
+		// ==========================================
+		case 'INIT_DATA':
+			return { ...state, ...action.payload };
+
+		case 'SET_MODE':
+			return {
+				...state,
+				mode: action.payload,
+				contextMenu: null, // Close menu on mode change
+			};
+
+		case 'SET_TOOL':
+			return {
+				...state,
+				activeTool: action.payload,
+				selection: null,
+				mode: 'select',
+				contextMenu: null,
+			};
+
+		case 'SELECT_ITEM':
+			return {
+				...state,
+				selection: action.payload,
+				mode: 'select', // Reset draw mode on select
+				contextMenu: null,
+			};
+
+		case 'TOGGLE_VISIBILITY':
+			return {
+				...state,
+				visibility: {
+					...state.visibility,
+					[action.payload]: !state.visibility[action.payload],
+				},
+				contextMenu: null,
+			};
+
+		case 'SET_SAVING':
+			return { ...state, isSaving: action.payload };
+
+		// --- CONTEXT MENU ---
+		case 'OPEN_CONTEXT_MENU':
+			return { ...state, contextMenu: action.payload };
+
+		case 'CLOSE_CONTEXT_MENU':
+			return { ...state, contextMenu: null };
+
+		// ==========================================
+		// MARKERS
+		// ==========================================
+		case 'ADD_MARKER':
+			return {
+				...state,
+				markers: [...state.markers, action.payload],
+				selection: { type: 'marker', id: action.payload._id },
+				contextMenu: null,
+			};
+		case 'UPDATE_MARKER':
+			return {
+				...state,
+				markers: state.markers.map((m) => (m._id === action.id ? { ...m, ...action.updates } : m)),
+			};
+		case 'DELETE_MARKER':
+			return {
+				...state,
+				markers: state.markers.filter((m) => m._id !== action.id),
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
+			};
+
+		// ==========================================
+		// PATHS
+		// ==========================================
+		case 'ADD_PATH':
+			return {
+				...state,
+				paths: [...state.paths, action.payload],
+				selection: { type: 'path', id: action.payload._id },
+				mode: 'draw', // Auto enter draw mode
+				contextMenu: null,
+			};
+		case 'UPDATE_PATH':
+			return {
+				...state,
+				paths: state.paths.map((p) => (p._id === action.id ? { ...p, ...action.updates } : p)),
+			};
+		case 'DELETE_PATH':
+			return {
+				...state,
+				paths: state.paths.filter((p) => p._id !== action.id),
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
+			};
+		case 'UPDATE_PATH_POINT':
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					const newPoints = [...p.points];
+					newPoints[action.index] = { ...newPoints[action.index], ...action.updates };
+					return { ...p, points: newPoints };
+				}),
+			};
+		case 'APPEND_PATH_POINT':
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					return { ...p, points: [...p.points, { coordinates: action.coordinates, text: '' }] };
+				}),
+			};
+		case 'INSERT_PATH_POINT':
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					const newPoints = [...p.points];
+					newPoints.splice(action.index, 0, { coordinates: action.coordinates, text: '' });
+					return { ...p, points: newPoints };
+				}),
+			};
+		case 'DELETE_PATH_POINT':
+			return {
+				...state,
+				paths: state.paths.map((p) => {
+					if (p._id !== action.id) return p;
+					const newPoints = p.points.filter((_, i) => i !== action.index);
+					return { ...p, points: newPoints };
+				}),
+			};
+
+		// ==========================================
+		// AREAS (REGIONS)
+		// ==========================================
+		case 'ADD_AREA': {
+			// <--- ADDED OPEN BRACE
+			const areaDefaults = {
+				lineColor: '#d97706',
+				weight: 2,
+				borderStyle: 'solid',
+				fillType: 'solid',
+				interiorColor: '#ff0000',
+				fillOpacity: 0.2,
+				labelDisplay: 'always',
+				labelColor: '#ffffff',
+				fontSize: 16,
+				paddingX: 8,
+				paddingY: 4,
+				labelBgColor: '#000000',
+				labelBgOpacity: 0,
+				labelRadius: 4,
+				labelHasBorder: false,
+				labelBorderColor: '#ffffff',
+			};
+
+			return {
+				...state,
+				areas: [...state.areas, { ...areaDefaults, ...action.payload }],
+				selection: { type: 'area', id: action.payload._id },
+				mode: 'draw',
+				contextMenu: null,
+			};
+		}
+		case 'UPDATE_AREA':
+			return {
+				...state,
+				areas: state.areas.map((a) => (a._id === action.id ? { ...a, ...action.updates } : a)),
+			};
+		case 'DELETE_AREA':
+			return {
+				...state,
+				areas: state.areas.filter((a) => a._id !== action.id),
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
+			};
+		case 'UPDATE_AREA_POINT':
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = [...a.points];
+					newPoints[action.index] = { ...newPoints[action.index], coordinates: action.coordinates };
+					return { ...a, points: newPoints };
+				}),
+			};
+		case 'APPEND_AREA_POINT':
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					return { ...a, points: [...a.points, { coordinates: action.coordinates }] };
+				}),
+			};
+		case 'INSERT_AREA_POINT':
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					const newPoints = [...a.points];
+					newPoints.splice(action.index + 1, 0, { coordinates: action.coordinates });
+					return { ...a, points: newPoints };
+				}),
+			};
+		case 'DELETE_AREA_POINT':
+			return {
+				...state,
+				areas: state.areas.map((a) => {
+					if (a._id !== action.id) return a;
+					return { ...a, points: a.points.filter((_, i) => i !== action.index) };
+				}),
+			};
+
+		// ==========================================
+		// OVERLAYS
+		// ==========================================
+		case 'ADD_OVERLAY':
+			return {
+				...state,
+				overlays: [...state.overlays, action.payload],
+				selection: { type: 'overlay', id: action.payload._id },
+				contextMenu: null,
+			};
+		case 'UPDATE_OVERLAY':
+			return {
+				...state,
+				overlays: state.overlays.map((o) => (o._id === action.id ? { ...o, ...action.updates } : o)),
+			};
+		case 'DELETE_OVERLAY':
+			return {
+				...state,
+				overlays: state.overlays.filter((o) => o._id !== action.id),
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
+			};
+
+		default:
+			return state;
+	}
+};
+
+export const useAtlasReducer = (preloadedState) => {
+	// Merge defaults with any loaded DB data
+	const effectiveState = { ...initialState, ...preloadedState };
+
+	const [state, dispatch] = useReducer(reducer, effectiveState);
+	return [state, dispatch];
+};
+
+--- END OF hooks\useAtlasReducer.js ---
+
+--- FILE: layers\EditAreasLayer.jsx ---
+import React, { useMemo, useState } from 'react';
+import { Polygon, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { createHandleIcon, createMidpointIcon, createLabelIcon } from '@/features/atlas/utils/markerUtils';
+import { getRoundedPath } from '@/features/atlas/utils/pathUtils';
+import { PatternDefs } from '../components/PatternDefs';
+
+const getMidpoint = (p1, p2) => [
+	(p1.coordinates[0] + p2.coordinates[0]) / 2,
+	(p1.coordinates[1] + p2.coordinates[1]) / 2,
+];
+
+const getCentroid = (points) => {
+	if (!points || points.length === 0) return [0, 0];
+	let lat = 0,
+		lng = 0;
+	points.forEach((p) => {
+		lat += p.coordinates[0];
+		lng += p.coordinates[1];
+	});
+	return [lat / points.length, lng / points.length];
+};
+
+const AreaItem = ({ area, selection, activeTool, actions }) => {
+	const [isHovered, setIsHovered] = useState(false);
+
+	const isSelected = selection?.type === 'area' && selection.id === area._id;
+	const isInteractive = activeTool === 'areas';
+	const rawPoints = (area.points || []).map((p) => p.coordinates);
+
+	// 1. Geometry Calculation
+	const positions = useMemo(() => {
+		if (rawPoints.length < 3) return rawPoints;
+		if (area.curviness > 0) return getRoundedPath(rawPoints, area.curviness, true);
+		return rawPoints;
+	}, [rawPoints, area.curviness]);
+
+	const center = area.labelPosition || getCentroid(area.points);
+
+	// 2. Pattern Logic
+	let fillColor = area.interiorColor || '#ff0000';
+	let fillOpacity = area.fillOpacity ?? 0.2;
+
+	if (area.fillType === 'hatch' || area.fillType === 'dots') {
+		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
+		const safeOpacity = Math.round(fillOpacity * 100);
+		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity})`;
+		fillOpacity = 1;
+
+		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
+		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
+
+		// MATCH THE ID GENERATION IN PATTERN DEFS EXACTLY
+		const id = `pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight}`;
+		fillColor = `url(#${id})`;
+		fillOpacity = 1;
+	}
+
+	// 3. Label Visibility
+	let labelOpacity = 0;
+	if (area.labelDisplay === 'always') labelOpacity = 1;
+	else if (area.labelDisplay === 'hover' && (isHovered || isSelected)) labelOpacity = 1;
+	if (isSelected) labelOpacity = 1;
+	if (!area.name) labelOpacity = 0;
+
+	// 4. MEMOIZED ICONS (CRITICAL FIX FOR DRAG)
+	const labelIcon = useMemo(
+		() =>
+			createLabelIcon(area.name, {
+				color: area.labelColor,
+				fontSize: area.fontSize,
+				rotation: area.textRotation,
+				bgColor: area.labelBgColor,
+				bgOpacity: area.labelBgOpacity,
+				hasBorder: area.labelHasBorder,
+				borderRadius: area.labelRadius,
+				borderColor: area.labelBorderColor,
+				paddingX: area.paddingX,
+				paddingY: area.paddingY,
+				isSelected: isSelected && isInteractive,
+			}),
+		[
+			area.name,
+			area.labelColor,
+			area.fontSize,
+			area.textRotation,
+			area.labelBgColor,
+			area.labelBgOpacity,
+			area.labelHasBorder,
+			area.labelRadius,
+			area.labelBorderColor,
+			area.paddingX,
+			area.paddingY,
+			isSelected,
+			isInteractive,
+		]
+	);
+
+	const handleIcon = useMemo(() => createHandleIcon(true), []);
+	const midpointIcon = useMemo(() => createMidpointIcon(), []);
+
+	// 5. Handlers
+	const handleLabelDrag = (e) => {
+		const { lat, lng } = e.target.getLatLng();
+		// Use requestAnimationFrame or debounce if this is still heavy,
+		// but normally updating Redux/State on dragend is safer than drag
+		actions.updateArea(area._id, { labelPosition: [lat, lng] });
+	};
+
+	return (
+		<React.Fragment>
+			{positions.length > 0 && (
+				<Polygon
+					positions={positions}
+					pathOptions={{
+						color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#d97706',
+						fillColor: fillColor,
+						fillOpacity: fillOpacity,
+						weight: area.weight || 2,
+						dashArray: area.borderStyle === 'dashed' ? '10, 10' : area.borderStyle === 'dotted' ? '2, 6' : null,
+						lineJoin: 'round',
+					}}
+					eventHandlers={{
+						click: (e) => {
+							if (!isInteractive) return;
+							L.DomEvent.stopPropagation(e);
+							actions.selectItem('area', area._id);
+						},
+						contextmenu: (e) => {
+							L.DomEvent.stopPropagation(e);
+							e.originalEvent.preventDefault();
+							actions.openContextMenu({
+								type: 'entity',
+								position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+								target: { type: 'area', id: area._id, data: area },
+							});
+						},
+						mouseover: () => setIsHovered(true),
+						mouseout: () => setIsHovered(false),
+					}}
+				/>
+			)}
+
+			{/* Label Marker */}
+			{area.name && labelOpacity > 0 && (
+				<Marker
+					position={center}
+					icon={labelIcon}
+					draggable={isSelected && isInteractive}
+					opacity={labelOpacity}
+					eventHandlers={{
+						click: (e) => {
+							if (!isInteractive) return;
+							L.DomEvent.stopPropagation(e);
+							actions.selectItem('area', area._id);
+						},
+						dragend: handleLabelDrag, // Only update on drop to save performance
+					}}
+				/>
+			)}
+
+			{/* EDIT HANDLES */}
+			{isSelected && (
+				<>
+					{area.points.map((pt, idx) => (
+						<React.Fragment key={`v-${idx}`}>
+							<Marker
+								position={pt.coordinates}
+								icon={handleIcon}
+								draggable={true}
+								eventHandlers={{
+									dragend: (e) => {
+										const { lat, lng } = e.target.getLatLng();
+										actions.updateAreaPoint(area._id, idx, [lat, lng]);
+									},
+									contextmenu: (e) => {
+										L.DomEvent.stopPropagation(e);
+										actions.deleteAreaPoint(area._id, idx);
+									},
+									click: (e) => L.DomEvent.stopPropagation(e),
+								}}
+							/>
+							<Marker
+								position={getMidpoint(pt, area.points[(idx + 1) % area.points.length])}
+								icon={midpointIcon}
+								eventHandlers={{
+									click: (e) => {
+										L.DomEvent.stopPropagation(e);
+										actions.insertAreaPoint(
+											area._id,
+											idx,
+											getMidpoint(pt, area.points[(idx + 1) % area.points.length])
+										);
+									},
+								}}
+							/>
+						</React.Fragment>
+					))}
+				</>
+			)}
+		</React.Fragment>
+	);
+};
+
+export default function EditAreasLayer() {
+	const { state, actions } = useAtlasEditor();
+	const { areas, selection, activeTool, visibility } = state;
+	if (!visibility.areas) return null;
+	return (
+		<>
+			<PatternDefs areas={areas} />
+			{areas.map((area) => (
+				<AreaItem key={area._id} area={area} selection={selection} activeTool={activeTool} actions={actions} />
+			))}
+		</>
+	);
+}
+
+--- END OF layers\EditAreasLayer.jsx ---
+
+--- FILE: layers\EditMarkersLayer.jsx ---
+import React from 'react';
+import { Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+
+export default function EditMarkersLayer() {
+	const { state, actions } = useAtlasEditor();
+	const { markers, selection, visibility } = state;
+
+	if (!visibility.markers) return null;
+
+	return (
+		<>
+			{markers.map((m) => {
+				const isSelected = selection?.type === 'marker' && selection.id === m._id;
+
+				return (
+					<Marker
+						key={m._id}
+						position={[m.lat, m.lng]}
+						// Pass selection state to resolver for dashed border on text
+						icon={resolveMarkerIcon({ ...m, isSelected })}
+						draggable={true}
+						opacity={isSelected ? 1 : 0.8}
+						eventHandlers={{
+							click: (e) => {
+								L.DomEvent.stopPropagation(e);
+								actions.selectItem('marker', m._id);
+							},
+							dragend: (e) => {
+								const { lat, lng } = e.target.getLatLng();
+								actions.updateMarker(m._id, { lat, lng });
+							},
+							contextmenu: (e) => {
+								L.DomEvent.stopPropagation(e);
+								e.originalEvent.preventDefault();
+								actions.openContextMenu({
+									type: 'entity',
+									position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+									target: { type: 'marker', id: m._id, data: m },
+								});
+							},
+						}}
+					/>
+				);
+			})}
+		</>
+	);
+}
+
+--- END OF layers\EditMarkersLayer.jsx ---
+
+--- FILE: layers\EditOverlaysLayer.jsx ---
+import React from 'react';
+import { ImageOverlay, Rectangle, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { createHandleIcon } from '../components/VertexHandle';
+
+export default function EditOverlaysLayer() {
+	const { state, actions } = useAtlasEditor();
+	const { overlays, selection, activeTool, visibility } = state;
+	const isInteractive = activeTool === 'overlays';
+
+	// FIX: Robust URL resolver that handles null/undefined/non-strings
+	const getUrl = (path) => {
+		if (!path || typeof path !== 'string') return '';
+		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
+	};
+
+	if (!visibility.overlays) return null;
+
+	return (
+		<>
+			{overlays.map((overlay) => {
+				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
+				const imagePath = getUrl(overlay.image);
+
+				// Bounds: [[lat1, lng1], [lat2, lng2]]
+				const b = overlay.bounds;
+				// Safety check for bounds to prevent arithmetic crash
+				if (!b || b.length < 2 || !b[0] || !b[1]) return null;
+
+				const centerLat = (b[0][0] + b[1][0]) / 2;
+				const centerLng = (b[0][1] + b[1][1]) / 2;
+
+				return (
+					<React.Fragment key={overlay._id}>
+						{/* IMAGE - Only render if we have a path */}
+						{imagePath && (
+							<ImageOverlay
+								url={imagePath}
+								bounds={overlay.bounds}
+								opacity={isSelected ? 0.8 : 1}
+								interactive={false}
+							/>
+						)}
+
+						{/* HIT BOX */}
+						<Rectangle
+							bounds={overlay.bounds}
+							pathOptions={{
+								color: isSelected ? '#3b82f6' : 'transparent',
+								weight: 2,
+								fillOpacity: isSelected ? 0.1 : 0,
+								dashArray: '5, 5',
+							}}
+							eventHandlers={{
+								click: (e) => {
+									if (!isInteractive) return;
+									L.DomEvent.stopPropagation(e);
+									actions.selectItem('overlay', overlay._id);
+								},
+							}}
+						/>
+
+						{/* HANDLES (Only when selected) */}
+						{isSelected && (
+							<>
+								{/* CENTER MOVE HANDLE */}
+								<Marker
+									position={[centerLat, centerLng]}
+									draggable={true}
+									icon={L.divIcon({
+										className: 'move-handle',
+										html: '<div style="width: 24px; height: 24px; background: rgba(59, 130, 246, 0.5); border: 2px solid white; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 12h20L12 2zm0 20l10-10H2l10 10z"/></svg></div>',
+										iconSize: [24, 24],
+										iconAnchor: [12, 12],
+									})}
+									eventHandlers={{
+										dragend: (e) => {
+											const newCenter = e.target.getLatLng();
+											actions.moveOverlay(overlay._id, newCenter, { lat: centerLat, lng: centerLng }, overlay.bounds);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+
+								{/* RESIZE HANDLES */}
+								{/* Top Left */}
+								<Marker
+									position={b[0]}
+									draggable={true}
+									icon={createHandleIcon(true, true)}
+									eventHandlers={{
+										dragend: (e) => {
+											const { lat, lng } = e.target.getLatLng();
+											actions.resizeOverlay(overlay._id, 'tl', lat, lng, overlay.bounds);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+								{/* Bottom Right */}
+								<Marker
+									position={b[1]}
+									draggable={true}
+									icon={createHandleIcon(true, true)}
+									eventHandlers={{
+										dragend: (e) => {
+											const { lat, lng } = e.target.getLatLng();
+											actions.resizeOverlay(overlay._id, 'br', lat, lng, overlay.bounds);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+							</>
+						)}
+					</React.Fragment>
+				);
+			})}
+		</>
+	);
+}
+
+--- END OF layers\EditOverlaysLayer.jsx ---
+
+--- FILE: layers\EditPathsLayer.jsx ---
+import React, { useMemo } from 'react';
+import { Polyline, Marker, Tooltip } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+import { createPathHandleIcon, createPathMidpointIcon } from '@/features/atlas/utils/markerUtils';
+import { getSmoothPath } from '@/features/atlas/utils/pathUtils'; // Import the new math
+
+const getMidpoint = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+
+const PathItem = ({ path, isSelected, isInteractive, selection, actions }) => {
+	// 1. Calculate Geometry
+	const rawPositions = path.points.map((p) => p.coordinates);
+
+	// 2. Smooth if needed
+	const positions = useMemo(() => {
+		// Only curve if we have at least 3 points and curviness > 0
+		if (path.curviness > 0 && rawPositions.length >= 3) {
+			// Map 0.1-1.0 input to a reasonable tension (0.1 is tight, 1.0 is loose)
+			return getSmoothPath(rawPositions, path.curviness);
+		}
+		return rawPositions;
+	}, [rawPositions, path.curviness]);
+
+	if (positions.length === 0 && !isSelected) return null;
+
+	// 3. Label Style
+	const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
+
+	return (
+		<React.Fragment>
+			{/* The Line */}
+			{positions.length > 0 && (
+				<Polyline
+					positions={positions}
+					pathOptions={{
+						color: path.color || '#d97706',
+						weight: isSelected ? (path.weight || 5) + 2 : path.weight || 5,
+						opacity: path.opacity || 1,
+						dashArray: path.dashArray || null,
+						lineCap: 'round',
+						lineJoin: 'round',
+					}}
+					eventHandlers={{
+						click: (e) => {
+							if (!isInteractive) return;
+							L.DomEvent.stopPropagation(e);
+							actions.selectItem('path', path._id);
+						},
+					}}>
+					{path.name && path.labelDisplay !== 'none' && (
+						<Tooltip
+							permanent={path.labelDisplay === 'always'}
+							direction='center'
+							className={tooltipClass}
+							opacity={path.labelStyle === 'ghost' ? 1 : 0.9}>
+							<span>{path.name}</span>
+						</Tooltip>
+					)}
+				</Polyline>
+			)}
+
+			{/* EDIT HANDLES - Only visible when selected */}
+			{isSelected && (
+				<>
+					{/* Vertices */}
+					{path.points.map((pt, idx) => {
+						const hasText = !!pt.text && pt.text.trim().length > 0;
+						const isPointSelected = selection?.index === idx;
+
+						return (
+							<Marker
+								key={`v-${idx}`}
+								position={pt.coordinates}
+								icon={createPathHandleIcon(isPointSelected, hasText)}
+								draggable={true}
+								zIndexOffset={1000}
+								eventHandlers={{
+									dragend: (e) => {
+										const { lat, lng } = e.target.getLatLng();
+										actions.updatePathPoint(path._id, idx, { coordinates: [lat, lng] });
+									},
+									click: (e) => {
+										L.DomEvent.stopPropagation(e);
+										actions.selectItem('path', path._id, idx);
+									},
+									contextmenu: (e) => {
+										L.DomEvent.stopPropagation(e);
+										actions.deletePathPoint(path._id, idx);
+									},
+								}}
+							/>
+						);
+					})}
+
+					{/* Midpoints (Insert) */}
+					{path.points.map((pt, idx) => {
+						if (idx === path.points.length - 1) return null;
+						const nextPt = path.points[idx + 1];
+						const mid = getMidpoint(pt.coordinates, nextPt.coordinates);
+
+						return (
+							<Marker
+								key={`m-${idx}`}
+								position={mid}
+								icon={createPathMidpointIcon()}
+								zIndexOffset={900}
+								opacity={0.6}
+								eventHandlers={{
+									click: (e) => {
+										L.DomEvent.stopPropagation(e);
+										actions.insertPathPoint(path._id, idx + 1, mid);
+									},
+								}}
+							/>
+						);
+					})}
+				</>
+			)}
+		</React.Fragment>
+	);
+};
+
+export default function EditPathsLayer() {
+	const { state, actions } = useAtlasEditor();
+	const { paths, selection, activeTool, visibility } = state;
+	const isInteractive = activeTool === 'paths';
+
+	if (!visibility.paths) return null;
+
+	return (
+		<>
+			{paths.map((path) => (
+				<PathItem
+					key={path._id}
+					path={path}
+					isSelected={selection?.type === 'path' && selection.id === path._id}
+					selection={selection}
+					isInteractive={isInteractive}
+					actions={actions}
+				/>
+			))}
+		</>
+	);
+}
+
+--- END OF layers\EditPathsLayer.jsx ---
+
+--- FILE: services\atlasMapper.js ---
+/**
+ * Transforms raw Supabase/JSON data into flat Editor State
+ * Assigns temporary _id for session management if missing
+ */
+export const normalizeMapData = (dbData) => {
+	// 1. Markers (Flatten from Categories)
+	const markers = [];
+	const rawAnn = dbData.annotations || {};
+
+	Object.entries(rawAnn).forEach(([catKey, catData]) => {
+		if (Array.isArray(catData.items)) {
+			catData.items.forEach((item) => {
+				markers.push({
+					...item,
+					category: catKey,
+					_id: item._id || crypto.randomUUID(), // Stable ID for session
+					lat: Number(item.lat) || 0,
+					lng: Number(item.lng) || 0,
+				});
+			});
+		}
+	});
+
+	// 2. Paths
+	const paths = (dbData.paths || []).map((p) => ({
+		...p,
+		_id: p._id || crypto.randomUUID(),
+		points: (Array.isArray(p.points) ? p.points : []).map((pt) => {
+			// Normalize point structure: [lat,lng] -> { coordinates: [lat,lng], text: "" }
+			if (Array.isArray(pt)) return { coordinates: pt, text: '' };
+			return pt;
+		}),
+	}));
+
+	// 3. Areas (Regions)
+	const areas = [];
+	const rawAreas = dbData.areas || {};
+	// Handle both legacy array format and object format
+	const areaList = Array.isArray(rawAreas) ? rawAreas : Object.values(rawAreas).flatMap((cat) => cat.items || []);
+
+	areaList.forEach((a) => {
+		areas.push({
+			...a,
+			_id: a._id || crypto.randomUUID(),
+			points: Array.isArray(a.points) ? a.points : [],
+		});
+	});
+
+	// 4. Overlays
+	const overlays = (dbData.overlays || []).map((o) => ({
+		...o,
+		_id: o._id || crypto.randomUUID(),
+		// Ensure bounds are valid arrays
+		bounds: o.bounds || [
+			[0, 0],
+			[0, 0],
+		],
+	}));
+
+	return { markers, paths, areas, overlays };
+};
+
+/**
+ * Prepares Editor State for Database Save
+ * Removes temporary IDs and re-nests data
+ */
+export const serializeMapData = (state) => {
+	// 1. Re-nest Markers
+	const annotations = {};
+	state.markers.forEach((m) => {
+		const cat = m.category || 'default';
+		// Auto-generate nice name if new category
+		if (!annotations[cat]) {
+			const name = cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+			annotations[cat] = { name, items: [] };
+		}
+
+		const { _id, category, ...cleanItem } = m;
+		// Enforce precision
+		cleanItem.lat = Number(cleanItem.lat.toFixed(4));
+		cleanItem.lng = Number(cleanItem.lng.toFixed(4));
+
+		annotations[cat].items.push(cleanItem);
+	});
+
+	// 2. Clean Paths
+	const paths = state.paths.map(({ _id, ...p }) => ({
+		...p,
+		points: p.points.map((pt) => ({
+			...pt,
+			coordinates: [Number(pt.coordinates[0].toFixed(4)), Number(pt.coordinates[1].toFixed(4))],
+		})),
+	}));
+
+	// 3. Clean Areas
+	const areas = {
+		regions: {
+			name: 'Regions',
+			items: state.areas.map(({ _id, ...a }) => ({
+				...a,
+				points: a.points.map((pt) => ({
+					...pt,
+					coordinates: [Number(pt.coordinates[0].toFixed(4)), Number(pt.coordinates[1].toFixed(4))],
+				})),
+			})),
+		},
+	};
+
+	// 4. Clean Overlays
+	const overlays = state.overlays.map(({ _id, ...o }) => o);
+
+	return { annotations, paths, areas, overlays };
+};
+
+--- END OF services\atlasMapper.js ---
+
+--- FILE: services\geometryUtils.js ---
+/**
+ * Standardize coordinates to 4 decimal places
+ */
+export const roundCoord = (val) => Number(Number(val).toFixed(4));
+
+export const getMidpoint = (p1, p2) => {
+	// p1, p2 can be arrays [lat, lng] or objects with coordinates
+	const c1 = Array.isArray(p1) ? p1 : p1.coordinates;
+	const c2 = Array.isArray(p2) ? p2 : p2.coordinates;
+	return [(c1[0] + c2[0]) / 2, (c1[1] + c2[1]) / 2];
+};
+
+/**
+ * Calculates new bounds for an overlay when a handle is dragged
+ * @param {string} handle - 'tl', 'tr', 'bl', 'br'
+ * @param {number} newLat
+ * @param {number} newLng
+ * @param {Array} oldBounds - [[lat1, lng1], [lat2, lng2]]
+ */
+export const calculateNewOverlayBounds = (handle, newLat, newLng, oldBounds) => {
+	const [p1, p2] = oldBounds; // p1 is usually TL (or SW), p2 is BR (or NE)
+
+	// Create copy
+	let next = [[...p1], [...p2]];
+
+	switch (handle) {
+		case 'tl':
+			next[0] = [newLat, newLng];
+			break;
+		case 'br':
+			next[1] = [newLat, newLng];
+			break;
+		case 'tr':
+			// Top Right: affects Lat of P1 (Top) and Lng of P2 (Right)
+			next[0][0] = newLat;
+			next[1][1] = newLng;
+			break;
+		case 'bl':
+			// Bottom Left: affects Lat of P2 (Bottom) and Lng of P1 (Left)
+			// Note: Leaflet bounds might be [SouthWest, NorthEast] or [TopLeft, BottomRight]
+			// Depending on CRS.Simple, usually index 0 is TopLeft.
+			// Assuming index 0 is Top-Left for simple maps:
+			next[1][0] = newLat; // Bottom
+			next[0][1] = newLng; // Left
+			break;
+	}
+
+	return next;
+};
+
+--- END OF services\geometryUtils.js ---
+

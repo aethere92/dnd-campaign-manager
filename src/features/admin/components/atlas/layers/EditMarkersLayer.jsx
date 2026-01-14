@@ -19,7 +19,8 @@ export default function EditMarkersLayer() {
 					<Marker
 						key={m._id}
 						position={[m.lat, m.lng]}
-						icon={resolveMarkerIcon(m)}
+						// Pass selection state to resolver for dashed border on text
+						icon={resolveMarkerIcon({ ...m, isSelected })}
 						draggable={true}
 						opacity={isSelected ? 1 : 0.8}
 						eventHandlers={{
@@ -30,6 +31,15 @@ export default function EditMarkersLayer() {
 							dragend: (e) => {
 								const { lat, lng } = e.target.getLatLng();
 								actions.updateMarker(m._id, { lat, lng });
+							},
+							contextmenu: (e) => {
+								L.DomEvent.stopPropagation(e);
+								e.originalEvent.preventDefault();
+								actions.openContextMenu({
+									type: 'entity',
+									position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+									target: { type: 'marker', id: m._id, data: m },
+								});
 							},
 						}}
 					/>

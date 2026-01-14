@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-13 22:29:09
+Generated: 2026-01-14 21:04:57
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -176,15 +176,14 @@ features\admin\components\SessionEventManager.jsx:
   → react
 
 features\admin\components\SmartColorPicker.jsx:
-  → @/domain/entity/config/entityColors
   → clsx
   → lucide-react
   → react
+  → react-dom
 
 features\admin\components\SmartImageInput.jsx:
-  → ./AdminFormStyles
   → ./ImageLibraryModal
-  → @/features/admin/config/imageManifest.json
+  → clsx
   → lucide-react
   → react
 
@@ -199,6 +198,7 @@ features\admin\components\TacticalMapManager.jsx:
 
 features\admin\components\atlas\AtlasEditor.jsx:
   → ./AtlasEditorContext
+  → ./components/EditorContextMenu
   → ./components/EditorLayerList
   → ./components/EditorMapEvents
   → ./components/EditorSidebar
@@ -217,6 +217,12 @@ features\admin\components\atlas\AtlasEditorContext.jsx:
   → ./hooks/useAtlasReducer
   → ./services/atlasMapper
   → @/features/atlas/api/mapService
+  → react
+
+features\admin\components\atlas\components\EditorContextMenu.jsx:
+  → ../AtlasEditorContext
+  → clsx
+  → lucide-react
   → react
 
 features\admin\components\atlas\components\EditorLayerList.jsx:
@@ -285,6 +291,7 @@ features\admin\components\atlas\components\VisualIconPicker.jsx:
 features\admin\components\atlas\forms\AreaForm.jsx:
   → @/features/admin/components/AdminFormStyles
   → @/features/admin/components/SmartColorPicker
+  → clsx
   → lucide-react
   → react
 
@@ -296,6 +303,7 @@ features\admin\components\atlas\forms\MarkerForm.jsx:
   → @/features/admin/components/SmartColorPicker
   → @/features/atlas/api/mapService
   → @/features/campaign/CampaignContext
+  → clsx
   → lucide-react
   → react
 
@@ -460,7 +468,9 @@ features\atlas\components\__MapLayerControl.jsx:
   → react
 
 features\atlas\components\layers\MapAreas.jsx:
+  → @/features/admin/components/atlas/components/PatternDefs
   → @/features/atlas/utils/markerUtils
+  → @/features/atlas/utils/pathUtils
   → react
   → react-leaflet
 
@@ -1265,8 +1275,8 @@ shared\utils\markdownUtils.js:
 ### DEPENDENCY STATISTICS
 
 Most imported files (relative imports):
-  ./AdminFormStyles: 10 imports
-  ../AtlasEditorContext: 8 imports
+  ./AdminFormStyles: 9 imports
+  ../AtlasEditorContext: 9 imports
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
   ../context/AtlasContext: 2 imports
@@ -1290,18 +1300,18 @@ Most imported files (relative imports):
 Files with most outgoing dependencies:
   app\AppRoutes.jsx: 18 imports
   features\admin\components\AdminForm.jsx: 17 imports
-  features\admin\components\atlas\AtlasEditor.jsx: 13 imports
+  features\admin\components\atlas\AtlasEditor.jsx: 14 imports
   features\dashboard\DashboardPage.jsx: 12 imports
   features\wiki\components\EntityMiniMap.jsx: 12 imports
   features\admin\pages\SplitPaneManager.jsx: 11 imports
   features\atlas\components\MapCanvas.jsx: 11 imports
   features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
+  features\admin\components\atlas\forms\MarkerForm.jsx: 10 imports
   features\atlas\components\layers\MapMarkers.jsx: 10 imports
   features\smart-tooltip\components\TooltipCard.jsx: 10 imports
   features\wiki\layouts\SessionLayout.jsx: 10 imports
   features\admin\components\atlas\components\EditorSidebar.jsx: 9 imports
-  features\admin\components\atlas\forms\MarkerForm.jsx: 9 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
   features\wiki\components\EntityLocalGraph.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports

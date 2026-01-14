@@ -33,25 +33,33 @@ const MapAreaItem = ({ area }) => {
 	if (area.fillType === 'hatch' || area.fillType === 'dots') {
 		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
 		const safeOpacity = Math.round(fillOpacity * 100);
-		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity})`;
+
+		// FIX: Must match PatternDefs logic exactly (including defaults)
+		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
+		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
+
+		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight})`;
 		fillOpacity = 1;
 	}
 
 	// Label Visibility Logic
+	// FIX: Default to 'always' if undefined to prevent invisible text
+	const displayMode = area.labelDisplay || 'always';
 	let labelOpacity = 0;
-	if (area.labelDisplay === 'always') labelOpacity = 1;
-	else if (area.labelDisplay === 'hover' && isHovered) labelOpacity = 1;
+	if (displayMode === 'always') labelOpacity = 1;
+	else if (displayMode === 'hover' && isHovered) labelOpacity = 1;
 
 	return (
 		<React.Fragment>
 			<Polygon
 				positions={positions}
 				pathOptions={{
-					color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#transparent',
+					color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#d97706',
 					fillColor: fillColor,
 					fillOpacity: fillOpacity,
-					weight: area.weight || 1, // Default viewer weight to 1 if not set
+					weight: area.weight || 2,
 					dashArray: area.borderStyle === 'dashed' ? '10, 10' : area.borderStyle === 'dotted' ? '2, 6' : null,
+					lineJoin: 'round',
 				}}
 				eventHandlers={{
 					mouseover: () => setIsHovered(true),
@@ -68,6 +76,12 @@ const MapAreaItem = ({ area }) => {
 						rotation: area.textRotation || 0,
 						bgColor: area.labelBgColor || 'transparent',
 						bgOpacity: area.labelBgOpacity || 0,
+						hasBorder: area.labelHasBorder,
+						borderRadius: area.labelRadius,
+						borderColor: area.labelBorderColor,
+						// NEW: Pass Padding
+						paddingX: area.paddingX,
+						paddingY: area.paddingY,
 						isSelected: false,
 					})}
 					opacity={labelOpacity}
@@ -83,6 +97,7 @@ export const MapAreas = ({ areas }) => {
 
 	return (
 		<>
+			{/* PatternDefs handles generating the SVG <defs> */}
 			<PatternDefs areas={areas} />
 			{areas.map((area, idx) => (
 				<MapAreaItem key={`${area.name}-${idx}`} area={area} />

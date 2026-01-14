@@ -57,6 +57,7 @@ PARTIAL BUNDLE: FEATURES WIKI
           AtlasEditor.jsx
           AtlasEditorContext.jsx
           components/
+            EditorContextMenu.jsx
             EditorLayerList.jsx
             EditorMapEvents.jsx
             EditorSidebar.jsx

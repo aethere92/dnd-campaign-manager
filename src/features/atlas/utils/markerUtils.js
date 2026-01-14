@@ -1,5 +1,5 @@
-import React from 'react';
 import L from 'leaflet';
+import React from 'react';
 import { renderToString } from 'react-dom/server';
 import * as LucideIcons from 'lucide-react';
 
@@ -142,7 +142,63 @@ const getContrastColor = (hex) => {
 };
 
 // ==========================================
-// 3. MAIN MARKER RENDERER
+// 3. UNIFIED LABEL CREATOR
+// ==========================================
+export const createLabelIcon = (text, options) => {
+	const {
+		color = '#fff',
+		fontSize = 16,
+		rotation = 0,
+		bgColor = '#000',
+		bgOpacity = 0,
+		isSelected,
+		// Borders
+		hasBorder = false,
+		borderRadius = 4,
+		borderColor = null, // Optional override
+		// Padding
+		paddingX = 8,
+		paddingY = 4,
+	} = options || {};
+
+	const finalBorderColor = borderColor || color;
+	const borderStyle = hasBorder ? `border: 1px solid ${finalBorderColor};` : `border: 1px solid transparent;`;
+
+	// Handle scale for markers that pass it via fontSize
+	const safeFontSize = Math.max(8, fontSize);
+
+	return L.divIcon({
+		className: 'area-label-icon',
+		html: `
+            <div style="
+                /* FIX: Apply scaling logic here */
+                transform: translate(-50%, -50%) rotate(${rotation}deg) scale(var(--label-scale, 1)); 
+                text-align: center; 
+                pointer-events: auto; 
+                width: max-content;
+                color: ${color};
+                font-size: ${safeFontSize}px;
+                font-weight: bold;
+                text-shadow: none;
+                background: ${bgOpacity > 0 ? bgColor : 'transparent'};
+                padding: ${paddingY}px ${paddingX}px;
+                border-radius: ${borderRadius}px;
+                opacity: ${bgOpacity > 0 ? bgOpacity : 1};
+                ${borderStyle}
+                ${isSelected ? 'outline: 2px dashed #3b82f6; outline-offset: 2px;' : ''}
+                /* Smooth transition for zoom changes */
+                transition: transform 0.15s ease-out;
+            ">
+                ${text}
+            </div>
+        `,
+		iconSize: [0, 0],
+		iconAnchor: [0, 0],
+	});
+};
+
+// ==========================================
+// 4. MAIN MARKER RENDERER
 // ==========================================
 export const resolveMarkerIcon = (marker) => {
 	const {
@@ -153,22 +209,23 @@ export const resolveMarkerIcon = (marker) => {
 		label,
 		labelDisplay = 'hover',
 		scale = 1,
+		isSelected,
 	} = marker;
 
 	// --- A. TEXT VARIANT ---
 	if (variant === 'text') {
-		return L.divIcon({
-			className: 'custom-text-marker',
-			html: `
-                <div style="transform: translate(-50%, -50%) scale(${scale}); text-align: center; width: max-content;">
-                    <span style="font-family: sans-serif; font-weight: 800; font-size: 14px; color: ${color}; 
-                    text-shadow: 0 0 2px #000, 0 0 4px #000; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em;">
-                        ${label || 'Untitled'}
-                    </span>
-                </div>
-            `,
-			iconSize: [0, 0],
-			iconAnchor: [0, 0],
+		return createLabelIcon(label || 'Untitled', {
+			color: color,
+			fontSize: 14 * scale,
+			rotation: marker.textRotation || 0,
+			bgColor: marker.labelBgColor,
+			bgOpacity: marker.labelBgOpacity,
+			hasBorder: marker.labelHasBorder,
+			borderColor: marker.labelBorderColor,
+			borderRadius: marker.labelRadius,
+			paddingX: marker.paddingX,
+			paddingY: marker.paddingY,
+			isSelected: isSelected,
 		});
 	}
 
@@ -179,7 +236,6 @@ export const resolveMarkerIcon = (marker) => {
 	const width = ShapeDef.width;
 	const height = ShapeDef.height;
 
-	// Anchor Logic
 	const anchor =
 		shape === 'pin' && variant === 'large'
 			? [(width * finalScale) / 2, height * finalScale]
@@ -198,7 +254,9 @@ export const resolveMarkerIcon = (marker) => {
 		);
 		return L.divIcon({
 			className: 'marker-icon-only',
-			html: `<div style="transform: scale(${scale}); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));">${iconHtml}</div>`,
+			html: `<div style="transform: scale(${scale}); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); ${
+				isSelected ? 'outline: 2px dashed #3b82f6; border-radius: 4px;' : ''
+			}">${iconHtml}</div>`,
 			iconSize: [24, 24],
 			iconAnchor: [12, 12],
 		});
@@ -231,11 +289,7 @@ export const resolveMarkerIcon = (marker) => {
             <svg viewBox="${ShapeDef.viewBox}" width="100%" height="100%" style="overflow: visible;">${svgContent}</svg>
             ${
 							variant !== 'small'
-								? `
-                <div style="position: absolute; top: ${ShapeDef.iconY}px; left: 50%; transform: translate(-50%, -50%); 
-                            display: flex; align-items: center; justify-content: center; width: 16px; height: 16px;">
-                    ${innerIconHtml}
-                </div>`
+								? `<div style="position: absolute; top: ${ShapeDef.iconY}px; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; width: 16px; height: 16px;">${innerIconHtml}</div>`
 								: ''
 						}
         </div>
@@ -244,7 +298,7 @@ export const resolveMarkerIcon = (marker) => {
 	// --- E. LABEL ---
 	let labelHtml = '';
 	if (label && labelDisplay !== 'none') {
-		const visibleClass = labelDisplay === 'hover' ? 'opacity-0 group-hover:opacity-100' : 'opacity-100';
+		const visibleClass = labelDisplay === 'hover' && !isSelected ? 'opacity-0 group-hover:opacity-100' : 'opacity-100';
 		const topOffset = shape === 'pin' && variant === 'large' ? '100%' : '50%';
 		labelHtml = `
             <div class="absolute left-1/2 -translate-x-1/2 ${visibleClass} transition-opacity duration-200 z-50 pointer-events-none"
@@ -258,7 +312,9 @@ export const resolveMarkerIcon = (marker) => {
 
 	return L.divIcon({
 		className: 'custom-composite-marker group',
-		html: `<div style="position: relative;">${html}${labelHtml}</div>`,
+		html: `<div style="position: relative; ${
+			isSelected ? 'filter: brightness(1.1) drop-shadow(0 0 4px #3b82f6);' : ''
+		}">${html}${labelHtml}</div>`,
 		iconSize: [width * finalScale, height * finalScale],
 		iconAnchor: anchor,
 	});
@@ -267,39 +323,17 @@ export const resolveMarkerIcon = (marker) => {
 export { LucideIcons };
 
 // ==========================================
-// 4. EDITOR HANDLES (RESTORED)
+// 5. EDITOR HANDLES (Unchanged)
 // ==========================================
-
-export const createLabelIcon = (text, options) => {
-	// This handles the Area Labels
-	const { color = '#fff', fontSize = 16, rotation = 0, bgColor = '#000', bgOpacity = 0, isSelected } = options || {};
-
+export const createHandleIcon = (isSelected, isSpecial = false) => {
+	const color = isSpecial ? '#3b82f6' : isSelected ? '#d97706' : '#333';
 	return L.divIcon({
-		className: 'area-label-icon',
-		html: `
-            <div style="
-                transform: translate(-50%, -50%) rotate(${rotation}deg); 
-                text-align: center; 
-                pointer-events: auto; 
-                width: max-content;
-                color: ${color};
-                font-size: ${fontSize}px;
-                font-weight: bold;
-                text-shadow: 0 0 3px black;
-                background: ${bgOpacity > 0 ? bgColor : 'transparent'};
-                padding: ${bgOpacity > 0 ? '2px 6px' : '0'};
-                border-radius: 4px;
-                opacity: ${bgOpacity > 0 ? bgOpacity : 1};
-                border: ${isSelected ? '1px dashed #3b82f6' : 'none'};
-            ">
-                ${text}
-            </div>
-        `,
-		iconSize: [0, 0],
-		iconAnchor: [0, 0],
+		className: 'vertex-handle',
+		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+		iconSize: [10, 10],
+		iconAnchor: [5, 5],
 	});
 };
-
 export const createDotIcon = (color) =>
 	L.divIcon({
 		className: 'path-dot',
@@ -311,21 +345,10 @@ export const createDotIcon = (color) =>
 export const createMidpointIcon = () =>
 	L.divIcon({
 		className: 'midpoint-handle',
-		html: `<div style="width: 8px; height: 8px; background: rgba(255,255,255,0.5); border: 1px solid #3b82f6; border-radius: 50%; opacity: 0.6; transition: opacity 0.2s;"></div>`,
+		html: `<div style="width: 8px; height: 8px; background: rgba(255,255,255,0.5); border: 2px solid black; border-radius: 50%; opacity: 0.6; transition: opacity 0.2s;"></div>`,
 		iconSize: [8, 8],
 		iconAnchor: [4, 4],
 	});
-
-// THIS IS THE FUNCTION THAT WAS MISSING:
-export const createHandleIcon = (isSelected, isSpecial = false) => {
-	const color = isSpecial ? '#3b82f6' : isSelected ? '#d97706' : '#333';
-	return L.divIcon({
-		className: 'vertex-handle',
-		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
-		iconSize: [10, 10],
-		iconAnchor: [5, 5],
-	});
-};
 
 export const createPathHandleIcon = (isSelected, hasText) => {
 	const borderColor = isSelected ? '#d97706' : hasText ? '#3b82f6' : '#000000';

@@ -15,23 +15,42 @@ const initialState = {
 		areas: true,
 		overlays: true,
 	},
-	contextMenu: null,
+	contextMenu: null, // { type: 'map'|'entity', position: {x,y}, latlng: {lat,lng}, target: {type, id, ...data} }
+	mapId: null,
+	mapConfig: null,
 };
 
 const reducer = (state, action) => {
 	switch (action.type) {
-		// --- GLOBAL ---
+		// ==========================================
+		// GLOBAL / UI STATE
+		// ==========================================
 		case 'INIT_DATA':
 			return { ...state, ...action.payload };
 
 		case 'SET_MODE':
-			return { ...state, mode: action.payload };
+			return {
+				...state,
+				mode: action.payload,
+				contextMenu: null, // Close menu on mode change
+			};
 
 		case 'SET_TOOL':
-			return { ...state, activeTool: action.payload, selection: null, mode: 'select' };
+			return {
+				...state,
+				activeTool: action.payload,
+				selection: null,
+				mode: 'select',
+				contextMenu: null,
+			};
 
 		case 'SELECT_ITEM':
-			return { ...state, selection: action.payload, mode: 'select' }; // Reset draw mode on select
+			return {
+				...state,
+				selection: action.payload,
+				mode: 'select', // Reset draw mode on select
+				contextMenu: null,
+			};
 
 		case 'TOGGLE_VISIBILITY':
 			return {
@@ -40,17 +59,28 @@ const reducer = (state, action) => {
 					...state.visibility,
 					[action.payload]: !state.visibility[action.payload],
 				},
+				contextMenu: null,
 			};
 
 		case 'SET_SAVING':
 			return { ...state, isSaving: action.payload };
 
-		// --- MARKERS ---
+		// --- CONTEXT MENU ---
+		case 'OPEN_CONTEXT_MENU':
+			return { ...state, contextMenu: action.payload };
+
+		case 'CLOSE_CONTEXT_MENU':
+			return { ...state, contextMenu: null };
+
+		// ==========================================
+		// MARKERS
+		// ==========================================
 		case 'ADD_MARKER':
 			return {
 				...state,
 				markers: [...state.markers, action.payload],
 				selection: { type: 'marker', id: action.payload._id },
+				contextMenu: null,
 			};
 		case 'UPDATE_MARKER':
 			return {
@@ -61,16 +91,20 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				markers: state.markers.filter((m) => m._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 
-		// --- PATHS ---
+		// ==========================================
+		// PATHS
+		// ==========================================
 		case 'ADD_PATH':
 			return {
 				...state,
 				paths: [...state.paths, action.payload],
 				selection: { type: 'path', id: action.payload._id },
 				mode: 'draw', // Auto enter draw mode
+				contextMenu: null,
 			};
 		case 'UPDATE_PATH':
 			return {
@@ -81,7 +115,8 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				paths: state.paths.filter((p) => p._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 		case 'UPDATE_PATH_POINT':
 			return {
@@ -121,14 +156,38 @@ const reducer = (state, action) => {
 				}),
 			};
 
-		// --- AREAS ---
-		case 'ADD_AREA':
+		// ==========================================
+		// AREAS (REGIONS)
+		// ==========================================
+		case 'ADD_AREA': {
+			// <--- ADDED OPEN BRACE
+			const areaDefaults = {
+				lineColor: '#d97706',
+				weight: 2,
+				borderStyle: 'solid',
+				fillType: 'solid',
+				interiorColor: '#ff0000',
+				fillOpacity: 0.2,
+				labelDisplay: 'always',
+				labelColor: '#ffffff',
+				fontSize: 16,
+				paddingX: 8,
+				paddingY: 4,
+				labelBgColor: '#000000',
+				labelBgOpacity: 0,
+				labelRadius: 4,
+				labelHasBorder: false,
+				labelBorderColor: '#ffffff',
+			};
+
 			return {
 				...state,
-				areas: [...state.areas, action.payload],
+				areas: [...state.areas, { ...areaDefaults, ...action.payload }],
 				selection: { type: 'area', id: action.payload._id },
 				mode: 'draw',
+				contextMenu: null,
 			};
+		}
 		case 'UPDATE_AREA':
 			return {
 				...state,
@@ -138,7 +197,8 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				areas: state.areas.filter((a) => a._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
 		case 'UPDATE_AREA_POINT':
 			return {
@@ -155,8 +215,6 @@ const reducer = (state, action) => {
 				...state,
 				areas: state.areas.map((a) => {
 					if (a._id !== action.id) return a;
-					// Fix: Ensure coordinates is wrapped in object if your structure requires it,
-					// though mapper normalizes this.
 					return { ...a, points: [...a.points, { coordinates: action.coordinates }] };
 				}),
 			};
@@ -179,12 +237,15 @@ const reducer = (state, action) => {
 				}),
 			};
 
-		// --- OVERLAYS ---
+		// ==========================================
+		// OVERLAYS
+		// ==========================================
 		case 'ADD_OVERLAY':
 			return {
 				...state,
 				overlays: [...state.overlays, action.payload],
 				selection: { type: 'overlay', id: action.payload._id },
+				contextMenu: null,
 			};
 		case 'UPDATE_OVERLAY':
 			return {
@@ -195,14 +256,9 @@ const reducer = (state, action) => {
 			return {
 				...state,
 				overlays: state.overlays.filter((o) => o._id !== action.id),
-				selection: null,
+				selection: state.selection?.id === action.id ? null : state.selection,
+				contextMenu: null,
 			};
-
-		case 'OPEN_CONTEXT_MENU':
-			return { ...state, contextMenu: action.payload };
-
-		case 'CLOSE_CONTEXT_MENU':
-			return { ...state, contextMenu: null };
 
 		default:
 			return state;
@@ -210,7 +266,7 @@ const reducer = (state, action) => {
 };
 
 export const useAtlasReducer = (preloadedState) => {
-	// Merge defaults (visibility, tools) with DB data (markers, mapConfig)
+	// Merge defaults with any loaded DB data
 	const effectiveState = { ...initialState, ...preloadedState };
 
 	const [state, dispatch] = useReducer(reducer, effectiveState);

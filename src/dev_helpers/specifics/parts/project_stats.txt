@@ -1,0 +1,59 @@
+================================================================
+PROJECT STATISTICS
+Generated: 2026-01-14 21:05:26
+================================================================
+
+### OVERALL STATISTICS
+
+Total files: 27
+Total lines: 3,401
+Non-empty lines: 3,102
+Comment lines: 127
+Total size: 109,384 bytes (106.82 KB)
+Average lines per file: 126.0
+
+
+### STATISTICS BY FILE TYPE
+
+.js:
+  Files: 4
+  Lines: 534
+  Size: 15,181 bytes (14.83 KB)
+
+.jsx:
+  Files: 23
+  Lines: 2,867
+  Size: 94,203 bytes (92.00 KB)
+
+
+### LARGEST FILES (by lines)
+
+forms\AreaForm.jsx: 402 lines
+forms\MarkerForm.jsx: 356 lines
+hooks\useAtlasReducer.js: 275 lines
+components\EditorContextMenu.jsx: 241 lines
+forms\PathForm.jsx: 219 lines
+layers\EditAreasLayer.jsx: 219 lines
+components\VisualIconPicker.jsx: 160 lines
+components\EditorSidebar.jsx: 158 lines
+layers\EditPathsLayer.jsx: 145 lines
+components\EditorLayerList.jsx: 132 lines
+components\EditorToolbar.jsx: 122 lines
+layers\EditOverlaysLayer.jsx: 121 lines
+services\atlasMapper.js: 114 lines
+AtlasEditor.jsx: 97 lines
+hooks\useAtlasActions.js: 95 lines
+forms\OverlayForm.jsx: 73 lines
+components\PathStylePopup.jsx: 70 lines
+components\PatternDefs.jsx: 66 lines
+AtlasEditorContext.jsx: 60 lines
+components\EditorMapEvents.jsx: 54 lines
+
+
+### STATISTICS BY CATEGORY
+
+root:
+  Files: 27
+  Lines: 3,401
+  Size: 109,384 bytes (106.82 KB)
+

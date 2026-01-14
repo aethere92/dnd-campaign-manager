@@ -39,6 +39,15 @@ export default function EditorMapEvents() {
 				actions.deselect();
 			}
 		},
+		contextmenu(e) {
+			e.originalEvent.preventDefault(); // Stop browser menu
+
+			actions.openContextMenu({
+				type: 'map', // Tells logic to show Radial Menu
+				position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+				latlng: { lat: e.latlng.lat, lng: e.latlng.lng }, // Pass map coordinates for creation
+			});
+		},
 	});
 	return null;
 }

@@ -1,48 +1,64 @@
 import React, { useEffect, useRef } from 'react';
 import { useAtlasEditor } from '../AtlasEditorContext';
-import {
-	MapPin,
-	Footprints,
-	Hexagon,
-	Type,
-	X,
-	Edit2,
-	Copy,
-	Trash2,
-	EyeOff,
-	Link as LinkIcon,
-	Plus,
-} from 'lucide-react';
+import { MapPin, Footprints, Hexagon, Type, X, Edit2, Copy, Trash2, EyeOff } from 'lucide-react';
 import clsx from 'clsx';
 
 // ==========================================
-// 1. RADIAL MENU (Map Context)
+// 1. RADIAL MENU (Creation)
 // ==========================================
 const RadialMenu = ({ x, y, latlng, onClose, actions }) => {
-	// Helper to trigger creation
-	const create = (tool, extraData = {}) => {
-		actions.setTool(tool);
-
-		// Immediate creation logic based on type
+	const handleCreate = (type) => {
 		const id = crypto.randomUUID();
-		if (tool === 'markers') {
+		const { lat, lng } = latlng;
+
+		// 1. PIN (Marker)
+		if (type === 'pin') {
+			actions.setTool('markers');
 			actions.addMarker({
 				_id: id,
-				lat: latlng.lat,
-				lng: latlng.lng,
+				lat,
+				lng,
 				label: 'New Marker',
 				category: 'default',
 				color: '#d97706',
 				variant: 'large',
 				shape: 'pin',
-				...extraData,
 			});
-		} else if (tool === 'paths') {
-			// For paths/areas, we switch to draw mode and set the first point?
-			// Or just switch tool. Let's just switch tool for complex shapes,
-			// but for Marker/Label we create immediately.
-		} else if (tool === 'areas') {
-			// Just switch tool
+		}
+		// 2. LABEL (Text Marker)
+		else if (type === 'label') {
+			actions.setTool('markers');
+			actions.addMarker({
+				_id: id,
+				lat,
+				lng,
+				label: 'New Label',
+				category: 'default',
+				color: '#ffffff',
+				variant: 'text',
+				scale: 1.5,
+			});
+		}
+		// 3. REGION (Area) - Starts drawing immediately
+		else if (type === 'area') {
+			actions.setTool('areas');
+			actions.addArea({
+				_id: id,
+				name: 'New Region',
+				interiorColor: '#ff0000',
+				points: [{ coordinates: [lat, lng] }], // Start with first point
+			});
+			// Auto-select to trigger draw mode in reducer
+		}
+		// 4. PATH - Starts drawing immediately
+		else if (type === 'path') {
+			actions.setTool('paths');
+			actions.addPath({
+				_id: id,
+				name: 'New Path',
+				color: '#d97706',
+				points: [{ coordinates: [lat, lng], text: '' }], // Start with first point
+			});
 		}
 
 		onClose();
@@ -55,65 +71,62 @@ const RadialMenu = ({ x, y, latlng, onClose, actions }) => {
 				onClick();
 			}}
 			className={clsx(
-				'flex flex-col items-center justify-center gap-1 w-20 h-20 rounded-full hover:bg-muted/80 hover:scale-105 transition-all active:scale-95 text-muted-foreground hover:text-primary',
+				'flex flex-col items-center justify-center gap-0.5 w-16 h-16 rounded-full hover:scale-110 transition-all active:scale-95 text-muted-foreground hover:text-primary absolute',
 				className
 			)}>
-			<Icon size={24} strokeWidth={1.5} />
-			<span className='text-[10px] font-bold uppercase tracking-wider'>{label}</span>
+			<Icon size={20} strokeWidth={2} />
+			<span className='text-[9px] font-bold uppercase tracking-wider'>{label}</span>
 		</button>
 	);
 
+	// Half size of 160px = 80px offset
 	return (
 		<div
-			className='fixed z-[9999] w-64 h-64 rounded-full bg-background/95 backdrop-blur-sm shadow-2xl border border-border flex items-center justify-center animate-in zoom-in-50 duration-200'
-			style={{ top: y - 128, left: x - 128 }}
+			className='fixed z-[9999] w-40 h-40 rounded-full bg-background/95 backdrop-blur-sm shadow-2xl border border-border flex items-center justify-center animate-in zoom-in-75 duration-150 origin-center'
+			style={{ top: y - 80, left: x - 80 }}
 			onContextMenu={(e) => e.preventDefault()}>
-			{/* Top: Pin */}
-			<div className='absolute top-2 left-1/2 -translate-x-1/2'>
-				<MenuItem icon={MapPin} label='Pin' onClick={() => create('markers')} />
-			</div>
-			{/* Right: Region */}
-			<div className='absolute right-2 top-1/2 -translate-y-1/2'>
-				<MenuItem icon={Hexagon} label='Region' onClick={() => actions.setTool('areas')} />
-			</div>
-			{/* Bottom: Label */}
-			<div className='absolute bottom-2 left-1/2 -translate-x-1/2'>
-				<MenuItem
-					icon={Type}
-					label='Label'
-					onClick={() => create('markers', { variant: 'text', label: 'New Label' })}
-				/>
-			</div>
-			{/* Left: Path */}
-			<div className='absolute left-2 top-1/2 -translate-y-1/2'>
-				<MenuItem icon={Footprints} label='Path' onClick={() => actions.setTool('paths')} />
-			</div>
+			{/* Slices positioned absolutely */}
+			<MenuItem className='top-1' icon={MapPin} label='Pin' onClick={() => handleCreate('pin')} />
+			<MenuItem className='right-1' icon={Hexagon} label='Region' onClick={() => handleCreate('area')} />
+			<MenuItem className='bottom-1' icon={Type} label='Label' onClick={() => handleCreate('label')} />
+			<MenuItem className='left-1' icon={Footprints} label='Path' onClick={() => handleCreate('path')} />
 
-			{/* Center: Close */}
+			{/* Center Close Button */}
 			<button
 				onClick={onClose}
-				className='w-12 h-12 bg-muted rounded-full flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-colors border border-border z-10 shadow-sm'>
-				<X size={20} />
+				className='w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-colors border border-border z-10 shadow-sm'>
+				<X size={16} />
 			</button>
 
-			{/* Dividers for visual style */}
-			<div className='absolute inset-0 rounded-full border border-border opacity-20 pointer-events-none' />
-			<div className='absolute w-full h-px bg-border top-1/2 left-0 -z-10 opacity-30' />
-			<div className='absolute h-full w-px bg-border left-1/2 top-0 -z-10 opacity-30' />
+			{/* Visual Crosshair Lines */}
+			<div className='absolute w-full h-px bg-border/50 top-1/2 left-0 -z-10' />
+			<div className='absolute h-full w-px bg-border/50 left-1/2 top-0 -z-10' />
 		</div>
 	);
 };
 
 // ==========================================
-// 2. ENTITY LIST MENU (Item Context)
+// 2. LIST MENU (Entity Editing)
 // ==========================================
 const EntityMenu = ({ x, y, target, onClose, actions }) => {
 	const { type, id, data } = target;
 
+	const handleColor = (color) => {
+		if (type === 'marker') actions.updateMarker(id, { color });
+		else if (type === 'area') actions.updateArea(id, { interiorColor: color, lineColor: color });
+		else if (type === 'path') actions.updatePath(id, { color });
+	};
+
+	const handleDelete = () => {
+		if (type === 'marker') actions.deleteMarker(id);
+		if (type === 'area') actions.deleteArea(id);
+		if (type === 'path') actions.deletePath(id);
+		onClose();
+	};
+
 	const handleDuplicate = () => {
 		const newId = crypto.randomUUID();
-		// Shift position slightly so it's visible
-		const offset = 0.05;
+		const offset = 0.5; // Slight offset to see copy
 
 		if (type === 'marker') {
 			actions.addMarker({
@@ -129,33 +142,6 @@ const EntityMenu = ({ x, y, target, onClose, actions }) => {
 				coordinates: [p.coordinates[0] + offset, p.coordinates[1] + offset],
 			}));
 			actions.addArea({ ...data, _id: newId, points: newPoints, name: `${data.name} (Copy)` });
-		} else if (type === 'path') {
-			const newPoints = data.points.map((p) => ({
-				...p,
-				coordinates: [p.coordinates[0] + offset, p.coordinates[1] + offset],
-			}));
-			actions.addPath({ ...data, _id: newId, points: newPoints, name: `${data.name} (Copy)` });
-		}
-		onClose();
-	};
-
-	const handleColor = (color) => {
-		if (type === 'marker') actions.updateMarker(id, { color });
-		else if (type === 'area') actions.updateArea(id, { interiorColor: color, lineColor: color });
-		else if (type === 'path') actions.updatePath(id, { color });
-		// Don't close, user might want to try multiple colors
-	};
-
-	const handleEdit = () => {
-		actions.selectItem(type, id);
-		onClose();
-	};
-
-	const handleDelete = () => {
-		if (confirm('Delete this item?')) {
-			if (type === 'marker') actions.deleteMarker(id);
-			if (type === 'area') actions.deleteArea(id);
-			if (type === 'path') actions.deletePath(id);
 		}
 		onClose();
 	};
@@ -164,48 +150,37 @@ const EntityMenu = ({ x, y, target, onClose, actions }) => {
 
 	return (
 		<div
-			className='fixed z-[9999] w-56 bg-card border border-border shadow-xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col'
+			className='fixed z-[9999] w-48 bg-card border border-border shadow-xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col'
 			style={{ top: y, left: x }}
 			onContextMenu={(e) => e.preventDefault()}>
-			{/* Quick Colors */}
-			<div className='p-2 border-b border-border bg-muted/30 grid grid-cols-8 gap-1'>
+			<div className='p-2 border-b border-border bg-muted/30 grid grid-cols-4 gap-1'>
 				{colors.map((c) => (
 					<button
 						key={c}
 						onClick={() => handleColor(c)}
-						className='w-5 h-5 rounded-full hover:scale-110 transition-transform border border-black/10 shadow-sm'
+						className='w-6 h-6 rounded-full hover:scale-110 transition-transform border border-black/10 shadow-sm mx-auto'
 						style={{ backgroundColor: c }}
-						title={c}
 					/>
 				))}
 			</div>
-
-			{/* Actions */}
 			<div className='py-1'>
 				<button
-					onClick={handleEdit}
-					className='flex items-center gap-3 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium text-foreground'>
-					<Edit2 size={14} className='text-muted-foreground' /> Edit {type}
+					onClick={() => {
+						actions.selectItem(type, id);
+						onClose();
+					}}
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium'>
+					<Edit2 size={14} /> Edit {type}
 				</button>
 				<button
 					onClick={handleDuplicate}
-					className='flex items-center gap-3 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium text-foreground'>
-					<Copy size={14} className='text-muted-foreground' /> Duplicate
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium'>
+					<Copy size={14} /> Duplicate
 				</button>
-				<button
-					onClick={() => {
-						actions.toggleVisibility(type + 's');
-						onClose();
-					}}
-					className='flex items-center gap-3 px-3 py-2 w-full text-left hover:bg-muted text-xs font-medium text-foreground'>
-					<EyeOff size={14} className='text-muted-foreground' /> Hide Layer
-				</button>
-
 				<div className='h-px bg-border my-1' />
-
 				<button
 					onClick={handleDelete}
-					className='flex items-center gap-3 px-3 py-2 w-full text-left hover:bg-red-500/10 text-xs font-medium text-red-600'>
+					className='flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-red-500/10 text-xs font-medium text-red-600'>
 					<Trash2 size={14} /> Remove
 				</button>
 			</div>
@@ -216,34 +191,29 @@ const EntityMenu = ({ x, y, target, onClose, actions }) => {
 // ==========================================
 // 3. MAIN CONTAINER
 // ==========================================
-export default function AtlasContextMenu() {
+export default function EditorContextMenu() {
 	const { state, actions } = useAtlasEditor();
 	const { contextMenu } = state;
 	const ref = useRef(null);
 
-	// Close on click outside
+	// Close on outside click
 	useEffect(() => {
 		if (!contextMenu) return;
-
-		const handleClick = (e) => {
+		const clickCheck = (e) => {
 			if (ref.current && !ref.current.contains(e.target)) {
 				actions.closeContextMenu();
 			}
 		};
-
-		// Slight delay to prevent immediate closing from the trigger click if it propagates
-		setTimeout(() => window.addEventListener('mousedown', handleClick), 10);
-		return () => window.removeEventListener('mousedown', handleClick);
+		window.addEventListener('mousedown', clickCheck);
+		return () => window.removeEventListener('mousedown', clickCheck);
 	}, [contextMenu, actions]);
 
 	if (!contextMenu) return null;
 
-	// Prevent menu from going off-screen
+	// Safety bounds to keep menu on screen
 	const { x, y } = contextMenu.position;
-
-	// Simple bounds check (logic can be improved for edge cases)
-	const safeX = Math.min(window.innerWidth - 250, Math.max(10, x));
-	const safeY = Math.min(window.innerHeight - 300, Math.max(10, y));
+	const safeX = Math.min(window.innerWidth - 200, Math.max(10, x));
+	const safeY = Math.min(window.innerHeight - 200, Math.max(10, y));
 
 	return (
 		<div ref={ref}>
@@ -256,7 +226,6 @@ export default function AtlasContextMenu() {
 					actions={actions}
 				/>
 			)}
-
 			{contextMenu.type === 'entity' && (
 				<EntityMenu
 					x={safeX}

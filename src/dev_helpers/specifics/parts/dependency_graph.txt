@@ -1,0 +1,216 @@
+================================================================
+DEPENDENCY GRAPH
+Generated: 2026-01-14 21:05:26
+================================================================
+
+### IMPORT RELATIONSHIPS
+
+
+AtlasEditor.jsx:
+  → ./AtlasEditorContext
+  → ./components/EditorContextMenu
+  → ./components/EditorLayerList
+  → ./components/EditorMapEvents
+  → ./components/EditorSidebar
+  → ./components/EditorToolbar
+  → ./components/MapZoomHandler
+  → ./layers/EditAreasLayer
+  → ./layers/EditMarkersLayer
+  → ./layers/EditOverlaysLayer
+  → ./layers/EditPathsLayer
+  → leaflet
+  → react
+  → react-leaflet
+
+AtlasEditorContext.jsx:
+  → ./hooks/useAtlasActions
+  → ./hooks/useAtlasReducer
+  → ./services/atlasMapper
+  → @/features/atlas/api/mapService
+  → react
+
+components\EditorContextMenu.jsx:
+  → ../AtlasEditorContext
+  → clsx
+  → lucide-react
+  → react
+
+components\EditorLayerList.jsx:
+  → ../AtlasEditorContext
+  → clsx
+  → react
+
+components\EditorMapEvents.jsx:
+  → ../AtlasEditorContext
+  → react-leaflet
+
+components\EditorSidebar.jsx:
+  → ../AtlasEditorContext
+  → @/features/admin/components/AdminFormStyles
+  → @/features/admin/components/atlas/forms/AreaForm
+  → @/features/admin/components/atlas/forms/MarkerForm
+  → @/features/admin/components/atlas/forms/OverlayForm
+  → @/features/admin/components/atlas/forms/PathForm
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+components\EditorToolbar.jsx:
+  → ../AtlasEditorContext
+  → @/shared/components/ui/Button
+  → clsx
+  → lucide-react
+  → react
+
+components\MapZoomHandler.jsx:
+  → react
+  → react-leaflet
+
+components\PathStylePopup.jsx:
+  → clsx
+  → lucide-react
+  → react
+  → react-dom
+
+components\PatternDefs.jsx:
+  → react
+
+components\SegmentedControl.jsx:
+  → clsx
+  → react
+
+components\ShapeSelector.jsx:
+  → @/features/atlas/utils/markerUtils
+  → clsx
+  → react
+
+components\TileSelector.jsx:
+  → clsx
+  → react
+
+components\VertexHandle.jsx:
+  → leaflet
+
+components\VisualIconPicker.jsx:
+  → @/features/atlas/utils/markerUtils
+  → clsx
+  → lucide-react
+  → react
+  → react-dom
+
+forms\AreaForm.jsx:
+  → @/features/admin/components/AdminFormStyles
+  → @/features/admin/components/SmartColorPicker
+  → clsx
+  → lucide-react
+  → react
+
+forms\MarkerForm.jsx:
+  → ../components/ShapeSelector
+  → ../components/TileSelector
+  → ../components/VisualIconPicker
+  → @/features/admin/components/AdminFormStyles
+  → @/features/admin/components/SmartColorPicker
+  → @/features/atlas/api/mapService
+  → @/features/campaign/CampaignContext
+  → clsx
+  → lucide-react
+  → react
+
+forms\OverlayForm.jsx:
+  → @/features/admin/components/AdminFormStyles
+  → @/features/admin/components/SmartImageInput
+  → lucide-react
+  → react
+
+forms\PathForm.jsx:
+  → @/features/admin/components/AdminFormStyles
+  → @/features/admin/components/SmartColorPicker
+  → lucide-react
+  → react
+
+hooks\useAtlasActions.js:
+  → ../services/geometryUtils
+  → react
+
+hooks\useAtlasReducer.js:
+  → react
+
+layers\EditAreasLayer.jsx:
+  → ../AtlasEditorContext
+  → ../components/PatternDefs
+  → @/features/atlas/utils/markerUtils
+  → @/features/atlas/utils/pathUtils
+  → leaflet
+  → react
+  → react-leaflet
+
+layers\EditMarkersLayer.jsx:
+  → ../AtlasEditorContext
+  → @/features/atlas/utils/markerUtils
+  → leaflet
+  → react
+  → react-leaflet
+
+layers\EditOverlaysLayer.jsx:
+  → ../AtlasEditorContext
+  → ../components/VertexHandle
+  → leaflet
+  → react
+  → react-leaflet
+
+layers\EditPathsLayer.jsx:
+  → ../AtlasEditorContext
+  → @/features/atlas/utils/markerUtils
+  → @/features/atlas/utils/pathUtils
+  → leaflet
+  → react
+  → react-leaflet
+
+
+### DEPENDENCY STATISTICS
+
+Most imported files (relative imports):
+  ../AtlasEditorContext: 9 imports
+  ./AtlasEditorContext: 1 imports
+  ./components/MapZoomHandler: 1 imports
+  ./components/EditorContextMenu: 1 imports
+  ./components/EditorToolbar: 1 imports
+  ./components/EditorSidebar: 1 imports
+  ./components/EditorLayerList: 1 imports
+  ./components/EditorMapEvents: 1 imports
+  ./layers/EditMarkersLayer: 1 imports
+  ./layers/EditPathsLayer: 1 imports
+  ./layers/EditAreasLayer: 1 imports
+  ./layers/EditOverlaysLayer: 1 imports
+  ./hooks/useAtlasReducer: 1 imports
+  ./hooks/useAtlasActions: 1 imports
+  ./services/atlasMapper: 1 imports
+  ../components/ShapeSelector: 1 imports
+  ../components/VisualIconPicker: 1 imports
+  ../components/TileSelector: 1 imports
+  ../services/geometryUtils: 1 imports
+  ../components/PatternDefs: 1 imports
+
+
+Files with most outgoing dependencies:
+  AtlasEditor.jsx: 14 imports
+  forms\MarkerForm.jsx: 10 imports
+  components\EditorSidebar.jsx: 9 imports
+  layers\EditAreasLayer.jsx: 7 imports
+  layers\EditPathsLayer.jsx: 6 imports
+  AtlasEditorContext.jsx: 5 imports
+  components\EditorToolbar.jsx: 5 imports
+  components\VisualIconPicker.jsx: 5 imports
+  forms\AreaForm.jsx: 5 imports
+  layers\EditMarkersLayer.jsx: 5 imports
+  layers\EditOverlaysLayer.jsx: 5 imports
+  components\EditorContextMenu.jsx: 4 imports
+  components\PathStylePopup.jsx: 4 imports
+  forms\OverlayForm.jsx: 4 imports
+  forms\PathForm.jsx: 4 imports
+  components\EditorLayerList.jsx: 3 imports
+  components\ShapeSelector.jsx: 3 imports
+  components\EditorMapEvents.jsx: 2 imports
+  components\MapZoomHandler.jsx: 2 imports
+  components\SegmentedControl.jsx: 2 imports
