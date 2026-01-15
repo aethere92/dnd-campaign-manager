@@ -154,9 +154,11 @@ const PathItem = React.memo(
 export default function EditPathsLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { paths, selection, activeTool, visibility } = state;
-	const isInteractive = activeTool === 'paths';
 
 	if (!visibility.paths) return null;
+
+	// Universal Select Logic
+	const isInteractive = activeTool === 'paths' || activeTool === 'select';
 
 	return (
 		<>
@@ -166,7 +168,7 @@ export default function EditPathsLayer() {
 					path={path}
 					isSelected={selection?.type === 'path' && selection.id === path._id}
 					selectedPointIndex={selection?.type === 'path' && selection.id === path._id ? selection.index : undefined}
-					isInteractive={isInteractive}
+					isInteractive={isInteractive} // Pass down the computed interactive state
 					actions={actions}
 				/>
 			))}

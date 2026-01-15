@@ -6,15 +6,19 @@ import { useAtlasEditor } from '../AtlasEditorContext';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
 const MarkerItem = React.memo(
-	({ marker, isSelected, actions }) => {
+	({ marker, isSelected, isInteractive, actions }) => {
+		// Added isInteractive prop
+
 		const icon = useMemo(() => resolveMarkerIcon({ ...marker, isSelected }), [marker, isSelected]);
 
 		const onClick = useCallback(
 			(e) => {
+				// Allow selection if tool matches OR if we are in universal select mode
+				if (!isInteractive) return;
 				L.DomEvent.stopPropagation(e);
 				actions.selectItem('marker', marker._id);
 			},
-			[marker._id, actions]
+			[marker._id, actions, isInteractive]
 		);
 
 		const onDragEnd = useCallback(
@@ -42,7 +46,7 @@ const MarkerItem = React.memo(
 			<Marker
 				position={[marker.lat, marker.lng]}
 				icon={icon}
-				draggable={true}
+				draggable={isSelected} // Only drag if selected
 				opacity={isSelected ? 1 : 0.8}
 				eventHandlers={{
 					click: onClick,
@@ -53,15 +57,20 @@ const MarkerItem = React.memo(
 		);
 	},
 	(prev, next) => {
-		return prev.marker === next.marker && prev.isSelected === next.isSelected;
+		return (
+			prev.marker === next.marker && prev.isSelected === next.isSelected && prev.isInteractive === next.isInteractive
+		);
 	}
 );
 
 export default function EditMarkersLayer() {
 	const { state, actions } = useAtlasEditor();
-	const { markers, selection, visibility } = state;
+	const { markers, selection, visibility, activeTool } = state;
 
 	if (!visibility.markers) return null;
+
+	// Universal Select Logic
+	const isInteractive = activeTool === 'markers' || activeTool === 'select' || activeTool === 'text';
 
 	return (
 		<>
@@ -70,6 +79,7 @@ export default function EditMarkersLayer() {
 					key={m._id}
 					marker={m}
 					isSelected={selection?.type === 'marker' && selection.id === m._id}
+					isInteractive={isInteractive}
 					actions={actions}
 				/>
 			))}

@@ -1,121 +1,88 @@
+// --- FILE: components/EditorToolbar.jsx ---
 import React from 'react';
-import { Save, Loader2, MapPin, Footprints, Hexagon, Image as ImageIcon, Plus } from 'lucide-react';
-import Button from '@/shared/components/ui/Button';
+import { MousePointer2, MapPin, Type, Hexagon, Waypoints, Save, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import clsx from 'clsx';
 
-const ToolBtn = ({ icon: Icon, label, active, onClick }) => (
+// Icon Button Component
+const ToolBtn = ({ icon: Icon, active, onClick, title, disabled, className }) => (
 	<button
 		onClick={onClick}
+		title={title}
+		disabled={disabled}
 		className={clsx(
-			'flex items-center gap-2 p-2 rounded-md transition-all text-xs font-bold uppercase',
-			active ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'
-		)}
-		title={label}>
-		<Icon size={18} />
-		<span className='hidden md:inline'>{label}</span>
+			'p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px]',
+			active
+				? 'bg-primary text-primary-foreground shadow-sm'
+				: 'text-muted-foreground hover:bg-muted hover:text-foreground',
+			disabled && 'opacity-50 cursor-not-allowed',
+			className
+		)}>
+		<Icon size={20} strokeWidth={active ? 2.5 : 2} />
 	</button>
 );
 
 export default function EditorToolbar() {
 	const { state, actions, saveMap } = useAtlasEditor();
-	const { activeTool, isSaving, mode } = state;
-
-	const handleNewPath = () => {
-		const newPath = {
-			_id: crypto.randomUUID(),
-			name: 'New Path',
-			lineColor: '#d97706',
-			opacity: 1,
-			points: [],
-		};
-		actions.addPath(newPath);
-	};
-
-	const handleNewArea = () => {
-		const newArea = {
-			_id: crypto.randomUUID(),
-			name: 'New Region',
-			interiorColor: '#ff0000',
-			lineColor: 'transparent',
-			points: [],
-		};
-		actions.addArea(newArea);
-	};
-
-	const handleNewOverlay = () => {
-		const newOverlay = {
-			_id: crypto.randomUUID(),
-			name: 'New Overlay',
-			image: '',
-			bounds: [
-				[0, 0],
-				[-100, 100],
-			],
-		};
-		actions.addOverlay(newOverlay);
-	};
+	const { activeTool, isSaving } = state;
 
 	return (
-		<div className='absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-auto'>
-			<div className='bg-background/95 backdrop-blur border border-border p-2 rounded-lg shadow-xl'>
-				<Button size='sm' variant='primary' icon={isSaving ? Loader2 : Save} onClick={saveMap} disabled={isSaving}>
-					{isSaving ? 'Saving' : 'Save'}
-				</Button>
-			</div>
+		<div className='absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 pointer-events-none'>
+			{/* Floating Toolbar */}
+			<div className='pointer-events-auto flex items-center gap-2 bg-background/80 backdrop-blur-md border border-border/50 p-2 rounded-2xl shadow-2xl ring-1 ring-black/5'>
+				{/* 1. SELECT Tool */}
+				<ToolBtn
+					icon={MousePointer2}
+					title='Select (V)'
+					active={activeTool === 'select'}
+					onClick={() => actions.setTool('select')}
+				/>
 
-			<div className='bg-background/95 backdrop-blur border border-border p-1 rounded-lg shadow-xl flex flex-col gap-1'>
+				{/* 2. MARKER Tool */}
 				<ToolBtn
 					icon={MapPin}
-					label='Markers'
+					title='Marker (M)'
 					active={activeTool === 'markers'}
 					onClick={() => actions.setTool('markers')}
 				/>
-				<ToolBtn
-					icon={Footprints}
-					label='Paths'
-					active={activeTool === 'paths'}
-					onClick={() => actions.setTool('paths')}
-				/>
+
+				{/* 3. LABEL Tool */}
+				<ToolBtn icon={Type} title='Label (T)' active={activeTool === 'text'} onClick={() => actions.setTool('text')} />
+
+				{/* 4. REGION Tool */}
 				<ToolBtn
 					icon={Hexagon}
-					label='Regions'
+					title='Region (R)'
 					active={activeTool === 'areas'}
 					onClick={() => actions.setTool('areas')}
 				/>
+
+				{/* 5. PATH Tool */}
+				<ToolBtn
+					icon={Waypoints}
+					title='Path (P)'
+					active={activeTool === 'paths'}
+					onClick={() => actions.setTool('paths')}
+				/>
+
+				{/* 6. OVERLAYS Tool */}
 				<ToolBtn
 					icon={ImageIcon}
-					label='Overlays'
+					title='Overlays (O)'
 					active={activeTool === 'overlays'}
 					onClick={() => actions.setTool('overlays')}
 				/>
+
+				{/* 7. SAVE Button */}
+				<ToolBtn
+					icon={isSaving ? Loader2 : Save}
+					title='Save Map'
+					active={false} // Action button, not a mode
+					onClick={saveMap}
+					disabled={isSaving}
+					className={clsx(isSaving && 'animate-spin')}
+				/>
 			</div>
-
-			{activeTool === 'paths' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewPath} className='shadow-xl'>
-					New Path
-				</Button>
-			)}
-			{activeTool === 'areas' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewArea} className='shadow-xl'>
-					New Region
-				</Button>
-			)}
-			{activeTool === 'overlays' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewOverlay} className='shadow-xl'>
-					New Overlay
-				</Button>
-			)}
-
-			{mode === 'draw' && (
-				<div
-					className='bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl animate-pulse text-center cursor-pointer'
-					onClick={() => actions.setMode('select')}>
-					DRAWING ACTIVE
-					<br />
-					<span className='underline opacity-80'>Stop</span>
-				</div>
-			)}
 		</div>
 	);
 }

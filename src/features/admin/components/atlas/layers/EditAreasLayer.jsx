@@ -224,7 +224,8 @@ export default function EditAreasLayer() {
 
 	if (!visibility.areas) return null;
 
-	const isInteractive = activeTool === 'areas';
+	// Universal Select Logic
+	const isInteractive = activeTool === 'areas' || activeTool === 'select';
 
 	return (
 		<>
@@ -234,7 +235,7 @@ export default function EditAreasLayer() {
 					key={area._id}
 					area={area}
 					isSelected={selection?.type === 'area' && selection.id === area._id}
-					isInteractive={isInteractive}
+					isInteractive={isInteractive} // Pass down
 					actions={actions}
 				/>
 			))}

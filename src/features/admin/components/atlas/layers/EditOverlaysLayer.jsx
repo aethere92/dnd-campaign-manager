@@ -7,7 +7,7 @@ import { createHandleIcon } from '../components/VertexHandle';
 export default function EditOverlaysLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { overlays, selection, activeTool, visibility } = state;
-	const isInteractive = activeTool === 'overlays';
+	const isInteractive = activeTool === 'overlays' || activeTool === 'select';
 
 	// FIX: Robust URL resolver that handles null/undefined/non-strings
 	const getUrl = (path) => {
