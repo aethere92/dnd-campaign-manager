@@ -7,7 +7,7 @@ const initialState = {
 	overlays: [],
 	selection: null, // { type, id, index? }
 	mode: 'select', // 'select' | 'draw'
-	activeTool: 'markers',
+	activeTool: 'select',
 	isSaving: false,
 	visibility: {
 		markers: true,

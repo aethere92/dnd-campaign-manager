@@ -12,9 +12,10 @@ const getMidpoint = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 const PathItem = React.memo(
 	({ path, isSelected, selectedPointIndex, isInteractive, actions }) => {
 		const polylineRef = useRef(null);
+		const dragStartRef = useRef(null);
 		const [isHovered, setIsHovered] = useState(false);
 
-		// 1. Calculate Geometry
+		// Geometry
 		const rawPositions = useMemo(() => path.points.map((p) => p.coordinates), [path.points]);
 		const positions = useMemo(() => {
 			if (path.curviness > 0 && rawPositions.length >= 3) {
@@ -23,7 +24,7 @@ const PathItem = React.memo(
 			return rawPositions;
 		}, [rawPositions, path.curviness]);
 
-		// Events
+		// Handlers
 		const onClick = useCallback(
 			(e) => {
 				if (!isInteractive) return;
@@ -33,12 +34,52 @@ const PathItem = React.memo(
 			[isInteractive, path._id, actions]
 		);
 
+		// --- VERTEX DRAG (LIVE PREVIEW) ---
+		const onVertexDragStart = useCallback(() => {
+			dragStartRef.current = {
+				rawPoints: path.points.map((p) => [...p.coordinates]),
+			};
+		}, [path.points]);
+
+		const onVertexDrag = useCallback(
+			(e, index) => {
+				if (!dragStartRef.current || !polylineRef.current) return;
+
+				const latlng = e.target.getLatLng();
+
+				// 1. Update point in temp array
+				const currentPoints = dragStartRef.current.rawPoints;
+				currentPoints[index] = [latlng.lat, latlng.lng];
+
+				// 2. Re-smooth
+				let visualPoints = currentPoints;
+				if (path.curviness > 0 && currentPoints.length >= 3) {
+					visualPoints = getSmoothPath(currentPoints, path.curviness);
+				}
+
+				// 3. Update Visuals
+				polylineRef.current.setLatLngs(visualPoints);
+
+				// Note: TextAlongPath might lag slightly as it relies on 'zoomend'/'moveend'
+				// or React updates, but the line itself will be buttery smooth.
+			},
+			[path.curviness]
+		);
+
+		const onVertexDragEnd = useCallback(
+			(e, index) => {
+				const latlng = e.target.getLatLng();
+				actions.updatePathPoint(path._id, index, { coordinates: [latlng.lat, latlng.lng] });
+				dragStartRef.current = null;
+			},
+			[path._id, actions]
+		);
+
 		if (positions.length === 0 && !isSelected) return null;
 
 		const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
 		const showTooltip = path.name && path.labelDisplay !== 'none' && !path.textAlongLine;
 
-		// Calculate Text Visibility
 		let isTextVisible = false;
 		if (path.textAlongLine && path.labelDisplay !== 'none') {
 			if (path.labelDisplay === 'always') isTextVisible = true;
@@ -101,10 +142,9 @@ const PathItem = React.memo(
 								draggable={true}
 								zIndexOffset={1000}
 								eventHandlers={{
-									dragend: (e) => {
-										const { lat, lng } = e.target.getLatLng();
-										actions.updatePathPoint(path._id, idx, { coordinates: [lat, lng] });
-									},
+									dragstart: onVertexDragStart,
+									drag: (e) => onVertexDrag(e, idx),
+									dragend: (e) => onVertexDragEnd(e, idx),
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
 										actions.selectItem('path', path._id, idx);
@@ -142,7 +182,6 @@ const PathItem = React.memo(
 		);
 	},
 	(prev, next) => {
-		// Re-render check
 		if (prev.path !== next.path) return false;
 		if (prev.isInteractive !== next.isInteractive) return false;
 		if (prev.isSelected !== next.isSelected) return false;
@@ -154,11 +193,9 @@ const PathItem = React.memo(
 export default function EditPathsLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { paths, selection, activeTool, visibility } = state;
+	const isInteractive = activeTool === 'paths' || activeTool === 'select';
 
 	if (!visibility.paths) return null;
-
-	// Universal Select Logic
-	const isInteractive = activeTool === 'paths' || activeTool === 'select';
 
 	return (
 		<>
@@ -168,7 +205,7 @@ export default function EditPathsLayer() {
 					path={path}
 					isSelected={selection?.type === 'path' && selection.id === path._id}
 					selectedPointIndex={selection?.type === 'path' && selection.id === path._id ? selection.index : undefined}
-					isInteractive={isInteractive} // Pass down the computed interactive state
+					isInteractive={isInteractive}
 					actions={actions}
 				/>
 			))}

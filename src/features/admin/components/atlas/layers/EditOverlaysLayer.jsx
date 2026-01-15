@@ -1,15 +1,18 @@
+// --- FILE: layers/EditOverlaysLayer.jsx ---
 import React from 'react';
 import { ImageOverlay, Rectangle, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
-import { createHandleIcon } from '../components/VertexHandle';
+import { createHandleIcon, createMoveHandleIcon } from '../components/VertexHandle'; // Import new icon
 
 export default function EditOverlaysLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { overlays, selection, activeTool, visibility } = state;
+
+	// Universal Select Logic
 	const isInteractive = activeTool === 'overlays' || activeTool === 'select';
 
-	// FIX: Robust URL resolver that handles null/undefined/non-strings
+	// ... helper
 	const getUrl = (path) => {
 		if (!path || typeof path !== 'string') return '';
 		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
@@ -22,10 +25,7 @@ export default function EditOverlaysLayer() {
 			{overlays.map((overlay) => {
 				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
 				const imagePath = getUrl(overlay.image);
-
-				// Bounds: [[lat1, lng1], [lat2, lng2]]
 				const b = overlay.bounds;
-				// Safety check for bounds to prevent arithmetic crash
 				if (!b || b.length < 2 || !b[0] || !b[1]) return null;
 
 				const centerLat = (b[0][0] + b[1][0]) / 2;
@@ -33,7 +33,6 @@ export default function EditOverlaysLayer() {
 
 				return (
 					<React.Fragment key={overlay._id}>
-						{/* IMAGE - Only render if we have a path */}
 						{imagePath && (
 							<ImageOverlay
 								url={imagePath}
@@ -43,7 +42,6 @@ export default function EditOverlaysLayer() {
 							/>
 						)}
 
-						{/* HIT BOX */}
 						<Rectangle
 							bounds={overlay.bounds}
 							pathOptions={{
@@ -61,19 +59,13 @@ export default function EditOverlaysLayer() {
 							}}
 						/>
 
-						{/* HANDLES (Only when selected) */}
 						{isSelected && (
 							<>
-								{/* CENTER MOVE HANDLE */}
+								{/* CENTER MOVE HANDLE - Updated to use shared icon */}
 								<Marker
 									position={[centerLat, centerLng]}
 									draggable={true}
-									icon={L.divIcon({
-										className: 'move-handle',
-										html: '<div style="width: 24px; height: 24px; background: rgba(59, 130, 246, 0.5); border: 2px solid white; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 12h20L12 2zm0 20l10-10H2l10 10z"/></svg></div>',
-										iconSize: [24, 24],
-										iconAnchor: [12, 12],
-									})}
+									icon={createMoveHandleIcon()}
 									eventHandlers={{
 										dragend: (e) => {
 											const newCenter = e.target.getLatLng();
@@ -83,8 +75,7 @@ export default function EditOverlaysLayer() {
 									}}
 								/>
 
-								{/* RESIZE HANDLES */}
-								{/* Top Left */}
+								{/* RESIZE HANDLES (Unchanged) */}
 								<Marker
 									position={b[0]}
 									draggable={true}
@@ -97,7 +88,6 @@ export default function EditOverlaysLayer() {
 										click: (e) => L.DomEvent.stopPropagation(e),
 									}}
 								/>
-								{/* Bottom Right */}
 								<Marker
 									position={b[1]}
 									draggable={true}
