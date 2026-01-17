@@ -117,6 +117,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
+          TextAlongPath.jsx
         sidebar/
           SidebarGroup.jsx
           SidebarItem.jsx
@@ -3657,173 +3658,198 @@ export default function SmartImageInput({ value, onChange, placeholder, classNam
 --- END OF features\admin\components\SmartImageInput.jsx ---
 
 --- FILE: features\admin\components\TacticalMapManager.jsx ---
-/* --- FILE: features/admin/components/TacticalMapManager.jsx --- */
-import React, { useState, useEffect } from 'react';
-import { MapContainer, ImageOverlay, Marker, useMap, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { MapContainer, ImageOverlay, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Map as MapIcon, Trash2, Plus, Target, Save } from 'lucide-react';
-import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
-import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
-import Button from '@/shared/components/ui/Button';
+import { useAtlasEditor, AtlasEditorProvider } from './atlas/AtlasEditorContext';
+import { serializeMapData } from './atlas/services/atlasMapper';
 
-// Click handler component
-const MapClickHandler = ({ onMapClick }) => {
-	useMapEvents({
-		click: (e) => onMapClick(e.latlng),
-	});
+// Editor UI
+import EditorToolbar from './atlas/components/EditorToolbar';
+import EditorSidebar from './atlas/components/EditorSidebar';
+import EditorLayerList from './atlas/components/EditorLayerList';
+import EditorMapEvents from './atlas/components/EditorMapEvents';
+import AtlasContextMenu from './atlas/components/EditorContextMenu';
+import { MapZoomHandler } from './atlas/components/MapZoomHandler';
+
+// Layers
+import EditMarkersLayer from './atlas/layers/EditMarkersLayer';
+import EditPathsLayer from './atlas/layers/EditPathsLayer';
+import EditAreasLayer from './atlas/layers/EditAreasLayer';
+import EditOverlaysLayer from './atlas/layers/EditOverlaysLayer';
+
+import { Target, Maximize, Minimize } from 'lucide-react';
+import { clsx } from 'clsx';
+
+// ------------------------------------------------------------------
+// 1. STATE SYNCER
+// ------------------------------------------------------------------
+const StateSyncer = ({ onChange }) => {
+	const { state } = useAtlasEditor();
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			const serialized = serializeMapData(state);
+			onChange(JSON.stringify(serialized));
+		}, 500);
+		return () => clearTimeout(timer);
+	}, [state, onChange]);
 	return null;
 };
 
-const MapController = ({ bounds }) => {
+// ------------------------------------------------------------------
+// 2. FULLSCREEN HANDLER
+// Forces Leaflet to re-calculate its size when the container grows
+// ------------------------------------------------------------------
+const FullscreenHandler = ({ isFullscreen }) => {
 	const map = useMap();
 	useEffect(() => {
-		if (bounds) map.fitBounds(bounds);
-	}, [map, bounds]);
+		// Small delay to ensure the DOM transition has finished
+		const timer = setTimeout(() => {
+			map.invalidateSize();
+		}, 100);
+		return () => clearTimeout(timer);
+	}, [map, isFullscreen]);
 	return null;
 };
 
-export default function TacticalMapManager({ imageUrl, value, onChange }) {
-	const [markers, setMarkers] = useState([]);
-	const [dimensions, setDimensions] = useState(null);
-	const [selectedIdx, setSelectedIdx] = useState(null);
+// ------------------------------------------------------------------
+// 3. INTERNAL CANVAS
+// ------------------------------------------------------------------
+const TacticalEditorCanvas = ({ imageUrl, dimensions }) => {
+	const [isFullscreen, setIsFullscreen] = useState(false);
 
-	// 1. Load existing markers from JSON string
-	useEffect(() => {
-		if (value) {
-			try {
-				const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-				setMarkers(Array.isArray(parsed) ? parsed : []);
-			} catch (e) {
-				setMarkers([]);
-			}
+	const toggleFullscreen = (e) => {
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
 		}
-	}, [value]);
+		setIsFullscreen(!isFullscreen);
+	};
 
-	// 2. Handle Image Dimensions
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isFullscreen]);
+
+	const content = (
+		<div
+			className={clsx(
+				'flex w-full overflow-hidden bg-[#1a1412] border border-border shadow-inner transition-all duration-300',
+				// We use !important styles to ensure we escape any parent container offsets
+				isFullscreen
+					? 'fixed !top-0 !left-0 !right-0 !bottom-0 !m-0 z-[5000] h-screen w-screen'
+					: 'relative h-[600px] rounded-lg'
+			)}>
+			<div className='hidden lg:block shrink-0 relative z-[400] h-full'>
+				<EditorLayerList />
+			</div>
+
+			<div className='flex-1 h-full relative z-0'>
+				<EditorToolbar />
+
+				<button
+					onClick={toggleFullscreen}
+					className='absolute top-4 right-4 z-[1000] p-2 bg-background/90 backdrop-blur border border-border shadow-md rounded-md hover:bg-primary hover:text-white transition-colors text-muted-foreground'
+					title={isFullscreen ? 'Exit Fullscreen (ESC)' : 'Enter Fullscreen'}>
+					{isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+				</button>
+
+				<MapContainer
+					crs={L.CRS.Simple}
+					bounds={dimensions}
+					center={[dimensions[0][0] / 2, dimensions[1][1] / 2]}
+					zoom={0}
+					minZoom={-2}
+					maxZoom={4}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					zoomControl={false}
+					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					{/* CRITICAL: Listens for resize */}
+					<FullscreenHandler isFullscreen={isFullscreen} />
+
+					<MapZoomHandler referenceZoom={1} />
+					<ImageOverlay url={imageUrl} bounds={dimensions} />
+					<EditorMapEvents />
+					<EditOverlaysLayer />
+					<EditAreasLayer />
+					<EditPathsLayer />
+					<EditMarkersLayer />
+				</MapContainer>
+				<AtlasContextMenu />
+			</div>
+
+			<EditorSidebar />
+		</div>
+	);
+
+	return isFullscreen ? createPortal(content, document.body) : content;
+};
+
+// ------------------------------------------------------------------
+// 4. MAIN MANAGER
+// ------------------------------------------------------------------
+export default function TacticalMapManager({ imageUrl, value, onChange }) {
+	const [dimensions, setDimensions] = useState(null);
+
 	useEffect(() => {
 		if (!imageUrl) return;
 		const img = new Image();
 		img.src = imageUrl;
 		img.onload = () => {
-			const h = img.height;
-			const w = img.width;
-			setDimensions(L.latLngBounds([-h, 0], [0, w]));
+			setDimensions([
+				[-img.height, 0],
+				[0, img.width],
+			]);
 		};
 	}, [imageUrl]);
 
-	const handleMapClick = (latlng) => {
-		const newMarker = {
-			lat: Math.round(latlng.lat),
-			lng: Math.round(latlng.lng),
-			label: 'New Marker',
-			category: 'default',
-		};
-		const updated = [...markers, newMarker];
-		setMarkers(updated);
-		setSelectedIdx(updated.length - 1);
-		onChange(JSON.stringify(updated));
-	};
+	const initialData = useMemo(() => {
+		let raw = value;
+		if (typeof raw === 'string') {
+			try {
+				raw = JSON.parse(raw);
+			} catch {
+				raw = {};
+			}
+		}
+		return raw || {};
+	}, []);
 
-	const updateMarker = (idx, fields) => {
-		const updated = [...markers];
-		updated[idx] = { ...updated[idx], ...fields };
-		setMarkers(updated);
-		onChange(JSON.stringify(updated));
-	};
-
-	const removeMarker = (idx) => {
-		const updated = markers.filter((_, i) => i !== idx);
-		setMarkers(updated);
-		setSelectedIdx(null);
-		onChange(JSON.stringify(updated));
-	};
-
-	if (!imageUrl || !dimensions) return null;
+	if (!imageUrl) return null;
+	if (!dimensions) return <div className='p-4 text-xs text-muted-foreground'>Loading Map Image...</div>;
 
 	return (
-		<div className={ADMIN_SECTION_CLASS}>
-			<div className={ADMIN_HEADER_CLASS}>
-				<span className='flex items-center gap-2'>
-					<Target size={18} className='text-primary' /> Marker Editor
+		<div className='space-y-2'>
+			<div className='flex items-center justify-between px-1'>
+				<span className='flex items-center gap-2 font-bold text-sm text-foreground'>
+					<Target size={16} className='text-primary' /> Tactical Map Editor
 				</span>
-				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>Click map to add</span>
+				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>
+					{dimensions[1][1]} x {Math.abs(dimensions[0][0])}px
+				</span>
 			</div>
 
-			<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-				{/* Visual Map Area */}
-				<div className='lg:col-span-2 h-[400px] rounded-lg border border-border overflow-hidden bg-muted relative z-0'>
-					<MapContainer
-						crs={L.CRS.Simple}
-						bounds={dimensions}
-						zoom={-2}
-						minZoom={-3}
-						attributionControl={false}
-						style={{ height: '100%', width: '100%', background: 'var(--background)' }}>
-						<MapController bounds={dimensions} />
-						<MapClickHandler onMapClick={handleMapClick} />
-						<ImageOverlay url={imageUrl} bounds={dimensions} />
-
-						{markers?.map((m, i) => (
-							<Marker
-								key={i}
-								position={[m.lat, m.lng]}
-								icon={resolveMarkerIcon(m)}
-								eventHandlers={{ click: () => setSelectedIdx(i) }}
-							/>
-						))}
-					</MapContainer>
-				</div>
-
-				{/* Sidebar Editor */}
-				<div className='space-y-4'>
-					<div className='max-h-[400px] overflow-y-auto pr-2 space-y-3 custom-scrollbar'>
-						{markers.length === 0 && (
-							<div className='text-center py-10 text-xs text-muted-foreground italic border-2 border-dashed border-border rounded-lg'>
-								No markers yet. Click the map to start.
-							</div>
-						)}
-						{markers.map((m, i) => (
-							<div
-								key={i}
-								className={`p-3 rounded-lg border transition-all ${
-									selectedIdx === i ? 'border-accent bg-accent/5 ring-1 ring-accent' : 'border-border bg-background'
-								}`}
-								onClick={() => setSelectedIdx(i)}>
-								<div className='flex justify-between items-start mb-2'>
-									<span className='text-[10px] font-bold text-muted-foreground uppercase'>Marker #{i + 1}</span>
-									<button onClick={() => removeMarker(i)} className='text-muted-foreground hover:text-red-600'>
-										<Trash2 size={14} />
-									</button>
-								</div>
-								<div className='space-y-2'>
-									<input
-										className={ADMIN_INPUT_CLASS}
-										value={m.label}
-										onChange={(e) => updateMarker(i, { label: e.target.value })}
-										placeholder='Label...'
-									/>
-									<select
-										className={ADMIN_INPUT_CLASS}
-										value={m.category}
-										onChange={(e) => updateMarker(i, { category: e.target.value })}>
-										<option value='default'>Default Pin</option>
-										<option value='combat'>Combat / Danger</option>
-										<option value='city'>City / Settlement</option>
-										<option value='npc'>NPC / Person</option>
-										<option value='magic'>Magic / Mystery</option>
-										<option value='quest'>Objective</option>
-										<option value='location'>Location</option>
-									</select>
-									<div className='flex gap-2 text-[9px] font-mono text-muted-foreground'>
-										<span>LAT: {m.lat}</span>
-										<span>LNG: {m.lng}</span>
-									</div>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
+			<AtlasEditorProvider
+				onSave={() => {}}
+				initialData={{
+					...initialData,
+					metadata: {
+						mapId: 'tactical_temp',
+						sizes: {
+							imageHeight: Math.abs(dimensions[0][0]),
+							imageWidth: dimensions[1][1],
+							maxZoom: 4,
+						},
+					},
+				}}>
+				<StateSyncer onChange={onChange} />
+				<TacticalEditorCanvas imageUrl={imageUrl} dimensions={dimensions} />
+			</AtlasEditorProvider>
 		</div>
 	);
 }
@@ -3939,9 +3965,9 @@ import { updateMapData } from '@/features/atlas/api/mapService';
 
 const AtlasEditorContext = createContext(null);
 
-export const AtlasEditorProvider = ({ initialData, children }) => {
+// UPDATED: Added onSave prop
+export const AtlasEditorProvider = ({ initialData, onSave, children }) => {
 	// 1. Initialize State
-	// We use useMemo to prevent re-normalizing on every render if initialData is stable
 	const normalizedInitialState = useMemo(() => {
 		return {
 			...normalizeMapData(initialData),
@@ -3961,8 +3987,15 @@ export const AtlasEditorProvider = ({ initialData, children }) => {
 		dispatch({ type: 'SET_SAVING', payload: true });
 		try {
 			const payload = serializeMapData(state);
-			await updateMapData(state.mapId, payload);
-			alert('Map saved successfully.');
+
+			// FIX: Check if a custom save handler exists (for Tactical Map)
+			if (onSave) {
+				await onSave(payload);
+			} else {
+				// Default behavior: Update DB
+				await updateMapData(state.mapId, payload);
+				alert('Map saved successfully.');
+			}
 		} catch (e) {
 			console.error(e);
 			alert('Save failed: ' + e.message);
@@ -3971,16 +4004,7 @@ export const AtlasEditorProvider = ({ initialData, children }) => {
 		}
 	};
 
-	// 5. Construct Context Value
-	const value = useMemo(
-		() => ({
-			state,
-			dispatch,
-			actions,
-			saveMap,
-		}),
-		[state, actions]
-	);
+	const value = useMemo(() => ({ state, dispatch, actions, saveMap }), [state, actions]);
 
 	return <AtlasEditorContext.Provider value={value}>{children}</AtlasEditorContext.Provider>;
 };
@@ -4238,7 +4262,8 @@ export default function EditorContextMenu() {
 --- END OF features\admin\components\atlas\components\EditorContextMenu.jsx ---
 
 --- FILE: features\admin\components\atlas\components\EditorLayerList.jsx ---
-import React, { useState } from 'react';
+// --- FILE: components/EditorLayerList.jsx ---
+import React, { useState, useMemo } from 'react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import {
 	ChevronDown,
@@ -4253,7 +4278,8 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
+// Memoize Group to prevent re-rendering list items when typing in other forms
+const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
 	const [isOpen, setIsOpen] = useState(true);
 	if (!items || items.length === 0) return null;
 
@@ -4301,14 +4327,25 @@ const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible,
 			)}
 		</div>
 	);
-};
+});
 
 export default function EditorLayerList() {
 	const { state, actions } = useAtlasEditor();
 	const { markers, paths, areas, overlays, selection, visibility } = state;
 	const [search, setSearch] = useState('');
 
-	const filter = (list) => list.filter((i) => (i.label || i.name || '').toLowerCase().includes(search.toLowerCase()));
+	// Optimize filtering with useMemo
+	const filteredData = useMemo(() => {
+		const term = search.toLowerCase();
+		const filterFn = (i) => (i.label || i.name || '').toLowerCase().includes(term);
+
+		return {
+			markers: markers.filter(filterFn),
+			paths: paths.filter(filterFn),
+			areas: areas.filter(filterFn),
+			overlays: overlays.filter(filterFn),
+		};
+	}, [search, markers, paths, areas, overlays]);
 
 	return (
 		<div className='flex flex-col h-full bg-background/95 backdrop-blur border-r border-border w-64 z-10'>
@@ -4328,7 +4365,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Markers'
 					icon={MapPin}
-					items={filter(markers)}
+					items={filteredData.markers}
 					type='marker'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -4338,7 +4375,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Paths'
 					icon={Footprints}
-					items={filter(paths)}
+					items={filteredData.paths}
 					type='path'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -4348,7 +4385,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Regions'
 					icon={Hexagon}
-					items={filter(areas)}
+					items={filteredData.areas}
 					type='area'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -4358,7 +4395,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Overlays'
 					icon={ImageIcon}
-					items={filter(overlays)}
+					items={filteredData.overlays}
 					type='overlay'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -4373,6 +4410,7 @@ export default function EditorLayerList() {
 --- END OF features\admin\components\atlas\components\EditorLayerList.jsx ---
 
 --- FILE: features\admin\components\atlas\components\EditorMapEvents.jsx ---
+// --- FILE: components/EditorMapEvents.jsx ---
 import { useMapEvents } from 'react-leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 
@@ -4383,10 +4421,9 @@ export default function EditorMapEvents() {
 	useMapEvents({
 		click(e) {
 			actions.closeContextMenu();
-			// Precision fixed in Service Layer, but we pass raw here
 			const pos = [e.latlng.lat, e.latlng.lng];
 
-			// Drawing Logic
+			// 1. Drawing Logic (Append points to existing shapes)
 			if (mode === 'draw' && selection) {
 				if (selection.type === 'path') {
 					actions.appendPathPoint(selection.id, pos);
@@ -4394,9 +4431,9 @@ export default function EditorMapEvents() {
 					actions.appendAreaPoint(selection.id, pos);
 				}
 			}
-			// Creation Logic
+			// 2. Creation Logic: MARKERS
 			else if (activeTool === 'markers' && !selection) {
-				const newMarker = {
+				actions.addMarker({
 					_id: crypto.randomUUID(),
 					label: 'New Marker',
 					lat: pos[0],
@@ -4406,21 +4443,64 @@ export default function EditorMapEvents() {
 					scale: 1,
 					variant: 'large',
 					shape: 'pin',
-				};
-				actions.addMarker(newMarker);
+				});
 			}
-			// Deselect Logic
+			// 3. Creation Logic: TEXT LABELS
+			else if (activeTool === 'text' && !selection) {
+				actions.addMarker({
+					_id: crypto.randomUUID(),
+					label: 'New Label',
+					lat: pos[0],
+					lng: pos[1],
+					category: 'default',
+					color: '#ffffff',
+					scale: 1.5,
+					variant: 'text',
+					shape: 'pin',
+				});
+			}
+			// 4. Creation Logic: AREAS
+			else if (activeTool === 'areas' && !selection) {
+				actions.addArea({
+					_id: crypto.randomUUID(),
+					name: 'New Region',
+					interiorColor: '#ff0000',
+					points: [{ coordinates: pos }],
+				});
+			}
+			// 5. Creation Logic: PATHS
+			else if (activeTool === 'paths' && !selection) {
+				actions.addPath({
+					_id: crypto.randomUUID(),
+					name: 'New Path',
+					color: '#d97706',
+					points: [{ coordinates: pos, text: '' }],
+				});
+			}
+			// 6. Creation Logic: OVERLAYS (Added)
+			else if (activeTool === 'overlays' && !selection) {
+				const size = 50; // Creates a 100x100 unit box
+				actions.addOverlay({
+					_id: crypto.randomUUID(),
+					name: 'New Overlay',
+					image: '', // User will set this in the form
+					bounds: [
+						[pos[0] + size, pos[1] - size], // Top Left
+						[pos[0] - size, pos[1] + size], // Bottom Right
+					],
+				});
+			}
+			// 7. Select Mode / Deselect Logic
 			else {
 				actions.deselect();
 			}
 		},
 		contextmenu(e) {
-			e.originalEvent.preventDefault(); // Stop browser menu
-
+			e.originalEvent.preventDefault();
 			actions.openContextMenu({
-				type: 'map', // Tells logic to show Radial Menu
+				type: 'map',
 				position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
-				latlng: { lat: e.latlng.lat, lng: e.latlng.lng }, // Pass map coordinates for creation
+				latlng: { lat: e.latlng.lat, lng: e.latlng.lng },
 			});
 		},
 	});
@@ -4591,124 +4671,91 @@ export default function EditorSidebar() {
 --- END OF features\admin\components\atlas\components\EditorSidebar.jsx ---
 
 --- FILE: features\admin\components\atlas\components\EditorToolbar.jsx ---
+// --- FILE: components/EditorToolbar.jsx ---
 import React from 'react';
-import { Save, Loader2, MapPin, Footprints, Hexagon, Image as ImageIcon, Plus } from 'lucide-react';
-import Button from '@/shared/components/ui/Button';
+import { MousePointer2, MapPin, Type, Hexagon, Waypoints, Save, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import clsx from 'clsx';
 
-const ToolBtn = ({ icon: Icon, label, active, onClick }) => (
+// Icon Button Component
+const ToolBtn = ({ icon: Icon, active, onClick, title, disabled, className }) => (
 	<button
 		onClick={onClick}
+		title={title}
+		disabled={disabled}
 		className={clsx(
-			'flex items-center gap-2 p-2 rounded-md transition-all text-xs font-bold uppercase',
-			active ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'
-		)}
-		title={label}>
-		<Icon size={18} />
-		<span className='hidden md:inline'>{label}</span>
+			'p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px]',
+			active
+				? 'bg-primary text-primary-foreground shadow-sm'
+				: 'text-muted-foreground hover:bg-muted hover:text-foreground',
+			disabled && 'opacity-50 cursor-not-allowed',
+			className
+		)}>
+		<Icon size={20} strokeWidth={active ? 2.5 : 2} />
 	</button>
 );
 
 export default function EditorToolbar() {
 	const { state, actions, saveMap } = useAtlasEditor();
-	const { activeTool, isSaving, mode } = state;
-
-	const handleNewPath = () => {
-		const newPath = {
-			_id: crypto.randomUUID(),
-			name: 'New Path',
-			lineColor: '#d97706',
-			opacity: 1,
-			points: [],
-		};
-		actions.addPath(newPath);
-	};
-
-	const handleNewArea = () => {
-		const newArea = {
-			_id: crypto.randomUUID(),
-			name: 'New Region',
-			interiorColor: '#ff0000',
-			lineColor: 'transparent',
-			points: [],
-		};
-		actions.addArea(newArea);
-	};
-
-	const handleNewOverlay = () => {
-		const newOverlay = {
-			_id: crypto.randomUUID(),
-			name: 'New Overlay',
-			image: '',
-			bounds: [
-				[0, 0],
-				[-100, 100],
-			],
-		};
-		actions.addOverlay(newOverlay);
-	};
+	const { activeTool, isSaving } = state;
 
 	return (
-		<div className='absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-auto'>
-			<div className='bg-background/95 backdrop-blur border border-border p-2 rounded-lg shadow-xl'>
-				<Button size='sm' variant='primary' icon={isSaving ? Loader2 : Save} onClick={saveMap} disabled={isSaving}>
-					{isSaving ? 'Saving' : 'Save'}
-				</Button>
-			</div>
+		<div className='absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 pointer-events-none'>
+			{/* Floating Toolbar */}
+			<div className='pointer-events-auto flex items-center gap-2 bg-background/80 backdrop-blur-md border border-border/50 p-2 rounded-2xl shadow-2xl ring-1 ring-black/5'>
+				{/* 1. SELECT Tool */}
+				<ToolBtn
+					icon={MousePointer2}
+					title='Select (V)'
+					active={activeTool === 'select'}
+					onClick={() => actions.setTool('select')}
+				/>
 
-			<div className='bg-background/95 backdrop-blur border border-border p-1 rounded-lg shadow-xl flex flex-col gap-1'>
+				{/* 2. MARKER Tool */}
 				<ToolBtn
 					icon={MapPin}
-					label='Markers'
+					title='Marker (M)'
 					active={activeTool === 'markers'}
 					onClick={() => actions.setTool('markers')}
 				/>
-				<ToolBtn
-					icon={Footprints}
-					label='Paths'
-					active={activeTool === 'paths'}
-					onClick={() => actions.setTool('paths')}
-				/>
+
+				{/* 3. LABEL Tool */}
+				<ToolBtn icon={Type} title='Label (T)' active={activeTool === 'text'} onClick={() => actions.setTool('text')} />
+
+				{/* 4. REGION Tool */}
 				<ToolBtn
 					icon={Hexagon}
-					label='Regions'
+					title='Region (R)'
 					active={activeTool === 'areas'}
 					onClick={() => actions.setTool('areas')}
 				/>
+
+				{/* 5. PATH Tool */}
+				<ToolBtn
+					icon={Waypoints}
+					title='Path (P)'
+					active={activeTool === 'paths'}
+					onClick={() => actions.setTool('paths')}
+				/>
+
+				{/* 6. OVERLAYS Tool */}
 				<ToolBtn
 					icon={ImageIcon}
-					label='Overlays'
+					title='Overlays (O)'
 					active={activeTool === 'overlays'}
 					onClick={() => actions.setTool('overlays')}
 				/>
+
+				{/* 7. SAVE Button */}
+				<ToolBtn
+					icon={isSaving ? Loader2 : Save}
+					title='Save Map'
+					active={false} // Action button, not a mode
+					onClick={saveMap}
+					disabled={isSaving}
+					className={clsx(isSaving && 'animate-spin')}
+				/>
 			</div>
-
-			{activeTool === 'paths' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewPath} className='shadow-xl'>
-					New Path
-				</Button>
-			)}
-			{activeTool === 'areas' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewArea} className='shadow-xl'>
-					New Region
-				</Button>
-			)}
-			{activeTool === 'overlays' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewOverlay} className='shadow-xl'>
-					New Overlay
-				</Button>
-			)}
-
-			{mode === 'draw' && (
-				<div
-					className='bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl animate-pulse text-center cursor-pointer'
-					onClick={() => actions.setMode('select')}>
-					DRAWING ACTIVE
-					<br />
-					<span className='underline opacity-80'>Stop</span>
-				</div>
-			)}
 		</div>
 	);
 }
@@ -4810,39 +4857,51 @@ export default function PathStylePopup({ data, onChange }) {
 --- END OF features\admin\components\atlas\components\PathStylePopup.jsx ---
 
 --- FILE: features\admin\components\atlas\components\PatternDefs.jsx ---
-import React from 'react';
+// --- FILE: components/PatternDefs.jsx ---
+import React, { useMemo } from 'react';
 
-export const PatternDefs = ({ areas }) => {
-	const patterns = new Map();
+// Extract logic to avoid re-creation on every render
+const generatePatternId = (area) => {
+	const color = area.interiorColor || '#d97706';
+	const type = area.fillType;
+	const opacity = area.fillOpacity ?? 0.2;
+	const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
+	const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+	const safeColor = color.replace('#', '');
+	const safeOpacity = Math.round(opacity * 100);
 
-	areas.forEach((area) => {
-		if (area.fillType === 'hatch' || area.fillType === 'dots') {
-			const color = area.interiorColor || '#d97706';
-			const type = area.fillType;
-			const opacity = area.fillOpacity ?? 0.2;
+	return {
+		id: `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`,
+		type,
+		color,
+		opacity,
+		spacing,
+		weight,
+	};
+};
 
-			// Use defaults if new props aren't set
-			const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
-			const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+const PatternDefsComponent = ({ areas }) => {
+	const patterns = useMemo(() => {
+		const uniquePatterns = new Map();
 
-			const safeColor = color.replace('#', '');
-			const safeOpacity = Math.round(opacity * 100);
-
-			// Generate ID based on all visual properties
-			const id = `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`;
-
-			if (!patterns.has(id)) {
-				patterns.set(id, { id, type, color, opacity, spacing, weight });
+		areas.forEach((area) => {
+			if (area.fillType === 'hatch' || area.fillType === 'dots') {
+				const def = generatePatternId(area);
+				if (!uniquePatterns.has(def.id)) {
+					uniquePatterns.set(def.id, def);
+				}
 			}
-		}
-	});
+		});
 
-	if (patterns.size === 0) return null;
+		return Array.from(uniquePatterns.values());
+	}, [areas]);
+
+	if (patterns.length === 0) return null;
 
 	return (
 		<svg style={{ height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
 			<defs>
-				{Array.from(patterns.values()).map(({ id, type, color, opacity, spacing, weight }) => (
+				{patterns.map(({ id, type, color, opacity, spacing, weight }) => (
 					<pattern
 						key={id}
 						id={id}
@@ -4863,7 +4922,6 @@ export const PatternDefs = ({ areas }) => {
 							/>
 						)}
 						{type === 'dots' && (
-							// Staggered Dot Pattern
 							<>
 								<circle cx={spacing * 0.25} cy={spacing * 0.25} r={weight} fill={color} fillOpacity={opacity} />
 								<circle cx={spacing * 0.75} cy={spacing * 0.75} r={weight} fill={color} fillOpacity={opacity} />
@@ -4875,6 +4933,10 @@ export const PatternDefs = ({ areas }) => {
 		</svg>
 	);
 };
+
+// Only re-render if the areas array length changes or reference changes
+// This is safe because if an area updates its fill, the areas array ref changes in the reducer
+export const PatternDefs = React.memo(PatternDefsComponent);
 
 --- END OF features\admin\components\atlas\components\PatternDefs.jsx ---
 
@@ -4979,6 +5041,7 @@ export default function TileSelector({ options, value, onChange }) {
 --- END OF features\admin\components\atlas\components\TileSelector.jsx ---
 
 --- FILE: features\admin\components\atlas\components\VertexHandle.jsx ---
+// --- FILE: components/VertexHandle.jsx ---
 import L from 'leaflet';
 
 export const createHandleIcon = (isSelected, isSpecial = false) => {
@@ -4988,6 +5051,33 @@ export const createHandleIcon = (isSelected, isSpecial = false) => {
 		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
 		iconSize: [10, 10],
 		iconAnchor: [5, 5],
+	});
+};
+
+// NEW: Shared Move Handle (Glassmorphism style with arrows)
+export const createMoveHandleIcon = () => {
+	return L.divIcon({
+		className: 'move-handle',
+		html: `
+            <div style="
+                width: 24px; 
+                height: 24px; 
+                background: rgba(59, 130, 246, 0.9); 
+                border: 2px solid white; 
+                border-radius: 4px; 
+                cursor: move; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            ">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3-3M2 12h20M12 2v20"/>
+                </svg>
+            </div>
+        `,
+		iconSize: [24, 24],
+		iconAnchor: [12, 12],
 	});
 };
 
@@ -5997,8 +6087,9 @@ export const OverlayForm = ({ data, actions, onClose }) => {
 --- END OF features\admin\components\atlas\forms\OverlayForm.jsx ---
 
 --- FILE: features\admin\components\atlas\forms\PathForm.jsx ---
+// --- FILE: forms/PathForm.jsx ---
 import React from 'react';
-import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon } from 'lucide-react';
+import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon, AlignCenter } from 'lucide-react'; // Added AlignCenter
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 
@@ -6039,6 +6130,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 		curviness: 0,
 		labelDisplay: 'hover',
 		labelStyle: 'box',
+		textAlongLine: false, // NEW DEFAULT
 		...data,
 	};
 
@@ -6081,6 +6173,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 
 				<div className='space-y-4'>
 					<label className={LABEL_CLASS}>Line Style</label>
+					{/* ... (Existing Line Style Buttons kept same) ... */}
 					<div className='grid grid-cols-3 gap-2'>
 						{[
 							{
@@ -6134,6 +6227,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 								<label className={LABEL_CLASS}>Stroke Color</label>
 								<SmartColorPicker value={safeData.color} onChange={(val) => onChange('color', val)} />
 							</div>
+							{/* ... Thickness and Curviness controls kept same ... */}
 							<div className='space-y-2'>
 								<div className='flex justify-between'>
 									<label className={LABEL_CLASS}>Thickness</label>
@@ -6186,11 +6280,15 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 						</div>
 						<div className='space-y-2'>
 							<label className={LABEL_CLASS}>Style</label>
+							{/* Modified Style Selector to include Curved Option */}
 							<div className='flex bg-card border border-border rounded-md p-1'>
 								<button
-									onClick={() => onChange('labelStyle', 'box')}
-									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
-										safeData.labelStyle !== 'ghost'
+									onClick={() => {
+										onChange('labelStyle', 'box');
+										onChange('textAlongLine', false);
+									}}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.labelStyle === 'box' && !safeData.textAlongLine
 											? 'bg-primary text-white shadow-sm'
 											: 'text-muted-foreground hover:bg-muted'
 									}`}
@@ -6198,14 +6296,25 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 									<LayoutTemplate size={14} />
 								</button>
 								<button
-									onClick={() => onChange('labelStyle', 'ghost')}
-									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
-										safeData.labelStyle === 'ghost'
+									onClick={() => {
+										onChange('labelStyle', 'ghost');
+										onChange('textAlongLine', false);
+									}}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.labelStyle === 'ghost' && !safeData.textAlongLine
 											? 'bg-primary text-white shadow-sm'
 											: 'text-muted-foreground hover:bg-muted'
 									}`}
-									title='Text Only (Ghost)'>
+									title='Text Only'>
 									<TypeIcon size={14} />
+								</button>
+								<button
+									onClick={() => onChange('textAlongLine', true)}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.textAlongLine ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:bg-muted'
+									}`}
+									title='Curved on Line'>
+									<AlignCenter size={14} />
 								</button>
 							</div>
 						</div>
@@ -6326,7 +6435,7 @@ const initialState = {
 	overlays: [],
 	selection: null, // { type, id, index? }
 	mode: 'select', // 'select' | 'draw'
-	activeTool: 'markers',
+	activeTool: 'select',
 	isSaving: false,
 	visibility: {
 		markers: true,
@@ -6595,11 +6704,13 @@ export const useAtlasReducer = (preloadedState) => {
 --- END OF features\admin\components\atlas\hooks\useAtlasReducer.js ---
 
 --- FILE: features\admin\components\atlas\layers\EditAreasLayer.jsx ---
-import React, { useMemo, useState } from 'react';
+// --- FILE: features/admin/components/atlas/layers/EditAreasLayer.jsx ---
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { Polygon, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createHandleIcon, createMidpointIcon, createLabelIcon } from '@/features/atlas/utils/markerUtils';
+import { createMoveHandleIcon } from '../components/VertexHandle';
 import { getRoundedPath } from '@/features/atlas/utils/pathUtils';
 import { PatternDefs } from '../components/PatternDefs';
 
@@ -6613,202 +6724,343 @@ const getCentroid = (points) => {
 	let lat = 0,
 		lng = 0;
 	points.forEach((p) => {
-		lat += p.coordinates[0];
-		lng += p.coordinates[1];
+		// Handle both object {coordinates: []} and raw array [] formats
+		const c = p.coordinates || p;
+		lat += c[0];
+		lng += c[1];
 	});
 	return [lat / points.length, lng / points.length];
 };
 
-const AreaItem = ({ area, selection, activeTool, actions }) => {
-	const [isHovered, setIsHovered] = useState(false);
-
-	const isSelected = selection?.type === 'area' && selection.id === area._id;
-	const isInteractive = activeTool === 'areas';
-	const rawPoints = (area.points || []).map((p) => p.coordinates);
-
-	// 1. Geometry Calculation
-	const positions = useMemo(() => {
-		if (rawPoints.length < 3) return rawPoints;
-		if (area.curviness > 0) return getRoundedPath(rawPoints, area.curviness, true);
-		return rawPoints;
-	}, [rawPoints, area.curviness]);
-
-	const center = area.labelPosition || getCentroid(area.points);
-
-	// 2. Pattern Logic
-	let fillColor = area.interiorColor || '#ff0000';
-	let fillOpacity = area.fillOpacity ?? 0.2;
-
-	if (area.fillType === 'hatch' || area.fillType === 'dots') {
-		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
-		const safeOpacity = Math.round(fillOpacity * 100);
-		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity})`;
-		fillOpacity = 1;
-
-		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
-		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
-
-		// MATCH THE ID GENERATION IN PATTERN DEFS EXACTLY
-		const id = `pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight}`;
-		fillColor = `url(#${id})`;
-		fillOpacity = 1;
-	}
-
-	// 3. Label Visibility
-	let labelOpacity = 0;
-	if (area.labelDisplay === 'always') labelOpacity = 1;
-	else if (area.labelDisplay === 'hover' && (isHovered || isSelected)) labelOpacity = 1;
-	if (isSelected) labelOpacity = 1;
-	if (!area.name) labelOpacity = 0;
-
-	// 4. MEMOIZED ICONS (CRITICAL FIX FOR DRAG)
-	const labelIcon = useMemo(
-		() =>
-			createLabelIcon(area.name, {
-				color: area.labelColor,
-				fontSize: area.fontSize,
-				rotation: area.textRotation,
-				bgColor: area.labelBgColor,
-				bgOpacity: area.labelBgOpacity,
-				hasBorder: area.labelHasBorder,
-				borderRadius: area.labelRadius,
-				borderColor: area.labelBorderColor,
-				paddingX: area.paddingX,
-				paddingY: area.paddingY,
-				isSelected: isSelected && isInteractive,
-			}),
-		[
-			area.name,
-			area.labelColor,
-			area.fontSize,
-			area.textRotation,
-			area.labelBgColor,
-			area.labelBgOpacity,
-			area.labelHasBorder,
-			area.labelRadius,
-			area.labelBorderColor,
-			area.paddingX,
-			area.paddingY,
-			isSelected,
-			isInteractive,
-		]
+const useAreaIcons = () => {
+	return useMemo(
+		() => ({
+			handleIcon: createHandleIcon(true),
+			midpointIcon: createMidpointIcon(),
+			moveIcon: createMoveHandleIcon(),
+		}),
+		[]
 	);
+};
 
-	const handleIcon = useMemo(() => createHandleIcon(true), []);
-	const midpointIcon = useMemo(() => createMidpointIcon(), []);
+const AreaItem = React.memo(
+	({ area, isSelected, isInteractive, actions }) => {
+		const [isHovered, setIsHovered] = useState(false);
+		const { handleIcon, midpointIcon, moveIcon } = useAreaIcons();
 
-	// 5. Handlers
-	const handleLabelDrag = (e) => {
-		const { lat, lng } = e.target.getLatLng();
-		// Use requestAnimationFrame or debounce if this is still heavy,
-		// but normally updating Redux/State on dragend is safer than drag
-		actions.updateArea(area._id, { labelPosition: [lat, lng] });
-	};
+		const polygonRef = useRef(null);
+		const labelRef = useRef(null);
+		const dragStartRef = useRef(null);
 
-	return (
-		<React.Fragment>
-			{positions.length > 0 && (
+		const rawPoints = (area.points || []).map((p) => p.coordinates);
+
+		// Geometry
+		const positions = useMemo(() => {
+			if (rawPoints.length < 3) return rawPoints;
+			if (area.curviness > 0) return getRoundedPath(rawPoints, area.curviness, true);
+			return rawPoints;
+		}, [rawPoints, area.curviness]);
+
+		// Geometric Center
+		const geometricCenter = useMemo(() => getCentroid(area.points), [area.points]);
+
+		// Label Position
+		const labelCenter = useMemo(() => area.labelPosition || geometricCenter, [area.labelPosition, geometricCenter]);
+
+		// Styles
+		const fillStyle = useMemo(() => {
+			let fillColor = area.interiorColor || '#ff0000';
+			let fillOpacity = area.fillOpacity ?? 0.2;
+
+			if (area.fillType === 'hatch' || area.fillType === 'dots') {
+				const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
+				const safeOpacity = Math.round(fillOpacity * 100);
+				const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
+				const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
+				const id = `pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight}`;
+				fillColor = `url(#${id})`;
+				fillOpacity = 1;
+			}
+			return { fillColor, fillOpacity };
+		}, [area.interiorColor, area.fillOpacity, area.fillType, area.fillSpacing, area.fillWeight]);
+
+		const labelOpacity = useMemo(() => {
+			if (!area.name) return 0;
+			if (area.labelDisplay === 'always') return 1;
+			if (isSelected) return 1;
+			if (area.labelDisplay === 'hover' && isHovered) return 1;
+			return 0;
+		}, [area.name, area.labelDisplay, isSelected, isHovered]);
+
+		const labelIcon = useMemo(
+			() =>
+				createLabelIcon(area.name, {
+					color: area.labelColor,
+					fontSize: area.fontSize,
+					rotation: area.textRotation,
+					bgColor: area.labelBgColor,
+					bgOpacity: area.labelBgOpacity,
+					hasBorder: area.labelHasBorder,
+					borderRadius: area.labelRadius,
+					borderColor: area.labelBorderColor,
+					paddingX: area.paddingX,
+					paddingY: area.paddingY,
+					isSelected: isSelected && isInteractive,
+				}),
+			[area, isSelected, isInteractive]
+		);
+
+		// --- General Handlers ---
+		const onAreaClick = useCallback(
+			(e) => {
+				if (!isInteractive) return;
+				L.DomEvent.stopPropagation(e);
+				actions.selectItem('area', area._id);
+			},
+			[isInteractive, area._id, actions]
+		);
+
+		const onCtxMenu = useCallback(
+			(e) => {
+				L.DomEvent.stopPropagation(e);
+				e.originalEvent.preventDefault();
+				actions.openContextMenu({
+					type: 'entity',
+					position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+					target: { type: 'area', id: area._id, data: area },
+				});
+			},
+			[area, actions]
+		);
+
+		const handleLabelDrag = useCallback(
+			(e) => {
+				const { lat, lng } = e.target.getLatLng();
+				actions.updateArea(area._id, { labelPosition: [lat, lng] });
+			},
+			[area._id, actions]
+		);
+
+		// --- SHAPE MOVE HANDLERS (Whole Polygon) ---
+		const onMoveStart = useCallback(
+			(e) => {
+				dragStartRef.current = {
+					type: 'move',
+					startLatLng: e.target.getLatLng(),
+					initialVisualPoints: positions.map((p) => [...p]),
+					initialLabelPos: [...labelCenter],
+				};
+			},
+			[positions, labelCenter]
+		);
+
+		const onMoveDrag = useCallback((e) => {
+			if (!dragStartRef.current || dragStartRef.current.type !== 'move' || !polygonRef.current) return;
+
+			const currentLatLng = e.target.getLatLng();
+			const start = dragStartRef.current.startLatLng;
+			const latDiff = currentLatLng.lat - start.lat;
+			const lngDiff = currentLatLng.lng - start.lng;
+
+			const newVisualPoints = dragStartRef.current.initialVisualPoints.map((p) => [p[0] + latDiff, p[1] + lngDiff]);
+			polygonRef.current.setLatLngs(newVisualPoints);
+
+			if (labelRef.current) {
+				const lStart = dragStartRef.current.initialLabelPos;
+				labelRef.current.setLatLng([lStart[0] + latDiff, lStart[1] + lngDiff]);
+			}
+		}, []);
+
+		const onMoveEnd = useCallback(
+			(e) => {
+				if (!dragStartRef.current || dragStartRef.current.type !== 'move') return;
+				const endLatLng = e.target.getLatLng();
+				const start = dragStartRef.current.startLatLng;
+				const latDiff = endLatLng.lat - start.lat;
+				const lngDiff = endLatLng.lng - start.lng;
+
+				const newPoints = area.points.map((p) => ({
+					...p,
+					coordinates: [p.coordinates[0] + latDiff, p.coordinates[1] + lngDiff],
+				}));
+
+				const updates = { points: newPoints };
+				if (area.labelPosition) {
+					updates.labelPosition = [area.labelPosition[0] + latDiff, area.labelPosition[1] + lngDiff];
+				}
+
+				actions.updateArea(area._id, updates);
+				dragStartRef.current = null;
+			},
+			[area._id, area.points, area.labelPosition, actions]
+		);
+
+		// --- VERTEX MOVE HANDLERS (Single Point) ---
+
+		const onVertexDragStart = useCallback(() => {
+			// Snapshot the raw control points
+			dragStartRef.current = {
+				type: 'vertex',
+				rawPoints: area.points.map((p) => [...p.coordinates]),
+			};
+		}, [area.points]);
+
+		const onVertexDrag = useCallback(
+			(e, index) => {
+				if (!dragStartRef.current || dragStartRef.current.type !== 'vertex' || !polygonRef.current) return;
+
+				const latlng = e.target.getLatLng();
+
+				// 1. Update the specific point in our temporary array
+				const currentPoints = dragStartRef.current.rawPoints;
+				currentPoints[index] = [latlng.lat, latlng.lng];
+
+				// 2. Re-calculate Smoothing (if enabled)
+				let visualPoints = currentPoints;
+				if (area.curviness > 0) {
+					visualPoints = getRoundedPath(currentPoints, area.curviness, true);
+				}
+
+				// 3. Imperative Update
+				polygonRef.current.setLatLngs(visualPoints);
+
+				// 4. Update Label Centroid (if dynamic)
+				// If user hasn't manually pinned the label, it should move with the shape
+				if (!area.labelPosition && labelRef.current) {
+					const newCenter = getCentroid(currentPoints);
+					labelRef.current.setLatLng(newCenter);
+				}
+			},
+			[area.curviness, area.labelPosition]
+		);
+
+		const onVertexDragEnd = useCallback(
+			(e, index) => {
+				const latlng = e.target.getLatLng();
+				actions.updateAreaPoint(area._id, index, [latlng.lat, latlng.lng]);
+				dragStartRef.current = null;
+			},
+			[area._id, actions]
+		);
+
+		if (positions.length === 0) return null;
+
+		return (
+			<React.Fragment>
 				<Polygon
+					ref={polygonRef}
 					positions={positions}
 					pathOptions={{
 						color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#d97706',
-						fillColor: fillColor,
-						fillOpacity: fillOpacity,
+						fillColor: fillStyle.fillColor,
+						fillOpacity: fillStyle.fillOpacity,
 						weight: area.weight || 2,
 						dashArray: area.borderStyle === 'dashed' ? '10, 10' : area.borderStyle === 'dotted' ? '2, 6' : null,
 						lineJoin: 'round',
 					}}
 					eventHandlers={{
-						click: (e) => {
-							if (!isInteractive) return;
-							L.DomEvent.stopPropagation(e);
-							actions.selectItem('area', area._id);
-						},
-						contextmenu: (e) => {
-							L.DomEvent.stopPropagation(e);
-							e.originalEvent.preventDefault();
-							actions.openContextMenu({
-								type: 'entity',
-								position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
-								target: { type: 'area', id: area._id, data: area },
-							});
-						},
+						click: onAreaClick,
+						contextmenu: onCtxMenu,
 						mouseover: () => setIsHovered(true),
 						mouseout: () => setIsHovered(false),
 					}}
 				/>
-			)}
 
-			{/* Label Marker */}
-			{area.name && labelOpacity > 0 && (
-				<Marker
-					position={center}
-					icon={labelIcon}
-					draggable={isSelected && isInteractive}
-					opacity={labelOpacity}
-					eventHandlers={{
-						click: (e) => {
-							if (!isInteractive) return;
-							L.DomEvent.stopPropagation(e);
-							actions.selectItem('area', area._id);
-						},
-						dragend: handleLabelDrag, // Only update on drop to save performance
-					}}
-				/>
-			)}
+				{area.name && labelOpacity > 0 && (
+					<Marker
+						ref={labelRef}
+						position={labelCenter}
+						icon={labelIcon}
+						draggable={isSelected && isInteractive}
+						opacity={labelOpacity}
+						zIndexOffset={100}
+						eventHandlers={{
+							click: onAreaClick,
+							dragend: handleLabelDrag,
+						}}
+					/>
+				)}
 
-			{/* EDIT HANDLES */}
-			{isSelected && (
-				<>
-					{area.points.map((pt, idx) => (
-						<React.Fragment key={`v-${idx}`}>
-							<Marker
-								position={pt.coordinates}
-								icon={handleIcon}
-								draggable={true}
-								eventHandlers={{
-									dragend: (e) => {
-										const { lat, lng } = e.target.getLatLng();
-										actions.updateAreaPoint(area._id, idx, [lat, lng]);
-									},
-									contextmenu: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.deleteAreaPoint(area._id, idx);
-									},
-									click: (e) => L.DomEvent.stopPropagation(e),
-								}}
-							/>
-							<Marker
-								position={getMidpoint(pt, area.points[(idx + 1) % area.points.length])}
-								icon={midpointIcon}
-								eventHandlers={{
-									click: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.insertAreaPoint(
-											area._id,
-											idx,
-											getMidpoint(pt, area.points[(idx + 1) % area.points.length])
-										);
-									},
-								}}
-							/>
-						</React.Fragment>
-					))}
-				</>
-			)}
-		</React.Fragment>
-	);
-};
+				{isSelected && (
+					<>
+						<Marker
+							position={geometricCenter}
+							draggable={true}
+							icon={moveIcon}
+							zIndexOffset={1000}
+							eventHandlers={{
+								dragstart: onMoveStart,
+								drag: onMoveDrag,
+								dragend: onMoveEnd,
+								click: (e) => L.DomEvent.stopPropagation(e),
+							}}
+						/>
+
+						{area.points.map((pt, idx) => (
+							<React.Fragment key={`v-${idx}`}>
+								<Marker
+									position={pt.coordinates}
+									icon={handleIcon}
+									draggable={true}
+									eventHandlers={{
+										dragstart: onVertexDragStart,
+										drag: (e) => onVertexDrag(e, idx),
+										dragend: (e) => onVertexDragEnd(e, idx),
+										contextmenu: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.deleteAreaPoint(area._id, idx);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+								<Marker
+									position={getMidpoint(pt, area.points[(idx + 1) % area.points.length])}
+									icon={midpointIcon}
+									eventHandlers={{
+										click: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.insertAreaPoint(
+												area._id,
+												idx,
+												getMidpoint(pt, area.points[(idx + 1) % area.points.length])
+											);
+										},
+									}}
+								/>
+							</React.Fragment>
+						))}
+					</>
+				)}
+			</React.Fragment>
+		);
+	},
+	(prev, next) => {
+		if (prev.area !== next.area) return false;
+		if (prev.isInteractive !== next.isInteractive) return false;
+		if (prev.isSelected !== next.isSelected) return false;
+		return true;
+	}
+);
 
 export default function EditAreasLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { areas, selection, activeTool, visibility } = state;
+
 	if (!visibility.areas) return null;
+
+	const isInteractive = activeTool === 'areas' || activeTool === 'select';
+
 	return (
 		<>
 			<PatternDefs areas={areas} />
 			{areas.map((area) => (
-				<AreaItem key={area._id} area={area} selection={selection} activeTool={activeTool} actions={actions} />
+				<AreaItem
+					key={area._id}
+					area={area}
+					isSelected={selection?.type === 'area' && selection.id === area._id}
+					isInteractive={isInteractive}
+					actions={actions}
+				/>
 			))}
 		</>
 	);
@@ -6817,53 +7069,91 @@ export default function EditAreasLayer() {
 --- END OF features\admin\components\atlas\layers\EditAreasLayer.jsx ---
 
 --- FILE: features\admin\components\atlas\layers\EditMarkersLayer.jsx ---
-import React from 'react';
+// --- FILE: layers/EditMarkersLayer.jsx ---
+import React, { useMemo, useCallback } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
+const MarkerItem = React.memo(
+	({ marker, isSelected, isInteractive, actions }) => {
+		// Added isInteractive prop
+
+		const icon = useMemo(() => resolveMarkerIcon({ ...marker, isSelected }), [marker, isSelected]);
+
+		const onClick = useCallback(
+			(e) => {
+				// Allow selection if tool matches OR if we are in universal select mode
+				if (!isInteractive) return;
+				L.DomEvent.stopPropagation(e);
+				actions.selectItem('marker', marker._id);
+			},
+			[marker._id, actions, isInteractive]
+		);
+
+		const onDragEnd = useCallback(
+			(e) => {
+				const { lat, lng } = e.target.getLatLng();
+				actions.updateMarker(marker._id, { lat, lng });
+			},
+			[marker._id, actions]
+		);
+
+		const onCtxMenu = useCallback(
+			(e) => {
+				L.DomEvent.stopPropagation(e);
+				e.originalEvent.preventDefault();
+				actions.openContextMenu({
+					type: 'entity',
+					position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+					target: { type: 'marker', id: marker._id, data: marker },
+				});
+			},
+			[marker, actions]
+		);
+
+		return (
+			<Marker
+				position={[marker.lat, marker.lng]}
+				icon={icon}
+				draggable={isSelected} // Only drag if selected
+				opacity={isSelected ? 1 : 0.8}
+				eventHandlers={{
+					click: onClick,
+					dragend: onDragEnd,
+					contextmenu: onCtxMenu,
+				}}
+			/>
+		);
+	},
+	(prev, next) => {
+		return (
+			prev.marker === next.marker && prev.isSelected === next.isSelected && prev.isInteractive === next.isInteractive
+		);
+	}
+);
+
 export default function EditMarkersLayer() {
 	const { state, actions } = useAtlasEditor();
-	const { markers, selection, visibility } = state;
+	const { markers, selection, visibility, activeTool } = state;
 
 	if (!visibility.markers) return null;
 
+	// Universal Select Logic
+	const isInteractive = activeTool === 'markers' || activeTool === 'select' || activeTool === 'text';
+
 	return (
 		<>
-			{markers.map((m) => {
-				const isSelected = selection?.type === 'marker' && selection.id === m._id;
-
-				return (
-					<Marker
-						key={m._id}
-						position={[m.lat, m.lng]}
-						// Pass selection state to resolver for dashed border on text
-						icon={resolveMarkerIcon({ ...m, isSelected })}
-						draggable={true}
-						opacity={isSelected ? 1 : 0.8}
-						eventHandlers={{
-							click: (e) => {
-								L.DomEvent.stopPropagation(e);
-								actions.selectItem('marker', m._id);
-							},
-							dragend: (e) => {
-								const { lat, lng } = e.target.getLatLng();
-								actions.updateMarker(m._id, { lat, lng });
-							},
-							contextmenu: (e) => {
-								L.DomEvent.stopPropagation(e);
-								e.originalEvent.preventDefault();
-								actions.openContextMenu({
-									type: 'entity',
-									position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
-									target: { type: 'marker', id: m._id, data: m },
-								});
-							},
-						}}
-					/>
-				);
-			})}
+			{markers.map((m) => (
+				<MarkerItem
+					key={m._id}
+					marker={m}
+					isSelected={selection?.type === 'marker' && selection.id === m._id}
+					isInteractive={isInteractive}
+					actions={actions}
+				/>
+			))}
 		</>
 	);
 }
@@ -6871,18 +7161,21 @@ export default function EditMarkersLayer() {
 --- END OF features\admin\components\atlas\layers\EditMarkersLayer.jsx ---
 
 --- FILE: features\admin\components\atlas\layers\EditOverlaysLayer.jsx ---
+// --- FILE: layers/EditOverlaysLayer.jsx ---
 import React from 'react';
 import { ImageOverlay, Rectangle, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
-import { createHandleIcon } from '../components/VertexHandle';
+import { createHandleIcon, createMoveHandleIcon } from '../components/VertexHandle'; // Import new icon
 
 export default function EditOverlaysLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { overlays, selection, activeTool, visibility } = state;
-	const isInteractive = activeTool === 'overlays';
 
-	// FIX: Robust URL resolver that handles null/undefined/non-strings
+	// Universal Select Logic
+	const isInteractive = activeTool === 'overlays' || activeTool === 'select';
+
+	// ... helper
 	const getUrl = (path) => {
 		if (!path || typeof path !== 'string') return '';
 		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
@@ -6895,10 +7188,7 @@ export default function EditOverlaysLayer() {
 			{overlays.map((overlay) => {
 				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
 				const imagePath = getUrl(overlay.image);
-
-				// Bounds: [[lat1, lng1], [lat2, lng2]]
 				const b = overlay.bounds;
-				// Safety check for bounds to prevent arithmetic crash
 				if (!b || b.length < 2 || !b[0] || !b[1]) return null;
 
 				const centerLat = (b[0][0] + b[1][0]) / 2;
@@ -6906,7 +7196,6 @@ export default function EditOverlaysLayer() {
 
 				return (
 					<React.Fragment key={overlay._id}>
-						{/* IMAGE - Only render if we have a path */}
 						{imagePath && (
 							<ImageOverlay
 								url={imagePath}
@@ -6916,7 +7205,6 @@ export default function EditOverlaysLayer() {
 							/>
 						)}
 
-						{/* HIT BOX */}
 						<Rectangle
 							bounds={overlay.bounds}
 							pathOptions={{
@@ -6934,19 +7222,13 @@ export default function EditOverlaysLayer() {
 							}}
 						/>
 
-						{/* HANDLES (Only when selected) */}
 						{isSelected && (
 							<>
-								{/* CENTER MOVE HANDLE */}
+								{/* CENTER MOVE HANDLE - Updated to use shared icon */}
 								<Marker
 									position={[centerLat, centerLng]}
 									draggable={true}
-									icon={L.divIcon({
-										className: 'move-handle',
-										html: '<div style="width: 24px; height: 24px; background: rgba(59, 130, 246, 0.5); border: 2px solid white; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 12h20L12 2zm0 20l10-10H2l10 10z"/></svg></div>',
-										iconSize: [24, 24],
-										iconAnchor: [12, 12],
-									})}
+									icon={createMoveHandleIcon()}
 									eventHandlers={{
 										dragend: (e) => {
 											const newCenter = e.target.getLatLng();
@@ -6956,8 +7238,7 @@ export default function EditOverlaysLayer() {
 									}}
 								/>
 
-								{/* RESIZE HANDLES */}
-								{/* Top Left */}
+								{/* RESIZE HANDLES (Unchanged) */}
 								<Marker
 									position={b[0]}
 									draggable={true}
@@ -6970,7 +7251,6 @@ export default function EditOverlaysLayer() {
 										click: (e) => L.DomEvent.stopPropagation(e),
 									}}
 								/>
-								{/* Bottom Right */}
 								<Marker
 									position={b[1]}
 									draggable={true}
@@ -6995,132 +7275,198 @@ export default function EditOverlaysLayer() {
 --- END OF features\admin\components\atlas\layers\EditOverlaysLayer.jsx ---
 
 --- FILE: features\admin\components\atlas\layers\EditPathsLayer.jsx ---
-import React, { useMemo } from 'react';
+/* --- FILE: features/admin/components/atlas/layers/EditPathsLayer.jsx --- */
+import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { Polyline, Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createPathHandleIcon, createPathMidpointIcon } from '@/features/atlas/utils/markerUtils';
-import { getSmoothPath } from '@/features/atlas/utils/pathUtils'; // Import the new math
+import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
+import { TextAlongPath } from '@/features/atlas/components/layers/TextAlongPath';
 
 const getMidpoint = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 
-const PathItem = ({ path, isSelected, isInteractive, selection, actions }) => {
-	// 1. Calculate Geometry
-	const rawPositions = path.points.map((p) => p.coordinates);
+const PathItem = React.memo(
+	({ path, isSelected, selectedPointIndex, isInteractive, actions }) => {
+		const polylineRef = useRef(null);
+		const dragStartRef = useRef(null);
+		const [isHovered, setIsHovered] = useState(false);
 
-	// 2. Smooth if needed
-	const positions = useMemo(() => {
-		// Only curve if we have at least 3 points and curviness > 0
-		if (path.curviness > 0 && rawPositions.length >= 3) {
-			// Map 0.1-1.0 input to a reasonable tension (0.1 is tight, 1.0 is loose)
-			return getSmoothPath(rawPositions, path.curviness);
+		// Geometry
+		const rawPositions = useMemo(() => path.points.map((p) => p.coordinates), [path.points]);
+		const positions = useMemo(() => {
+			if (path.curviness > 0 && rawPositions.length >= 3) {
+				return getSmoothPath(rawPositions, path.curviness);
+			}
+			return rawPositions;
+		}, [rawPositions, path.curviness]);
+
+		// FIX: Safe Click Handler
+		const onClick = useCallback(
+			(e) => {
+				if (!isInteractive) return;
+				L.DomEvent.stopPropagation(e);
+				L.DomEvent.preventDefault(e);
+
+				requestAnimationFrame(() => {
+					actions.selectItem('path', path._id || path.id);
+				});
+			},
+			[isInteractive, path._id, path.id, actions]
+		);
+
+		// --- DRAG HANDLERS ---
+		const onVertexDragStart = useCallback(() => {
+			dragStartRef.current = {
+				rawPoints: path.points.map((p) => [...p.coordinates]),
+			};
+		}, [path.points]);
+
+		const onVertexDrag = useCallback(
+			(e, index) => {
+				if (!dragStartRef.current || !polylineRef.current) return;
+				const latlng = e.target.getLatLng();
+				const currentPoints = dragStartRef.current.rawPoints;
+				currentPoints[index] = [latlng.lat, latlng.lng];
+
+				let visualPoints = currentPoints;
+				if (path.curviness > 0 && currentPoints.length >= 3) {
+					visualPoints = getSmoothPath(currentPoints, path.curviness);
+				}
+				polylineRef.current.setLatLngs(visualPoints);
+			},
+			[path.curviness]
+		);
+
+		const onVertexDragEnd = useCallback(
+			(e, index) => {
+				const latlng = e.target.getLatLng();
+				actions.updatePathPoint(path._id || path.id, index, { coordinates: [latlng.lat, latlng.lng] });
+				dragStartRef.current = null;
+			},
+			[path._id, path.id, actions]
+		);
+
+		if (positions.length === 0 && !isSelected) return null;
+
+		// Visibility
+		const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
+		const showTooltip = path.name && path.labelDisplay !== 'none' && !path.textAlongLine;
+
+		let isTextVisible = false;
+		if (path.textAlongLine && path.labelDisplay !== 'none') {
+			if (path.labelDisplay === 'always') isTextVisible = true;
+			else if (path.labelDisplay === 'hover') isTextVisible = isHovered || isSelected;
 		}
-		return rawPositions;
-	}, [rawPositions, path.curviness]);
 
-	if (positions.length === 0 && !isSelected) return null;
+		return (
+			<React.Fragment>
+				{positions.length > 0 && (
+					<Polyline
+						ref={polylineRef}
+						positions={positions}
+						pathOptions={{
+							color: path.color || '#d97706',
+							weight: isSelected ? (path.weight || 5) + 2 : path.weight || 5,
+							opacity: path.opacity || 1,
+							dashArray: path.dashArray || null,
+							lineCap: 'round',
+							lineJoin: 'round',
+						}}
+						eventHandlers={{
+							click: onClick,
+							mouseover: () => setIsHovered(true),
+							mouseout: () => setIsHovered(false),
+						}}>
+						{showTooltip && (
+							<Tooltip
+								permanent={path.labelDisplay === 'always'}
+								direction='center'
+								className={tooltipClass}
+								opacity={path.labelStyle === 'ghost' ? 1 : 0.9}>
+								<span>{path.name}</span>
+							</Tooltip>
+						)}
 
-	// 3. Label Style
-	const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
+						{path.textAlongLine && path.name && (
+							<TextAlongPath
+								layerRef={polylineRef}
+								text={path.name}
+								visible={isTextVisible}
+								style={{
+									color: '#ffffff',
+									strokeColor: path.color || '#000',
+									opacity: path.opacity || 1,
+									fontSize: 12,
+									fontWeight: 800,
+								}}
+							/>
+						)}
+					</Polyline>
+				)}
 
-	return (
-		<React.Fragment>
-			{/* The Line */}
-			{positions.length > 0 && (
-				<Polyline
-					positions={positions}
-					pathOptions={{
-						color: path.color || '#d97706',
-						weight: isSelected ? (path.weight || 5) + 2 : path.weight || 5,
-						opacity: path.opacity || 1,
-						dashArray: path.dashArray || null,
-						lineCap: 'round',
-						lineJoin: 'round',
-					}}
-					eventHandlers={{
-						click: (e) => {
-							if (!isInteractive) return;
-							L.DomEvent.stopPropagation(e);
-							actions.selectItem('path', path._id);
-						},
-					}}>
-					{path.name && path.labelDisplay !== 'none' && (
-						<Tooltip
-							permanent={path.labelDisplay === 'always'}
-							direction='center'
-							className={tooltipClass}
-							opacity={path.labelStyle === 'ghost' ? 1 : 0.9}>
-							<span>{path.name}</span>
-						</Tooltip>
-					)}
-				</Polyline>
-			)}
-
-			{/* EDIT HANDLES - Only visible when selected */}
-			{isSelected && (
-				<>
-					{/* Vertices */}
-					{path.points.map((pt, idx) => {
-						const hasText = !!pt.text && pt.text.trim().length > 0;
-						const isPointSelected = selection?.index === idx;
-
-						return (
+				{isSelected && (
+					<>
+						{path.points.map((pt, idx) => (
 							<Marker
 								key={`v-${idx}`}
 								position={pt.coordinates}
-								icon={createPathHandleIcon(isPointSelected, hasText)}
+								icon={createPathHandleIcon(selectedPointIndex === idx, !!pt.text)}
 								draggable={true}
 								zIndexOffset={1000}
 								eventHandlers={{
-									dragend: (e) => {
-										const { lat, lng } = e.target.getLatLng();
-										actions.updatePathPoint(path._id, idx, { coordinates: [lat, lng] });
-									},
+									dragstart: onVertexDragStart,
+									drag: (e) => onVertexDrag(e, idx),
+									dragend: (e) => onVertexDragEnd(e, idx),
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
-										actions.selectItem('path', path._id, idx);
+										actions.selectItem('path', path._id || path.id, idx);
 									},
 									contextmenu: (e) => {
 										L.DomEvent.stopPropagation(e);
-										actions.deletePathPoint(path._id, idx);
+										actions.deletePathPoint(path._id || path.id, idx);
 									},
 								}}
 							/>
-						);
-					})}
-
-					{/* Midpoints (Insert) */}
-					{path.points.map((pt, idx) => {
-						if (idx === path.points.length - 1) return null;
-						const nextPt = path.points[idx + 1];
-						const mid = getMidpoint(pt.coordinates, nextPt.coordinates);
-
-						return (
-							<Marker
-								key={`m-${idx}`}
-								position={mid}
-								icon={createPathMidpointIcon()}
-								zIndexOffset={900}
-								opacity={0.6}
-								eventHandlers={{
-									click: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.insertPathPoint(path._id, idx + 1, mid);
-									},
-								}}
-							/>
-						);
-					})}
-				</>
-			)}
-		</React.Fragment>
-	);
-};
+						))}
+						{path.points.map((pt, idx) => {
+							if (idx === path.points.length - 1) return null;
+							const nextPt = path.points[idx + 1];
+							const mid = getMidpoint(pt.coordinates, nextPt.coordinates);
+							return (
+								<Marker
+									key={`m-${idx}`}
+									position={mid}
+									icon={createPathMidpointIcon()}
+									zIndexOffset={900}
+									opacity={0.6}
+									eventHandlers={{
+										click: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.insertPathPoint(path._id || path.id, idx + 1, mid);
+										},
+									}}
+								/>
+							);
+						})}
+					</>
+				)}
+			</React.Fragment>
+		);
+	},
+	(prev, next) => {
+		if (prev.path !== next.path) return false;
+		if (prev.isInteractive !== next.isInteractive) return false;
+		if (prev.isSelected !== next.isSelected) return false;
+		if (prev.selectedPointIndex !== next.selectedPointIndex) return false;
+		return true;
+	}
+);
 
 export default function EditPathsLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { paths, selection, activeTool, visibility } = state;
-	const isInteractive = activeTool === 'paths';
+	const isInteractive = activeTool === 'paths' || activeTool === 'select';
 
 	if (!visibility.paths) return null;
 
@@ -7128,10 +7474,12 @@ export default function EditPathsLayer() {
 		<>
 			{paths.map((path) => (
 				<PathItem
-					key={path._id}
+					key={path._id || path.id}
 					path={path}
-					isSelected={selection?.type === 'path' && selection.id === path._id}
-					selection={selection}
+					isSelected={selection?.type === 'path' && selection.id === (path._id || path.id)}
+					selectedPointIndex={
+						selection?.type === 'path' && selection.id === (path._id || path.id) ? selection.index : undefined
+					}
 					isInteractive={isInteractive}
 					actions={actions}
 				/>
@@ -7143,106 +7491,118 @@ export default function EditPathsLayer() {
 --- END OF features\admin\components\atlas\layers\EditPathsLayer.jsx ---
 
 --- FILE: features\admin\components\atlas\services\atlasMapper.js ---
-/**
- * Transforms raw Supabase/JSON data into flat Editor State
- * Assigns temporary _id for session management if missing
- */
+/* --- FILE: features/admin/components/atlas/services/atlasMapper.js --- */
+
+// Helper: Native UUID generation
+const generateId = () => {
+	if (typeof self !== 'undefined' && self.crypto && self.crypto.randomUUID) {
+		return self.crypto.randomUUID();
+	}
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+		var r = (Math.random() * 16) | 0,
+			v = c == 'x' ? r : (r & 0x3) | 0x8;
+		return v.toString(16);
+	});
+};
+
 export const normalizeMapData = (dbData) => {
-	// 1. Markers (Flatten from Categories)
+	const data = dbData || {};
+
+	// 1. Markers
 	const markers = [];
-	const rawAnn = dbData.annotations || {};
+	const rawAnn = data.annotations || {};
 
 	Object.entries(rawAnn).forEach(([catKey, catData]) => {
-		if (Array.isArray(catData.items)) {
+		if (catData && Array.isArray(catData.items)) {
 			catData.items.forEach((item) => {
 				markers.push({
 					...item,
 					category: catKey,
-					_id: item._id || crypto.randomUUID(), // Stable ID for session
-					lat: Number(item.lat) || 0,
-					lng: Number(item.lng) || 0,
+					_id: item._id || item.id || generateId(),
+					position: [Number(item.lat || 0), Number(item.lng || 0)],
+					lat: Number(item.lat || 0),
+					lng: Number(item.lng || 0),
 				});
 			});
 		}
 	});
 
 	// 2. Paths
-	const paths = (dbData.paths || []).map((p) => ({
+	const paths = (data.paths || []).map((p) => ({
 		...p,
-		_id: p._id || crypto.randomUUID(),
+		_id: p._id || p.id || generateId(),
+		textAlongLine: !!p.textAlongLine,
+		// FIX: Default to 'hover' if missing, so text isn't invisible by default
+		labelDisplay: p.labelDisplay || 'hover',
+		labelStyle: p.labelStyle || 'box',
 		points: (Array.isArray(p.points) ? p.points : []).map((pt) => {
-			// Normalize point structure: [lat,lng] -> { coordinates: [lat,lng], text: "" }
 			if (Array.isArray(pt)) return { coordinates: pt, text: '' };
 			return pt;
 		}),
 	}));
 
-	// 3. Areas (Regions)
+	// 3. Areas
 	const areas = [];
-	const rawAreas = dbData.areas || {};
-	// Handle both legacy array format and object format
+	const rawAreas = data.areas || {};
 	const areaList = Array.isArray(rawAreas) ? rawAreas : Object.values(rawAreas).flatMap((cat) => cat.items || []);
 
 	areaList.forEach((a) => {
 		areas.push({
 			...a,
-			_id: a._id || crypto.randomUUID(),
+			_id: a._id || a.id || generateId(),
 			points: Array.isArray(a.points) ? a.points : [],
 		});
 	});
 
 	// 4. Overlays
-	const overlays = (dbData.overlays || []).map((o) => ({
-		...o,
-		_id: o._id || crypto.randomUUID(),
-		// Ensure bounds are valid arrays
-		bounds: o.bounds || [
-			[0, 0],
-			[0, 0],
-		],
-	}));
+	const overlays = (data.overlays || []).map((o) => {
+		let safeBounds = o.bounds;
+		if (!safeBounds || !Array.isArray(safeBounds) || safeBounds.length < 2) {
+			safeBounds = [
+				[0, 0],
+				[0, 0],
+			];
+		}
+		return {
+			...o,
+			_id: o._id || o.id || generateId(),
+			bounds: safeBounds,
+		};
+	});
 
 	return { markers, paths, areas, overlays };
 };
 
-/**
- * Prepares Editor State for Database Save
- * Removes temporary IDs and re-nests data
- */
 export const serializeMapData = (state) => {
-	// 1. Re-nest Markers
 	const annotations = {};
 	state.markers.forEach((m) => {
 		const cat = m.category || 'default';
-		// Auto-generate nice name if new category
 		if (!annotations[cat]) {
 			const name = cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 			annotations[cat] = { name, items: [] };
 		}
-
-		const { _id, category, ...cleanItem } = m;
-		// Enforce precision
-		cleanItem.lat = Number(cleanItem.lat.toFixed(4));
-		cleanItem.lng = Number(cleanItem.lng.toFixed(4));
-
+		const { _id, id, position, category, ...cleanItem } = m;
+		cleanItem.lat = Number(Number(cleanItem.lat).toFixed(4));
+		cleanItem.lng = Number(Number(cleanItem.lng).toFixed(4));
+		cleanItem.id = _id || id;
 		annotations[cat].items.push(cleanItem);
 	});
 
-	// 2. Clean Paths
-	const paths = state.paths.map(({ _id, ...p }) => ({
+	const paths = state.paths.map(({ _id, id, ...p }) => ({
 		...p,
+		id: _id || id,
 		points: p.points.map((pt) => ({
 			...pt,
 			coordinates: [Number(pt.coordinates[0].toFixed(4)), Number(pt.coordinates[1].toFixed(4))],
 		})),
 	}));
 
-	// 3. Clean Areas
 	const areas = {
 		regions: {
 			name: 'Regions',
-			items: state.areas.map(({ _id, ...a }) => ({
+			items: state.areas.map(({ _id, id, ...a }) => ({
 				...a,
+				id: _id || id,
 				points: a.points.map((pt) => ({
 					...pt,
 					coordinates: [Number(pt.coordinates[0].toFixed(4)), Number(pt.coordinates[1].toFixed(4))],
@@ -7251,8 +7611,10 @@ export const serializeMapData = (state) => {
 		},
 	};
 
-	// 4. Clean Overlays
-	const overlays = state.overlays.map(({ _id, ...o }) => o);
+	const overlays = state.overlays.map(({ _id, id, ...o }) => ({
+		...o,
+		id: _id || id,
+	}));
 
 	return { annotations, paths, areas, overlays };
 };

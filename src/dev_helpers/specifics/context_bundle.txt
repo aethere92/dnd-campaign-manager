@@ -454,7 +454,8 @@ export default function EditorContextMenu() {
 --- END OF components\EditorContextMenu.jsx ---
 
 --- FILE: components\EditorLayerList.jsx ---
-import React, { useState } from 'react';
+// --- FILE: components/EditorLayerList.jsx ---
+import React, { useState, useMemo } from 'react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import {
 	ChevronDown,
@@ -469,7 +470,8 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
+// Memoize Group to prevent re-rendering list items when typing in other forms
+const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection, isVisible, onToggle }) => {
 	const [isOpen, setIsOpen] = useState(true);
 	if (!items || items.length === 0) return null;
 
@@ -517,14 +519,25 @@ const Group = ({ title, icon: Icon, items, type, onSelect, selection, isVisible,
 			)}
 		</div>
 	);
-};
+});
 
 export default function EditorLayerList() {
 	const { state, actions } = useAtlasEditor();
 	const { markers, paths, areas, overlays, selection, visibility } = state;
 	const [search, setSearch] = useState('');
 
-	const filter = (list) => list.filter((i) => (i.label || i.name || '').toLowerCase().includes(search.toLowerCase()));
+	// Optimize filtering with useMemo
+	const filteredData = useMemo(() => {
+		const term = search.toLowerCase();
+		const filterFn = (i) => (i.label || i.name || '').toLowerCase().includes(term);
+
+		return {
+			markers: markers.filter(filterFn),
+			paths: paths.filter(filterFn),
+			areas: areas.filter(filterFn),
+			overlays: overlays.filter(filterFn),
+		};
+	}, [search, markers, paths, areas, overlays]);
 
 	return (
 		<div className='flex flex-col h-full bg-background/95 backdrop-blur border-r border-border w-64 z-10'>
@@ -544,7 +557,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Markers'
 					icon={MapPin}
-					items={filter(markers)}
+					items={filteredData.markers}
 					type='marker'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -554,7 +567,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Paths'
 					icon={Footprints}
-					items={filter(paths)}
+					items={filteredData.paths}
 					type='path'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -564,7 +577,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Regions'
 					icon={Hexagon}
-					items={filter(areas)}
+					items={filteredData.areas}
 					type='area'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -574,7 +587,7 @@ export default function EditorLayerList() {
 				<Group
 					title='Overlays'
 					icon={ImageIcon}
-					items={filter(overlays)}
+					items={filteredData.overlays}
 					type='overlay'
 					onSelect={actions.selectItem}
 					selection={selection}
@@ -589,6 +602,7 @@ export default function EditorLayerList() {
 --- END OF components\EditorLayerList.jsx ---
 
 --- FILE: components\EditorMapEvents.jsx ---
+// --- FILE: components/EditorMapEvents.jsx ---
 import { useMapEvents } from 'react-leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 
@@ -599,10 +613,9 @@ export default function EditorMapEvents() {
 	useMapEvents({
 		click(e) {
 			actions.closeContextMenu();
-			// Precision fixed in Service Layer, but we pass raw here
 			const pos = [e.latlng.lat, e.latlng.lng];
 
-			// Drawing Logic
+			// 1. Drawing Logic (Append points to existing shapes)
 			if (mode === 'draw' && selection) {
 				if (selection.type === 'path') {
 					actions.appendPathPoint(selection.id, pos);
@@ -610,9 +623,9 @@ export default function EditorMapEvents() {
 					actions.appendAreaPoint(selection.id, pos);
 				}
 			}
-			// Creation Logic
+			// 2. Creation Logic: MARKERS
 			else if (activeTool === 'markers' && !selection) {
-				const newMarker = {
+				actions.addMarker({
 					_id: crypto.randomUUID(),
 					label: 'New Marker',
 					lat: pos[0],
@@ -622,21 +635,64 @@ export default function EditorMapEvents() {
 					scale: 1,
 					variant: 'large',
 					shape: 'pin',
-				};
-				actions.addMarker(newMarker);
+				});
 			}
-			// Deselect Logic
+			// 3. Creation Logic: TEXT LABELS
+			else if (activeTool === 'text' && !selection) {
+				actions.addMarker({
+					_id: crypto.randomUUID(),
+					label: 'New Label',
+					lat: pos[0],
+					lng: pos[1],
+					category: 'default',
+					color: '#ffffff',
+					scale: 1.5,
+					variant: 'text',
+					shape: 'pin',
+				});
+			}
+			// 4. Creation Logic: AREAS
+			else if (activeTool === 'areas' && !selection) {
+				actions.addArea({
+					_id: crypto.randomUUID(),
+					name: 'New Region',
+					interiorColor: '#ff0000',
+					points: [{ coordinates: pos }],
+				});
+			}
+			// 5. Creation Logic: PATHS
+			else if (activeTool === 'paths' && !selection) {
+				actions.addPath({
+					_id: crypto.randomUUID(),
+					name: 'New Path',
+					color: '#d97706',
+					points: [{ coordinates: pos, text: '' }],
+				});
+			}
+			// 6. Creation Logic: OVERLAYS (Added)
+			else if (activeTool === 'overlays' && !selection) {
+				const size = 50; // Creates a 100x100 unit box
+				actions.addOverlay({
+					_id: crypto.randomUUID(),
+					name: 'New Overlay',
+					image: '', // User will set this in the form
+					bounds: [
+						[pos[0] + size, pos[1] - size], // Top Left
+						[pos[0] - size, pos[1] + size], // Bottom Right
+					],
+				});
+			}
+			// 7. Select Mode / Deselect Logic
 			else {
 				actions.deselect();
 			}
 		},
 		contextmenu(e) {
-			e.originalEvent.preventDefault(); // Stop browser menu
-
+			e.originalEvent.preventDefault();
 			actions.openContextMenu({
-				type: 'map', // Tells logic to show Radial Menu
+				type: 'map',
 				position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
-				latlng: { lat: e.latlng.lat, lng: e.latlng.lng }, // Pass map coordinates for creation
+				latlng: { lat: e.latlng.lat, lng: e.latlng.lng },
 			});
 		},
 	});
@@ -807,124 +863,91 @@ export default function EditorSidebar() {
 --- END OF components\EditorSidebar.jsx ---
 
 --- FILE: components\EditorToolbar.jsx ---
+// --- FILE: components/EditorToolbar.jsx ---
 import React from 'react';
-import { Save, Loader2, MapPin, Footprints, Hexagon, Image as ImageIcon, Plus } from 'lucide-react';
-import Button from '@/shared/components/ui/Button';
+import { MousePointer2, MapPin, Type, Hexagon, Waypoints, Save, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import clsx from 'clsx';
 
-const ToolBtn = ({ icon: Icon, label, active, onClick }) => (
+// Icon Button Component
+const ToolBtn = ({ icon: Icon, active, onClick, title, disabled, className }) => (
 	<button
 		onClick={onClick}
+		title={title}
+		disabled={disabled}
 		className={clsx(
-			'flex items-center gap-2 p-2 rounded-md transition-all text-xs font-bold uppercase',
-			active ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'
-		)}
-		title={label}>
-		<Icon size={18} />
-		<span className='hidden md:inline'>{label}</span>
+			'p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center min-w-[40px]',
+			active
+				? 'bg-primary text-primary-foreground shadow-sm'
+				: 'text-muted-foreground hover:bg-muted hover:text-foreground',
+			disabled && 'opacity-50 cursor-not-allowed',
+			className
+		)}>
+		<Icon size={20} strokeWidth={active ? 2.5 : 2} />
 	</button>
 );
 
 export default function EditorToolbar() {
 	const { state, actions, saveMap } = useAtlasEditor();
-	const { activeTool, isSaving, mode } = state;
-
-	const handleNewPath = () => {
-		const newPath = {
-			_id: crypto.randomUUID(),
-			name: 'New Path',
-			lineColor: '#d97706',
-			opacity: 1,
-			points: [],
-		};
-		actions.addPath(newPath);
-	};
-
-	const handleNewArea = () => {
-		const newArea = {
-			_id: crypto.randomUUID(),
-			name: 'New Region',
-			interiorColor: '#ff0000',
-			lineColor: 'transparent',
-			points: [],
-		};
-		actions.addArea(newArea);
-	};
-
-	const handleNewOverlay = () => {
-		const newOverlay = {
-			_id: crypto.randomUUID(),
-			name: 'New Overlay',
-			image: '',
-			bounds: [
-				[0, 0],
-				[-100, 100],
-			],
-		};
-		actions.addOverlay(newOverlay);
-	};
+	const { activeTool, isSaving } = state;
 
 	return (
-		<div className='absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-auto'>
-			<div className='bg-background/95 backdrop-blur border border-border p-2 rounded-lg shadow-xl'>
-				<Button size='sm' variant='primary' icon={isSaving ? Loader2 : Save} onClick={saveMap} disabled={isSaving}>
-					{isSaving ? 'Saving' : 'Save'}
-				</Button>
-			</div>
+		<div className='absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 pointer-events-none'>
+			{/* Floating Toolbar */}
+			<div className='pointer-events-auto flex items-center gap-2 bg-background/80 backdrop-blur-md border border-border/50 p-2 rounded-2xl shadow-2xl ring-1 ring-black/5'>
+				{/* 1. SELECT Tool */}
+				<ToolBtn
+					icon={MousePointer2}
+					title='Select (V)'
+					active={activeTool === 'select'}
+					onClick={() => actions.setTool('select')}
+				/>
 
-			<div className='bg-background/95 backdrop-blur border border-border p-1 rounded-lg shadow-xl flex flex-col gap-1'>
+				{/* 2. MARKER Tool */}
 				<ToolBtn
 					icon={MapPin}
-					label='Markers'
+					title='Marker (M)'
 					active={activeTool === 'markers'}
 					onClick={() => actions.setTool('markers')}
 				/>
-				<ToolBtn
-					icon={Footprints}
-					label='Paths'
-					active={activeTool === 'paths'}
-					onClick={() => actions.setTool('paths')}
-				/>
+
+				{/* 3. LABEL Tool */}
+				<ToolBtn icon={Type} title='Label (T)' active={activeTool === 'text'} onClick={() => actions.setTool('text')} />
+
+				{/* 4. REGION Tool */}
 				<ToolBtn
 					icon={Hexagon}
-					label='Regions'
+					title='Region (R)'
 					active={activeTool === 'areas'}
 					onClick={() => actions.setTool('areas')}
 				/>
+
+				{/* 5. PATH Tool */}
+				<ToolBtn
+					icon={Waypoints}
+					title='Path (P)'
+					active={activeTool === 'paths'}
+					onClick={() => actions.setTool('paths')}
+				/>
+
+				{/* 6. OVERLAYS Tool */}
 				<ToolBtn
 					icon={ImageIcon}
-					label='Overlays'
+					title='Overlays (O)'
 					active={activeTool === 'overlays'}
 					onClick={() => actions.setTool('overlays')}
 				/>
+
+				{/* 7. SAVE Button */}
+				<ToolBtn
+					icon={isSaving ? Loader2 : Save}
+					title='Save Map'
+					active={false} // Action button, not a mode
+					onClick={saveMap}
+					disabled={isSaving}
+					className={clsx(isSaving && 'animate-spin')}
+				/>
 			</div>
-
-			{activeTool === 'paths' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewPath} className='shadow-xl'>
-					New Path
-				</Button>
-			)}
-			{activeTool === 'areas' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewArea} className='shadow-xl'>
-					New Region
-				</Button>
-			)}
-			{activeTool === 'overlays' && (
-				<Button size='sm' variant='secondary' icon={Plus} onClick={handleNewOverlay} className='shadow-xl'>
-					New Overlay
-				</Button>
-			)}
-
-			{mode === 'draw' && (
-				<div
-					className='bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl animate-pulse text-center cursor-pointer'
-					onClick={() => actions.setMode('select')}>
-					DRAWING ACTIVE
-					<br />
-					<span className='underline opacity-80'>Stop</span>
-				</div>
-			)}
 		</div>
 	);
 }
@@ -1026,39 +1049,51 @@ export default function PathStylePopup({ data, onChange }) {
 --- END OF components\PathStylePopup.jsx ---
 
 --- FILE: components\PatternDefs.jsx ---
-import React from 'react';
+// --- FILE: components/PatternDefs.jsx ---
+import React, { useMemo } from 'react';
 
-export const PatternDefs = ({ areas }) => {
-	const patterns = new Map();
+// Extract logic to avoid re-creation on every render
+const generatePatternId = (area) => {
+	const color = area.interiorColor || '#d97706';
+	const type = area.fillType;
+	const opacity = area.fillOpacity ?? 0.2;
+	const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
+	const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+	const safeColor = color.replace('#', '');
+	const safeOpacity = Math.round(opacity * 100);
 
-	areas.forEach((area) => {
-		if (area.fillType === 'hatch' || area.fillType === 'dots') {
-			const color = area.interiorColor || '#d97706';
-			const type = area.fillType;
-			const opacity = area.fillOpacity ?? 0.2;
+	return {
+		id: `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`,
+		type,
+		color,
+		opacity,
+		spacing,
+		weight,
+	};
+};
 
-			// Use defaults if new props aren't set
-			const spacing = area.fillSpacing || (type === 'hatch' ? 10 : 16);
-			const weight = area.fillWeight || (type === 'hatch' ? 2 : 1.5);
+const PatternDefsComponent = ({ areas }) => {
+	const patterns = useMemo(() => {
+		const uniquePatterns = new Map();
 
-			const safeColor = color.replace('#', '');
-			const safeOpacity = Math.round(opacity * 100);
-
-			// Generate ID based on all visual properties
-			const id = `pattern-${type}-${safeColor}-${safeOpacity}-${spacing}-${weight}`;
-
-			if (!patterns.has(id)) {
-				patterns.set(id, { id, type, color, opacity, spacing, weight });
+		areas.forEach((area) => {
+			if (area.fillType === 'hatch' || area.fillType === 'dots') {
+				const def = generatePatternId(area);
+				if (!uniquePatterns.has(def.id)) {
+					uniquePatterns.set(def.id, def);
+				}
 			}
-		}
-	});
+		});
 
-	if (patterns.size === 0) return null;
+		return Array.from(uniquePatterns.values());
+	}, [areas]);
+
+	if (patterns.length === 0) return null;
 
 	return (
 		<svg style={{ height: 0, width: 0, position: 'absolute', pointerEvents: 'none' }}>
 			<defs>
-				{Array.from(patterns.values()).map(({ id, type, color, opacity, spacing, weight }) => (
+				{patterns.map(({ id, type, color, opacity, spacing, weight }) => (
 					<pattern
 						key={id}
 						id={id}
@@ -1079,7 +1114,6 @@ export const PatternDefs = ({ areas }) => {
 							/>
 						)}
 						{type === 'dots' && (
-							// Staggered Dot Pattern
 							<>
 								<circle cx={spacing * 0.25} cy={spacing * 0.25} r={weight} fill={color} fillOpacity={opacity} />
 								<circle cx={spacing * 0.75} cy={spacing * 0.75} r={weight} fill={color} fillOpacity={opacity} />
@@ -1091,6 +1125,10 @@ export const PatternDefs = ({ areas }) => {
 		</svg>
 	);
 };
+
+// Only re-render if the areas array length changes or reference changes
+// This is safe because if an area updates its fill, the areas array ref changes in the reducer
+export const PatternDefs = React.memo(PatternDefsComponent);
 
 --- END OF components\PatternDefs.jsx ---
 
@@ -1195,6 +1233,7 @@ export default function TileSelector({ options, value, onChange }) {
 --- END OF components\TileSelector.jsx ---
 
 --- FILE: components\VertexHandle.jsx ---
+// --- FILE: components/VertexHandle.jsx ---
 import L from 'leaflet';
 
 export const createHandleIcon = (isSelected, isSpecial = false) => {
@@ -1204,6 +1243,33 @@ export const createHandleIcon = (isSelected, isSpecial = false) => {
 		html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid ${color}; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
 		iconSize: [10, 10],
 		iconAnchor: [5, 5],
+	});
+};
+
+// NEW: Shared Move Handle (Glassmorphism style with arrows)
+export const createMoveHandleIcon = () => {
+	return L.divIcon({
+		className: 'move-handle',
+		html: `
+            <div style="
+                width: 24px; 
+                height: 24px; 
+                background: rgba(59, 130, 246, 0.9); 
+                border: 2px solid white; 
+                border-radius: 4px; 
+                cursor: move; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            ">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3-3M2 12h20M12 2v20"/>
+                </svg>
+            </div>
+        `,
+		iconSize: [24, 24],
+		iconAnchor: [12, 12],
 	});
 };
 
@@ -2213,8 +2279,9 @@ export const OverlayForm = ({ data, actions, onClose }) => {
 --- END OF forms\OverlayForm.jsx ---
 
 --- FILE: forms\PathForm.jsx ---
+// --- FILE: forms/PathForm.jsx ---
 import React from 'react';
-import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon } from 'lucide-react';
+import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon, AlignCenter } from 'lucide-react'; // Added AlignCenter
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 
@@ -2255,6 +2322,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 		curviness: 0,
 		labelDisplay: 'hover',
 		labelStyle: 'box',
+		textAlongLine: false, // NEW DEFAULT
 		...data,
 	};
 
@@ -2297,6 +2365,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 
 				<div className='space-y-4'>
 					<label className={LABEL_CLASS}>Line Style</label>
+					{/* ... (Existing Line Style Buttons kept same) ... */}
 					<div className='grid grid-cols-3 gap-2'>
 						{[
 							{
@@ -2350,6 +2419,7 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 								<label className={LABEL_CLASS}>Stroke Color</label>
 								<SmartColorPicker value={safeData.color} onChange={(val) => onChange('color', val)} />
 							</div>
+							{/* ... Thickness and Curviness controls kept same ... */}
 							<div className='space-y-2'>
 								<div className='flex justify-between'>
 									<label className={LABEL_CLASS}>Thickness</label>
@@ -2402,11 +2472,15 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 						</div>
 						<div className='space-y-2'>
 							<label className={LABEL_CLASS}>Style</label>
+							{/* Modified Style Selector to include Curved Option */}
 							<div className='flex bg-card border border-border rounded-md p-1'>
 								<button
-									onClick={() => onChange('labelStyle', 'box')}
-									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
-										safeData.labelStyle !== 'ghost'
+									onClick={() => {
+										onChange('labelStyle', 'box');
+										onChange('textAlongLine', false);
+									}}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.labelStyle === 'box' && !safeData.textAlongLine
 											? 'bg-primary text-white shadow-sm'
 											: 'text-muted-foreground hover:bg-muted'
 									}`}
@@ -2414,14 +2488,25 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 									<LayoutTemplate size={14} />
 								</button>
 								<button
-									onClick={() => onChange('labelStyle', 'ghost')}
-									className={`flex-1 flex items-center justify-center py-1 rounded text-xs transition-colors ${
-										safeData.labelStyle === 'ghost'
+									onClick={() => {
+										onChange('labelStyle', 'ghost');
+										onChange('textAlongLine', false);
+									}}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.labelStyle === 'ghost' && !safeData.textAlongLine
 											? 'bg-primary text-white shadow-sm'
 											: 'text-muted-foreground hover:bg-muted'
 									}`}
-									title='Text Only (Ghost)'>
+									title='Text Only'>
 									<TypeIcon size={14} />
+								</button>
+								<button
+									onClick={() => onChange('textAlongLine', true)}
+									className={`flex-1 flex items-center justify-center py-1 rounded-[3px] text-xs transition-colors ${
+										safeData.textAlongLine ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:bg-muted'
+									}`}
+									title='Curved on Line'>
+									<AlignCenter size={14} />
 								</button>
 							</div>
 						</div>
@@ -2542,7 +2627,7 @@ const initialState = {
 	overlays: [],
 	selection: null, // { type, id, index? }
 	mode: 'select', // 'select' | 'draw'
-	activeTool: 'markers',
+	activeTool: 'select',
 	isSaving: false,
 	visibility: {
 		markers: true,
@@ -2811,11 +2896,13 @@ export const useAtlasReducer = (preloadedState) => {
 --- END OF hooks\useAtlasReducer.js ---
 
 --- FILE: layers\EditAreasLayer.jsx ---
-import React, { useMemo, useState } from 'react';
+// --- FILE: features/admin/components/atlas/layers/EditAreasLayer.jsx ---
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { Polygon, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createHandleIcon, createMidpointIcon, createLabelIcon } from '@/features/atlas/utils/markerUtils';
+import { createMoveHandleIcon } from '../components/VertexHandle';
 import { getRoundedPath } from '@/features/atlas/utils/pathUtils';
 import { PatternDefs } from '../components/PatternDefs';
 
@@ -2829,202 +2916,343 @@ const getCentroid = (points) => {
 	let lat = 0,
 		lng = 0;
 	points.forEach((p) => {
-		lat += p.coordinates[0];
-		lng += p.coordinates[1];
+		// Handle both object {coordinates: []} and raw array [] formats
+		const c = p.coordinates || p;
+		lat += c[0];
+		lng += c[1];
 	});
 	return [lat / points.length, lng / points.length];
 };
 
-const AreaItem = ({ area, selection, activeTool, actions }) => {
-	const [isHovered, setIsHovered] = useState(false);
-
-	const isSelected = selection?.type === 'area' && selection.id === area._id;
-	const isInteractive = activeTool === 'areas';
-	const rawPoints = (area.points || []).map((p) => p.coordinates);
-
-	// 1. Geometry Calculation
-	const positions = useMemo(() => {
-		if (rawPoints.length < 3) return rawPoints;
-		if (area.curviness > 0) return getRoundedPath(rawPoints, area.curviness, true);
-		return rawPoints;
-	}, [rawPoints, area.curviness]);
-
-	const center = area.labelPosition || getCentroid(area.points);
-
-	// 2. Pattern Logic
-	let fillColor = area.interiorColor || '#ff0000';
-	let fillOpacity = area.fillOpacity ?? 0.2;
-
-	if (area.fillType === 'hatch' || area.fillType === 'dots') {
-		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
-		const safeOpacity = Math.round(fillOpacity * 100);
-		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity})`;
-		fillOpacity = 1;
-
-		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
-		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
-
-		// MATCH THE ID GENERATION IN PATTERN DEFS EXACTLY
-		const id = `pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight}`;
-		fillColor = `url(#${id})`;
-		fillOpacity = 1;
-	}
-
-	// 3. Label Visibility
-	let labelOpacity = 0;
-	if (area.labelDisplay === 'always') labelOpacity = 1;
-	else if (area.labelDisplay === 'hover' && (isHovered || isSelected)) labelOpacity = 1;
-	if (isSelected) labelOpacity = 1;
-	if (!area.name) labelOpacity = 0;
-
-	// 4. MEMOIZED ICONS (CRITICAL FIX FOR DRAG)
-	const labelIcon = useMemo(
-		() =>
-			createLabelIcon(area.name, {
-				color: area.labelColor,
-				fontSize: area.fontSize,
-				rotation: area.textRotation,
-				bgColor: area.labelBgColor,
-				bgOpacity: area.labelBgOpacity,
-				hasBorder: area.labelHasBorder,
-				borderRadius: area.labelRadius,
-				borderColor: area.labelBorderColor,
-				paddingX: area.paddingX,
-				paddingY: area.paddingY,
-				isSelected: isSelected && isInteractive,
-			}),
-		[
-			area.name,
-			area.labelColor,
-			area.fontSize,
-			area.textRotation,
-			area.labelBgColor,
-			area.labelBgOpacity,
-			area.labelHasBorder,
-			area.labelRadius,
-			area.labelBorderColor,
-			area.paddingX,
-			area.paddingY,
-			isSelected,
-			isInteractive,
-		]
+const useAreaIcons = () => {
+	return useMemo(
+		() => ({
+			handleIcon: createHandleIcon(true),
+			midpointIcon: createMidpointIcon(),
+			moveIcon: createMoveHandleIcon(),
+		}),
+		[]
 	);
+};
 
-	const handleIcon = useMemo(() => createHandleIcon(true), []);
-	const midpointIcon = useMemo(() => createMidpointIcon(), []);
+const AreaItem = React.memo(
+	({ area, isSelected, isInteractive, actions }) => {
+		const [isHovered, setIsHovered] = useState(false);
+		const { handleIcon, midpointIcon, moveIcon } = useAreaIcons();
 
-	// 5. Handlers
-	const handleLabelDrag = (e) => {
-		const { lat, lng } = e.target.getLatLng();
-		// Use requestAnimationFrame or debounce if this is still heavy,
-		// but normally updating Redux/State on dragend is safer than drag
-		actions.updateArea(area._id, { labelPosition: [lat, lng] });
-	};
+		const polygonRef = useRef(null);
+		const labelRef = useRef(null);
+		const dragStartRef = useRef(null);
 
-	return (
-		<React.Fragment>
-			{positions.length > 0 && (
+		const rawPoints = (area.points || []).map((p) => p.coordinates);
+
+		// Geometry
+		const positions = useMemo(() => {
+			if (rawPoints.length < 3) return rawPoints;
+			if (area.curviness > 0) return getRoundedPath(rawPoints, area.curviness, true);
+			return rawPoints;
+		}, [rawPoints, area.curviness]);
+
+		// Geometric Center
+		const geometricCenter = useMemo(() => getCentroid(area.points), [area.points]);
+
+		// Label Position
+		const labelCenter = useMemo(() => area.labelPosition || geometricCenter, [area.labelPosition, geometricCenter]);
+
+		// Styles
+		const fillStyle = useMemo(() => {
+			let fillColor = area.interiorColor || '#ff0000';
+			let fillOpacity = area.fillOpacity ?? 0.2;
+
+			if (area.fillType === 'hatch' || area.fillType === 'dots') {
+				const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
+				const safeOpacity = Math.round(fillOpacity * 100);
+				const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
+				const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
+				const id = `pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight}`;
+				fillColor = `url(#${id})`;
+				fillOpacity = 1;
+			}
+			return { fillColor, fillOpacity };
+		}, [area.interiorColor, area.fillOpacity, area.fillType, area.fillSpacing, area.fillWeight]);
+
+		const labelOpacity = useMemo(() => {
+			if (!area.name) return 0;
+			if (area.labelDisplay === 'always') return 1;
+			if (isSelected) return 1;
+			if (area.labelDisplay === 'hover' && isHovered) return 1;
+			return 0;
+		}, [area.name, area.labelDisplay, isSelected, isHovered]);
+
+		const labelIcon = useMemo(
+			() =>
+				createLabelIcon(area.name, {
+					color: area.labelColor,
+					fontSize: area.fontSize,
+					rotation: area.textRotation,
+					bgColor: area.labelBgColor,
+					bgOpacity: area.labelBgOpacity,
+					hasBorder: area.labelHasBorder,
+					borderRadius: area.labelRadius,
+					borderColor: area.labelBorderColor,
+					paddingX: area.paddingX,
+					paddingY: area.paddingY,
+					isSelected: isSelected && isInteractive,
+				}),
+			[area, isSelected, isInteractive]
+		);
+
+		// --- General Handlers ---
+		const onAreaClick = useCallback(
+			(e) => {
+				if (!isInteractive) return;
+				L.DomEvent.stopPropagation(e);
+				actions.selectItem('area', area._id);
+			},
+			[isInteractive, area._id, actions]
+		);
+
+		const onCtxMenu = useCallback(
+			(e) => {
+				L.DomEvent.stopPropagation(e);
+				e.originalEvent.preventDefault();
+				actions.openContextMenu({
+					type: 'entity',
+					position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+					target: { type: 'area', id: area._id, data: area },
+				});
+			},
+			[area, actions]
+		);
+
+		const handleLabelDrag = useCallback(
+			(e) => {
+				const { lat, lng } = e.target.getLatLng();
+				actions.updateArea(area._id, { labelPosition: [lat, lng] });
+			},
+			[area._id, actions]
+		);
+
+		// --- SHAPE MOVE HANDLERS (Whole Polygon) ---
+		const onMoveStart = useCallback(
+			(e) => {
+				dragStartRef.current = {
+					type: 'move',
+					startLatLng: e.target.getLatLng(),
+					initialVisualPoints: positions.map((p) => [...p]),
+					initialLabelPos: [...labelCenter],
+				};
+			},
+			[positions, labelCenter]
+		);
+
+		const onMoveDrag = useCallback((e) => {
+			if (!dragStartRef.current || dragStartRef.current.type !== 'move' || !polygonRef.current) return;
+
+			const currentLatLng = e.target.getLatLng();
+			const start = dragStartRef.current.startLatLng;
+			const latDiff = currentLatLng.lat - start.lat;
+			const lngDiff = currentLatLng.lng - start.lng;
+
+			const newVisualPoints = dragStartRef.current.initialVisualPoints.map((p) => [p[0] + latDiff, p[1] + lngDiff]);
+			polygonRef.current.setLatLngs(newVisualPoints);
+
+			if (labelRef.current) {
+				const lStart = dragStartRef.current.initialLabelPos;
+				labelRef.current.setLatLng([lStart[0] + latDiff, lStart[1] + lngDiff]);
+			}
+		}, []);
+
+		const onMoveEnd = useCallback(
+			(e) => {
+				if (!dragStartRef.current || dragStartRef.current.type !== 'move') return;
+				const endLatLng = e.target.getLatLng();
+				const start = dragStartRef.current.startLatLng;
+				const latDiff = endLatLng.lat - start.lat;
+				const lngDiff = endLatLng.lng - start.lng;
+
+				const newPoints = area.points.map((p) => ({
+					...p,
+					coordinates: [p.coordinates[0] + latDiff, p.coordinates[1] + lngDiff],
+				}));
+
+				const updates = { points: newPoints };
+				if (area.labelPosition) {
+					updates.labelPosition = [area.labelPosition[0] + latDiff, area.labelPosition[1] + lngDiff];
+				}
+
+				actions.updateArea(area._id, updates);
+				dragStartRef.current = null;
+			},
+			[area._id, area.points, area.labelPosition, actions]
+		);
+
+		// --- VERTEX MOVE HANDLERS (Single Point) ---
+
+		const onVertexDragStart = useCallback(() => {
+			// Snapshot the raw control points
+			dragStartRef.current = {
+				type: 'vertex',
+				rawPoints: area.points.map((p) => [...p.coordinates]),
+			};
+		}, [area.points]);
+
+		const onVertexDrag = useCallback(
+			(e, index) => {
+				if (!dragStartRef.current || dragStartRef.current.type !== 'vertex' || !polygonRef.current) return;
+
+				const latlng = e.target.getLatLng();
+
+				// 1. Update the specific point in our temporary array
+				const currentPoints = dragStartRef.current.rawPoints;
+				currentPoints[index] = [latlng.lat, latlng.lng];
+
+				// 2. Re-calculate Smoothing (if enabled)
+				let visualPoints = currentPoints;
+				if (area.curviness > 0) {
+					visualPoints = getRoundedPath(currentPoints, area.curviness, true);
+				}
+
+				// 3. Imperative Update
+				polygonRef.current.setLatLngs(visualPoints);
+
+				// 4. Update Label Centroid (if dynamic)
+				// If user hasn't manually pinned the label, it should move with the shape
+				if (!area.labelPosition && labelRef.current) {
+					const newCenter = getCentroid(currentPoints);
+					labelRef.current.setLatLng(newCenter);
+				}
+			},
+			[area.curviness, area.labelPosition]
+		);
+
+		const onVertexDragEnd = useCallback(
+			(e, index) => {
+				const latlng = e.target.getLatLng();
+				actions.updateAreaPoint(area._id, index, [latlng.lat, latlng.lng]);
+				dragStartRef.current = null;
+			},
+			[area._id, actions]
+		);
+
+		if (positions.length === 0) return null;
+
+		return (
+			<React.Fragment>
 				<Polygon
+					ref={polygonRef}
 					positions={positions}
 					pathOptions={{
 						color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#d97706',
-						fillColor: fillColor,
-						fillOpacity: fillOpacity,
+						fillColor: fillStyle.fillColor,
+						fillOpacity: fillStyle.fillOpacity,
 						weight: area.weight || 2,
 						dashArray: area.borderStyle === 'dashed' ? '10, 10' : area.borderStyle === 'dotted' ? '2, 6' : null,
 						lineJoin: 'round',
 					}}
 					eventHandlers={{
-						click: (e) => {
-							if (!isInteractive) return;
-							L.DomEvent.stopPropagation(e);
-							actions.selectItem('area', area._id);
-						},
-						contextmenu: (e) => {
-							L.DomEvent.stopPropagation(e);
-							e.originalEvent.preventDefault();
-							actions.openContextMenu({
-								type: 'entity',
-								position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
-								target: { type: 'area', id: area._id, data: area },
-							});
-						},
+						click: onAreaClick,
+						contextmenu: onCtxMenu,
 						mouseover: () => setIsHovered(true),
 						mouseout: () => setIsHovered(false),
 					}}
 				/>
-			)}
 
-			{/* Label Marker */}
-			{area.name && labelOpacity > 0 && (
-				<Marker
-					position={center}
-					icon={labelIcon}
-					draggable={isSelected && isInteractive}
-					opacity={labelOpacity}
-					eventHandlers={{
-						click: (e) => {
-							if (!isInteractive) return;
-							L.DomEvent.stopPropagation(e);
-							actions.selectItem('area', area._id);
-						},
-						dragend: handleLabelDrag, // Only update on drop to save performance
-					}}
-				/>
-			)}
+				{area.name && labelOpacity > 0 && (
+					<Marker
+						ref={labelRef}
+						position={labelCenter}
+						icon={labelIcon}
+						draggable={isSelected && isInteractive}
+						opacity={labelOpacity}
+						zIndexOffset={100}
+						eventHandlers={{
+							click: onAreaClick,
+							dragend: handleLabelDrag,
+						}}
+					/>
+				)}
 
-			{/* EDIT HANDLES */}
-			{isSelected && (
-				<>
-					{area.points.map((pt, idx) => (
-						<React.Fragment key={`v-${idx}`}>
-							<Marker
-								position={pt.coordinates}
-								icon={handleIcon}
-								draggable={true}
-								eventHandlers={{
-									dragend: (e) => {
-										const { lat, lng } = e.target.getLatLng();
-										actions.updateAreaPoint(area._id, idx, [lat, lng]);
-									},
-									contextmenu: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.deleteAreaPoint(area._id, idx);
-									},
-									click: (e) => L.DomEvent.stopPropagation(e),
-								}}
-							/>
-							<Marker
-								position={getMidpoint(pt, area.points[(idx + 1) % area.points.length])}
-								icon={midpointIcon}
-								eventHandlers={{
-									click: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.insertAreaPoint(
-											area._id,
-											idx,
-											getMidpoint(pt, area.points[(idx + 1) % area.points.length])
-										);
-									},
-								}}
-							/>
-						</React.Fragment>
-					))}
-				</>
-			)}
-		</React.Fragment>
-	);
-};
+				{isSelected && (
+					<>
+						<Marker
+							position={geometricCenter}
+							draggable={true}
+							icon={moveIcon}
+							zIndexOffset={1000}
+							eventHandlers={{
+								dragstart: onMoveStart,
+								drag: onMoveDrag,
+								dragend: onMoveEnd,
+								click: (e) => L.DomEvent.stopPropagation(e),
+							}}
+						/>
+
+						{area.points.map((pt, idx) => (
+							<React.Fragment key={`v-${idx}`}>
+								<Marker
+									position={pt.coordinates}
+									icon={handleIcon}
+									draggable={true}
+									eventHandlers={{
+										dragstart: onVertexDragStart,
+										drag: (e) => onVertexDrag(e, idx),
+										dragend: (e) => onVertexDragEnd(e, idx),
+										contextmenu: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.deleteAreaPoint(area._id, idx);
+										},
+										click: (e) => L.DomEvent.stopPropagation(e),
+									}}
+								/>
+								<Marker
+									position={getMidpoint(pt, area.points[(idx + 1) % area.points.length])}
+									icon={midpointIcon}
+									eventHandlers={{
+										click: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.insertAreaPoint(
+												area._id,
+												idx,
+												getMidpoint(pt, area.points[(idx + 1) % area.points.length])
+											);
+										},
+									}}
+								/>
+							</React.Fragment>
+						))}
+					</>
+				)}
+			</React.Fragment>
+		);
+	},
+	(prev, next) => {
+		if (prev.area !== next.area) return false;
+		if (prev.isInteractive !== next.isInteractive) return false;
+		if (prev.isSelected !== next.isSelected) return false;
+		return true;
+	}
+);
 
 export default function EditAreasLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { areas, selection, activeTool, visibility } = state;
+
 	if (!visibility.areas) return null;
+
+	const isInteractive = activeTool === 'areas' || activeTool === 'select';
+
 	return (
 		<>
 			<PatternDefs areas={areas} />
 			{areas.map((area) => (
-				<AreaItem key={area._id} area={area} selection={selection} activeTool={activeTool} actions={actions} />
+				<AreaItem
+					key={area._id}
+					area={area}
+					isSelected={selection?.type === 'area' && selection.id === area._id}
+					isInteractive={isInteractive}
+					actions={actions}
+				/>
 			))}
 		</>
 	);
@@ -3033,53 +3261,91 @@ export default function EditAreasLayer() {
 --- END OF layers\EditAreasLayer.jsx ---
 
 --- FILE: layers\EditMarkersLayer.jsx ---
-import React from 'react';
+// --- FILE: layers/EditMarkersLayer.jsx ---
+import React, { useMemo, useCallback } from 'react';
 import { Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
 
+const MarkerItem = React.memo(
+	({ marker, isSelected, isInteractive, actions }) => {
+		// Added isInteractive prop
+
+		const icon = useMemo(() => resolveMarkerIcon({ ...marker, isSelected }), [marker, isSelected]);
+
+		const onClick = useCallback(
+			(e) => {
+				// Allow selection if tool matches OR if we are in universal select mode
+				if (!isInteractive) return;
+				L.DomEvent.stopPropagation(e);
+				actions.selectItem('marker', marker._id);
+			},
+			[marker._id, actions, isInteractive]
+		);
+
+		const onDragEnd = useCallback(
+			(e) => {
+				const { lat, lng } = e.target.getLatLng();
+				actions.updateMarker(marker._id, { lat, lng });
+			},
+			[marker._id, actions]
+		);
+
+		const onCtxMenu = useCallback(
+			(e) => {
+				L.DomEvent.stopPropagation(e);
+				e.originalEvent.preventDefault();
+				actions.openContextMenu({
+					type: 'entity',
+					position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
+					target: { type: 'marker', id: marker._id, data: marker },
+				});
+			},
+			[marker, actions]
+		);
+
+		return (
+			<Marker
+				position={[marker.lat, marker.lng]}
+				icon={icon}
+				draggable={isSelected} // Only drag if selected
+				opacity={isSelected ? 1 : 0.8}
+				eventHandlers={{
+					click: onClick,
+					dragend: onDragEnd,
+					contextmenu: onCtxMenu,
+				}}
+			/>
+		);
+	},
+	(prev, next) => {
+		return (
+			prev.marker === next.marker && prev.isSelected === next.isSelected && prev.isInteractive === next.isInteractive
+		);
+	}
+);
+
 export default function EditMarkersLayer() {
 	const { state, actions } = useAtlasEditor();
-	const { markers, selection, visibility } = state;
+	const { markers, selection, visibility, activeTool } = state;
 
 	if (!visibility.markers) return null;
 
+	// Universal Select Logic
+	const isInteractive = activeTool === 'markers' || activeTool === 'select' || activeTool === 'text';
+
 	return (
 		<>
-			{markers.map((m) => {
-				const isSelected = selection?.type === 'marker' && selection.id === m._id;
-
-				return (
-					<Marker
-						key={m._id}
-						position={[m.lat, m.lng]}
-						// Pass selection state to resolver for dashed border on text
-						icon={resolveMarkerIcon({ ...m, isSelected })}
-						draggable={true}
-						opacity={isSelected ? 1 : 0.8}
-						eventHandlers={{
-							click: (e) => {
-								L.DomEvent.stopPropagation(e);
-								actions.selectItem('marker', m._id);
-							},
-							dragend: (e) => {
-								const { lat, lng } = e.target.getLatLng();
-								actions.updateMarker(m._id, { lat, lng });
-							},
-							contextmenu: (e) => {
-								L.DomEvent.stopPropagation(e);
-								e.originalEvent.preventDefault();
-								actions.openContextMenu({
-									type: 'entity',
-									position: { x: e.originalEvent.clientX, y: e.originalEvent.clientY },
-									target: { type: 'marker', id: m._id, data: m },
-								});
-							},
-						}}
-					/>
-				);
-			})}
+			{markers.map((m) => (
+				<MarkerItem
+					key={m._id}
+					marker={m}
+					isSelected={selection?.type === 'marker' && selection.id === m._id}
+					isInteractive={isInteractive}
+					actions={actions}
+				/>
+			))}
 		</>
 	);
 }
@@ -3087,18 +3353,21 @@ export default function EditMarkersLayer() {
 --- END OF layers\EditMarkersLayer.jsx ---
 
 --- FILE: layers\EditOverlaysLayer.jsx ---
+// --- FILE: layers/EditOverlaysLayer.jsx ---
 import React from 'react';
 import { ImageOverlay, Rectangle, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
-import { createHandleIcon } from '../components/VertexHandle';
+import { createHandleIcon, createMoveHandleIcon } from '../components/VertexHandle'; // Import new icon
 
 export default function EditOverlaysLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { overlays, selection, activeTool, visibility } = state;
-	const isInteractive = activeTool === 'overlays';
 
-	// FIX: Robust URL resolver that handles null/undefined/non-strings
+	// Universal Select Logic
+	const isInteractive = activeTool === 'overlays' || activeTool === 'select';
+
+	// ... helper
 	const getUrl = (path) => {
 		if (!path || typeof path !== 'string') return '';
 		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
@@ -3111,10 +3380,7 @@ export default function EditOverlaysLayer() {
 			{overlays.map((overlay) => {
 				const isSelected = selection?.type === 'overlay' && selection.id === overlay._id;
 				const imagePath = getUrl(overlay.image);
-
-				// Bounds: [[lat1, lng1], [lat2, lng2]]
 				const b = overlay.bounds;
-				// Safety check for bounds to prevent arithmetic crash
 				if (!b || b.length < 2 || !b[0] || !b[1]) return null;
 
 				const centerLat = (b[0][0] + b[1][0]) / 2;
@@ -3122,7 +3388,6 @@ export default function EditOverlaysLayer() {
 
 				return (
 					<React.Fragment key={overlay._id}>
-						{/* IMAGE - Only render if we have a path */}
 						{imagePath && (
 							<ImageOverlay
 								url={imagePath}
@@ -3132,7 +3397,6 @@ export default function EditOverlaysLayer() {
 							/>
 						)}
 
-						{/* HIT BOX */}
 						<Rectangle
 							bounds={overlay.bounds}
 							pathOptions={{
@@ -3150,19 +3414,13 @@ export default function EditOverlaysLayer() {
 							}}
 						/>
 
-						{/* HANDLES (Only when selected) */}
 						{isSelected && (
 							<>
-								{/* CENTER MOVE HANDLE */}
+								{/* CENTER MOVE HANDLE - Updated to use shared icon */}
 								<Marker
 									position={[centerLat, centerLng]}
 									draggable={true}
-									icon={L.divIcon({
-										className: 'move-handle',
-										html: '<div style="width: 24px; height: 24px; background: rgba(59, 130, 246, 0.5); border: 2px solid white; border-radius: 4px; cursor: move; display: flex; align-items: center; justify-content: center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 12h20L12 2zm0 20l10-10H2l10 10z"/></svg></div>',
-										iconSize: [24, 24],
-										iconAnchor: [12, 12],
-									})}
+									icon={createMoveHandleIcon()}
 									eventHandlers={{
 										dragend: (e) => {
 											const newCenter = e.target.getLatLng();
@@ -3172,8 +3430,7 @@ export default function EditOverlaysLayer() {
 									}}
 								/>
 
-								{/* RESIZE HANDLES */}
-								{/* Top Left */}
+								{/* RESIZE HANDLES (Unchanged) */}
 								<Marker
 									position={b[0]}
 									draggable={true}
@@ -3186,7 +3443,6 @@ export default function EditOverlaysLayer() {
 										click: (e) => L.DomEvent.stopPropagation(e),
 									}}
 								/>
-								{/* Bottom Right */}
 								<Marker
 									position={b[1]}
 									draggable={true}
@@ -3211,87 +3467,153 @@ export default function EditOverlaysLayer() {
 --- END OF layers\EditOverlaysLayer.jsx ---
 
 --- FILE: layers\EditPathsLayer.jsx ---
-import React, { useMemo } from 'react';
+// --- FILE: features/admin/components/atlas/layers/EditPathsLayer.jsx ---
+import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { Polyline, Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import { createPathHandleIcon, createPathMidpointIcon } from '@/features/atlas/utils/markerUtils';
-import { getSmoothPath } from '@/features/atlas/utils/pathUtils'; // Import the new math
+import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
+import { TextAlongPath } from '@/features/atlas/components/layers/TextAlongPath';
 
 const getMidpoint = (p1, p2) => [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
 
-const PathItem = ({ path, isSelected, isInteractive, selection, actions }) => {
-	// 1. Calculate Geometry
-	const rawPositions = path.points.map((p) => p.coordinates);
+const PathItem = React.memo(
+	({ path, isSelected, selectedPointIndex, isInteractive, actions }) => {
+		const polylineRef = useRef(null);
+		const dragStartRef = useRef(null);
+		const [isHovered, setIsHovered] = useState(false);
 
-	// 2. Smooth if needed
-	const positions = useMemo(() => {
-		// Only curve if we have at least 3 points and curviness > 0
-		if (path.curviness > 0 && rawPositions.length >= 3) {
-			// Map 0.1-1.0 input to a reasonable tension (0.1 is tight, 1.0 is loose)
-			return getSmoothPath(rawPositions, path.curviness);
+		// Geometry
+		const rawPositions = useMemo(() => path.points.map((p) => p.coordinates), [path.points]);
+		const positions = useMemo(() => {
+			if (path.curviness > 0 && rawPositions.length >= 3) {
+				return getSmoothPath(rawPositions, path.curviness);
+			}
+			return rawPositions;
+		}, [rawPositions, path.curviness]);
+
+		// Handlers
+		const onClick = useCallback(
+			(e) => {
+				if (!isInteractive) return;
+				L.DomEvent.stopPropagation(e);
+				actions.selectItem('path', path._id);
+			},
+			[isInteractive, path._id, actions]
+		);
+
+		// --- VERTEX DRAG (LIVE PREVIEW) ---
+		const onVertexDragStart = useCallback(() => {
+			dragStartRef.current = {
+				rawPoints: path.points.map((p) => [...p.coordinates]),
+			};
+		}, [path.points]);
+
+		const onVertexDrag = useCallback(
+			(e, index) => {
+				if (!dragStartRef.current || !polylineRef.current) return;
+
+				const latlng = e.target.getLatLng();
+
+				// 1. Update point in temp array
+				const currentPoints = dragStartRef.current.rawPoints;
+				currentPoints[index] = [latlng.lat, latlng.lng];
+
+				// 2. Re-smooth
+				let visualPoints = currentPoints;
+				if (path.curviness > 0 && currentPoints.length >= 3) {
+					visualPoints = getSmoothPath(currentPoints, path.curviness);
+				}
+
+				// 3. Update Visuals
+				polylineRef.current.setLatLngs(visualPoints);
+
+				// Note: TextAlongPath might lag slightly as it relies on 'zoomend'/'moveend'
+				// or React updates, but the line itself will be buttery smooth.
+			},
+			[path.curviness]
+		);
+
+		const onVertexDragEnd = useCallback(
+			(e, index) => {
+				const latlng = e.target.getLatLng();
+				actions.updatePathPoint(path._id, index, { coordinates: [latlng.lat, latlng.lng] });
+				dragStartRef.current = null;
+			},
+			[path._id, actions]
+		);
+
+		if (positions.length === 0 && !isSelected) return null;
+
+		const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
+		const showTooltip = path.name && path.labelDisplay !== 'none' && !path.textAlongLine;
+
+		let isTextVisible = false;
+		if (path.textAlongLine && path.labelDisplay !== 'none') {
+			if (path.labelDisplay === 'always') isTextVisible = true;
+			else if (path.labelDisplay === 'hover') isTextVisible = isHovered || isSelected;
 		}
-		return rawPositions;
-	}, [rawPositions, path.curviness]);
 
-	if (positions.length === 0 && !isSelected) return null;
+		return (
+			<React.Fragment>
+				{positions.length > 0 && (
+					<Polyline
+						ref={polylineRef}
+						positions={positions}
+						pathOptions={{
+							color: path.color || '#d97706',
+							weight: isSelected ? (path.weight || 5) + 2 : path.weight || 5,
+							opacity: path.opacity || 1,
+							dashArray: path.dashArray || null,
+							lineCap: 'round',
+							lineJoin: 'round',
+						}}
+						eventHandlers={{
+							click: onClick,
+							mouseover: () => setIsHovered(true),
+							mouseout: () => setIsHovered(false),
+						}}>
+						{showTooltip && (
+							<Tooltip
+								permanent={path.labelDisplay === 'always'}
+								direction='center'
+								className={tooltipClass}
+								opacity={path.labelStyle === 'ghost' ? 1 : 0.9}>
+								<span>{path.name}</span>
+							</Tooltip>
+						)}
 
-	// 3. Label Style
-	const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
+						{path.textAlongLine && path.name && (
+							<TextAlongPath
+								layerRef={polylineRef}
+								text={path.name}
+								visible={isTextVisible}
+								style={{
+									color: '#ffffff',
+									strokeColor: path.color || '#000',
+									opacity: path.opacity || 1,
+									fontSize: 12,
+									fontWeight: 800,
+								}}
+							/>
+						)}
+					</Polyline>
+				)}
 
-	return (
-		<React.Fragment>
-			{/* The Line */}
-			{positions.length > 0 && (
-				<Polyline
-					positions={positions}
-					pathOptions={{
-						color: path.color || '#d97706',
-						weight: isSelected ? (path.weight || 5) + 2 : path.weight || 5,
-						opacity: path.opacity || 1,
-						dashArray: path.dashArray || null,
-						lineCap: 'round',
-						lineJoin: 'round',
-					}}
-					eventHandlers={{
-						click: (e) => {
-							if (!isInteractive) return;
-							L.DomEvent.stopPropagation(e);
-							actions.selectItem('path', path._id);
-						},
-					}}>
-					{path.name && path.labelDisplay !== 'none' && (
-						<Tooltip
-							permanent={path.labelDisplay === 'always'}
-							direction='center'
-							className={tooltipClass}
-							opacity={path.labelStyle === 'ghost' ? 1 : 0.9}>
-							<span>{path.name}</span>
-						</Tooltip>
-					)}
-				</Polyline>
-			)}
-
-			{/* EDIT HANDLES - Only visible when selected */}
-			{isSelected && (
-				<>
-					{/* Vertices */}
-					{path.points.map((pt, idx) => {
-						const hasText = !!pt.text && pt.text.trim().length > 0;
-						const isPointSelected = selection?.index === idx;
-
-						return (
+				{isSelected && (
+					<>
+						{path.points.map((pt, idx) => (
 							<Marker
 								key={`v-${idx}`}
 								position={pt.coordinates}
-								icon={createPathHandleIcon(isPointSelected, hasText)}
+								icon={createPathHandleIcon(selectedPointIndex === idx, !!pt.text)}
 								draggable={true}
 								zIndexOffset={1000}
 								eventHandlers={{
-									dragend: (e) => {
-										const { lat, lng } = e.target.getLatLng();
-										actions.updatePathPoint(path._id, idx, { coordinates: [lat, lng] });
-									},
+									dragstart: onVertexDragStart,
+									drag: (e) => onVertexDrag(e, idx),
+									dragend: (e) => onVertexDragEnd(e, idx),
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
 										actions.selectItem('path', path._id, idx);
@@ -3302,41 +3624,45 @@ const PathItem = ({ path, isSelected, isInteractive, selection, actions }) => {
 									},
 								}}
 							/>
-						);
-					})}
-
-					{/* Midpoints (Insert) */}
-					{path.points.map((pt, idx) => {
-						if (idx === path.points.length - 1) return null;
-						const nextPt = path.points[idx + 1];
-						const mid = getMidpoint(pt.coordinates, nextPt.coordinates);
-
-						return (
-							<Marker
-								key={`m-${idx}`}
-								position={mid}
-								icon={createPathMidpointIcon()}
-								zIndexOffset={900}
-								opacity={0.6}
-								eventHandlers={{
-									click: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.insertPathPoint(path._id, idx + 1, mid);
-									},
-								}}
-							/>
-						);
-					})}
-				</>
-			)}
-		</React.Fragment>
-	);
-};
+						))}
+						{path.points.map((pt, idx) => {
+							if (idx === path.points.length - 1) return null;
+							const nextPt = path.points[idx + 1];
+							const mid = getMidpoint(pt.coordinates, nextPt.coordinates);
+							return (
+								<Marker
+									key={`m-${idx}`}
+									position={mid}
+									icon={createPathMidpointIcon()}
+									zIndexOffset={900}
+									opacity={0.6}
+									eventHandlers={{
+										click: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.insertPathPoint(path._id, idx + 1, mid);
+										},
+									}}
+								/>
+							);
+						})}
+					</>
+				)}
+			</React.Fragment>
+		);
+	},
+	(prev, next) => {
+		if (prev.path !== next.path) return false;
+		if (prev.isInteractive !== next.isInteractive) return false;
+		if (prev.isSelected !== next.isSelected) return false;
+		if (prev.selectedPointIndex !== next.selectedPointIndex) return false;
+		return true;
+	}
+);
 
 export default function EditPathsLayer() {
 	const { state, actions } = useAtlasEditor();
 	const { paths, selection, activeTool, visibility } = state;
-	const isInteractive = activeTool === 'paths';
+	const isInteractive = activeTool === 'paths' || activeTool === 'select';
 
 	if (!visibility.paths) return null;
 
@@ -3347,7 +3673,7 @@ export default function EditPathsLayer() {
 					key={path._id}
 					path={path}
 					isSelected={selection?.type === 'path' && selection.id === path._id}
-					selection={selection}
+					selectedPointIndex={selection?.type === 'path' && selection.id === path._id ? selection.index : undefined}
 					isInteractive={isInteractive}
 					actions={actions}
 				/>

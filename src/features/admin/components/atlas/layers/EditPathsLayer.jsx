@@ -1,4 +1,4 @@
-// --- FILE: features/admin/components/atlas/layers/EditPathsLayer.jsx ---
+/* --- FILE: features/admin/components/atlas/layers/EditPathsLayer.jsx --- */
 import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { Polyline, Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
@@ -24,17 +24,21 @@ const PathItem = React.memo(
 			return rawPositions;
 		}, [rawPositions, path.curviness]);
 
-		// Handlers
+		// FIX: Safe Click Handler
 		const onClick = useCallback(
 			(e) => {
 				if (!isInteractive) return;
 				L.DomEvent.stopPropagation(e);
-				actions.selectItem('path', path._id);
+				L.DomEvent.preventDefault(e);
+
+				requestAnimationFrame(() => {
+					actions.selectItem('path', path._id || path.id);
+				});
 			},
-			[isInteractive, path._id, actions]
+			[isInteractive, path._id, path.id, actions]
 		);
 
-		// --- VERTEX DRAG (LIVE PREVIEW) ---
+		// --- DRAG HANDLERS ---
 		const onVertexDragStart = useCallback(() => {
 			dragStartRef.current = {
 				rawPoints: path.points.map((p) => [...p.coordinates]),
@@ -44,24 +48,15 @@ const PathItem = React.memo(
 		const onVertexDrag = useCallback(
 			(e, index) => {
 				if (!dragStartRef.current || !polylineRef.current) return;
-
 				const latlng = e.target.getLatLng();
-
-				// 1. Update point in temp array
 				const currentPoints = dragStartRef.current.rawPoints;
 				currentPoints[index] = [latlng.lat, latlng.lng];
 
-				// 2. Re-smooth
 				let visualPoints = currentPoints;
 				if (path.curviness > 0 && currentPoints.length >= 3) {
 					visualPoints = getSmoothPath(currentPoints, path.curviness);
 				}
-
-				// 3. Update Visuals
 				polylineRef.current.setLatLngs(visualPoints);
-
-				// Note: TextAlongPath might lag slightly as it relies on 'zoomend'/'moveend'
-				// or React updates, but the line itself will be buttery smooth.
 			},
 			[path.curviness]
 		);
@@ -69,14 +64,15 @@ const PathItem = React.memo(
 		const onVertexDragEnd = useCallback(
 			(e, index) => {
 				const latlng = e.target.getLatLng();
-				actions.updatePathPoint(path._id, index, { coordinates: [latlng.lat, latlng.lng] });
+				actions.updatePathPoint(path._id || path.id, index, { coordinates: [latlng.lat, latlng.lng] });
 				dragStartRef.current = null;
 			},
-			[path._id, actions]
+			[path._id, path.id, actions]
 		);
 
 		if (positions.length === 0 && !isSelected) return null;
 
+		// Visibility
 		const tooltipClass = path.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box';
 		const showTooltip = path.name && path.labelDisplay !== 'none' && !path.textAlongLine;
 
@@ -147,11 +143,11 @@ const PathItem = React.memo(
 									dragend: (e) => onVertexDragEnd(e, idx),
 									click: (e) => {
 										L.DomEvent.stopPropagation(e);
-										actions.selectItem('path', path._id, idx);
+										actions.selectItem('path', path._id || path.id, idx);
 									},
 									contextmenu: (e) => {
 										L.DomEvent.stopPropagation(e);
-										actions.deletePathPoint(path._id, idx);
+										actions.deletePathPoint(path._id || path.id, idx);
 									},
 								}}
 							/>
@@ -170,7 +166,7 @@ const PathItem = React.memo(
 									eventHandlers={{
 										click: (e) => {
 											L.DomEvent.stopPropagation(e);
-											actions.insertPathPoint(path._id, idx + 1, mid);
+											actions.insertPathPoint(path._id || path.id, idx + 1, mid);
 										},
 									}}
 								/>
@@ -201,10 +197,12 @@ export default function EditPathsLayer() {
 		<>
 			{paths.map((path) => (
 				<PathItem
-					key={path._id}
+					key={path._id || path.id}
 					path={path}
-					isSelected={selection?.type === 'path' && selection.id === path._id}
-					selectedPointIndex={selection?.type === 'path' && selection.id === path._id ? selection.index : undefined}
+					isSelected={selection?.type === 'path' && selection.id === (path._id || path.id)}
+					selectedPointIndex={
+						selection?.type === 'path' && selection.id === (path._id || path.id) ? selection.index : undefined
+					}
 					isInteractive={isInteractive}
 					actions={actions}
 				/>

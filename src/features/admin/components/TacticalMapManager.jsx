@@ -1,170 +1,195 @@
-/* --- FILE: features/admin/components/TacticalMapManager.jsx --- */
-import React, { useState, useEffect } from 'react';
-import { MapContainer, ImageOverlay, Marker, useMap, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { MapContainer, ImageOverlay, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Map as MapIcon, Trash2, Plus, Target, Save } from 'lucide-react';
-import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
-import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
-import Button from '@/shared/components/ui/Button';
+import { useAtlasEditor, AtlasEditorProvider } from './atlas/AtlasEditorContext';
+import { serializeMapData } from './atlas/services/atlasMapper';
 
-// Click handler component
-const MapClickHandler = ({ onMapClick }) => {
-	useMapEvents({
-		click: (e) => onMapClick(e.latlng),
-	});
+// Editor UI
+import EditorToolbar from './atlas/components/EditorToolbar';
+import EditorSidebar from './atlas/components/EditorSidebar';
+import EditorLayerList from './atlas/components/EditorLayerList';
+import EditorMapEvents from './atlas/components/EditorMapEvents';
+import AtlasContextMenu from './atlas/components/EditorContextMenu';
+import { MapZoomHandler } from './atlas/components/MapZoomHandler';
+
+// Layers
+import EditMarkersLayer from './atlas/layers/EditMarkersLayer';
+import EditPathsLayer from './atlas/layers/EditPathsLayer';
+import EditAreasLayer from './atlas/layers/EditAreasLayer';
+import EditOverlaysLayer from './atlas/layers/EditOverlaysLayer';
+
+import { Target, Maximize, Minimize } from 'lucide-react';
+import { clsx } from 'clsx';
+
+// ------------------------------------------------------------------
+// 1. STATE SYNCER
+// ------------------------------------------------------------------
+const StateSyncer = ({ onChange }) => {
+	const { state } = useAtlasEditor();
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			const serialized = serializeMapData(state);
+			onChange(JSON.stringify(serialized));
+		}, 500);
+		return () => clearTimeout(timer);
+	}, [state, onChange]);
 	return null;
 };
 
-const MapController = ({ bounds }) => {
+// ------------------------------------------------------------------
+// 2. FULLSCREEN HANDLER
+// Forces Leaflet to re-calculate its size when the container grows
+// ------------------------------------------------------------------
+const FullscreenHandler = ({ isFullscreen }) => {
 	const map = useMap();
 	useEffect(() => {
-		if (bounds) map.fitBounds(bounds);
-	}, [map, bounds]);
+		// Small delay to ensure the DOM transition has finished
+		const timer = setTimeout(() => {
+			map.invalidateSize();
+		}, 100);
+		return () => clearTimeout(timer);
+	}, [map, isFullscreen]);
 	return null;
 };
 
-export default function TacticalMapManager({ imageUrl, value, onChange }) {
-	const [markers, setMarkers] = useState([]);
-	const [dimensions, setDimensions] = useState(null);
-	const [selectedIdx, setSelectedIdx] = useState(null);
+// ------------------------------------------------------------------
+// 3. INTERNAL CANVAS
+// ------------------------------------------------------------------
+const TacticalEditorCanvas = ({ imageUrl, dimensions }) => {
+	const [isFullscreen, setIsFullscreen] = useState(false);
 
-	// 1. Load existing markers from JSON string
-	useEffect(() => {
-		if (value) {
-			try {
-				const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-				setMarkers(Array.isArray(parsed) ? parsed : []);
-			} catch (e) {
-				setMarkers([]);
-			}
+	const toggleFullscreen = (e) => {
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
 		}
-	}, [value]);
+		setIsFullscreen(!isFullscreen);
+	};
 
-	// 2. Handle Image Dimensions
+	useEffect(() => {
+		const handleKeyDown = (e) => {
+			if (e.key === 'Escape' && isFullscreen) setIsFullscreen(false);
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isFullscreen]);
+
+	const content = (
+		<div
+			className={clsx(
+				'flex w-full overflow-hidden bg-[#1a1412] border border-border shadow-inner transition-all duration-300',
+				// We use !important styles to ensure we escape any parent container offsets
+				isFullscreen
+					? 'fixed !top-0 !left-0 !right-0 !bottom-0 !m-0 z-[5000] h-screen w-screen'
+					: 'relative h-[600px] rounded-lg'
+			)}>
+			<div className='hidden lg:block shrink-0 relative z-[400] h-full'>
+				<EditorLayerList />
+			</div>
+
+			<div className='flex-1 h-full relative z-0'>
+				<EditorToolbar />
+
+				<button
+					onClick={toggleFullscreen}
+					className='absolute top-4 right-4 z-[1000] p-2 bg-background/90 backdrop-blur border border-border shadow-md rounded-md hover:bg-primary hover:text-white transition-colors text-muted-foreground'
+					title={isFullscreen ? 'Exit Fullscreen (ESC)' : 'Enter Fullscreen'}>
+					{isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+				</button>
+
+				<MapContainer
+					crs={L.CRS.Simple}
+					bounds={dimensions}
+					center={[dimensions[0][0] / 2, dimensions[1][1] / 2]}
+					zoom={0}
+					minZoom={-2}
+					maxZoom={4}
+					scrollWheelZoom={true}
+					attributionControl={false}
+					zoomControl={false}
+					style={{ height: '100%', width: '100%', background: 'transparent' }}>
+					{/* CRITICAL: Listens for resize */}
+					<FullscreenHandler isFullscreen={isFullscreen} />
+
+					<MapZoomHandler referenceZoom={1} />
+					<ImageOverlay url={imageUrl} bounds={dimensions} />
+					<EditorMapEvents />
+					<EditOverlaysLayer />
+					<EditAreasLayer />
+					<EditPathsLayer />
+					<EditMarkersLayer />
+				</MapContainer>
+				<AtlasContextMenu />
+			</div>
+
+			<EditorSidebar />
+		</div>
+	);
+
+	return isFullscreen ? createPortal(content, document.body) : content;
+};
+
+// ------------------------------------------------------------------
+// 4. MAIN MANAGER
+// ------------------------------------------------------------------
+export default function TacticalMapManager({ imageUrl, value, onChange }) {
+	const [dimensions, setDimensions] = useState(null);
+
 	useEffect(() => {
 		if (!imageUrl) return;
 		const img = new Image();
 		img.src = imageUrl;
 		img.onload = () => {
-			const h = img.height;
-			const w = img.width;
-			setDimensions(L.latLngBounds([-h, 0], [0, w]));
+			setDimensions([
+				[-img.height, 0],
+				[0, img.width],
+			]);
 		};
 	}, [imageUrl]);
 
-	const handleMapClick = (latlng) => {
-		const newMarker = {
-			lat: Math.round(latlng.lat),
-			lng: Math.round(latlng.lng),
-			label: 'New Marker',
-			category: 'default',
-		};
-		const updated = [...markers, newMarker];
-		setMarkers(updated);
-		setSelectedIdx(updated.length - 1);
-		onChange(JSON.stringify(updated));
-	};
+	const initialData = useMemo(() => {
+		let raw = value;
+		if (typeof raw === 'string') {
+			try {
+				raw = JSON.parse(raw);
+			} catch {
+				raw = {};
+			}
+		}
+		return raw || {};
+	}, []);
 
-	const updateMarker = (idx, fields) => {
-		const updated = [...markers];
-		updated[idx] = { ...updated[idx], ...fields };
-		setMarkers(updated);
-		onChange(JSON.stringify(updated));
-	};
-
-	const removeMarker = (idx) => {
-		const updated = markers.filter((_, i) => i !== idx);
-		setMarkers(updated);
-		setSelectedIdx(null);
-		onChange(JSON.stringify(updated));
-	};
-
-	if (!imageUrl || !dimensions) return null;
+	if (!imageUrl) return null;
+	if (!dimensions) return <div className='p-4 text-xs text-muted-foreground'>Loading Map Image...</div>;
 
 	return (
-		<div className={ADMIN_SECTION_CLASS}>
-			<div className={ADMIN_HEADER_CLASS}>
-				<span className='flex items-center gap-2'>
-					<Target size={18} className='text-primary' /> Marker Editor
+		<div className='space-y-2'>
+			<div className='flex items-center justify-between px-1'>
+				<span className='flex items-center gap-2 font-bold text-sm text-foreground'>
+					<Target size={16} className='text-primary' /> Tactical Map Editor
 				</span>
-				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>Click map to add</span>
+				<span className='text-[10px] text-muted-foreground uppercase tracking-widest'>
+					{dimensions[1][1]} x {Math.abs(dimensions[0][0])}px
+				</span>
 			</div>
 
-			<div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-				{/* Visual Map Area */}
-				<div className='lg:col-span-2 h-[400px] rounded-lg border border-border overflow-hidden bg-muted relative z-0'>
-					<MapContainer
-						crs={L.CRS.Simple}
-						bounds={dimensions}
-						zoom={-2}
-						minZoom={-3}
-						attributionControl={false}
-						style={{ height: '100%', width: '100%', background: 'var(--background)' }}>
-						<MapController bounds={dimensions} />
-						<MapClickHandler onMapClick={handleMapClick} />
-						<ImageOverlay url={imageUrl} bounds={dimensions} />
-
-						{markers?.map((m, i) => (
-							<Marker
-								key={i}
-								position={[m.lat, m.lng]}
-								icon={resolveMarkerIcon(m)}
-								eventHandlers={{ click: () => setSelectedIdx(i) }}
-							/>
-						))}
-					</MapContainer>
-				</div>
-
-				{/* Sidebar Editor */}
-				<div className='space-y-4'>
-					<div className='max-h-[400px] overflow-y-auto pr-2 space-y-3 custom-scrollbar'>
-						{markers.length === 0 && (
-							<div className='text-center py-10 text-xs text-muted-foreground italic border-2 border-dashed border-border rounded-lg'>
-								No markers yet. Click the map to start.
-							</div>
-						)}
-						{markers.map((m, i) => (
-							<div
-								key={i}
-								className={`p-3 rounded-lg border transition-all ${
-									selectedIdx === i ? 'border-accent bg-accent/5 ring-1 ring-accent' : 'border-border bg-background'
-								}`}
-								onClick={() => setSelectedIdx(i)}>
-								<div className='flex justify-between items-start mb-2'>
-									<span className='text-[10px] font-bold text-muted-foreground uppercase'>Marker #{i + 1}</span>
-									<button onClick={() => removeMarker(i)} className='text-muted-foreground hover:text-red-600'>
-										<Trash2 size={14} />
-									</button>
-								</div>
-								<div className='space-y-2'>
-									<input
-										className={ADMIN_INPUT_CLASS}
-										value={m.label}
-										onChange={(e) => updateMarker(i, { label: e.target.value })}
-										placeholder='Label...'
-									/>
-									<select
-										className={ADMIN_INPUT_CLASS}
-										value={m.category}
-										onChange={(e) => updateMarker(i, { category: e.target.value })}>
-										<option value='default'>Default Pin</option>
-										<option value='combat'>Combat / Danger</option>
-										<option value='city'>City / Settlement</option>
-										<option value='npc'>NPC / Person</option>
-										<option value='magic'>Magic / Mystery</option>
-										<option value='quest'>Objective</option>
-										<option value='location'>Location</option>
-									</select>
-									<div className='flex gap-2 text-[9px] font-mono text-muted-foreground'>
-										<span>LAT: {m.lat}</span>
-										<span>LNG: {m.lng}</span>
-									</div>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
+			<AtlasEditorProvider
+				onSave={() => {}}
+				initialData={{
+					...initialData,
+					metadata: {
+						mapId: 'tactical_temp',
+						sizes: {
+							imageHeight: Math.abs(dimensions[0][0]),
+							imageWidth: dimensions[1][1],
+							maxZoom: 4,
+						},
+					},
+				}}>
+				<StateSyncer onChange={onChange} />
+				<TacticalEditorCanvas imageUrl={imageUrl} dimensions={dimensions} />
+			</AtlasEditorProvider>
 		</div>
 	);
 }

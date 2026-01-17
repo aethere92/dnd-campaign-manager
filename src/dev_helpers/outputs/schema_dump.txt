@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/14/2026, 9:04:59 PM
+   Generated: 1/17/2026, 9:56:05 AM
 =========================================
 
 -----------------------------------------
@@ -497,8 +497,9 @@ TABLE: maps [⚠️ RLS DISABLED]
                   710
                 ]
               },
+              "icon": "ArrowDown",
               "type": "people",
-              "color": "#059669",
+              "color": "#15803d",
               "label": "To Penal Colony",
               "mapLink": "khorinis"
             },
@@ -512,8 +513,9 @@ TABLE: maps [⚠️ RLS DISABLED]
                   710
                 ]
               },
+              "icon": "ArrowUp",
               "type": "people",
-              "color": "#10b981",
+              "color": "#15803d",
               "label": "To Shortcut Terrace",
               "mapLink": "khorinis"
             }
@@ -522,22 +524,22 @@ TABLE: maps [⚠️ RLS DISABLED]
       }
     },
     "created_at": "2026-01-07T19:18:00.850Z",
-    "updated_at": "2026-01-11T07:23:21.438Z"
+    "updated_at": "2026-01-15T17:25:00.441Z"
   },
   {
-    "id": "75f5ea76-e844-4299-98c5-c4099c629b41",
+    "id": "c65e65c8-dc37-4f5e-9a7c-f1be1fadc220",
     "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "key": "khorinis_teleporter_c",
-    "title": "khorinis_teleporter_c",
+    "key": "finneas_encounter",
+    "title": "finneas_encounter",
     "config": {
-      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis_island/teleporter_c",
-      "mapId": "khorinis_teleporter_c",
+      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/unnamed_island/finneas_dungeon",
+      "mapId": "finneas_encounter",
       "sizes": {
-        "maxZoom": 3,
-        "imageWidth": 1800,
-        "imageHeight": 1200
+        "maxZoom": 4,
+        "imageWidth": 3120,
+        "imageHeight": 1920
       },
-      "parentId": "khorinis",
+      "parentId": "unnamed_island_01",
       "fileExtension": "webp"
     },
     "data": {
@@ -550,50 +552,23 @@ TABLE: maps [⚠️ RLS DISABLED]
       "paths": [],
       "overlays": [],
       "annotations": {
-        "navigation_arrows": {
-          "name": "Navigation Arrows",
+        "default": {
+          "name": "Default",
           "items": [
             {
-              "lat": -38.625,
-              "lng": 63.125,
-              "map": {
-                "exitZoom": 4,
-                "exitCoordinates": [
-                  -195,
-                  656
-                ]
-              },
+              "lat": -60.6875,
+              "lng": 8.8125,
               "type": "place",
               "color": "#059669",
-              "label": "To Korinis Island",
-              "mapLink": "khorinis"
-            }
-          ]
-        },
-        "points_of_interest": {
-          "name": "Points Of Interest",
-          "items": [
-            {
-              "lat": -104.75,
-              "lng": 197.25,
-              "map": {
-                "exitZoom": 2,
-                "exitCoordinates": [
-                  -370,
-                  610
-                ]
-              },
-              "type": "place",
-              "color": "#059669",
-              "label": "Teleporter to A (Pyramid)",
-              "mapLink": "khorinis_pyramid"
+              "label": "Exit to Island",
+              "mapLink": "unnamed_island_01"
             }
           ]
         }
       }
     },
-    "created_at": "2026-01-07T19:18:00.553Z",
-    "updated_at": "2026-01-11T16:19:27.487Z"
+    "created_at": "2026-01-07T19:18:01.351Z",
+    "updated_at": "2026-01-11T07:21:10.897Z"
   }
 ]
 

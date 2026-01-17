@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BookOpen, MapPin, Image as ImageIcon, Map as MapIcon } from 'lucide-react';
 
 export function useMapCanvasViewModel(data) {
 	// 1. Initialize Visibility
@@ -13,14 +12,14 @@ export function useMapCanvasViewModel(data) {
 			init[`marker-cat-${cat}`] = true;
 		});
 
-		// Initialize individual markers (new)
+		// Initialize individual markers
 		data.markers.forEach((m) => {
 			if (m.label) init[`marker-item-${m.label}`] = true;
 		});
 
-		// Sessions/Overlays: OFF by default
-		data.sessions.forEach((s) => (init[`session-${s.name}`] = false));
-		data.overlays.forEach((o) => (init[`overlay-${o.name}`] = false));
+		// Sessions/Overlays: OFF by default unless specified
+		data.sessions.forEach((s) => (init[`session-${s.name}`] = true)); // Defaulting to TRUE for MiniMaps is usually better
+		data.overlays.forEach((o) => (init[`overlay-${o.name}`] = true));
 
 		return init;
 	});
@@ -65,7 +64,7 @@ export function useMapCanvasViewModel(data) {
 
 		const groups = [];
 
-		// 1. Sessions
+		// 1. Sessions (Paths)
 		if (data.sessions.length > 0) {
 			groups.push({
 				id: 'sessions-group',
@@ -74,7 +73,8 @@ export function useMapCanvasViewModel(data) {
 					.map((s) => ({
 						label: s.name,
 						id: `session-${s.name}`,
-						position: s.points[0]?.coordinates,
+						// Safe access to coordinates
+						position: s.points && s.points[0] ? s.points[0].coordinates : [0, 0],
 					}))
 					.filter((i) => i.position),
 			});
@@ -92,8 +92,8 @@ export function useMapCanvasViewModel(data) {
 				label: cat,
 				items: catMarkers.map((m) => ({
 					label: m.label,
-					id: `marker-item-${m.label}`, // Individual ID
-					position: m.position,
+					id: `marker-item-${m.label}`,
+					position: m.position || [0, 0],
 				})),
 			});
 		});
@@ -106,7 +106,8 @@ export function useMapCanvasViewModel(data) {
 				items: data.overlays.map((o) => ({
 					label: o.name,
 					id: `overlay-${o.name}`,
-					position: o.bounds[0],
+					// CRITICAL FIX: Safe access to bounds[0]
+					position: o.bounds && o.bounds.length > 0 ? o.bounds[0] : [0, 0],
 				})),
 			});
 		}
@@ -118,8 +119,10 @@ export function useMapCanvasViewModel(data) {
 				label: 'Regions & Areas',
 				items: data.areas.map((a) => ({
 					label: a.name,
-					id: 'areas', // Shared ID for all areas for now
-					position: a.positions[0],
+					id: 'areas',
+					// Safe access to positions
+					position:
+						a.positions && a.positions[0] ? a.positions[0] : a.points && a.points[0] ? a.points[0].coordinates : [0, 0],
 				})),
 			});
 		}
@@ -128,24 +131,21 @@ export function useMapCanvasViewModel(data) {
 	}, [data]);
 
 	// 3. Filter Layers
-	// Logic: Marker is visible if Category is ON AND Individual Item is ON
 	const visibleMarkers = useMemo(
 		() =>
 			data?.markers.filter(
-				(m) =>
-					visibility[`marker-cat-${m.category}`] !== false && // Default to true if undefined
-					visibility[`marker-item-${m.label}`] !== false
+				(m) => visibility[`marker-cat-${m.category}`] !== false && visibility[`marker-item-${m.label}`] !== false
 			) || [],
 		[data, visibility]
 	);
 
 	const visibleSessions = useMemo(
-		() => data?.sessions.filter((s) => visibility[`session-${s.name}`] || visibility['sessions-group']) || [],
+		() => data?.sessions.filter((s) => visibility[`session-${s.name}`] !== false) || [],
 		[data, visibility]
 	);
 
 	const visibleOverlays = useMemo(
-		() => data?.overlays.filter((o) => visibility[`overlay-${o.name}`] || visibility['overlays-group']) || [],
+		() => data?.overlays.filter((o) => visibility[`overlay-${o.name}`] !== false) || [],
 		[data, visibility]
 	);
 
@@ -156,6 +156,6 @@ export function useMapCanvasViewModel(data) {
 		visibleMarkers,
 		visibleSessions,
 		visibleOverlays,
-		showAreas: visibility['areas'],
+		showAreas: visibility['areas'] !== false, // Default to true if undefined
 	};
 }

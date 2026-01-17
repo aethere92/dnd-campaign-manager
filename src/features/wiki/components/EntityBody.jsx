@@ -63,7 +63,7 @@ export const EntityBody = ({
 			{mapImageUrl && mapImageUrl.length > 0 && (
 				<>
 					<SectionDivider />
-					<EntityMiniMap imageUrl={mapImageUrl} markers={mapMarkers} />
+					<EntityMiniMap imageUrl={mapImageUrl} mapData={mapMarkers} />
 				</>
 			)}
 

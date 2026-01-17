@@ -6,9 +6,9 @@ import { updateMapData } from '@/features/atlas/api/mapService';
 
 const AtlasEditorContext = createContext(null);
 
-export const AtlasEditorProvider = ({ initialData, children }) => {
+// UPDATED: Added onSave prop
+export const AtlasEditorProvider = ({ initialData, onSave, children }) => {
 	// 1. Initialize State
-	// We use useMemo to prevent re-normalizing on every render if initialData is stable
 	const normalizedInitialState = useMemo(() => {
 		return {
 			...normalizeMapData(initialData),
@@ -28,8 +28,15 @@ export const AtlasEditorProvider = ({ initialData, children }) => {
 		dispatch({ type: 'SET_SAVING', payload: true });
 		try {
 			const payload = serializeMapData(state);
-			await updateMapData(state.mapId, payload);
-			alert('Map saved successfully.');
+
+			// FIX: Check if a custom save handler exists (for Tactical Map)
+			if (onSave) {
+				await onSave(payload);
+			} else {
+				// Default behavior: Update DB
+				await updateMapData(state.mapId, payload);
+				alert('Map saved successfully.');
+			}
 		} catch (e) {
 			console.error(e);
 			alert('Save failed: ' + e.message);
@@ -38,16 +45,7 @@ export const AtlasEditorProvider = ({ initialData, children }) => {
 		}
 	};
 
-	// 5. Construct Context Value
-	const value = useMemo(
-		() => ({
-			state,
-			dispatch,
-			actions,
-			saveMap,
-		}),
-		[state, actions]
-	);
+	const value = useMemo(() => ({ state, dispatch, actions, saveMap }), [state, actions]);
 
 	return <AtlasEditorContext.Provider value={value}>{children}</AtlasEditorContext.Provider>;
 };

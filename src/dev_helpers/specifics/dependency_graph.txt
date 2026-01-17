@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-14 21:05:26
+Generated: 2026-01-16 21:15:39
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -57,7 +57,6 @@ components\EditorSidebar.jsx:
 
 components\EditorToolbar.jsx:
   → ../AtlasEditorContext
-  → @/shared/components/ui/Button
   → clsx
   → lucide-react
   → react
@@ -139,6 +138,7 @@ hooks\useAtlasReducer.js:
 layers\EditAreasLayer.jsx:
   → ../AtlasEditorContext
   → ../components/PatternDefs
+  → ../components/VertexHandle
   → @/features/atlas/utils/markerUtils
   → @/features/atlas/utils/pathUtils
   → leaflet
@@ -161,6 +161,7 @@ layers\EditOverlaysLayer.jsx:
 
 layers\EditPathsLayer.jsx:
   → ../AtlasEditorContext
+  → @/features/atlas/components/layers/TextAlongPath
   → @/features/atlas/utils/markerUtils
   → @/features/atlas/utils/pathUtils
   → leaflet
@@ -172,6 +173,7 @@ layers\EditPathsLayer.jsx:
 
 Most imported files (relative imports):
   ../AtlasEditorContext: 9 imports
+  ../components/VertexHandle: 2 imports
   ./AtlasEditorContext: 1 imports
   ./components/MapZoomHandler: 1 imports
   ./components/EditorContextMenu: 1 imports
@@ -190,22 +192,21 @@ Most imported files (relative imports):
   ../components/VisualIconPicker: 1 imports
   ../components/TileSelector: 1 imports
   ../services/geometryUtils: 1 imports
-  ../components/PatternDefs: 1 imports
 
 
 Files with most outgoing dependencies:
   AtlasEditor.jsx: 14 imports
   forms\MarkerForm.jsx: 10 imports
   components\EditorSidebar.jsx: 9 imports
-  layers\EditAreasLayer.jsx: 7 imports
-  layers\EditPathsLayer.jsx: 6 imports
+  layers\EditAreasLayer.jsx: 8 imports
+  layers\EditPathsLayer.jsx: 7 imports
   AtlasEditorContext.jsx: 5 imports
-  components\EditorToolbar.jsx: 5 imports
   components\VisualIconPicker.jsx: 5 imports
   forms\AreaForm.jsx: 5 imports
   layers\EditMarkersLayer.jsx: 5 imports
   layers\EditOverlaysLayer.jsx: 5 imports
   components\EditorContextMenu.jsx: 4 imports
+  components\EditorToolbar.jsx: 4 imports
   components\PathStylePopup.jsx: 4 imports
   forms\OverlayForm.jsx: 4 imports
   forms\PathForm.jsx: 4 imports

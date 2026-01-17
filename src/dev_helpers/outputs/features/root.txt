@@ -117,6 +117,7 @@ PARTIAL BUNDLE: ROOT
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
+          TextAlongPath.jsx
         sidebar/
           SidebarGroup.jsx
           SidebarItem.jsx

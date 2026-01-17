@@ -1,7 +1,5 @@
-// --- FILE: features/atlas/components/layers/MapRecaps.jsx ---
 import React, { useMemo, useRef, useState } from 'react';
 import { Polyline, Marker, Popup, Tooltip } from 'react-leaflet';
-import L from 'leaflet';
 import { Calendar } from 'lucide-react';
 import { createDotIcon } from '@/features/atlas/utils/markerUtils';
 import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
@@ -12,7 +10,9 @@ const PathRenderer = ({ session }) => {
 	const [isHovered, setIsHovered] = useState(false);
 
 	// 1. Calculate Geometry
-	const rawPositions = session.points.map((p) => p.coordinates);
+	// Handle both {coordinates:[]} objects and raw arrays
+	const rawPositions = (session.points || []).map((p) => p.coordinates || p);
+
 	const positions = useMemo(() => {
 		if (session.curviness > 0 && rawPositions.length > 1) {
 			return getSmoothPath(rawPositions, session.curviness);
@@ -34,6 +34,7 @@ const PathRenderer = ({ session }) => {
 	let isTextVisible = false;
 	if (hasTextAlongLine && session.labelDisplay !== 'none') {
 		if (session.labelDisplay === 'always') isTextVisible = true;
+		// Show on hover OR if we force it via props (optional)
 		else if (session.labelDisplay === 'hover') isTextVisible = isHovered;
 	}
 
@@ -58,7 +59,7 @@ const PathRenderer = ({ session }) => {
 					<Tooltip
 						permanent={session.labelDisplay === 'always'}
 						direction='center'
-						className='path-tooltip'
+						className={session.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box'}
 						opacity={session.labelDisplay === 'hover' ? 0.9 : 1}
 						sticky>
 						<span className='font-bold text-xs font-serif'>{session.name}</span>
@@ -84,8 +85,10 @@ const PathRenderer = ({ session }) => {
 			{/* Narrative Points */}
 			{session.points.map((point, idx) => {
 				if (!point.text) return null;
+				// Ensure safe coordinates
+				const coords = point.coordinates || point;
 				return (
-					<Marker key={`${session.name}-p-${idx}`} position={point.coordinates} icon={createDotIcon(color)}>
+					<Marker key={`${session.name}-p-${idx}`} position={coords} icon={createDotIcon(color)}>
 						<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
 							<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
 								<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
