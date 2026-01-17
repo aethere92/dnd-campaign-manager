@@ -181,7 +181,7 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 							<div className='flex justify-between items-center'>
 								<span className='text-[10px] font-medium text-muted-foreground'>Padding</span>
 							</div>
-							<div className='flex gap-4 w-full'>
+							<div className='flex gap-4 w-full flex-wrap'>
 								<div className='flex-1 flex items-center gap-2'>
 									<span className='text-[9px] text-muted-foreground font-bold'>HORZ</span>
 									<input
