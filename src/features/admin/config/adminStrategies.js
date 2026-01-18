@@ -56,6 +56,7 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'session_number', label: 'Session Number', type: 'number' },
 			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
 			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
 		],
 	},
 

@@ -1,0 +1,475 @@
+================================================================
+SPLIT BUNDLE: FEATURES_GRAPH - CONFIG
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\graph\config\graphStyles.js ---
+export const getGraphStyles = (theme) => {
+	// Logic based on explicit App Theme
+	const isDark = theme === 'dark';
+
+	// Define dynamic colors
+	const colors = {
+		// Major Nodes
+		text: isDark ? '#F3F4F6' : '#000000', // White vs Black
+		textBg: isDark ? '#1F2937' : '#ffffff', // Dark Gray vs White
+
+		// Minor Nodes
+		minorText: isDark ? '#D1D5DB' : '#374151', // Light Gray vs Dark Gray
+		textOutline: isDark ? '#000000' : '#ffffff', // Black halo vs White halo
+	};
+
+	return [
+		// --- MAJOR NODES (Hubs/VIPs) ---
+		{
+			selector: 'node',
+			style: {
+				label: 'data(label)',
+				'border-color': 'data(color)',
+				'background-image': 'data(image)',
+				'background-fit': 'cover',
+				'border-width': 2,
+				width: 'mapData(degree, 3, 20, 30, 50)',
+				height: 'mapData(degree, 3, 20, 30, 50)',
+				'font-family': 'Inter, sans-serif',
+				'font-size': '10pt',
+				'font-weight': '500',
+				'text-valign': 'bottom',
+				'text-margin-y': 6,
+				'letter-spacing': 0,
+
+				// DYNAMIC: Text Background
+				'text-background-color': colors.textBg,
+				'text-background-opacity': 0.7,
+				'text-background-padding': 2,
+				'text-background-shape': 'roundrectangle',
+
+				// DYNAMIC: Main Text Color
+				color: colors.text,
+
+				'text-wrap': 'ellipsis',
+				'text-max-width': 100,
+				'transition-property': 'opacity, width, height, color, text-background-color',
+				'transition-duration': '0.3s',
+			},
+		},
+		// --- MINOR NODES (Dots) ---
+		{
+			selector: 'node.minor',
+			style: {
+				width: 20,
+				height: 20,
+				'background-color': 'data(color)',
+				'border-width': 1,
+				'border-color': 'data(color)',
+				'font-size': 10,
+				'text-margin-y': 4,
+
+				// Minor nodes: No box, but use an outline (halo) to separate text from background
+				'text-background-opacity': 0,
+
+				// DYNAMIC: Halo color (Black in dark mode makes text pop)
+				'text-outline-color': colors.textOutline,
+				'text-outline-width': 2,
+				'text-outline-opacity': 0.8,
+
+				// DYNAMIC: Minor text color
+				color: colors.minorText,
+			},
+		},
+		// --- EDGES ---
+		{
+			selector: 'edge',
+			style: {
+				'line-color': 'data(color)',
+				'target-arrow-color': 'data(color)',
+				'curve-style': 'bezier',
+				width: 1,
+				opacity: 0.3,
+				'arrow-scale': 0.6,
+				'target-arrow-shape': 'triangle',
+				events: 'no',
+			},
+		},
+		// --- INTERACTION STATES ---
+		{
+			selector: '.dimmed',
+			style: {
+				opacity: 0.05,
+				'text-opacity': 0.1,
+				'border-opacity': 0.1,
+				'background-opacity': 0.1,
+			},
+		},
+		{
+			selector: '.highlighted',
+			style: {
+				'z-index': 9999,
+				'text-wrap': 'wrap',
+			},
+		},
+		{
+			selector: 'edge.highlighted',
+			style: {
+				width: 2,
+				opacity: 1,
+			},
+		},
+	];
+};
+
+export const LAYOUT_CONFIG = {
+	name: 'fcose',
+	quality: 'default',
+	randomize: true,
+	animate: false,
+	animationDuration: 1000,
+	fit: true,
+	padding: 50,
+	nodeDimensionsIncludeLabels: true,
+	nodeRepulsion: (node) => {
+		const degree = node.data('degree') || 0;
+		return 40000 + degree * 5000;
+	},
+	idealEdgeLength: (edge) => {
+		const d1 = edge.source().data('degree') || 0;
+		const d2 = edge.target().data('degree') || 0;
+		const maxDegree = Math.max(d1, d2);
+		return 150 + maxDegree * 30;
+	},
+	edgeElasticity: (edge) => 0.1,
+	gravity: 0.25,
+	gravityRange: 3.8,
+	numIter: 2500,
+	tile: true,
+	tilingPaddingVertical: 100,
+	tilingPaddingHorizontal: 100,
+};
+
+--- END OF features\graph\config\graphStyles.js ---
+

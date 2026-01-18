@@ -1,0 +1,913 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ATLAS - LAYERS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\atlas\components\layers\MapAreas.jsx ---
+import React, { useState } from 'react';
+import { Polygon, Marker } from 'react-leaflet';
+import { createLabelIcon } from '@/features/atlas/utils/markerUtils';
+import { getRoundedPath } from '@/features/atlas/utils/pathUtils';
+import { PatternDefs } from '@/features/admin/components/atlas/components/PatternDefs';
+
+const getCentroid = (points) => {
+	if (!points || points.length === 0) return [0, 0];
+	let lat = 0,
+		lng = 0;
+	points.forEach((p) => {
+		lat += Array.isArray(p) ? p[0] : p.coordinates[0];
+		lng += Array.isArray(p) ? p[1] : p.coordinates[1];
+	});
+	return [lat / points.length, lng / points.length];
+};
+
+const MapAreaItem = ({ area }) => {
+	const [isHovered, setIsHovered] = useState(false);
+
+	const rawPositions = area.positions || (area.points || []).map((p) => p.coordinates);
+	if (!rawPositions || rawPositions.length === 0) return null;
+
+	// Geometry Rounding
+	const positions = area.curviness > 0 ? getRoundedPath(rawPositions, area.curviness, true) : rawPositions;
+
+	const center = area.labelPosition || getCentroid(rawPositions);
+
+	// Pattern Logic
+	let fillColor = area.interiorColor || '#ff0000';
+	let fillOpacity = area.fillOpacity ?? 0.3;
+
+	if (area.fillType === 'hatch' || area.fillType === 'dots') {
+		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
+		const safeOpacity = Math.round(fillOpacity * 100);
+
+		// FIX: Must match PatternDefs logic exactly (including defaults)
+		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
+		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
+
+		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight})`;
+		fillOpacity = 1;
+	}
+
+	// Label Visibility Logic
+	// FIX: Default to 'always' if undefined to prevent invisible text
+	const displayMode = area.labelDisplay || 'always';
+	let labelOpacity = 0;
+	if (displayMode === 'always') labelOpacity = 1;
+	else if (displayMode === 'hover' && isHovered) labelOpacity = 1;
+
+	return (
+		<React.Fragment>
+			<Polygon
+				positions={positions}
+				pathOptions={{
+					color: area.borderStyle === 'none' ? 'transparent' : area.lineColor || '#d97706',
+					fillColor: fillColor,
+					fillOpacity: fillOpacity,
+					weight: area.weight || 2,
+					dashArray: area.borderStyle === 'dashed' ? '10, 10' : area.borderStyle === 'dotted' ? '2, 6' : null,
+					lineJoin: 'round',
+				}}
+				eventHandlers={{
+					mouseover: () => setIsHovered(true),
+					mouseout: () => setIsHovered(false),
+				}}
+			/>
+			{/* Text Label Marker */}
+			{area.name && labelOpacity > 0 && (
+				<Marker
+					position={center}
+					icon={createLabelIcon(area.name, {
+						color: area.labelColor || '#ffffff',
+						fontSize: area.fontSize || 16,
+						rotation: area.textRotation || 0,
+						bgColor: area.labelBgColor || 'transparent',
+						bgOpacity: area.labelBgOpacity || 0,
+						hasBorder: area.labelHasBorder,
+						borderRadius: area.labelRadius,
+						borderColor: area.labelBorderColor,
+						// NEW: Pass Padding
+						paddingX: area.paddingX,
+						paddingY: area.paddingY,
+						isSelected: false,
+					})}
+					opacity={labelOpacity}
+					interactive={false}
+				/>
+			)}
+		</React.Fragment>
+	);
+};
+
+export const MapAreas = ({ areas }) => {
+	if (!areas || areas.length === 0) return null;
+
+	return (
+		<>
+			{/* PatternDefs handles generating the SVG <defs> */}
+			<PatternDefs areas={areas} />
+			{areas.map((area, idx) => (
+				<MapAreaItem key={`${area.name}-${idx}`} area={area} />
+			))}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapAreas.jsx ---
+
+--- FILE: features\atlas\components\layers\MapMarkers.jsx ---
+import { Marker, Popup } from 'react-leaflet';
+import { ArrowRight, BookOpen, Map as MapIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { useAtlas } from '../../context/AtlasContext'; // Import the new Context
+import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
+export const MapMarkers = ({ markers }) => {
+	const navigate = useNavigate();
+	const { map: entityMap } = useEntityIndex();
+
+	// Get navigation function directly from context
+	const { navigateToMap } = useAtlas();
+
+	if (!markers || markers.length === 0) return null;
+
+	return (
+		<>
+			{markers.map((marker, idx) => {
+				// Generate Leaflet Icon
+				const leafletIcon = resolveMarkerIcon(marker);
+
+				// Attempt to link Marker -> Entity (by Name)
+				const entityMatch = Array.from(entityMap.values()).find(
+					(e) => e.name.toLowerCase() === marker.label.toLowerCase()
+				);
+
+				const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
+
+				// Prepare Display Data (Merge Marker Data with Entity Data)
+				const displayData = {
+					title: marker.label,
+					category:
+						marker.category && marker.category !== 'default'
+							? marker.category
+							: entityMatch
+							? entityMatch.type
+							: 'Point of Interest',
+					description: marker.description
+						? marker.description
+						: entityMatch
+						? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
+						: null,
+					image: entityMatch ? resolveImageUrl(entityAttrs, 'background') : null,
+				};
+
+				const entityConfig = entityMatch ? getEntityConfig(entityMatch.type) : null;
+
+				// --- Handlers ---
+
+				const handleWikiNav = (e) => {
+					e.stopPropagation();
+					if (entityMatch) {
+						navigate(`/wiki/${entityMatch.type}/${entityMatch.id}`);
+					}
+				};
+
+				const handleMapNav = (e) => {
+					e.stopPropagation();
+					if (marker.mapLink) {
+						navigateToMap(marker.mapLink);
+					}
+				};
+
+				return (
+					<Marker
+						// Use a stable key if possible, falling back to label+index
+						key={marker.id || `${marker.label}-${idx}`}
+						position={marker.position}
+						icon={leafletIcon}>
+						<Popup className='custom-popup-clean' closeButton={false}>
+							<div className='flex flex-col w-full font-sans bg-background rounded-lg overflow-hidden border border-border shadow-sm'>
+								{/* Header Image */}
+								{displayData.image && (
+									<div className='h-24 w-full relative bg-muted'>
+										<img src={displayData.image} alt={displayData.title} className='w-full h-full object-cover' />
+										<div className='absolute inset-0 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/80 via-30% to-transparent pointer-events-none' />
+									</div>
+								)}
+
+								{/* Content Body */}
+								<div className={clsx('px-4 pb-3', displayData.image ? 'pt-2 -mt-8 relative z-10' : 'pt-4')}>
+									<div className='flex items-start justify-between gap-2'>
+										<div>
+											<span
+												className={clsx(
+													'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
+													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
+												)}>
+												{displayData.category}
+											</span>
+											<h3 className='font-serif font-bold text-lg leading-tight text-foreground drop-shadow-sm'>
+												{displayData.title}
+											</h3>
+										</div>
+										{entityConfig && (
+											<div
+												className={clsx(
+													'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
+													entityConfig.tailwind.border,
+													entityConfig.tailwind.text
+												)}>
+												<entityConfig.icon size={14} />
+											</div>
+										)}
+									</div>
+
+									<div className='h-px w-full bg-border/50 my-3' />
+
+									<div className='text-xs text-muted-foreground leading-relaxed max-h-32 overflow-y-auto custom-scrollbar'>
+										{displayData.description || <span className='italic opacity-70'>No details available.</span>}
+									</div>
+								</div>
+
+								{/* Actions Footer */}
+								{(marker.mapLink || entityMatch) && (
+									<div className='bg-muted/50 p-2 border-t border-border flex flex-col gap-1'>
+										{/* Action: Enter Sub-Map */}
+										{marker.mapLink && (
+											<button
+												onClick={handleMapNav}
+												className='w-full flex items-center justify-between px-3 py-1.5 rounded hover:bg-primary/10 text-primary transition-colors text-xs font-bold uppercase tracking-wide group'>
+												<span className='flex items-center gap-2'>
+													<MapIcon size={12} /> Enter Location
+												</span>
+												<ArrowRight size={12} className='group-hover:translate-x-1 transition-transform' />
+											</button>
+										)}
+
+										{/* Action: Open Wiki */}
+										{entityMatch && (
+											<button
+												onClick={handleWikiNav}
+												className='w-full flex items-center justify-between px-3 py-1.5 rounded hover:bg-background text-muted-foreground hover:text-foreground transition-colors text-xs font-semibold group'>
+												<span className='flex items-center gap-2'>
+													<BookOpen size={12} /> View Encyclopedia
+												</span>
+												<ArrowRight size={12} className='opacity-0 group-hover:opacity-100 transition-opacity' />
+											</button>
+										)}
+									</div>
+								)}
+							</div>
+						</Popup>
+					</Marker>
+				);
+			})}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapMarkers.jsx ---
+
+--- FILE: features\atlas\components\layers\MapOverlays.jsx ---
+import { ImageOverlay } from 'react-leaflet';
+
+export const MapOverlays = ({ overlays }) => {
+	if (!overlays || overlays.length === 0) return null;
+
+	// Same robust logic for the viewer
+	const getUrl = (path) => {
+		if (!path || typeof path !== 'string') return '';
+		return path.startsWith('http') ? path : `${import.meta.env.BASE_URL}${path}`;
+	};
+
+	return (
+		<>
+			{overlays.map((overlay, idx) => {
+				const url = getUrl(overlay.image);
+				if (!url) return null;
+
+				return <ImageOverlay key={`${overlay.name}-${idx}`} url={url} bounds={overlay.bounds} opacity={1} />;
+			})}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapOverlays.jsx ---
+
+--- FILE: features\atlas\components\layers\MapRecaps.jsx ---
+import React, { useMemo, useRef, useState } from 'react';
+import { Polyline, Marker, Popup, Tooltip } from 'react-leaflet';
+import { Calendar } from 'lucide-react';
+import { createDotIcon } from '@/features/atlas/utils/markerUtils';
+import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
+import { TextAlongPath } from '@/features/atlas/components/layers/TextAlongPath';
+
+const PathRenderer = ({ session }) => {
+	const polylineRef = useRef(null);
+	const [isHovered, setIsHovered] = useState(false);
+
+	// 1. Calculate Geometry
+	// Handle both {coordinates:[]} objects and raw arrays
+	const rawPositions = (session.points || []).map((p) => p.coordinates || p);
+
+	const positions = useMemo(() => {
+		if (session.curviness > 0 && rawPositions.length > 1) {
+			return getSmoothPath(rawPositions, session.curviness);
+		}
+		return rawPositions;
+	}, [rawPositions, session.curviness]);
+
+	if (!positions || positions.length === 0) return null;
+
+	const color = session.color || '#d97706';
+	const weight = session.weight || 4;
+	const opacity = session.opacity || 0.8;
+	const dashArray = session.dashArray || null;
+
+	const hasTextAlongLine = !!session.textAlongLine;
+	const showTooltip = session.name && session.labelDisplay !== 'none' && !hasTextAlongLine;
+
+	// Calculate Visibility
+	let isTextVisible = false;
+	if (hasTextAlongLine && session.labelDisplay !== 'none') {
+		if (session.labelDisplay === 'always') isTextVisible = true;
+		// Show on hover OR if we force it via props (optional)
+		else if (session.labelDisplay === 'hover') isTextVisible = isHovered;
+	}
+
+	return (
+		<React.Fragment>
+			<Polyline
+				ref={polylineRef}
+				positions={positions}
+				pathOptions={{
+					color,
+					weight,
+					opacity,
+					dashArray,
+					lineCap: 'round',
+					lineJoin: 'round',
+				}}
+				eventHandlers={{
+					mouseover: () => setIsHovered(true),
+					mouseout: () => setIsHovered(false),
+				}}>
+				{showTooltip && (
+					<Tooltip
+						permanent={session.labelDisplay === 'always'}
+						direction='center'
+						className={session.labelStyle === 'ghost' ? 'leaflet-tooltip-ghost' : 'leaflet-tooltip-box'}
+						opacity={session.labelDisplay === 'hover' ? 0.9 : 1}
+						sticky>
+						<span className='font-bold text-xs font-serif'>{session.name}</span>
+					</Tooltip>
+				)}
+
+				{hasTextAlongLine && session.name && (
+					<TextAlongPath
+						layerRef={polylineRef}
+						text={session.name}
+						visible={isTextVisible}
+						style={{
+							color: '#ffffff',
+							strokeColor: color,
+							opacity: 1,
+							fontSize: 13,
+							fontWeight: 800,
+						}}
+					/>
+				)}
+			</Polyline>
+
+			{/* Narrative Points */}
+			{session.points.map((point, idx) => {
+				if (!point.text) return null;
+				// Ensure safe coordinates
+				const coords = point.coordinates || point;
+				return (
+					<Marker key={`${session.name}-p-${idx}`} position={coords} icon={createDotIcon(color)}>
+						<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
+							<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
+								<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
+									<Calendar size={12} className='text-primary' />
+									<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>{session.name}</span>
+								</div>
+								<div className='p-3 text-xs text-foreground/90 leading-snug'>{point.text}</div>
+							</div>
+						</Popup>
+					</Marker>
+				);
+			})}
+		</React.Fragment>
+	);
+};
+
+export const MapRecaps = ({ sessions }) => {
+	if (!sessions || sessions.length === 0) return null;
+
+	return (
+		<>
+			{sessions.map((session, idx) => (
+				<PathRenderer key={session.id || idx} session={session} />
+			))}
+		</>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapRecaps.jsx ---
+
+--- FILE: features\atlas\components\layers\TextAlongPath.jsx ---
+import { useEffect, useId, useRef, useCallback } from 'react';
+import { useMap } from 'react-leaflet';
+
+export const TextAlongPath = ({ layerRef, text, style = {}, visible = true }) => {
+	const map = useMap();
+	// Strip colons for valid selector IDs
+	const uniqueId = useId().replace(/:/g, '');
+	const domId = `path-link-${uniqueId}`;
+
+	const textNodeRef = useRef(null);
+	const guidePathRef = useRef(null);
+
+	const updateGeometry = useCallback(() => {
+		const layer = layerRef.current;
+		if (!layer || !text) return;
+
+		const pathElement = layer._path;
+		if (!pathElement) return;
+
+		const svgContainer = pathElement.parentNode;
+		if (!svgContainer) return;
+
+		// 1. Analyze Geometry & Direction
+		const rings = layer._parts;
+		if (!rings || rings.length === 0) return;
+		const points = rings[0];
+		if (!points || points.length < 2) return;
+
+		// If line goes Right-to-Left (East to West), reverse it so text isn't upside down
+		const isBackwards = points[points.length - 1].x < points[0].x;
+
+		let d = '';
+		if (isBackwards) {
+			for (let i = points.length - 1; i >= 0; i--) {
+				d += (i === points.length - 1 ? 'M' : 'L') + points[i].x + ',' + points[i].y + ' ';
+			}
+		} else {
+			for (let i = 0; i < points.length; i++) {
+				d += (i === 0 ? 'M' : 'L') + points[i].x + ',' + points[i].y + ' ';
+			}
+		}
+
+		// 2. Create/Update Hidden Guide Path
+		let guide = guidePathRef.current;
+		if (!guide) {
+			guide = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			guide.setAttribute('id', `guide-${domId}`);
+			guide.setAttribute('fill', 'none');
+			guide.setAttribute('stroke', 'none');
+			svgContainer.insertBefore(guide, pathElement);
+			guidePathRef.current = guide;
+		}
+		guide.setAttribute('d', d);
+
+		// 3. Sparse Calculation Logic
+		const pathLength = guide.getTotalLength();
+
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		const fontSize = style.fontSize || 12;
+		const fontWeight = style.fontWeight || 800;
+		ctx.font = `${fontWeight} ${fontSize}px sans-serif`;
+		const textWidth = ctx.measureText(text).width;
+
+		// --- SPARSITY TUNING ---
+		// A segment is the space allocated to ONE label.
+		// We set this very high to prevent clutter.
+		// 1200px (roughly a screen width) OR 10x the text width, whichever is bigger.
+		const minSegmentLength = Math.max(1200, textWidth * 10);
+
+		// How many segments fit?
+		let labelCount = Math.floor(pathLength / minSegmentLength);
+
+		// Always show at least 1, but cap at 4 to prevent spam on massive zoom-ins
+		labelCount = Math.max(1, Math.min(labelCount, 4));
+
+		// Distribution:
+		// 1 -> 50%
+		// 2 -> 33%, 66%
+		// 3 -> 25%, 50%, 75%
+		const offsets = [];
+		const interval = 100 / (labelCount + 1);
+		for (let i = 1; i <= labelCount; i++) {
+			offsets.push(`${interval * i}%`);
+		}
+
+		// 4. Create/Update Text Wrapper
+		let textNode = textNodeRef.current;
+		if (!textNode) {
+			const NS = 'http://www.w3.org/2000/svg';
+			textNode = document.createElementNS(NS, 'text');
+			textNode.setAttribute('id', `text-${domId}`);
+			textNode.setAttribute('dominant-baseline', 'middle');
+			svgContainer.appendChild(textNode);
+			textNodeRef.current = textNode;
+		}
+
+		// 5. Apply Styles
+		Object.assign(textNode.style, {
+			pointerEvents: 'none',
+			fontFamily: 'var(--font-sans, sans-serif)',
+			fontWeight: `${fontWeight}`,
+			fontSize: `${fontSize}px`,
+			fill: style.color || '#ffffff',
+			stroke: style.strokeColor || '#000000',
+			strokeWidth: '5px',
+			paintOrder: 'stroke',
+			strokeLinejoin: 'round',
+			strokeLinecap: 'round',
+			textRendering: 'geometricPrecision',
+			letterSpacing: '0.05em',
+			whiteSpace: 'pre',
+			transition: 'opacity 0.2s ease-in-out',
+			opacity: visible ? style.opacity || 1 : 0,
+		});
+
+		// 6. Generate <textPath> elements
+		const NS = 'http://www.w3.org/2000/svg';
+
+		// Clear existing children
+		while (textNode.firstChild) {
+			textNode.removeChild(textNode.firstChild);
+		}
+
+		offsets.forEach((offset) => {
+			const textPath = document.createElementNS(NS, 'textPath');
+			textPath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#guide-${domId}`);
+
+			textPath.setAttribute('startOffset', offset);
+			textPath.setAttribute('text-anchor', 'middle');
+			textPath.setAttribute('alignment-baseline', 'middle');
+
+			textPath.textContent = text;
+			textNode.appendChild(textPath);
+		});
+	}, [layerRef, text, domId, style, visible]);
+
+	// --- Lifecycle ---
+
+	useEffect(() => {
+		requestAnimationFrame(updateGeometry);
+		const onMapUpdate = () => requestAnimationFrame(updateGeometry);
+
+		map.on('zoomend', onMapUpdate);
+		map.on('moveend', onMapUpdate);
+
+		return () => {
+			map.off('zoomend', onMapUpdate);
+			map.off('moveend', onMapUpdate);
+		};
+	}, [map, updateGeometry]);
+
+	// Cleanup
+	useEffect(() => {
+		return () => {
+			if (textNodeRef.current) textNodeRef.current.remove();
+			if (guidePathRef.current) guidePathRef.current.remove();
+		};
+	}, []);
+
+	return null;
+};
+
+--- END OF features\atlas\components\layers\TextAlongPath.jsx ---
+

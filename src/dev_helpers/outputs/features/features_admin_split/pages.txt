@@ -1,0 +1,1209 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ADMIN - PAGES
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\admin\pages\BulkReplaceTool.jsx ---
+import React, { useState } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { getBulkReplacePreview, executeBulkReplace } from '@/features/admin/api/adminService';
+import {
+	ADMIN_SECTION_CLASS,
+	ADMIN_HEADER_CLASS,
+	ADMIN_INPUT_CLASS,
+	ADMIN_LABEL_CLASS,
+} from '@/features/admin/components/AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+import { Replace, Eye, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+
+export default function BulkReplaceTool() {
+	const { campaignId } = useCampaign();
+	const queryClient = useQueryClient();
+	const [find, setFind] = useState('');
+	const [replace, setReplace] = useState('');
+	const [preview, setPreview] = useState(null); // null, [], or items
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	const handlePreview = async () => {
+		setIsProcessing(true);
+		const matches = await getBulkReplacePreview(campaignId, find, replace);
+		setPreview(matches);
+		setIsProcessing(false);
+	};
+
+	const handleConfirm = async () => {
+		if (!confirm(`Apply all ${preview.length} changes?`)) return;
+		setIsProcessing(true);
+		await executeBulkReplace(preview);
+		queryClient.invalidateQueries();
+		alert('Archive successfully patched.');
+		setPreview(null);
+		setFind('');
+		setReplace('');
+		setIsProcessing(false);
+	};
+
+	return (
+		<div className='max-w-4xl mx-auto p-6 space-y-6'>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>
+					<span className='flex items-center gap-2'>
+						<Replace size={18} className='text-amber-600' /> Archive Patch Tool
+					</span>
+				</h2>
+
+				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Search Term</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={find}
+							onChange={(e) => setFind(e.target.value)}
+							placeholder='Misspelled word...'
+						/>
+					</div>
+					<div>
+						<label className={ADMIN_LABEL_CLASS}>Replacement</label>
+						<input
+							className={ADMIN_INPUT_CLASS}
+							value={replace}
+							onChange={(e) => setReplace(e.target.value)}
+							placeholder='Proper word...'
+						/>
+					</div>
+				</div>
+
+				<div className='pt-2'>
+					<Button
+						variant='primary'
+						fullWidth
+						icon={isProcessing ? Loader2 : Eye}
+						disabled={isProcessing || !find.trim()}
+						onClick={handlePreview}>
+						{isProcessing ? 'Scanning...' : 'Scan for Matches'}
+					</Button>
+				</div>
+			</div>
+
+			{preview && (
+				<div className={`${ADMIN_SECTION_CLASS} animate-in slide-in-from-bottom-4`}>
+					<div className={ADMIN_HEADER_CLASS}>
+						<span>Review Proposed Changes ({preview.length})</span>
+						<Button size='sm' variant='danger' icon={Replace} onClick={handleConfirm} disabled={preview.length === 0}>
+							Apply All Updates
+						</Button>
+					</div>
+
+					{preview.length === 0 ? (
+						<div className='text-center py-10 text-muted-foreground italic'>No matches found in the archives.</div>
+					) : (
+						<div className='border border-border rounded-lg overflow-hidden bg-background'>
+							<table className='w-full text-[11px] text-left border-collapse'>
+								<thead className='bg-muted text-muted-foreground font-bold uppercase tracking-wider'>
+									<tr>
+										<th className='p-3 border-b border-border'>Context / Source</th>
+										<th className='p-3 border-b border-border'>Change Preview</th>
+									</tr>
+								</thead>
+								<tbody className='divide-y divide-border'>
+									{preview.map((item, idx) => (
+										<tr key={idx} className='hover:bg-muted/30'>
+											<td className='p-3 align-top font-bold text-muted-foreground w-1/3'>
+												<div className='uppercase text-[9px] opacity-50 mb-1'>
+													{item.table}.{item.field}
+												</div>
+												{item.context}
+											</td>
+											<td className='p-3 space-y-1'>
+												<div className='text-red-600 line-through opacity-60 bg-red-500/10 p-1 rounded'>
+													{item.original}
+												</div>
+												<div className='flex items-center gap-2 text-emerald-700 font-medium bg-emerald-500/10 p-1 rounded'>
+													<ArrowRight size={10} /> {item.proposal}
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\BulkReplaceTool.jsx ---
+
+--- FILE: features\admin\pages\EntityEditorPage.jsx ---
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import AdminForm from '@/features/admin/components/AdminForm'; // Import the form
+
+export default function EntityEditorPage() {
+	const { type, id } = useParams();
+
+	return (
+		<div className='max-w-5xl mx-auto'>
+			{/* Page Header */}
+			<div className='mb-6'>
+				<h1 className='text-2xl font-serif font-bold text-foreground capitalize'>
+					{id ? `Edit ${type}` : `Create New ${type}`}
+				</h1>
+				<p className='text-sm text-muted-foreground'>
+					{id ? `ID: ${id}` : 'Fill in the details below to create a new entry.'}
+				</p>
+			</div>
+
+			{/* The Dynamic Form */}
+			<AdminForm
+				type={type}
+				id={id}
+				key={`${type}-${id || 'new'}`} // <--- This forces a complete rebuild when type changes
+			/>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\EntityEditorPage.jsx ---
+
+--- FILE: features\admin\pages\EntityListPage.jsx ---
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Edit, Plus, Search, Loader2, Copy, Trash2, Image as ImageIcon } from 'lucide-react';
+import { getEntities } from '@/domain/entity/api/entityService';
+import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import Button from '@/shared/components/ui/Button';
+import EntityBadge from '@/domain/entity/components/EntityBadge';
+
+// Helper to clean paths for display
+const resolveImgUrl = (url) => {
+	if (!url) return null;
+	// Remove leading slashes or ../ sequences
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+export default function EntityListPage() {
+	const { type } = useParams();
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const [search, setSearch] = useState('');
+	const [isCloning, setIsCloning] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(null);
+
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	const { data, isLoading, refetch } = useQuery({
+		queryKey: ['admin-list', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: !!campaignId,
+	});
+
+	const filtered = (data || []).filter((item) =>
+		(item.name || item.title || '').toLowerCase().includes(search.toLowerCase())
+	);
+
+	const handleDuplicate = async (originalId) => {
+		if (!confirm('Create a copy of this entity?')) return;
+		setIsCloning(originalId);
+		try {
+			const raw = await fetchRawEntity(normalizedType, originalId);
+			const copyData = {
+				...raw,
+				name: raw.name ? `${raw.name} (Copy)` : undefined,
+				title: raw.title ? `${raw.title} (Copy)` : undefined,
+				campaign_id: campaignId,
+			};
+			const result = await createEntity(normalizedType, copyData);
+			navigate(`/dm/editor/${normalizedType}/${result.id}`);
+		} catch (e) {
+			console.error('Duplication failed:', e);
+			alert('Failed to duplicate: ' + e.message);
+			setIsCloning(false);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!confirm(`Are you sure you want to delete this ${normalizedType}? This cannot be undone.`)) return;
+		setIsDeleting(id);
+		try {
+			await deleteEntity(normalizedType, id);
+			refetch();
+		} catch (e) {
+			alert('Delete failed: ' + e.message);
+		} finally {
+			setIsDeleting(null);
+		}
+	};
+
+	return (
+		<div className='space-y-4 animate-in fade-in duration-300'>
+			{/* Header Toolbar */}
+			<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+				<h1 className='text-2xl font-serif font-bold text-foreground capitalize flex items-center gap-2'>
+					{type}s
+					<span className='text-sm font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
+						{data?.length || 0}
+					</span>
+				</h1>
+				<Link to={`/dm/editor/${normalizedType}`}>
+					<Button variant='primary' icon={Plus} size='sm'>
+						Create New
+					</Button>
+				</Link>
+			</div>
+
+			{/* Search Bar */}
+			<div className='relative'>
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={16} />
+				<input
+					type='text'
+					placeholder={`Filter ${type}s...`}
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+					className='w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm placeholder:text-muted-foreground/50'
+				/>
+			</div>
+
+			{/* Entity List */}
+			<div className='bg-background border border-border rounded-lg shadow-sm overflow-hidden'>
+				<div className='divide-y divide-border'>
+					{isLoading ? (
+						<div className='p-12 flex justify-center text-muted-foreground'>
+							<Loader2 className='animate-spin text-amber-600' />
+						</div>
+					) : filtered.length === 0 ? (
+						<div className='p-12 text-center text-muted-foreground text-sm italic bg-muted/10'>
+							{search ? `No matches for "${search}"` : `No ${type}s found. Create one to get started.`}
+						</div>
+					) : (
+						filtered.map((item) => {
+							// Determine icon URL (Check both flattened 'icon_url' and nested attributes)
+							const rawIcon = item.icon_url || item.attributes?.icon;
+							const iconSrc = resolveImgUrl(rawIcon);
+
+							return (
+								<div
+									key={item.id}
+									className='virtual-list-item group flex items-center justify-between p-3 hover:bg-muted/40 transition-colors'>
+									{/* Left: Info */}
+									<div className='flex items-center gap-4 min-w-0 flex-1'>
+										{/* --- NEW: Entity Icon --- */}
+										<div className='shrink-0 w-10 h-10 rounded-md bg-muted border border-border overflow-hidden flex items-center justify-center'>
+											{iconSrc ? (
+												<img
+													src={iconSrc}
+													alt={item.name}
+													className='w-full h-full object-cover'
+													loading='lazy'
+													onError={(e) => {
+														e.target.style.display = 'none';
+														e.target.nextSibling.style.display = 'flex';
+													}}
+												/>
+											) : (
+												<ImageIcon size={16} className='text-muted-foreground/20' />
+											)}
+											{/* Fallback hidden by default, shown on error */}
+											<div className='hidden w-full h-full items-center justify-center bg-muted'>
+												<ImageIcon size={16} className='text-muted-foreground/20' />
+											</div>
+										</div>
+
+										<div className='min-w-0'>
+											<div className='flex items-center gap-2'>
+												<span className='font-medium text-sm text-foreground truncate'>{item.name || item.title}</span>
+												{item.type !== normalizedType && <EntityBadge type={item.type} size='sm' variant='subtle' />}
+											</div>
+											<div className='text-[11px] text-muted-foreground truncate max-w-xl'>
+												{item.summary || item.narrative || item.description || 'No description'}
+											</div>
+										</div>
+									</div>
+
+									{/* Right: Actions */}
+									<div className='flex items-center gap-2 shrink-0 ml-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+										<EntityBadge
+											type={item.type}
+											size='sm'
+											variant='outline'
+											className='opacity-50 hidden sm:inline-flex'
+										/>
+										<button
+											onClick={() => handleDuplicate(item.id)}
+											disabled={isCloning === item.id}
+											className='p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500'
+											title='Duplicate'>
+											{isCloning === item.id ? (
+												<Loader2 size={16} className='animate-spin text-amber-600' />
+											) : (
+												<Copy size={16} />
+											)}
+										</button>
+										<Link to={`/dm/editor/${normalizedType}/${item.id}`}>
+											<Button
+												variant='ghost'
+												size='sm'
+												icon={Edit}
+												className='h-8 px-2 text-muted-foreground hover:text-foreground'>
+												Edit
+											</Button>
+										</Link>
+										<button
+											onClick={() => handleDelete(item.id)}
+											disabled={isDeleting === item.id}
+											className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+											title='Delete'>
+											{isDeleting === item.id ? <Loader2 size={16} className='animate-spin' /> : <Trash2 size={16} />}
+										</button>
+									</div>
+								</div>
+							);
+						})
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\EntityListPage.jsx ---
+
+--- FILE: features\admin\pages\MapManagerPage.jsx ---
+import React, { useState, useEffect } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { fetchCampaignMaps, fetchMapByKey } from '@/features/atlas/api/mapService';
+import { Map as MapIcon, Loader2, Edit3, ArrowLeft } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import AtlasEditor from '@/features/admin/components/atlas/AtlasEditor'; // We will create this next
+import { ADMIN_HEADER_CLASS } from '@/features/admin/components/AdminFormStyles';
+
+export default function MapManagerPage() {
+	const { campaignId } = useCampaign();
+	const [maps, setMaps] = useState([]);
+	const [selectedMap, setSelectedMap] = useState(null);
+	const [loading, setLoading] = useState(false);
+
+	// Load list on mount
+	useEffect(() => {
+		if (campaignId) loadList();
+	}, [campaignId]);
+
+	const loadList = async () => {
+		setLoading(true);
+		try {
+			const data = await fetchCampaignMaps(campaignId);
+			setMaps(data || []);
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Load full map details when selected
+	const handleSelect = async (mapSummary) => {
+		setLoading(true);
+		try {
+			const fullData = await fetchMapByKey(campaignId, mapSummary.key);
+			// Merge the ID back in since fetchMapByKey flattens it
+			setSelectedMap({ ...fullData, id: mapSummary.id, key: mapSummary.key });
+		} catch (e) {
+			alert(e.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// --- RENDER: EDITOR MODE ---
+	if (selectedMap) {
+		return (
+			<div className='h-[100vh] flex flex-col'>
+				<div className='bg-background border-b border-border p-2 flex items-center gap-4'>
+					<Button variant='ghost' size='sm' icon={ArrowLeft} onClick={() => setSelectedMap(null)}>
+						Back to List
+					</Button>
+					<span className='font-bold font-serif text-lg'>{selectedMap.metadata?.label || selectedMap.key}</span>
+				</div>
+				<div className='flex-1 overflow-hidden relative'>
+					<AtlasEditor initialData={selectedMap} />
+				</div>
+			</div>
+		);
+	}
+
+	// --- RENDER: LIST MODE ---
+	return (
+		<div className='max-w-5xl mx-auto p-8 space-y-6'>
+			<h1 className={ADMIN_HEADER_CLASS}>
+				<span className='flex items-center gap-2'>
+					<MapIcon className='text-primary' /> Atlas Manager
+				</span>
+			</h1>
+
+			{loading && (
+				<div className='text-center py-10'>
+					<Loader2 className='animate-spin mx-auto' />
+				</div>
+			)}
+
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+				{!loading &&
+					maps.map((m) => (
+						<button
+							key={m.id}
+							onClick={() => handleSelect(m)}
+							className='group flex flex-col items-start p-4 bg-card border border-border rounded-xl hover:border-primary hover:shadow-md transition-all text-left'>
+							<div className='w-full flex justify-between items-start mb-2'>
+								<span className='text-[10px] font-mono bg-muted px-2 py-1 rounded text-muted-foreground group-hover:text-primary transition-colors'>
+									{m.key}
+								</span>
+								<Edit3 size={16} className='opacity-0 group-hover:opacity-100 transition-opacity text-primary' />
+							</div>
+							<h3 className='font-bold text-lg'>{m.title}</h3>
+						</button>
+					))}
+			</div>
+
+			{!loading && maps.length === 0 && (
+				<div className='text-center py-20 text-muted-foreground italic border-2 border-dashed border-border rounded-xl'>
+					No maps found in database. Run the migration tool first.
+				</div>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\MapManagerPage.jsx ---
+
+--- FILE: features\admin\pages\MapMigrationTool.jsx ---
+import React, { useState } from 'react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { upsertMap } from '@/features/atlas/api/mapService';
+import Button from '@/shared/components/ui/Button';
+import { UploadCloud, CheckCircle, AlertTriangle, RefreshCw, Database } from 'lucide-react';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from '@/features/admin/components/AdminFormStyles';
+
+export default function MapMigrationTool() {
+	const { campaignId, campaignData } = useCampaign();
+	const [status, setStatus] = useState({});
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	const handleMigration = async () => {
+		if (!campaignId || !campaignData) return;
+		if (!confirm(`Overwrite database maps for campaign ${campaignId} with data from local files?`)) return;
+
+		setIsProcessing(true);
+		const newStatus = {};
+
+		const maps = campaignData.maps || {};
+		const mapKeys = Object.keys(maps);
+
+		for (const key of mapKeys) {
+			const mapObj = maps[key];
+			try {
+				const metadata = mapObj.metadata || {};
+
+				// --- FIX FOR NESTED MAPS ---
+				// Capture parentId if it exists at the root level of the file object
+				const configPayload = {
+					...metadata,
+					parentId: mapObj.parentId || metadata.parentId || null,
+				};
+
+				const contentData = {
+					annotations: mapObj.annotations || {},
+					paths: mapObj.paths || [],
+					areas: mapObj.areas || {},
+					overlays: mapObj.overlays || [],
+				};
+
+				await upsertMap(
+					campaignId,
+					key,
+					metadata.label || key,
+					configPayload, // Now contains parentId
+					contentData
+				);
+
+				newStatus[key] = { success: true, msg: 'Synced' };
+			} catch (err) {
+				console.error(err);
+				newStatus[key] = { success: false, msg: err.message };
+			}
+		}
+
+		setStatus(newStatus);
+		setIsProcessing(false);
+	};
+
+	if (!campaignData) return <div className='p-8'>Select a campaign with file-based maps first.</div>;
+
+	return (
+		<div className='max-w-4xl mx-auto p-6 space-y-6 animate-in fade-in'>
+			<div className={ADMIN_SECTION_CLASS}>
+				<h2 className={ADMIN_HEADER_CLASS}>
+					<span className='flex items-center gap-2'>
+						<Database size={18} className='text-blue-600' /> Map Database Migration
+					</span>
+				</h2>
+
+				<div className='p-4 bg-primary/20 border border-primary rounded-lg text-sm text-primary mb-6 flex gap-3 items-start'>
+					<AlertTriangle size={18} className='shrink-0 mt-0.5' />
+					<div>
+						<p className='font-bold mb-1'>Overwrite Warning</p>
+						<p>
+							This tool reads the <strong>local .js map files</strong> (Legacy) and pushes them into the{' '}
+							<strong>Supabase 'maps' table</strong>.
+						</p>
+						<p className='mt-2 text-xs opacity-80'>
+							It preserves <code>parentId</code> links for nested map navigation.
+						</p>
+					</div>
+				</div>
+
+				<div className='grid grid-cols-1 gap-2 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar pr-2'>
+					{Object.keys(campaignData.maps || {}).map((mapKey) => (
+						<div
+							key={mapKey}
+							className='flex items-center justify-between p-3 border border-border rounded bg-background shadow-sm'>
+							<div className='flex items-center gap-3'>
+								<span className='font-mono text-[10px] bg-muted px-2 py-1 rounded border border-border'>{mapKey}</span>
+								<div className='flex flex-col'>
+									<span className='text-sm font-medium'>{campaignData.maps[mapKey].metadata?.label}</span>
+									{campaignData.maps[mapKey].parentId && (
+										<span className='text-[10px] text-muted-foreground'>
+											↳ Child of: {campaignData.maps[mapKey].parentId}
+										</span>
+									)}
+								</div>
+							</div>
+
+							{status[mapKey] ? (
+								<span
+									className={`text-xs font-bold flex items-center gap-1 ${
+										status[mapKey].success ? 'text-emerald-600' : 'text-red-600'
+									}`}>
+									{status[mapKey].success ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+									{status[mapKey].msg}
+								</span>
+							) : (
+								<span className='text-xs text-muted-foreground italic opacity-50'>Pending</span>
+							)}
+						</div>
+					))}
+				</div>
+
+				<Button
+					fullWidth
+					variant='primary'
+					onClick={handleMigration}
+					disabled={isProcessing}
+					icon={isProcessing ? RefreshCw : UploadCloud}>
+					{isProcessing ? 'Migrating Data...' : 'Start Database Sync'}
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\MapMigrationTool.jsx ---
+
+--- FILE: features\admin\pages\SplitPaneManager.jsx ---
+import React, { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Search, Loader2, Copy, Trash2, Image as ImageIcon } from 'lucide-react';
+import { getEntities } from '@/domain/entity/api/entityService';
+import { createEntity, fetchRawEntity, deleteEntity } from '@/features/admin/api/adminService';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import AdminForm from '@/features/admin/components/AdminForm';
+import Button from '@/shared/components/ui/Button';
+
+// NEW IMPORTS
+import AdvancedFilter from '@/features/admin/components/AdvancedFilter';
+import { applyFilterRules } from '@/features/admin/utils/filterUtils';
+
+const resolveImgUrl = (url) => {
+	if (!url) return null;
+	const cleanPath = url.replace(/(\.\.\/)+/g, '').replace(/^\//, '');
+	return `${import.meta.env.BASE_URL}${cleanPath}`;
+};
+
+export default function SplitPaneManager() {
+	const { type, id } = useParams();
+	const navigate = useNavigate();
+	const { campaignId } = useCampaign();
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// State
+	const [search, setSearch] = useState('');
+	const [filterRules, setFilterRules] = useState([]); // Array of rules from AdvancedFilter
+
+	// Action States
+	const [isCloning, setIsCloning] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(null);
+
+	// 1. Fetch Full List
+	const {
+		data: allEntities,
+		isLoading,
+		refetch,
+	} = useQuery({
+		queryKey: ['admin-list', campaignId, normalizedType],
+		queryFn: () => getEntities(campaignId, normalizedType),
+		enabled: normalizedType === 'campaign' || !!campaignId,
+	});
+
+	// 2. Apply Filters & Search
+	const displayedEntities = useMemo(() => {
+		if (!allEntities) return [];
+
+		// Step A: Basic Text Search (Name/Title)
+		let result = allEntities.filter((item) => {
+			const term = search.toLowerCase();
+			return (item.name || '').toLowerCase().includes(term) || (item.title || '').toLowerCase().includes(term);
+		});
+
+		// Step B: Advanced Rules
+		result = applyFilterRules(result, filterRules);
+
+		return result;
+	}, [allEntities, search, filterRules]);
+
+	// ... (Duplicate/Delete handlers remain the same) ...
+	const handleDuplicate = async (originalId, e) => {
+		e.stopPropagation();
+		if (!confirm('Create a copy?')) return;
+
+		setIsCloning(originalId);
+		try {
+			const raw = await fetchRawEntity(normalizedType, originalId);
+			const copyData = {
+				...raw,
+				name: raw.name ? `${raw.name} (Copy)` : undefined,
+				title: raw.title ? `${raw.title} (Copy)` : undefined,
+				campaign_id: campaignId,
+			};
+			delete copyData.id;
+
+			const result = await createEntity(normalizedType, copyData);
+			refetch();
+			navigate(`/dm/manage/${normalizedType}/${result.id}`);
+		} catch (e) {
+			alert('Failed to duplicate: ' + e.message);
+		} finally {
+			setIsCloning(false);
+		}
+	};
+
+	const handleDelete = async (itemId, e) => {
+		e.stopPropagation();
+		if (!confirm('Delete this entry?')) return;
+
+		setIsDeleting(itemId);
+		try {
+			await deleteEntity(normalizedType, itemId);
+			refetch();
+			if (id === itemId) {
+				navigate(`/dm/manage/${normalizedType}`);
+			}
+		} catch (e) {
+			alert('Delete failed: ' + e.message);
+		} finally {
+			setIsDeleting(null);
+		}
+	};
+
+	return (
+		<div className='flex h-[100vh] overflow-hidden bg-muted/10'>
+			{/* --- LEFT PANE: LIST --- */}
+			<div className='w-80 flex flex-col border-r border-border bg-background shrink-0 shadow-sm z-10'>
+				{/* HEADER */}
+				<div className='p-3 border-b border-border space-y-3 bg-muted/10 relative z-20'>
+					<div className='flex items-center justify-between mb-2'>
+						<h2 className='text-lg font-serif font-bold capitalize text-foreground flex items-center gap-2'>
+							{type}s
+							<span className='text-xs font-sans font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border'>
+								{allEntities?.length || 0}
+							</span>
+						</h2>
+						<Button
+							onClick={() => navigate(`/dm/manage/${normalizedType}`)}
+							size='sm'
+							variant='primary'
+							icon={Plus}
+							className='h-7 px-2 text-xs'>
+							New
+						</Button>
+					</div>
+
+					<div className='flex gap-2'>
+						{/* Search Input */}
+						<div className='relative flex-1'>
+							<Search className='absolute left-2.5 top-2 text-muted-foreground/60' size={14} />
+							<input
+								type='text'
+								placeholder='Search...'
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								className='w-full pl-8 pr-3 py-1.5 bg-background border border-border rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 shadow-sm'
+							/>
+						</div>
+
+						{/* ADVANCED FILTER BUTTON */}
+						<AdvancedFilter type={normalizedType} data={allEntities || []} onFilterChange={setFilterRules} />
+					</div>
+
+					{/* Active Filter Summary (optional UI polish) */}
+					{filterRules.length > 0 && (
+						<div className='flex flex-wrap gap-1'>
+							{filterRules.map((rule) => (
+								<div
+									key={rule.id}
+									className='text-[9px] bg-amber-100 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded truncate max-w-full'>
+									{rule.field.split('.').pop()} {rule.operator === 'equals' ? '=' : rule.operator} {rule.value}
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+
+				{/* LIST */}
+				<div className='flex-1 overflow-y-auto custom-scrollbar'>
+					{isLoading ? (
+						<div className='p-8 flex justify-center'>
+							<Loader2 className='animate-spin text-amber-600' />
+						</div>
+					) : displayedEntities.length === 0 ? (
+						<div className='p-6 text-center text-xs text-muted-foreground italic'>No matches found.</div>
+					) : (
+						<div className='divide-y divide-border/40'>
+							{displayedEntities.map((item) => {
+								const isActive = id === item.id;
+								const rawIcon = item.icon_url || item.attributes?.icon;
+								const iconSrc = resolveImgUrl(rawIcon);
+
+								return (
+									<div
+										key={item.id}
+										onClick={() => navigate(`/dm/manage/${normalizedType}/${item.id}`)}
+										className={`group relative flex items-center w-full text-left transition-all cursor-pointer ${
+											isActive ? 'bg-amber-500/10/80' : 'bg-background hover:bg-muted/50'
+										}`}>
+										{/* Active Marker */}
+										<div
+											className={`absolute left-0 top-0 bottom-0 w-1 ${isActive ? 'bg-primary' : 'bg-transparent'}`}
+										/>
+
+										<div className='flex items-center gap-3 py-2 pl-3 pr-2 flex-1 min-w-0'>
+											<div className='shrink-0 w-9 h-9 rounded bg-muted border border-border overflow-hidden flex items-center justify-center'>
+												{iconSrc ? (
+													<img
+														src={iconSrc}
+														className='w-full h-full object-cover'
+														loading='lazy'
+														onError={(e) => {
+															e.target.style.display = 'none';
+															e.target.nextSibling.style.display = 'flex';
+														}}
+													/>
+												) : (
+													<ImageIcon size={14} className='text-muted-foreground/30' />
+												)}
+												<div className='hidden w-full h-full items-center justify-center bg-muted'>
+													<ImageIcon size={14} className='text-muted-foreground/30' />
+												</div>
+											</div>
+
+											<div className='min-w-0 flex-1'>
+												<div
+													className={`font-bold text-sm truncate mb-0.5 leading-none ${
+														isActive ? 'text-primary' : 'text-foreground'
+													}`}>
+													{item.name || item.title}
+												</div>
+												<div className='flex items-center justify-between gap-2'>
+													<div className='text-[10px] text-muted-foreground truncate opacity-80'>
+														{item.summary || item.narrative || item.description || 'No description'}
+													</div>
+													{item.status && (
+														<div
+															title={item.status}
+															className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+																item.status.toLowerCase().includes('active') ? 'bg-emerald-500' : 'bg-slate-300'
+															}`}
+														/>
+													)}
+												</div>
+											</div>
+										</div>
+
+										{/* Actions */}
+										<div
+											className={`flex flex-col gap-0.5 pr-1 pl-1 border-l border-transparent group-hover:border-border/50 h-full justify-center ${
+												isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+											} transition-opacity bg-gradient-to-l from-background to-transparent`}>
+											<button
+												onClick={(e) => handleDuplicate(item.id, e)}
+												className='p-1 text-muted-foreground hover:text-blue-600 hover:bg-blue-100 rounded'
+												title='Duplicate'>
+												{isCloning === item.id ? <Loader2 size={12} className='animate-spin' /> : <Copy size={12} />}
+											</button>
+											<button
+												onClick={(e) => handleDelete(item.id, e)}
+												className='p-1 text-muted-foreground hover:text-red-600 hover:bg-red-100 rounded'
+												title='Delete'>
+												{isDeleting === item.id ? <Loader2 size={12} className='animate-spin' /> : <Trash2 size={12} />}
+											</button>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			</div>
+
+			{/* --- RIGHT PANE: EDITOR --- */}
+			<div className='flex-1 overflow-y-auto bg-muted/10 p-4 md:p-8 custom-scrollbar'>
+				<div className='max-w-4xl mx-auto'>
+					<AdminForm key={`${normalizedType}-${id || 'new'}`} type={normalizedType} id={id} />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\admin\pages\SplitPaneManager.jsx ---
+

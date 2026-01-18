@@ -1,0 +1,831 @@
+================================================================
+SPLIT BUNDLE: DOMAIN_ENTITY - UTILS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: domain\entity\utils\attributeParser.js ---
+/**
+ * Attribute Parsing Utilities
+ * Safe parsing and extraction of entity attributes
+ */
+
+/**
+ * Parse attributes safely from JSON string, Object, or DB Row Array
+ * @param {string|Object|Array} attrs - Raw attributes
+ * @returns {Object} Parsed attributes object { key: value }
+ */
+export const parseAttributes = (attrs) => {
+	if (!attrs) return {};
+
+	// 1. Handle JSON String
+	if (typeof attrs === 'string') {
+		try {
+			return JSON.parse(attrs);
+		} catch {
+			console.warn('Failed to parse attributes string:', attrs);
+			return {};
+		}
+	}
+
+	// 2. Handle DB Row Array: [{ name: 'icon', value: '...' }, ...]
+	// This is common when joining tables (e.g. encounter_actions -> actor -> attributes)
+	if (Array.isArray(attrs)) {
+		// Check if it looks like a Name/Value pair list
+		if (attrs.length > 0 && 'name' in attrs[0] && 'value' in attrs[0]) {
+			return attrs.reduce((acc, curr) => {
+				if (curr.name) acc[curr.name] = curr.value;
+				return acc;
+			}, {});
+		}
+		// Otherwise return as-is (might be a simple list attribute value)
+		return {};
+	}
+
+	// 3. Already an Object
+	return attrs;
+};
+
+// ... (Keep getAttributeValue and rest of file exactly as is) ...
+export const getAttributeValue = (attributes, keys) => {
+	if (!attributes) return null;
+
+	// Normalize keys to array
+	const keyList = Array.isArray(keys) ? keys : [keys];
+
+	for (const key of keyList) {
+		// Try exact match
+		let val = attributes[key];
+
+		// Try lowercase match
+		if (!val) {
+			val = attributes[key.toLowerCase()];
+		}
+
+		// Try capitalized match
+		if (!val) {
+			val = attributes[key.charAt(0).toUpperCase() + key.slice(1)];
+		}
+
+		if (!val) continue;
+
+		// Unwrap nested structures
+		if (typeof val === 'string') return val;
+		if (Array.isArray(val) && val[0]?.value) return val[0].value;
+		if (Array.isArray(val) && val[0]) return String(val[0]);
+		if (typeof val === 'object' && val.value) return val.value;
+
+		// Fallback: stringify
+		return String(val);
+	}
+
+	return null;
+};
+
+// ... (Keep rest of file) ...
+export const parseAttributeValue = (val, key) => {
+	if (val === null || val === undefined) return null;
+
+	// 1. Already an array - clean it
+	if (Array.isArray(val)) {
+		return val.map((item) => (typeof item === 'object' && item.value ? item.value : item));
+	}
+
+	// 2. Check if this should be a list based on key name
+	const listKeys = ['feature', 'features', 'traits', 'inventory', 'loot', 'spells'];
+	if (typeof val === 'string' && listKeys.includes(key?.toLowerCase())) {
+		return val
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+	}
+
+	// 3. Unwrap objects
+	if (typeof val === 'object' && val.value) {
+		return val.value;
+	}
+
+	// 4. Return as string
+	return String(val);
+};
+
+export const parseAbilityScores = (val) => {
+	if (!val || typeof val !== 'string') return [];
+
+	return val.split(',').map((s) => {
+		const parts = s.trim().split(' ');
+		const name = parts[0];
+		const score = parts.find((p) => /^\d+$/.test(p)) || '';
+		const mod = parts.find((p) => p.includes('('))?.replace(/[()]/g, '') || '';
+
+		return { name, score, mod };
+	});
+};
+
+export const parseTagList = (val) => {
+	if (!val) return [];
+	if (Array.isArray(val)) return val.map(String);
+
+	return String(val)
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean);
+};
+
+export const isIgnoredAttribute = (key) => {
+	const ignoredKeys = [
+		'image',
+		'portrait',
+		'icon',
+		'token',
+		'session',
+		'date',
+		'summary',
+		'background_image',
+		'background',
+		'is_active',
+		'map_image',
+		'map_markers',
+		'aliases',
+	];
+
+	return ignoredKeys.includes(key.toLowerCase());
+};
+
+export const isNarrativeAttribute = (key) => {
+	const narrativeKeys = [
+		'background',
+		'personality',
+		'history',
+		'bio',
+		'biography',
+		'goals',
+		'ideals',
+		'bonds',
+		'flaws',
+		'notes',
+		'gm notes',
+		'description',
+		'appearance',
+		'tactics',
+		'narrative',
+	];
+
+	return narrativeKeys.includes(key.toLowerCase());
+};
+
+export const isListAttribute = (key) => {
+	const listKeys = ['feature', 'features', 'traits', 'inventory', 'loot', 'spells'];
+	return listKeys.includes(key.toLowerCase());
+};
+
+export const getAttributeDisplayType = (key, value) => {
+	const normalizedKey = key.toLowerCase();
+
+	// Special widgets
+	if (['abilities', 'stats'].includes(normalizedKey)) {
+		return 'stat-grid';
+	}
+
+	if (['ability score', 'saving throw', 'saves', 'skills', 'languages', 'proficiencies'].includes(normalizedKey)) {
+		return 'tags';
+	}
+
+	// Force list display
+	if (isListAttribute(key) && Array.isArray(value)) {
+		return 'list';
+	}
+
+	// Narrative text
+	if (isNarrativeAttribute(key)) {
+		return 'narrative';
+	}
+
+	// Long text becomes narrative
+	if (typeof value === 'string' && value.length > 100) {
+		return 'narrative';
+	}
+
+	// Default
+	return 'text';
+};
+
+--- END OF domain\entity\utils\attributeParser.js ---
+
+--- FILE: domain\entity\utils\entityUtils.js ---
+/**
+ * Entity Type Utilities
+ * Pure functions for entity type checking and normalization
+ */
+
+/**
+ * Normalize entity type string
+ * @param {string} type - Raw type string
+ * @returns {string} Normalized type
+ */
+export const normalizeEntityType = (type) => {
+	if (!type) return 'default';
+	const normalized = type.toLowerCase().trim();
+	// Handle plurals
+	return normalized === 'sessions' ? 'session' : normalized;
+};
+
+/**
+ * Check if entity type is a specific value
+ * @param {Object} entity - Entity object
+ * @param {string} type - Type to check
+ * @returns {boolean}
+ */
+export const isEntityType = (entity, type) => {
+	return normalizeEntityType(entity?.type) === normalizeEntityType(type);
+};
+
+/**
+ * Check if entity is a session
+ */
+export const isSession = (entity) => isEntityType(entity, 'session');
+
+/**
+ * Check if entity is a quest
+ */
+export const isQuest = (entity) => isEntityType(entity, 'quest');
+
+/**
+ * Check if entity is an NPC
+ */
+export const isNPC = (entity) => isEntityType(entity, 'npc');
+
+/**
+ * Check if entity is a location
+ */
+export const isLocation = (entity) => isEntityType(entity, 'location');
+
+/**
+ * Check if entity type should show status icons
+ * @param {string} type - Entity type
+ * @returns {boolean}
+ */
+export const shouldShowStatus = (type) => {
+	const normalized = normalizeEntityType(type);
+	return ['npc', 'faction', 'quest'].includes(normalized);
+};
+
+/**
+ * Get entity display name
+ * Handles different name fields across entity types
+ * @param {Object} entity - Entity object
+ * @returns {string}
+ */
+export const getEntityName = (entity) => {
+	if (!entity) return 'Unknown';
+
+	// Sessions use 'title'
+	if (isSession(entity)) {
+		return entity.title || entity.name || 'Untitled Session';
+	}
+
+	// Quests use 'title'
+	if (isQuest(entity)) {
+		return entity.title || entity.name || 'Untitled Quest';
+	}
+
+	// Everyone else uses 'name'
+	return entity.name || 'Unnamed';
+};
+
+/**
+ * Get entity description
+ * Handles different description fields
+ * @param {Object} entity - Entity object
+ * @returns {string|null}
+ */
+export const getEntityDescription = (entity) => {
+	if (!entity) return null;
+
+	// Try description first
+	if (entity.description) return entity.description;
+
+	// Sessions might use summary
+	if (isSession(entity)) {
+		return entity?.summary || entity.narrative || null;
+	}
+
+	// Characters might use background
+	if (isEntityType(entity, 'character')) {
+		return entity.background || entity.short_description || null;
+	}
+
+	return null;
+};
+
+/**
+ * Get entity icon initial (first letter)
+ * @param {Object} entity - Entity object
+ * @returns {string}
+ */
+export const getEntityInitial = (entity) => {
+	const name = getEntityName(entity);
+	return (name[0] || 'E').toUpperCase();
+};
+
+/**
+ * Check if entity is marked as dead/inactive
+ * @param {Object} entity - Entity object
+ * @returns {boolean}
+ */
+export const isEntityDead = (entity) => {
+	const status = entity.status?.toLowerCase();
+	return status === 'dead' || status === 'deceased' || status === 'inactive';
+};
+
+/**
+ * Check if entity/quest is completed
+ * @param {Object} entity - Entity object
+ * @returns {boolean}
+ */
+export const isEntityCompleted = (entity) => {
+	const status = entity.status?.toLowerCase();
+	return ['completed', 'finished', 'done', 'success'].some((k) => status?.includes(k));
+};
+
+/**
+ * Check if entity/quest has failed
+ * @param {Object} entity - Entity object
+ * @returns {boolean}
+ */
+export const isEntityFailed = (entity) => {
+	const status = entity.status?.toLowerCase();
+	return ['failed', 'failure', 'abandoned'].some((k) => status?.includes(k));
+};
+
+/**
+ * Determine the parent ID of an entity based on its relationships.
+ * Prioritizes explicit parent relationships, then location containers.
+ * @param {Object} entity - Entity object with relationships array
+ * @returns {string|null} ID of the parent entity
+ */
+export const getParentId = (entity) => {
+	const relationships = entity.relationships;
+	if (!relationships || !Array.isArray(relationships)) return null;
+
+	// 1. Check for explicit parent (Location hierarchy: Location -> Parent Location)
+	const parentRel = relationships.find(
+		(r) =>
+			(r.type === 'parent_location' || r.type === 'parent') && (r.direction === 'outgoing' || r.direction === undefined)
+	);
+	if (parentRel) return parentRel.entity_id;
+
+	// 2. Check for location link (NPC hierarchy: NPC -> Location)
+	if (entity.type === 'npc' || entity.type === 'encounter') {
+		// Get ALL relationships to locations
+		const locationRels = relationships.filter((r) => r.entity_type === 'location');
+
+		if (locationRels.length > 0) {
+			// Priority 1: Look for specific semantic types
+			const primary = locationRels.find((r) =>
+				['location', 'located_in', 'base', 'home', 'residence', 'origin', 'occurred_at'].includes(r.type?.toLowerCase())
+			);
+
+			// Priority 2: Fallback to the first location found (e.g. generic 'related')
+			return primary ? primary.entity_id : locationRels[0].entity_id;
+		}
+	}
+
+	return null;
+};
+
+--- END OF domain\entity\utils\entityUtils.js ---
+
+--- FILE: domain\entity\utils\statusUtils.js ---
+import { Sword, Shield, Circle, HelpCircle, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
+/**
+ * Rank definitions for sorting.
+ * Lower number = Higher priority in lists.
+ */
+const AFFINITY_RANKS = {
+	// Rank 1: Allies
+	ally: 1,
+	allies: 1,
+	friend: 1,
+	friendly: 1,
+	helpful: 1,
+	allied: 1,
+	alliance: 1,
+	aligned: 1,
+	// Rank 2: Neutral
+	neutral: 2,
+	indifferent: 2,
+	unknown: 2, // 'Unknown' faction status often implies neutral
+	// Rank 3: Enemies
+	enemy: 3,
+	enemies: 3,
+	hostile: 3,
+	rival: 3,
+	villain: 3,
+	threat: 3,
+	// Rank 99: Fallback
+	other: 99,
+};
+
+/**
+ * Calculate a numeric rank for an entity based on status/affinity string.
+ * Used for sorting: Allies -> Neutral -> Enemies -> Unknown
+ *
+ * @param {string} statusOrAffinity
+ * @returns {number} 1, 2, 3, or 99
+ */
+export const getAffinityRank = (statusOrAffinity) => {
+	const key = (statusOrAffinity || '').toLowerCase();
+
+	// Check for exact matches or substring matches
+	for (const [term, rank] of Object.entries(AFFINITY_RANKS)) {
+		if (key.includes(term)) return rank;
+	}
+
+	return 99;
+};
+
+/**
+ * Get status icon based on entity type and status
+ */
+export const getStatusIcon = (status, type) => {
+	const s = status?.toLowerCase() || 'unknown';
+
+	// Quest-specific icons
+	if (type === 'quest') {
+		if (['active', 'in progress', 'started'].some((k) => s.includes(k))) {
+			return { Icon: Circle, className: 'text-amber-500 fill-amber-500/20' };
+		}
+		if (['completed', 'finished', 'done', 'success'].some((k) => s.includes(k))) {
+			return { Icon: CheckCircle2, className: 'text-emerald-600' };
+		}
+		if (['failed', 'failure'].some((k) => s.includes(k))) {
+			return { Icon: XCircle, className: 'text-red-500' };
+		}
+		if (['abandoned', 'on-hold', 'paused'].some((k) => s.includes(k))) {
+			return { Icon: Clock, className: 'text-slate-400' };
+		}
+		return { Icon: Circle, className: 'text-slate-300' };
+	}
+
+	// NPC/Faction affinity icons
+	const rank = getAffinityRank(s);
+
+	if (rank === 3) {
+		// Enemy
+		return { Icon: Sword, className: 'text-red-500 fill-red-500/10' };
+	}
+	if (rank === 1) {
+		// Ally
+		return { Icon: Shield, className: 'text-emerald-500 fill-emerald-500/10' };
+	}
+	// Neutral / Unknown
+	return { Icon: Circle, className: 'text-muted-foreground/70' };
+};
+
+export const getStatusInfo = (entity) => {
+	const statusRaw = entity.status || getAttributeValue(entity.attributes, ['status']);
+	const affinityRaw = getAttributeValue(entity.attributes, ['affinity']);
+
+	const displayStatus = affinityRaw && affinityRaw !== 'unknown' ? affinityRaw : statusRaw;
+	const statusLower = displayStatus?.toLowerCase();
+
+	return {
+		raw: statusRaw,
+		display: displayStatus,
+		icon: getStatusIcon(displayStatus, entity.type),
+		rank: getAffinityRank(displayStatus),
+		isDead: statusLower === 'dead',
+		isFailed: statusLower === 'failed',
+		isCompleted: ['completed', 'finished', 'done', 'success'].some((k) => statusLower?.includes(k)),
+	};
+};
+
+--- END OF domain\entity\utils\statusUtils.js ---
+

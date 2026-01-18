@@ -1,0 +1,521 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ATLAS - CONTEXT
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\atlas\context\AtlasContext.jsx ---
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { fetchMapByKey } from '../api/mapService';
+
+const AtlasContext = createContext(null);
+
+export const AtlasProvider = ({ children }) => {
+	const { campaignId, campaignData } = useCampaign();
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// -- Data State --
+	const [mapData, setMapData] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
+
+	// -- UI State --
+	const [visibility, setVisibility] = useState({});
+	const [flyToTarget, setFlyToTarget] = useState(null);
+	const [activeTab, setActiveTab] = useState('locations');
+
+	const currentMapKey = searchParams.get('map') || campaignData?.defaultMap;
+
+	// Helper: Generate Unique ID
+	const generateId = (type, categoryKey, index, label) => {
+		const safeLabel = (label || 'unknown').replace(/\s+/g, '_').toLowerCase();
+		return `${type}-${categoryKey}-${index}-${safeLabel}`;
+	};
+
+	// 1. Fetch Data
+	useEffect(() => {
+		let isMounted = true;
+		const load = async () => {
+			if (!campaignId || !currentMapKey) return;
+
+			setIsLoading(true);
+			try {
+				const data = await fetchMapByKey(campaignId, currentMapKey);
+				if (isMounted) {
+					setMapData(data);
+					if (data) initializeVisibility(data);
+				}
+			} catch (err) {
+				console.error(err);
+			} finally {
+				if (isMounted) setIsLoading(false);
+			}
+		};
+		load();
+		return () => {
+			isMounted = false;
+		};
+	}, [campaignId, currentMapKey]);
+
+	// 2. Initialize Visibility Helper
+	const initializeVisibility = (data) => {
+		const initial = { areas: false };
+
+		// Markers
+		if (data.annotations) {
+			Object.entries(data.annotations).forEach(([key, cat]) => {
+				if (cat.items) {
+					cat.items.forEach((item, index) => {
+						const id = item.id || generateId('marker', key, index, item.label);
+						initial[id] = true;
+					});
+				}
+			});
+		}
+
+		// Areas
+		if (data.areas) {
+			Object.entries(data.areas).forEach(([key, cat]) => {
+				if (cat.items) {
+					cat.items.forEach((item, index) => {
+						const id = item.id || generateId('area', key, index, item.name);
+						initial[id] = false;
+					});
+				}
+			});
+		}
+
+		// Default OFF
+		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = false));
+		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = false));
+
+		setVisibility(initial);
+	};
+
+	// 3. Actions
+	const navigateToMap = (key) => setSearchParams({ map: key });
+
+	const flyTo = useCallback((position) => {
+		setFlyToTarget(position);
+	}, []);
+
+	const toggleItem = useCallback((id) => {
+		setVisibility((prev) => ({ ...prev, [id]: !prev[id] }));
+	}, []);
+
+	const toggleGroup = useCallback((ids, forceState = null) => {
+		setVisibility((prev) => {
+			const next = { ...prev };
+			const targetState = forceState !== null ? forceState : !prev[ids[0]];
+			ids.forEach((id) => (next[id] = targetState));
+			return next;
+		});
+	}, []);
+
+	// 4. View Model
+	const viewData = useMemo(() => {
+		if (!mapData) return null;
+
+		const markers = [];
+		const groups = [];
+
+		// Process Markers
+		if (mapData.annotations) {
+			Object.entries(mapData.annotations).forEach(([key, category]) => {
+				const groupItems = (category.items || []).map((item, index) => ({
+					...item,
+					// Generate stable, unique ID using index
+					id: item.id || generateId('marker', key, index, item.label),
+					category: category.name,
+					categoryId: key,
+					position: [Number(item.lat), Number(item.lng)],
+				}));
+
+				markers.push(...groupItems);
+
+				if (groupItems.length > 0) {
+					groups.push({
+						id: key,
+						label: category.name,
+						items: groupItems,
+					});
+				}
+			});
+		}
+
+		// Process Areas
+		const areas = mapData.areas
+			? Object.entries(mapData.areas).flatMap(([key, cat]) =>
+					(cat.items || []).map((item, index) => {
+						// Centroid fallback
+						const pos = item.labelPosition || (item.positions && item.positions[0]) || [0, 0];
+						return {
+							...item,
+							id: item.id || generateId('area', key, index, item.name),
+							label: item.name,
+							position: pos,
+						};
+					})
+			  )
+			: [];
+
+		return {
+			config: mapData,
+			markers,
+			groups,
+			sessions: mapData.paths || [],
+			overlays: mapData.overlays || [],
+			areas: areas,
+		};
+	}, [mapData]);
+
+	const value = {
+		mapData: viewData,
+		rawConfig: mapData,
+		isLoading,
+		visibility,
+		activeTab,
+		setActiveTab,
+		toggleItem,
+		toggleGroup,
+		navigateToMap,
+		flyTo,
+		flyToTarget,
+	};
+
+	return <AtlasContext.Provider value={value}>{children}</AtlasContext.Provider>;
+};
+
+export const useAtlas = () => {
+	const context = useContext(AtlasContext);
+	if (!context) throw new Error('useAtlas must be used within AtlasProvider');
+	return context;
+};
+
+--- END OF features\atlas\context\AtlasContext.jsx ---
+

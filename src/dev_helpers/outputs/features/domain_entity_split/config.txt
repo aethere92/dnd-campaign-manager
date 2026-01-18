@@ -1,0 +1,748 @@
+================================================================
+SPLIT BUNDLE: DOMAIN_ENTITY - CONFIG
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: domain\entity\config\entityColors.js ---
+/**
+ * Entity Color Palettes
+ * Hex colors for each entity type
+ */
+
+import { ENTITY_TYPES } from './entityTypes';
+
+/**
+ * Primary color for each entity type (hex)
+ */
+export const ENTITY_COLORS = {
+	[ENTITY_TYPES.SESSION]: '#64748b', // slate-500
+	[ENTITY_TYPES.CHARACTER]: '#ef4444', // red-500
+	[ENTITY_TYPES.NPC]: '#d97706', // amber-600
+	[ENTITY_TYPES.LOCATION]: '#10b981', // emerald-500
+	[ENTITY_TYPES.QUEST]: '#3b82f6', // blue-500
+	[ENTITY_TYPES.FACTION]: '#a855f7', // purple-500
+	[ENTITY_TYPES.ENCOUNTER]: '#f97316', // orange-500
+	[ENTITY_TYPES.ITEM]: '#06b6d4', // cyan-500
+	[ENTITY_TYPES.DEFAULT]: '#6b7280', // gray-500
+};
+
+/**
+ * Get primary color for entity type
+ * @param {string} type - Entity type
+ * @returns {string} Hex color
+ */
+export const getEntityColor = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_COLORS[normalized] || ENTITY_COLORS[ENTITY_TYPES.DEFAULT];
+};
+
+/**
+ * Extended color palette for each type (for future use)
+ * Includes lighter/darker shades
+ */
+export const ENTITY_COLOR_PALETTES = {
+	[ENTITY_TYPES.SESSION]: {
+		50: '#f8fafc',
+		100: '#f1f5f9',
+		500: '#64748b',
+		700: '#334155',
+		900: '#0f172a',
+	},
+	[ENTITY_TYPES.CHARACTER]: {
+		50: '#fef2f2',
+		100: '#fee2e2',
+		500: '#ef4444',
+		700: '#b91c1c',
+		900: '#7f1d1d',
+	},
+	[ENTITY_TYPES.NPC]: {
+		50: '#fffbeb',
+		100: '#fef3c7',
+		500: '#d97706',
+		700: '#a16207',
+		900: '#78350f',
+	},
+	[ENTITY_TYPES.LOCATION]: {
+		50: '#ecfdf5',
+		100: '#d1fae5',
+		500: '#10b981',
+		700: '#047857',
+		900: '#064e3b',
+	},
+	[ENTITY_TYPES.QUEST]: {
+		50: '#eff6ff',
+		100: '#dbeafe',
+		500: '#3b82f6',
+		700: '#1d4ed8',
+		900: '#1e3a8a',
+	},
+	[ENTITY_TYPES.FACTION]: {
+		50: '#faf5ff',
+		100: '#f3e8ff',
+		500: '#a855f7',
+		700: '#7e22ce',
+		900: '#581c87',
+	},
+	[ENTITY_TYPES.ENCOUNTER]: {
+		50: '#fff7ed',
+		100: '#ffedd5',
+		500: '#f97316',
+		700: '#c2410c',
+		900: '#7c2d12',
+	},
+	[ENTITY_TYPES.ITEM]: {
+		// <--- ADDED
+		50: '#ecfeff',
+		100: '#cffafe',
+		500: '#06b6d4',
+		700: '#0e7490',
+		900: '#164e63',
+	},
+	[ENTITY_TYPES.DEFAULT]: {
+		50: '#f9fafb',
+		100: '#f3f4f6',
+		500: '#6b7280',
+		700: '#374151',
+		900: '#111827',
+	},
+};
+
+/**
+ * Get color palette for entity type
+ * @param {string} type - Entity type
+ * @returns {Object} Color palette
+ */
+export const getEntityPalette = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_COLOR_PALETTES[normalized] || ENTITY_COLOR_PALETTES[ENTITY_TYPES.DEFAULT];
+};
+
+--- END OF domain\entity\config\entityColors.js ---
+
+--- FILE: domain\entity\config\entityConfig.js ---
+/**
+ * Entity Configuration Orchestrator
+ * Combines all entity config modules into a unified API
+ * This replaces the old monolithic entityConfig.jsx
+ */
+
+import { ENTITY_TYPES, getEntityLabel } from './entityTypes';
+import { getEntityIcon } from './entityIcons';
+import { getEntityColor, getEntityPalette } from './entityColors';
+import { getEntityStyles, getEntityPreset, buildEntityClassName } from './entityStyles';
+
+/**
+ * Get complete configuration for an entity type
+ * @param {string} type - Entity type
+ * @returns {Object} Complete entity config
+ */
+export const getEntityConfig = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+
+	return {
+		type: normalized,
+		label: getEntityLabel(normalized),
+		labelPlural: getEntityLabel(normalized, true),
+		icon: getEntityIcon(normalized),
+		color: getEntityColor(normalized),
+		palette: getEntityPalette(normalized),
+		tailwind: getEntityStyles(normalized),
+	};
+};
+
+/**
+ * LEGACY EXPORT: Full config map for backwards compatibility
+ * TODO: Gradually migrate consumers to use getEntityConfig() instead
+ */
+export const ENTITY_CONFIG = Object.values(ENTITY_TYPES).reduce((acc, type) => {
+	acc[type] = getEntityConfig(type);
+	return acc;
+}, {});
+
+// Re-export everything for convenience
+export { ENTITY_TYPES, getEntityLabel } from './entityTypes';
+export { getEntityIcon } from './entityIcons';
+export { getEntityColor, getEntityPalette } from './entityColors';
+export { getEntityStyles, getEntityPreset, buildEntityClassName } from './entityStyles';
+
+--- END OF domain\entity\config\entityConfig.js ---
+
+--- FILE: domain\entity\config\entityIcons.js ---
+import {
+	User,
+	MapPin,
+	Scroll,
+	Sword,
+	Flag,
+	Crown,
+	BookOpen,
+	Calendar,
+	Trees,
+	Castle,
+	Ship,
+	Landmark,
+	Globe,
+	Home,
+	Mountain,
+	Gem,
+} from 'lucide-react';
+import { ENTITY_TYPES } from './entityTypes';
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+
+export const ENTITY_ICONS = {
+	[ENTITY_TYPES.SESSION]: Calendar,
+	[ENTITY_TYPES.CHARACTER]: User,
+	[ENTITY_TYPES.NPC]: Crown,
+	[ENTITY_TYPES.LOCATION]: MapPin,
+	[ENTITY_TYPES.QUEST]: Scroll,
+	[ENTITY_TYPES.FACTION]: Flag,
+	[ENTITY_TYPES.ENCOUNTER]: Sword,
+	[ENTITY_TYPES.ITEM]: Gem,
+	[ENTITY_TYPES.DEFAULT]: BookOpen,
+};
+
+// Location specific mappings
+const LOCATION_TYPE_ICONS = {
+	building: Home,
+	ship: Ship,
+	landmark: Landmark,
+	dungeon: Mountain,
+	cave: Mountain,
+	region: MapPin,
+	city: Castle,
+	forest: Trees,
+	realm: Globe,
+};
+
+export const getEntityIcon = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_ICONS[normalized] || ENTITY_ICONS[ENTITY_TYPES.DEFAULT];
+};
+
+/**
+ * Advanced resolution that looks at attributes for finer detail
+ */
+export const resolveEntityIcon = (entity) => {
+	const type = entity.type?.toLowerCase();
+
+	if (type === 'location') {
+		const locType = getAttributeValue(entity.attributes, 'type')?.toLowerCase();
+		return LOCATION_TYPE_ICONS[locType] || ENTITY_ICONS.location;
+	}
+
+	return getEntityIcon(type);
+};
+
+--- END OF domain\entity\config\entityIcons.js ---
+
+--- FILE: domain\entity\config\entityStyles.js ---
+import { ENTITY_TYPES } from './entityTypes';
+
+/**
+ * Tailwind class maps
+ * CHANGED: Replaced 'slate' with 'muted-foreground' or 'foreground' to respect the active theme.
+ */
+const ENTITY_TAILWIND_CLASSES = {
+	[ENTITY_TYPES.SESSION]: {
+		text: 'text-[var(--entity-session,theme(colors.slate.500))] font-medium',
+		bg: 'bg-muted/50',
+		border: 'border-border',
+		hover: 'hover:bg-muted',
+	},
+	[ENTITY_TYPES.CHARACTER]: {
+		text: 'text-[var(--entity-character,theme(colors.red.500))]',
+		bg: 'bg-red-500/10',
+		border: 'border-red-500/20',
+		hover: 'hover:bg-red-500/10',
+	},
+	[ENTITY_TYPES.NPC]: {
+		text: 'text-[var(--entity-npc,theme(colors.amber.500))]',
+		bg: 'bg-amber-500/10',
+		border: 'border-amber-500/20',
+		hover: 'hover:bg-amber-500/10',
+	},
+	[ENTITY_TYPES.LOCATION]: {
+		text: 'text-[var(--entity-location,theme(colors.emerald.500))]', // Will use moss green on D&D theme
+		bg: 'bg-emerald-500/10',
+		border: 'border-emerald-500/20',
+		hover: 'hover:bg-emerald-500/10',
+	},
+	[ENTITY_TYPES.QUEST]: {
+		text: 'text-[var(--entity-quest,theme(colors.blue.500))]',
+		bg: 'bg-blue-500/10',
+		border: 'border-blue-500/20',
+		hover: 'hover:bg-blue-500/10',
+	},
+	[ENTITY_TYPES.FACTION]: {
+		text: 'text-[var(--entity-faction,theme(colors.purple.500))]',
+		bg: 'bg-purple-500/10',
+		border: 'border-purple-500/20',
+		hover: 'hover:bg-purple-500/10',
+	},
+	[ENTITY_TYPES.ENCOUNTER]: {
+		text: 'text-[var(--entity-encounter,theme(colors.orange.500))]',
+		bg: 'bg-orange-500/10',
+		border: 'border-orange-500/20',
+		hover: 'hover:bg-orange-500/10',
+	},
+	[ENTITY_TYPES.ITEM]: {
+		text: 'text-[var(--entity-item,theme(colors.cyan.600))] dark:text-[var(--entity-item,theme(colors.cyan.400))]',
+		bg: 'bg-cyan-500/10',
+		border: 'border-cyan-500/20',
+		hover: 'hover:bg-cyan-500/10',
+	},
+	[ENTITY_TYPES.DEFAULT]: {
+		text: 'text-muted-foreground',
+		bg: 'bg-muted',
+		border: 'border-border',
+		hover: 'hover:bg-muted/80',
+	},
+};
+
+export const getEntityStyles = (type) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	return ENTITY_TAILWIND_CLASSES[normalized] || ENTITY_TAILWIND_CLASSES[ENTITY_TYPES.DEFAULT];
+};
+
+export const buildEntityClassName = (type, variants = [], additional = '') => {
+	const styles = getEntityStyles(type);
+	const variantList = Array.isArray(variants) ? variants : [variants];
+	const classes = variantList
+		.map((variant) => styles[variant])
+		.filter(Boolean)
+		.join(' ');
+	return additional ? `${classes} ${additional}` : classes;
+};
+
+// Priority Badges - Using semantic opacity for better dark/light compatibility
+export const getPriorityStyles = (priority) => {
+	const p = priority?.toLowerCase() || '';
+	if (p.includes('high') || p.includes('urgent') || p.includes('critical')) {
+		return 'border-orange-500/30 text-orange-700 dark:text-orange-400 bg-orange-500/10';
+	}
+	if (p.includes('medium') || p.includes('normal')) {
+		return 'border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-500/10';
+	}
+	if (p.includes('low')) {
+		return 'border-border text-muted-foreground bg-muted/50';
+	}
+	return 'border-border text-muted-foreground bg-muted/30';
+};
+
+export const ENTITY_CLASS_PRESETS = {
+	iconBadge: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.bg} ${styles.border} ${styles.text} rounded-lg p-2 border`;
+	},
+	typeBadge: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.bg} ${styles.text} ${styles.border} text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border`;
+	},
+	card: (type) => {
+		const styles = getEntityStyles(type);
+		// Force bg-card to ensure cards are readable on all themes
+		return `bg-card border-border border rounded-lg p-4 ${styles.hover} transition-colors`;
+	},
+	link: (type) => {
+		const styles = getEntityStyles(type);
+		return `${styles.text} transition-colors font-semibold hover:underline`;
+	},
+};
+
+export const getEntityPreset = (preset, type) => {
+	const presetFn = ENTITY_CLASS_PRESETS[preset];
+	return presetFn ? presetFn(type) : '';
+};
+
+--- END OF domain\entity\config\entityStyles.js ---
+
+--- FILE: domain\entity\config\entityTypes.js ---
+/**
+ * Entity Type Definitions
+ * Central source of truth for entity types
+ */
+
+/**
+ * All valid entity types in the system
+ */
+export const ENTITY_TYPES = {
+	SESSION: 'session',
+	CHARACTER: 'character',
+	NPC: 'npc',
+	LOCATION: 'location',
+	QUEST: 'quest',
+	FACTION: 'faction',
+	ENCOUNTER: 'encounter',
+	ITEM: 'item',
+	DEFAULT: 'default',
+};
+
+/**
+ * Entity type labels (for display)
+ */
+export const ENTITY_LABELS = {
+	[ENTITY_TYPES.SESSION]: 'Session',
+	[ENTITY_TYPES.CHARACTER]: 'Character',
+	[ENTITY_TYPES.NPC]: 'NPC',
+	[ENTITY_TYPES.LOCATION]: 'Location',
+	[ENTITY_TYPES.QUEST]: 'Quest',
+	[ENTITY_TYPES.FACTION]: 'Faction',
+	[ENTITY_TYPES.ENCOUNTER]: 'Encounter',
+	[ENTITY_TYPES.ITEM]: 'Item',
+	[ENTITY_TYPES.DEFAULT]: 'Entity',
+};
+
+/**
+ * Pluralized entity labels (for navigation, headers)
+ */
+export const ENTITY_LABELS_PLURAL = {
+	[ENTITY_TYPES.SESSION]: 'Sessions',
+	[ENTITY_TYPES.CHARACTER]: 'Characters',
+	[ENTITY_TYPES.NPC]: 'NPCs',
+	[ENTITY_TYPES.LOCATION]: 'Locations',
+	[ENTITY_TYPES.QUEST]: 'Quests',
+	[ENTITY_TYPES.FACTION]: 'Factions',
+	[ENTITY_TYPES.ENCOUNTER]: 'Encounters',
+	[ENTITY_TYPES.ITEM]: 'Items',
+	[ENTITY_TYPES.DEFAULT]: 'Entities',
+};
+
+/**
+ * Get label for entity type
+ * @param {string} type - Entity type
+ * @param {boolean} plural - Return plural form
+ * @returns {string}
+ */
+export const getEntityLabel = (type, plural = false) => {
+	const normalized = type?.toLowerCase() || ENTITY_TYPES.DEFAULT;
+	const labels = plural ? ENTITY_LABELS_PLURAL : ENTITY_LABELS;
+	return labels[normalized] || labels[ENTITY_TYPES.DEFAULT];
+};
+
+--- END OF domain\entity\config\entityTypes.js ---
+

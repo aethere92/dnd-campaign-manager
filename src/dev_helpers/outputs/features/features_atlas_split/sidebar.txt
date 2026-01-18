@@ -1,0 +1,443 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ATLAS - SIDEBAR
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\atlas\components\sidebar\SidebarGroup.jsx ---
+import React, { useState } from 'react';
+import { clsx } from 'clsx';
+import { ChevronRight, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { SidebarItem } from './SidebarItem';
+
+export const SidebarGroup = ({ label, items, visibility, onToggleItem, onToggleGroup, onFlyTo }) => {
+	const [isExpanded, setIsExpanded] = useState(true);
+
+	const visibleCount = items.filter((i) => visibility[i.id]).length;
+	const isAllVisible = visibleCount === items.length;
+	const isNoneVisible = visibleCount === 0;
+	const isMixed = !isAllVisible && !isNoneVisible;
+
+	const handleGroupToggle = (e) => {
+		e.stopPropagation();
+		// If mixed, turn ON. If all on, turn OFF.
+		onToggleGroup(
+			items.map((i) => i.id),
+			isMixed ? true : !isAllVisible
+		);
+	};
+
+	return (
+		<div className='mb-0.5'>
+			<div className='flex items-center gap-1 px-2 py-2 md:py-1 sticky top-0 bg-muted/95 backdrop-blur-sm z-10 select-none group/header hover:bg-black/5 rounded-md'>
+				<button
+					onClick={() => setIsExpanded(!isExpanded)}
+					className='p-1 text-muted-foreground hover:text-foreground transition-colors'>
+					{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+				</button>
+
+				<span
+					className='flex-1 text-xs md:text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer truncate'
+					onClick={() => setIsExpanded(!isExpanded)}>
+					{label} <span className='opacity-50 ml-1'>({items.length})</span>
+				</span>
+
+				<button
+					onClick={handleGroupToggle}
+					className={clsx(
+						'p-1 rounded transition-colors',
+						isAllVisible ? 'text-primary' : isMixed ? 'text-primary/70' : 'text-muted-foreground/30'
+					)}>
+					{isAllVisible ? <Eye size={12} /> : isMixed ? <Eye size={12} className='opacity-50' /> : <EyeOff size={12} />}
+				</button>
+			</div>
+
+			{isExpanded && (
+				<div className='pl-1 space-y-0.5 ml-2 border-l border-border/40'>
+					{items.map((item) => (
+						<SidebarItem
+							key={item.id}
+							label={item.label}
+							isVisible={!!visibility[item.id]}
+							onToggle={() => onToggleItem(item.id)}
+							onNavigate={() => onFlyTo(item.position)}
+						/>
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\atlas\components\sidebar\SidebarGroup.jsx ---
+
+--- FILE: features\atlas\components\sidebar\SidebarItem.jsx ---
+import React from 'react';
+import { clsx } from 'clsx';
+import { Eye, EyeOff, Crosshair } from 'lucide-react';
+
+export const SidebarItem = ({ label, isVisible, onToggle, onNavigate, icon: Icon }) => (
+	<div className='flex items-center gap-1 px-2 py-2 md:py-0.5 hover:bg-black/5 group rounded-md transition-colors min-w-0'>
+		<button
+			onClick={(e) => {
+				e.stopPropagation();
+				onToggle();
+			}}
+			className={clsx(
+				'p-2 md:p-0.5 rounded transition-colors shrink-0 outline-none',
+				isVisible ? 'text-primary hover:bg-primary/10' : 'text-muted-foreground/40 hover:text-muted-foreground'
+			)}>
+			{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
+		</button>
+
+		<button
+			onClick={onNavigate}
+			className='flex-1 flex items-center text-left min-w-0 gap-2 py-1 md:py-0.5 outline-none'>
+			{Icon && <Icon size={12} className='text-muted-foreground/70 shrink-0' />}
+			<span
+				className={clsx(
+					'text-sm md:text-xs truncate transition-opacity',
+					!isVisible && 'opacity-50 text-muted-foreground'
+				)}>
+				{label}
+			</span>
+		</button>
+
+		<button
+			onClick={(e) => {
+				e.stopPropagation();
+				onNavigate();
+			}}
+			className='hidden md:block p-0.5 text-muted-foreground/0 group-hover:text-muted-foreground group-hover:opacity-100 opacity-0 transition-all'
+			title='Fly To'>
+			<Crosshair size={12} />
+		</button>
+	</div>
+);
+
+--- END OF features\atlas\components\sidebar\SidebarItem.jsx ---
+

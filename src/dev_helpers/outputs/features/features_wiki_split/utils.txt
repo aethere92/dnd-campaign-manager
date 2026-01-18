@@ -1,0 +1,899 @@
+================================================================
+SPLIT BUNDLE: FEATURES_WIKI - UTILS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\wiki\utils\attributeMapper.js ---
+/**
+ * Attribute Transform Functions
+ * Pure functions for processing entity attributes into view model format
+ */
+
+import {
+	parseAttributeValue,
+	parseAbilityScores,
+	parseTagList,
+	isIgnoredAttribute,
+	isNarrativeAttribute,
+	isListAttribute,
+} from '@/domain/entity/utils/attributeParser';
+
+/**
+ * Determine if an attribute should go to sidebar or main content
+ * @param {string} key - Attribute key
+ * @param {*} value - Attribute value
+ * @returns {'sidebar'|'main'|'ignore'}
+ */
+const getAttributeDestination = (key, value) => {
+	const normalizedKey = key.toLowerCase();
+
+	if (isIgnoredAttribute(normalizedKey)) {
+		return 'ignore';
+	}
+
+	// Special widgets always go to sidebar
+	if (
+		['abilities', 'stats', 'ability score', 'saving throw', 'saves', 'skills', 'languages', 'proficiencies'].includes(
+			normalizedKey
+		)
+	) {
+		return 'sidebar';
+	}
+
+	// Lists always go to main content
+	if (isListAttribute(normalizedKey) && Array.isArray(value)) {
+		return 'main';
+	}
+
+	// Narrative text goes to main
+	if (isNarrativeAttribute(normalizedKey)) {
+		return 'main';
+	}
+
+	// Long text goes to main
+	if (typeof value === 'string' && value.length > 100) {
+		return 'main';
+	}
+
+	// Everything else to sidebar
+	return 'sidebar';
+};
+
+/**
+ * Process special widget attributes (ability scores, tags)
+ * @param {string} key - Attribute key
+ * @param {*} value - Raw attribute value
+ * @returns {Object|null} Processed trait or null
+ */
+const processSpecialWidget = (key, value) => {
+	const normalizedKey = key.toLowerCase();
+
+	// Ability scores / stats
+	if (['abilities', 'stats'].includes(normalizedKey)) {
+		const strVal = parseAttributeValue(value);
+		return {
+			key,
+			value: parseAbilityScores(strVal),
+			displayType: 'stat-grid',
+		};
+	}
+
+	// Tag lists
+	if (['ability score', 'saving throw', 'saves', 'skills', 'languages', 'proficiencies'].includes(normalizedKey)) {
+		const strVal = parseAttributeValue(value);
+		return {
+			key,
+			value: parseTagList(strVal),
+			displayType: 'tags',
+		};
+	}
+
+	return null;
+};
+
+/**
+ * Transform attributes into sidebar traits and main content sections
+ * @param {Object} attributes - Parsed attributes object
+ * @param {string} entityDescription - Entity description (to avoid duplication)
+ * @returns {{traits: Array, sections: Array}}
+ */
+export const transformAttributes = (attributes, entityDescription = '') => {
+	const traits = [];
+	const sections = [];
+
+	Object.entries(attributes).forEach(([key, rawVal]) => {
+		// 1. Check for special widgets first
+		const widget = processSpecialWidget(key, rawVal);
+		if (widget) {
+			traits.push(widget);
+			return;
+		}
+
+		// 2. Parse value
+		const displayVal = parseAttributeValue(rawVal, key);
+		if (!displayVal) return;
+
+		// 3. Skip if it's the same as description
+		const normalizedKey = key.toLowerCase();
+		if (normalizedKey === 'description' && displayVal === entityDescription) {
+			return;
+		}
+
+		// 4. Determine destination
+		const destination = getAttributeDestination(key, displayVal);
+		if (destination === 'ignore') return;
+
+		// 5. Route to appropriate collection
+		if (destination === 'main') {
+			// Lists stay as arrays
+			if (isListAttribute(normalizedKey) && Array.isArray(displayVal)) {
+				sections.push({
+					key,
+					value: displayVal,
+					displayType: 'list',
+				});
+			} else {
+				// Join arrays into text for narrative
+				const textValue = Array.isArray(displayVal) ? displayVal.join('\n\n') : displayVal;
+				sections.push({
+					key,
+					value: textValue,
+					displayType: 'narrative',
+				});
+			}
+		} else {
+			// Sidebar trait
+			const textValue = Array.isArray(displayVal) ? displayVal.join(', ') : displayVal;
+			traits.push({
+				key,
+				value: textValue,
+				displayType: 'text',
+			});
+		}
+	});
+
+	return { traits, sections };
+};
+
+/**
+ * Extract extra tags for entity header (session-specific)
+ * @param {Object} attributes - Parsed attributes
+ * @param {string} entityType - Entity type
+ * @returns {string[]}
+ */
+export const extractHeaderTags = (attributes, entityType) => {
+	const tags = [];
+
+	if (entityType === 'session') {
+		if (attributes.Session) {
+			tags.push(`Session ${attributes.Session}`);
+		}
+		if (attributes.Date) {
+			tags.push(attributes.Date);
+		}
+	}
+
+	return tags;
+};
+
+--- END OF features\wiki\utils\attributeMapper.js ---
+
+--- FILE: features\wiki\utils\eventMapper.js ---
+/**
+ * Event Transform Functions
+ * Pure functions for processing entity events/history into view model format
+ */
+
+/**
+ * Parse events from various formats
+ * @param {Array|Object} events - Raw events data
+ * @returns {Array}
+ */
+export const parseEvents = (events) => {
+	if (!events) return [];
+
+	// Already an array
+	if (Array.isArray(events)) {
+		return events;
+	}
+
+	// Object grouped by type (flatten it)
+	if (typeof events === 'object') {
+		return Object.values(events).flat();
+	}
+
+	return [];
+};
+
+/**
+ * Transform events into history view model
+ * Includes deduplication to prevent React key errors
+ * @param {Array|Object} events - Raw events
+ * @returns {Array}
+ */
+export const transformEvents = (events) => {
+	const parsed = parseEvents(events);
+
+	// 1. Deduplicate by ID using a Map
+	const uniqueEventsMap = new Map();
+	parsed.forEach((evt) => {
+		if (evt && evt.id) {
+			uniqueEventsMap.set(evt.id, evt);
+		} else if (evt) {
+			// Handle events without IDs (fallback)
+			uniqueEventsMap.set(Math.random().toString(), evt);
+		}
+	});
+
+	// 2. Transform values
+	return Array.from(uniqueEventsMap.values()).map((event) => ({
+		id: event.id || Math.random().toString(),
+		title: event.title || 'Untitled Event',
+		description: event.description || '',
+		session_number: event.session_number,
+		order: event.order || event.event_order || 0,
+	}));
+};
+
+--- END OF features\wiki\utils\eventMapper.js ---
+
+--- FILE: features\wiki\utils\relationshipMapper.js ---
+/**
+ * Relationship Transform Functions
+ * Pure functions for processing entity relationships into view model format
+ */
+
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+
+/**
+ * Parse relationships from various formats
+ * @param {string|Array|Object} relationships - Raw relationships data
+ * @returns {Array}
+ */
+export const parseRelationships = (relationships) => {
+	if (!relationships) return [];
+
+	// Already an array
+	if (Array.isArray(relationships)) {
+		return relationships;
+	}
+
+	// String (JSON)
+	if (typeof relationships === 'string') {
+		try {
+			return JSON.parse(relationships);
+		} catch {
+			return [];
+		}
+	}
+
+	// Object (convert to array)
+	if (typeof relationships === 'object') {
+		return Object.values(relationships);
+	}
+
+	return [];
+};
+
+/**
+ * Transform relationships into connection view models
+ * @param {Array} relationships - Parsed relationships
+ * @param {number} maxConnections - Maximum connections to show (default 8)
+ * @returns {Array}
+ */
+export const transformRelationships = (relationships, maxConnections = 8) => {
+	const parsed = parseRelationships(relationships);
+
+	return parsed
+		.map((rel) => {
+			const config = getEntityConfig(rel.entity_type);
+
+			return {
+				id: rel.entity_id || Math.random().toString(),
+				name: rel.entity_name,
+				typeLabel: rel.entity_type,
+				role: formatRelationshipType(rel.type),
+				theme: {
+					...config.tailwind,
+					Icon: config.icon,
+				},
+			};
+		})
+		.slice(0, maxConnections);
+};
+
+/**
+ * Format relationship type for display
+ * @param {string} type - Raw relationship type
+ * @returns {string}
+ */
+const formatRelationshipType = (type) => {
+	if (!type) return 'related';
+	return type.toLowerCase().replace(/_/g, ' ');
+};
+
+--- END OF features\wiki\utils\relationshipMapper.js ---
+
+--- FILE: features\wiki\utils\wikiEntryMapper.js ---
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+
+export const transformWikiEntry = (data, type, additionalData = {}) => {
+	// --- SESSION ---
+	if (type === 'session') {
+		// Data comes from view_campaign_timeline
+		const sortedEvents = (data.events || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+		const eventRelMap = additionalData.eventRelMap || new Map();
+
+		// 1. Attach tags to specific events
+		sortedEvents.forEach((evt) => {
+			evt.relationships = eventRelMap.get(evt.id) || [];
+		});
+
+		// 2. Aggregate ALL unique entities from events to show in the Session Graph
+		const allRelationships = [...(additionalData.sessionRelationships || [])];
+		const seenIds = new Set(allRelationships.map((r) => r.entity_id));
+
+		// Iterate all events and their tags
+		eventRelMap.forEach((tags) => {
+			tags.forEach((tag) => {
+				if (!seenIds.has(tag.entity_id)) {
+					seenIds.add(tag.entity_id);
+					allRelationships.push({
+						entity_id: tag.entity_id,
+						entity_name: tag.entity_name,
+						entity_type: tag.entity_type,
+						type: 'mention', // Label for the edge
+					});
+				}
+			});
+		});
+
+		return {
+			id: data.id,
+			name: data.name || data.title,
+			type: 'session',
+			description: data.description || data.narrative,
+			attributes: data.attributes || {},
+			relationships: allRelationships, // Now includes event mentions
+			events: sortedEvents,
+		};
+	}
+
+	// --- STANDARD ENTITY ---
+	let entity = { ...data };
+
+	// Quest Objectives
+	if (type === 'quest' && additionalData.objectives) {
+		entity.objectives = additionalData.objectives.map((obj) => {
+			const sessionAttrs = obj.session?.attributes || {};
+			return {
+				...obj,
+				completed_session_number: sessionAttrs.session_number,
+				completed_session_title: obj.session?.title,
+			};
+		});
+	}
+
+	// Encounter Actions
+	if (type === 'encounter' && additionalData.encounterActions) {
+		const actions = additionalData.encounterActions.map((action) => {
+			const actorAttrs = action.actor?.attributes || {};
+			const targetAttrs = action.target?.attributes || {};
+
+			return {
+				id: action.id,
+				round: action.round_number,
+				order: action.action_order,
+				type: action.action_type,
+				isFriendly: action.result === 'SUCCESS',
+				description: action.action_description,
+				result: action.result,
+				effect: action.effect,
+				actor: {
+					id: action.actor?.id,
+					name: action.actor?.name || 'Unknown',
+					type: action.actor?.type || 'default',
+					iconUrl: resolveImageUrl(actorAttrs, 'icon'),
+				},
+				// CHANGED: Allow target if it has ID OR Name (fixes manual/ad-hoc targets)
+				target:
+					action.target && (action.target.id || action.target.name)
+						? {
+								id: action.target.id,
+								name: action.target.name || 'Unknown Target',
+								type: action.target.type || 'default',
+								iconUrl: resolveImageUrl(targetAttrs, 'icon'),
+						  }
+						: null,
+			};
+		});
+
+		const rounds = {};
+		actions.forEach((action) => {
+			if (!rounds[action.round]) rounds[action.round] = [];
+			rounds[action.round].push(action);
+		});
+
+		entity.combatRounds = rounds;
+	}
+
+	// Event Session Mapping
+	let events = entity.events;
+	if (events && typeof events === 'object' && !Array.isArray(events)) {
+		events = Object.values(events).flat();
+	}
+
+	if (events && Array.isArray(events) && events.length > 0 && additionalData.sessionMap) {
+		events = events.map((event) => ({
+			...event,
+			session_number:
+				event.session_id && additionalData.sessionMap.has(event.session_id)
+					? additionalData.sessionMap.get(event.session_id) - 1
+					: null,
+		}));
+
+		events.sort((a, b) => {
+			if (a.session_number !== b.session_number) {
+				if (a.session_number == null) return 1;
+				if (b.session_number == null) return -1;
+				return a.session_number - b.session_number;
+			}
+			return (a.order || 0) - (b.order || 0);
+		});
+		entity.events = events;
+	}
+
+	return entity;
+};
+
+--- END OF features\wiki\utils\wikiEntryMapper.js ---
+
+--- FILE: features\wiki\utils\wikiUtils.js ---
+import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
+import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
+import { getParentId } from '@/domain/entity/utils/entityUtils';
+
+// Helper: Strip Markdown
+const stripMarkdown = (text) => {
+	if (!text) return '';
+	return text
+		.replace(/^#+\s+/gm, '')
+		.replace(/(\*\*|__)(.*?)\1/g, '$2')
+		.replace(/(\*|_)(.*?)\1/g, '$2')
+		.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+		.replace(/`{1,3}[^`]+`{1,3}/g, '')
+		.replace(/\n/g, ' ')
+		.trim();
+};
+
+export function transformEntityToViewModel(entity, type) {
+	const contextType = type === 'sessions' ? 'session' : type;
+	const actualType = entity.type || contextType;
+	const attributes = entity.attributes || {};
+
+	// 1. Resolve Status
+	const statusRaw = getAttributeValue(attributes, ['status', 'Quest Status']) || entity.status || 'unknown';
+	const affinityRaw = getAttributeValue(attributes, ['affinity', 'disposition']);
+	const status = statusRaw.toLowerCase();
+	const affinity = affinityRaw ? affinityRaw.toLowerCase() : 'unknown';
+	const affinityRank = getAffinityRank(affinity !== 'unknown' ? affinity : status);
+
+	// 2. Resolve Meta Fields
+	const questType = getAttributeValue(attributes, ['Quest Type', 'Type']) || 'Side Quest';
+	const region = getAttributeValue(attributes, ['region', 'parent location']) || null;
+	const priority = getAttributeValue(attributes, ['Priority', 'priority']) || null;
+	const parentId = getParentId(entity);
+	const campaignArc = getAttributeValue(attributes, ['campaign_arc', 'arc']);
+
+	// 3. Resolve Description
+	// We need two versions:
+	// - One for the Card (short, plain text)
+	// - One for the Header (long, markdown preserved)
+	let rawDescription = entity.description;
+
+	if (actualType === 'session') {
+		rawDescription = entity.description || getAttributeValue(attributes, ['narrative', 'summary']);
+	} else {
+		rawDescription =
+			getAttributeValue(attributes, ['synopsis', 'summary', 'short_description', 'hook']) || entity.description;
+	}
+
+	// Version A: For Grid Cards (Stripped & Truncated)
+	const description = rawDescription
+		? stripMarkdown(rawDescription).substring(0, 140) + (rawDescription.length > 140 ? '...' : '')
+		: null;
+
+	// Version B: For Hero Headers (Full & Rich)
+	// FIX: Passing the raw string so Swimlane.jsx can handle the truncation logic itself
+	const fullDescription = rawDescription || null;
+
+	// 4. Resolve Footer Label
+	let footerLabel = null;
+	if (actualType === 'session') {
+		footerLabel = attributes.session_date || attributes.Date || `Session ${attributes.session_number || '#'}`;
+	} else if (actualType === 'npc') {
+		footerLabel = getAttributeValue(attributes, ['role', 'occupation', 'class', 'title']);
+	} else if (actualType === 'location') {
+		footerLabel = getAttributeValue(attributes, ['type']) || region;
+	} else if (actualType === 'encounter') {
+		footerLabel = getAttributeValue(attributes, ['status']) || 'Encounter';
+	} else if (actualType === 'quest') {
+		footerLabel = questType;
+	} else if (actualType === 'item') {
+		const rarity = getAttributeValue(attributes, ['rarity']);
+		const type = getAttributeValue(attributes, ['type', 'item_type']) || 'Item';
+		footerLabel = rarity ? `${rarity} ${type}` : type;
+	}
+
+	if (!footerLabel) {
+		footerLabel = region || getAttributeValue(attributes, ['type', 'subtype']);
+	}
+
+	// 5. Resolve Hero Subtitle
+	let heroSubtitle = footerLabel;
+	if (actualType === 'character') {
+		const role = getAttributeValue(attributes, ['class', 'role', 'occupation']);
+		const level = getAttributeValue(attributes, ['level']);
+		if (level && role) heroSubtitle = `Lvl ${level} ${role}`;
+		else if (level) heroSubtitle = `Level ${level}`;
+		else heroSubtitle = role;
+	}
+
+	return {
+		id: entity.id,
+		name: entity.name,
+		path: `/wiki/${contextType}/${entity.id}`,
+		type: actualType,
+
+		// UI Props
+		description, // Short (Cards)
+		fullDescription, // New: Long (Headers)
+		footerLabel,
+		heroSubtitle,
+
+		status,
+		affinity,
+		attributes,
+		relationships: entity.relationships,
+
+		meta: {
+			status,
+			affinity,
+			affinityRank,
+			questType,
+			region,
+			priority,
+			parentId,
+			campaignArc,
+		},
+	};
+}
+
+--- END OF features\wiki\utils\wikiUtils.js ---
+

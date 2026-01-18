@@ -1,0 +1,609 @@
+================================================================
+SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\search\components\SearchFooter.jsx ---
+export const SearchFooter = () => {
+	return (
+		<div className='flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/30 text-[10px] text-muted-foreground'>
+			<div className='flex items-center gap-4'>
+				<span className='flex items-center gap-1.5'>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↑</kbd>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↓</kbd>
+					<span>navigate</span>
+				</span>
+				<span className='flex items-center gap-1.5'>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↵</kbd>
+					<span>select</span>
+				</span>
+			</div>
+			<span className='flex items-center gap-1.5'>
+				<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>ESC</kbd>
+				<span>close</span>
+			</span>
+		</div>
+	);
+};
+
+--- END OF features\search\components\SearchFooter.jsx ---
+
+--- FILE: features\search\components\SearchModal.jsx ---
+import { createPortal } from 'react-dom';
+import { Search, X, Loader2 } from 'lucide-react';
+import { SearchResults } from './SearchResults';
+import { SearchFooter } from './SearchFooter';
+
+export const SearchModal = ({ vm, inputRef }) => {
+	return createPortal(
+		// Fixed inset-0 for full screen coverage on mobile
+		<div className='fixed inset-0 z-[100] flex flex-col lg:items-center lg:pt-[15vh] px-0 lg:px-4'>
+			{/* Backdrop */}
+			<div
+				className='absolute inset-0 bg-background/95 lg:bg-black/60 lg:backdrop-blur-sm transition-all'
+				onClick={vm.closeSearch}
+			/>
+
+			{/* Search Panel */}
+			<div className='relative w-full lg:max-w-2xl bg-background lg:rounded-xl shadow-2xl border-b lg:border border-border overflow-hidden flex flex-col h-full lg:h-auto lg:max-h-[70vh] animate-in fade-in slide-in-from-bottom-2 lg:slide-in-from-top-4 duration-200'>
+				{/* Search Input Area */}
+				<div className='flex items-center gap-3 p-4 border-b border-border bg-background shrink-0'>
+					<button onClick={vm.closeSearch} className='lg:hidden p-1 -ml-1 text-muted-foreground'>
+						<X size={20} />
+					</button>
+					<Search size={18} className='text-muted-foreground/70 shrink-0 hidden lg:block' />
+
+					<input
+						ref={inputRef}
+						type='text'
+						value={vm.query}
+						onChange={(e) => {
+							vm.setQuery(e.target.value);
+							vm.setSelectedIndex(0);
+						}}
+						placeholder='Search sessions, entities, lore...'
+						className='flex-1 bg-transparent text-base lg:text-sm text-foreground placeholder:text-muted-foreground/70 outline-none h-10 lg:h-auto'
+					/>
+
+					{vm.isLoading && <Loader2 size={16} className='animate-spin text-amber-600' />}
+
+					{vm.query && !vm.isLoading && (
+						<button
+							onClick={() => {
+								vm.setQuery('');
+								inputRef.current?.focus();
+							}}
+							className='p-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted rounded transition-colors'>
+							<X size={16} />
+						</button>
+					)}
+					<kbd className='hidden lg:inline-block px-2 py-1 text-[10px] font-semibold text-muted-foreground/70 bg-muted border border-border rounded'>
+						ESC
+					</kbd>
+				</div>
+
+				{/* Results Area - Flex 1 for mobile scrolling */}
+				<div className='flex-1 overflow-y-auto bg-muted/10 custom-scrollbar'>
+					<SearchResults vm={vm} />
+				</div>
+
+				{/* Footer (Desktop Only) */}
+				<div className='hidden lg:block'>
+					<SearchFooter />
+				</div>
+			</div>
+		</div>,
+		document.body
+	);
+};
+
+--- END OF features\search\components\SearchModal.jsx ---
+
+--- FILE: features\search\components\SearchResultItem.jsx ---
+import { clsx } from 'clsx';
+
+export const SearchResultItem = ({ item, isSelected, onSelect, onHover }) => {
+	return (
+		<button
+			onClick={onSelect}
+			onMouseEnter={onHover}
+			className={clsx(
+				'w-full flex items-start gap-3 px-4 py-2.5 transition-colors text-left',
+				isSelected ? 'bg-amber-500/10' : 'hover:bg-muted'
+			)}>
+			<div
+				className={clsx(
+					'shrink-0 w-9 h-9 rounded-lg border flex items-center justify-center',
+					item.theme.bg,
+					item.theme.border,
+					item.theme.text
+				)}>
+				<item.icon size={16} />
+			</div>
+			<div className='flex-1 min-w-0'>
+				<div className='flex items-center gap-2 mb-0.5'>
+					<span className='text-sm font-semibold text-foreground truncate'>{item.name}</span>
+					<span className='shrink-0 text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded'>
+						{item.type}
+					</span>
+				</div>
+				{item.description && <p className='text-xs text-muted-foreground line-clamp-2 leading-relaxed'>{item.description}</p>}
+			</div>
+			{isSelected && (
+				<kbd className='shrink-0 text-[10px] font-semibold text-muted-foreground/70 bg-muted px-2 py-1 rounded border border-border'>
+					↵
+				</kbd>
+			)}
+		</button>
+	);
+};
+
+--- END OF features\search\components\SearchResultItem.jsx ---
+
+--- FILE: features\search\components\SearchResults.jsx ---
+import { Search, Clock, Calendar, Database } from 'lucide-react';
+import { clsx } from 'clsx';
+import { SearchResultItem } from './SearchResultItem';
+
+const GroupHeader = ({ label, icon: Icon }) => (
+	<div className='px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 bg-muted/50 border-y border-border/50 sticky top-0 z-10 backdrop-blur-sm'>
+		<Icon size={12} />
+		{label}
+	</div>
+);
+
+export const SearchResults = ({ vm }) => {
+	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent } = vm;
+
+	// GROUPING LOGIC
+	const groupedResults = results.reduce(
+		(acc, item) => {
+			const group = item.type === 'session' ? 'sessions' : 'entities';
+			if (!acc[group]) acc[group] = [];
+			acc[group].push(item);
+			return acc;
+		},
+		{ sessions: [], entities: [] }
+	);
+
+	return (
+		<div className='pb-4'>
+			{query.trim() === '' ? (
+				// Recent Searches / Empty State
+				<div className='p-4'>
+					{recentSearches.length > 0 ? (
+						<>
+							<div className='flex items-center justify-between mb-3'>
+								<h3 className='text-xs font-semibold uppercase tracking-wider text-muted-foreground/70'>Recent Searches</h3>
+								<button onClick={clearRecent} className='text-xs text-muted-foreground/70 hover:text-foreground transition-colors'>
+									Clear
+								</button>
+							</div>
+							<div className='space-y-1'>
+								{recentSearches.map((item) => (
+									<button
+										key={item.id}
+										onClick={() => handleSelect(item)}
+										className='w-full flex items-start gap-3 p-2 rounded-lg hover:bg-muted transition-colors text-left group'>
+										<Clock size={14} className='mt-1 text-gray-300 group-hover:text-amber-600 transition-colors' />
+										<span className='text-sm text-muted-foreground group-hover:text-foreground transition-colors'>
+											{item.name}
+										</span>
+									</button>
+								))}
+							</div>
+						</>
+					) : (
+						<div className='text-center py-12 opacity-60'>
+							<Search size={40} className='mx-auto text-gray-300 mb-3' />
+							<p className='text-sm font-medium text-foreground mb-1'>Global Search</p>
+							<p className='text-xs text-muted-foreground'>Find anything in your campaign</p>
+						</div>
+					)}
+				</div>
+			) : results.length > 0 ? (
+				// Grouped Search Results
+				<div>
+					{groupedResults.sessions.length > 0 && (
+						<div className='mb-2'>
+							<GroupHeader label='Sessions' icon={Calendar} />
+							{groupedResults.sessions.map((item) => {
+								const idx = results.indexOf(item);
+								return (
+									<SearchResultItem
+										key={item.id}
+										item={item}
+										isSelected={idx === selectedIndex}
+										onSelect={() => handleSelect(item)}
+										onHover={() => setSelectedIndex(idx)}
+									/>
+								);
+							})}
+						</div>
+					)}
+
+					{groupedResults.entities.length > 0 && (
+						<div>
+							<GroupHeader label='Entities' icon={Database} />
+							{groupedResults.entities.map((item) => {
+								const idx = results.indexOf(item);
+								return (
+									<SearchResultItem
+										key={item.id}
+										item={item}
+										isSelected={idx === selectedIndex}
+										onSelect={() => handleSelect(item)}
+										onHover={() => setSelectedIndex(idx)}
+									/>
+								);
+							})}
+						</div>
+					)}
+				</div>
+			) : (
+				// No Results
+				!isLoading && (
+					<div className='text-center py-12 px-4'>
+						<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
+						<p className='text-xs text-muted-foreground'>Try checking your spelling</p>
+					</div>
+				)
+			)}
+		</div>
+	);
+};
+
+--- END OF features\search\components\SearchResults.jsx ---
+
+--- FILE: features\search\components\SearchTrigger.jsx ---
+import { Search } from 'lucide-react';
+import { useSearch } from '@/features/search/SearchContext'; // Import Context
+
+export const SearchTrigger = ({ className, onClick }) => {
+	const { openSearch } = useSearch();
+
+	const handleClick = (e) => {
+		openSearch();
+		if (onClick) onClick(e);
+	};
+
+	return (
+		<button
+			onClick={handleClick}
+			className={`w-full flex items-center gap-2 px-3 py-1.5 bg-background border border-border rounded-md text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all group ${className}`}>
+			<Search size={14} className='text-muted-foreground/70 group-hover:text-primary' />
+			<span className='flex-1 text-left text-xs'>Search...</span>
+			<kbd className='hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground/70 bg-muted border border-border rounded'>
+				⌘K
+			</kbd>
+		</button>
+	);
+};
+
+--- END OF features\search\components\SearchTrigger.jsx ---
+

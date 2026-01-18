@@ -1,0 +1,711 @@
+================================================================
+SPLIT BUNDLE: FEATURES_WIKI - CHARACTER
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\wiki\components\character\CharacterSidebar.jsx ---
+import { Tag, Shield, Gem, Scroll, Save, Eye, Swords, Activity } from 'lucide-react';
+import EntityLink from '@/domain/entity/components/EntityLink';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { clsx } from 'clsx';
+
+// Helper: Split string by comma and trim
+const parseTags = (str) => {
+	if (!str) return [];
+	if (Array.isArray(str)) return str;
+	return String(str)
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean);
+};
+
+const SidebarHeader = ({ title, icon: Icon }) => (
+	<h4 className='flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-3 mt-5 border-b border-border/40 pb-1'>
+		{Icon && <Icon size={12} />} {title}
+	</h4>
+);
+
+const TagPill = ({ text }) => (
+	<span className='inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-muted/30 text-muted-foreground border border-border/50'>
+		{text}
+	</span>
+);
+
+const StatRowItem = ({ label, value }) => (
+	<div className='flex flex-col items-center justify-center p-2 bg-muted/20 rounded border border-border/30'>
+		<span className='text-[9px] font-bold uppercase text-muted-foreground/70 tracking-wider mb-0.5'>{label}</span>
+		<span className='text-sm font-bold text-foreground font-serif'>{value}</span>
+	</div>
+);
+
+const SkillItem = ({ text }) => {
+	// split "Acrobatics (+1)" into name and val
+	const match = text.match(/^(.*)\s(\([+-]?\d+\))$/);
+	const name = match ? match[1] : text;
+	const val = match ? match[2] : '';
+
+	return (
+		<div className='flex justify-between items-center text-[11px] py-0.5 px-1 border-b border-border/20 last:border-0'>
+			<span className='text-muted-foreground'>{name}</span>
+			<span className='font-mono text-foreground opacity-80 text-[10px]'>{val}</span>
+		</div>
+	);
+};
+
+const SidebarLink = ({ entity }) => (
+	<EntityLink
+		id={entity.entity_id}
+		type={entity.entity_type}
+		inline={true}
+		showIcon={false}
+		className={clsx(
+			'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline !mb-2',
+			'!border-border hover:!border-primary/40 hover:!shadow-sm hover:!bg-card'
+		)}>
+		<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+			<EntityIcon type={entity.entity_type} size={16} className='opacity-80 group-hover:opacity-100' />
+			<span className='text-xs font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
+				{entity.entity_name}
+			</span>
+		</div>
+	</EntityLink>
+);
+
+export const CharacterSidebar = ({ attributes, gear, quests }) => {
+	const proficiencies = parseTags(attributes.proficiencies || attributes.tools);
+	const languages = parseTags(attributes.languages);
+	const saves = attributes['saving throw'] || attributes['saves'] || [];
+	const saveList = Array.isArray(saves) ? saves : [];
+
+	// Extract special stats manually
+	const initiative = attributes.initiative;
+	const proficiencyBonus = attributes.proficiency || attributes.proficiency_bonus;
+	const skills = parseTags(attributes.skills);
+	const senses = parseTags(attributes['additional senses'] || attributes.senses);
+
+	// Filter keys that we handle explicitly
+	const ignoredKeys = new Set([
+		// Header
+		'class',
+		'race',
+		'level',
+		// Stats Bar
+		'ability score',
+		'stats',
+		'saving throw',
+		'saves',
+		'armor class',
+		'ac',
+		'hit points',
+		'hp',
+		'speed',
+		'passive_perception',
+		'passive',
+		// Explicit Sections
+		'languages',
+		'proficiencies',
+		'tools',
+		'skills',
+		'initiative',
+		'proficiency',
+		'proficiency_bonus',
+		'additional senses',
+		'senses',
+		// System
+		'icon',
+		'background_image',
+		'is_active',
+		'campaign_id',
+	]);
+
+	// Get any remaining attributes (Alignment, Faith, etc.)
+	const otherAttributes = Object.entries(attributes).filter(([key, val]) => {
+		const k = key.toLowerCase();
+		if (ignoredKeys.has(k)) return false;
+		if (!val || (typeof val === 'object' && !Array.isArray(val))) return false;
+		return true;
+	});
+
+	return (
+		<div className='font-sans'>
+			{/* 1. Combat Vitals Row (Initiative / Proficiency) */}
+			{(initiative || proficiencyBonus) && (
+				<div className='grid grid-cols-2 gap-2 mb-4'>
+					{initiative && <StatRowItem label='Initiative' value={initiative} />}
+					{proficiencyBonus && <StatRowItem label='Proficiency' value={proficiencyBonus} />}
+				</div>
+			)}
+
+			{/* 2. Saving Throws */}
+			{saveList.length > 0 && (
+				<div>
+					<SidebarHeader title='Saving Throws' icon={Save} />
+					<div className='flex flex-wrap gap-1.5'>
+						{saveList.map((save, i) => (
+							<TagPill key={i} text={save} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 3. Skills (Compact Grid) */}
+			{skills.length > 0 && (
+				<div>
+					<SidebarHeader title='Skills' icon={Activity} />
+					<div className='grid grid-cols-2 gap-x-4 gap-y-0.5'>
+						{skills.map((skill, i) => (
+							<SkillItem key={i} text={skill} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 4. Senses */}
+			{senses.length > 0 && (
+				<div>
+					<SidebarHeader title='Senses' icon={Eye} />
+					<div className='flex flex-col gap-1'>
+						{senses.map((sense, i) => (
+							<div key={i} className='text-xs text-muted-foreground border-l-2 border-border pl-2 py-0.5'>
+								{sense}
+							</div>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 5. Languages */}
+			{languages.length > 0 && (
+				<div>
+					<SidebarHeader title='Languages' icon={Tag} />
+					<div className='flex flex-wrap gap-1.5'>
+						{languages.map((lang, i) => (
+							<TagPill key={i} text={lang} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 6. Dynamic Attributes */}
+			{otherAttributes.map(([key, val]) => {
+				const tags = parseTags(val);
+				return (
+					<div key={key}>
+						<SidebarHeader title={key.replace(/_/g, ' ')} icon={Swords} />
+						<div className='flex flex-wrap gap-1.5'>
+							{tags.map((t, i) => (
+								<TagPill key={i} text={t} />
+							))}
+						</div>
+					</div>
+				);
+			})}
+
+			{/* 7. Personal Quests */}
+			{quests && quests.length > 0 && (
+				<div>
+					<SidebarHeader title='Personal Quests' icon={Scroll} />
+					<div>
+						{quests.map((quest) => (
+							<SidebarLink key={quest.entity_id} entity={quest} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 8. Signature Gear */}
+			{gear && gear.length > 0 && (
+				<div>
+					<SidebarHeader title='Signature Gear' icon={Gem} />
+					<div>
+						{gear.map((item) => (
+							<SidebarLink key={item.entity_id} entity={item} />
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\character\CharacterSidebar.jsx ---
+
+--- FILE: features\wiki\components\character\CharacterStats.jsx ---
+import { Shield, Heart, Wind } from 'lucide-react';
+import { SectionDivider } from '@/shared/components/ui/SectionDivider';
+
+const parseStat = (str) => {
+	if (!str) return { label: '???', value: '-' };
+	const match = str.match(/^([A-Z]{3})\s+(.*)$/);
+	if (!match) return { label: str.substring(0, 3), value: str };
+	return { label: match[1], value: match[2] };
+};
+
+const StatPill = ({ raw }) => {
+	const { label, value } = parseStat(raw);
+	return (
+		<div className='flex flex-col items-center justify-center bg-muted/20 border border-border/50 rounded-md py-1.5 px-3 min-w-[70px]'>
+			<span className='text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5'>{label}</span>
+			<span className='text-sm font-bold text-foreground font-serif leading-none'>{value}</span>
+		</div>
+	);
+};
+
+const VitalPill = ({ label, value, icon: Icon, color }) => (
+	<div className='flex flex-col items-center justify-center bg-muted/20 border border-border/50 rounded-md py-1.5 px-4 min-w-[80px]'>
+		<div className='flex items-center gap-1.5 mb-0.5 opacity-80'>
+			<Icon size={10} className={color} />
+			<span className='text-[9px] font-bold uppercase text-muted-foreground tracking-wider'>{label}</span>
+		</div>
+		<span className='text-base font-serif font-bold text-foreground leading-none'>{value || '-'}</span>
+	</div>
+);
+
+export const CharacterStats = ({ attributes }) => {
+	const stats = attributes['ability score'] || attributes['stats'] || [];
+	const ac = attributes['armor class'] || attributes['ac'];
+	const hp = attributes['hit points'] || attributes['hp'];
+	const speed = attributes['speed'];
+
+	return (
+		<div>
+			<div className='flex flex-wrap items-center justify-center gap-6'>
+				{/* 1. Ability Scores */}
+				<div className='flex flex-wrap justify-center gap-2'>
+					{stats.map((s, i) => (
+						<StatPill key={i} raw={s} />
+					))}
+				</div>
+
+				{/* Vertical Divider (Hidden on small mobile) */}
+				<div className='hidden sm:block w-px h-8 bg-border/40' />
+
+				{/* 2. Vitals */}
+				<div className='flex flex-wrap justify-center gap-2'>
+					<VitalPill label='AC' value={ac} icon={Shield} color='text-emerald-500' />
+					<VitalPill label='HP' value={hp} icon={Heart} color='text-red-500' />
+					<VitalPill label='Speed' value={speed} icon={Wind} color='text-blue-500' />
+				</div>
+			</div>
+			<SectionDivider />
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\character\CharacterStats.jsx ---
+
+--- FILE: features\wiki\components\character\RelationshipNetwork.jsx ---
+import { clsx } from 'clsx';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import EntityLink from '@/domain/entity/components/EntityLink';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+
+const NetworkGroup = ({ type, items }) => {
+	if (!items || items.length === 0) return null;
+
+	const config = getEntityConfig(type);
+	const Icon = config.icon;
+
+	return (
+		<div className='break-inside-avoid mb-6 bg-card/40 border border-border/40 rounded-lg overflow-hidden'>
+			{/* Group Header */}
+			<div className='px-3 py-2 border-b border-border/40 bg-muted/30 flex items-center justify-between'>
+				<div
+					className={clsx('flex items-center gap-2 text-xs font-bold uppercase tracking-widest', config.tailwind.text)}>
+					<Icon size={14} /> {config.labelPlural}
+				</div>
+				<span className='text-[9px] font-bold bg-background border border-border/50 px-1.5 py-0.5 rounded text-muted-foreground'>
+					{items.length}
+				</span>
+			</div>
+
+			{/* List of Connections */}
+			<div className='p-2 space-y-1.5'>
+				{items.map((rel) => (
+					<EntityLink
+						key={rel.entity_id}
+						id={rel.entity_id}
+						type={rel.entity_type}
+						inline={true}
+						showIcon={true}
+						className={clsx(
+							'!flex !w-full !items-center !justify-between !p-2 !rounded-md !border !bg-card !transition-all !cursor-pointer !no-underline',
+							'!border-border hover:!border-primary/50 hover:!shadow-sm hover:!bg-muted/20 group'
+						)}>
+						{/* Left: Icon + Name */}
+						<div className='flex items-center gap-2.5 flex-1 min-w-0'>
+							{/* <EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' /> */}
+							<span className='text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors'>
+								{rel.entity_name}
+							</span>
+						</div>
+
+						{/* Right: Relationship Label */}
+						<span className='shrink-0 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded ml-2 max-w-[40%] truncate'>
+							{rel.type ? rel.type.replace(/_/g, ' ') : 'Related'}
+						</span>
+					</EntityLink>
+				))}
+			</div>
+		</div>
+	);
+};
+
+export const RelationshipNetwork = ({ relationships }) => {
+	if (!relationships || relationships.length === 0) {
+		return (
+			<div className='p-8 text-center text-muted-foreground italic border border-dashed border-border rounded-lg bg-muted/20'>
+				No connections recorded.
+			</div>
+		);
+	}
+
+	// 1. Group by Entity Type
+	const groups = relationships.reduce((acc, rel) => {
+		const type = rel.entity_type || 'default';
+		if (!acc[type]) acc[type] = [];
+		acc[type].push(rel);
+		return acc;
+	}, {});
+
+	// 2. Define Display Order (Narrative Priority)
+	const order = ['character', 'npc', 'faction', 'location', 'quest', 'encounter', 'item'];
+	const orderedKeys = order.filter((k) => groups[k]).concat(Object.keys(groups).filter((k) => !order.includes(k)));
+
+	// 3. Render Masonry Layout
+	return (
+		<div className='columns-1 md:columns-2 xl:columns-3 gap-6 animate-in fade-in duration-500'>
+			{orderedKeys.map((type) => (
+				<NetworkGroup key={type} type={type} items={groups[type]} />
+			))}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\character\RelationshipNetwork.jsx ---
+

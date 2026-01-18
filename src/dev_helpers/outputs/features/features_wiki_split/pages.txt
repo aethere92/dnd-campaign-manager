@@ -1,0 +1,499 @@
+================================================================
+SPLIT BUNDLE: FEATURES_WIKI - PAGES
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\wiki\pages\WikiDetailPage.jsx ---
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getWikiEntry } from '@/features/wiki/api/wikiService';
+import { transformWikiEntry } from '@/features/wiki/utils/wikiEntryMapper'; // Import transform
+import WikiEntityView from '@/features/wiki/components/WikiEntryView';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+
+export default function WikiEntryPage() {
+	const { type, entityId } = useParams();
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	const {
+		data: entity,
+		isLoading,
+		error,
+	} = useQuery({
+		queryKey: ['entry', normalizedType, entityId],
+		queryFn: () => getWikiEntry(entityId, normalizedType),
+		select: (res) => transformWikiEntry(res.data, res.type, res.additional),
+		enabled: !!entityId && !!normalizedType,
+		retry: 1,
+	});
+
+	if (isLoading) return <LoadingSpinner className='h-full min-h-[50vh]' text='Loading Entry...' />;
+	if (error)
+		return (
+			<div className='p-8 text-center text-red-600'>
+				<p>Failed to load entry</p>
+			</div>
+		);
+
+	return <WikiEntityView entity={entity} />;
+}
+
+--- END OF features\wiki\pages\WikiDetailPage.jsx ---
+
+--- FILE: features\wiki\pages\WikiLandingPage.jsx ---
+import { useParams } from 'react-router-dom';
+import { Search, Folder, LayoutGrid, List } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useEntityFetching } from '@/features/wiki/hooks/useEntityFetching';
+import { useEntityGrouping } from '@/features/wiki/hooks/useEntityGrouping';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { getSwimlanes, getStrategyMode } from '@/features/wiki/config/viewStrategies';
+import { Swimlane } from '../components/landing/Swimlane';
+import { EntityTableGroup } from '../components/landing/EntityTableGroup';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { clsx } from 'clsx';
+
+export default function WikiLandingPage() {
+	const { type } = useParams();
+	const normalizedType = type === 'sessions' ? 'session' : type;
+
+	// 1. Fetch Entities & Context (Arcs)
+	const { entities, context, isLoading } = useEntityFetching(normalizedType);
+	const [viewMode, setViewMode] = useState('grid');
+	const [search, setSearch] = useState('');
+
+	const config = getEntityConfig(normalizedType);
+	const mode = getStrategyMode(normalizedType);
+
+	// 2. Grouping
+	const groups = useEntityGrouping(entities, normalizedType, search, context);
+	const swimlanes = useMemo(() => getSwimlanes(groups, normalizedType), [groups, normalizedType]);
+
+	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text={`Loading ${config.labelPlural}...`} />;
+
+	const totalCount = swimlanes.reduce((acc, lane) => acc + lane.items.length, 0);
+
+	return (
+		<div className='p-4 md:p-8 lg:p-12 max-w-[1920px] mx-auto min-h-full pb-safe'>
+			{/* Header */}
+			<div className='flex flex-col gap-6 mb-8 border-b border-border pb-6'>
+				<div className='flex items-center justify-between sm:justify-center gap-2'>
+					<div className='flex items-center gap-4'>
+						<div
+							className={clsx(
+								'p-3 rounded-xl border shadow-sm bg-background hidden md:block',
+								config.tailwind.border,
+								config.tailwind.text
+							)}>
+							<config.icon size={32} strokeWidth={1.5} />
+						</div>
+						<div>
+							<h1 className='text-3xl font-serif font-bold text-foreground capitalize leading-none mb-1'>
+								{config.labelPlural}
+							</h1>
+							<p className='hidden sm:block text-sm text-muted-foreground font-medium'>{totalCount} entries found</p>
+						</div>
+					</div>
+					{/* Search Bar */}
+					<div className='relative max-w-2xl md:ml-auto'>
+						<Search size={16} className='absolute left-3 top-3 text-muted-foreground' />
+						<input
+							type='text'
+							placeholder={`Search ${config.labelPlural}...`}
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							className='w-full pl-10 pr-4 py-2 bg-background border border-border rounded-lg focus:ring-2 focus:ring-accent/20 focus:border-accent outline-none shadow-sm transition-all'
+						/>
+					</div>
+					{/* View Toggle */}
+					<div className='flex bg-muted p-1 rounded-lg border border-border/50'>
+						<button
+							onClick={() => setViewMode('grid')}
+							className={clsx(
+								'p-1.5 rounded-md transition-all',
+								viewMode === 'grid'
+									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
+									: 'text-muted-foreground hover:text-foreground'
+							)}
+							title='Grid View'>
+							<LayoutGrid size={18} />
+						</button>
+						<button
+							onClick={() => setViewMode('table')}
+							className={clsx(
+								'p-1.5 rounded-md transition-all',
+								viewMode === 'table'
+									? 'bg-background text-foreground shadow-sm ring-1 ring-black/5'
+									: 'text-muted-foreground hover:text-foreground'
+							)}
+							title='Table View'>
+							<List size={18} />
+						</button>
+					</div>
+				</div>
+			</div>
+
+			{/* CONTENT */}
+			<div className='pb-20'>
+				{viewMode === 'grid' ? (
+					swimlanes.map((lane) => (
+						<Swimlane
+							key={lane.id}
+							title={lane.title}
+							description={lane.description}
+							parentTitle={lane.parentTitle}
+							link={lane.link}
+							items={lane.items}
+							config={config}
+							context={mode}
+							type={lane.type}
+							stats={lane.stats}
+							order={lane.order} // <--- Added this
+						/>
+					))
+				) : (
+					<div className='max-w-6xl mx-auto'>
+						{swimlanes.map((lane) => (
+							<EntityTableGroup
+								key={lane.id}
+								title={lane.title}
+								description={lane.description}
+								parentTitle={lane.parentTitle}
+								link={lane.link}
+								items={lane.items}
+							/>
+						))}
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\wiki\pages\WikiLandingPage.jsx ---
+

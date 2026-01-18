@@ -1,0 +1,471 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ADMIN - LAYOUTS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\admin\layouts\AdminLayout.jsx ---
+import React from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { clsx } from 'clsx';
+import {
+	Database,
+	Users,
+	MapPin,
+	BookOpen,
+	Scroll,
+	ArrowLeft,
+	Shield,
+	Gem,
+	LogOut,
+	Play,
+	Sword,
+	Replace,
+	Drama,
+	Sun,
+	Moon,
+	Dice5, // Icon for D&D mode
+} from 'lucide-react';
+import { useCampaign } from '@/features/campaign/CampaignContext';
+import { useTheme, THEMES } from '@/shared/hooks/useTheme'; // Import constant too
+
+const NavItem = ({ to, icon: Icon, label }) => {
+	const location = useLocation();
+	const isActive = location.pathname.includes(to);
+
+	return (
+		<Link
+			to={to}
+			className={clsx(
+				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
+				isActive
+					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
+					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+			)}>
+			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
+			{label}
+		</Link>
+	);
+};
+
+export default function AdminLayout() {
+	const { campaignId, setCampaignId } = useCampaign();
+	const { theme, cycleTheme } = useTheme(); // Use cycleTheme
+	const navigate = useNavigate();
+
+	const handleSwitch = () => {
+		if (confirm('Go to Campaign Selection screen?')) {
+			setCampaignId(null);
+			navigate('/select-campaign');
+		}
+	};
+
+	// Helper to render current theme icon
+	const ThemeIcon = () => {
+		if (theme === THEMES.DARK) return <Moon size={16} />;
+		if (theme === THEMES.DND) return <Dice5 size={16} />;
+		return <Sun size={16} />;
+	};
+
+	return (
+		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans '>
+			{/* Sidebar */}
+			<aside className='w-56 bg-background border-r border-border flex flex-col shrink-0'>
+				<div className='p-4 border-b border-border bg-muted/20 flex items-center justify-between'>
+					<div className='flex items-center gap-2 text-primary'>
+						<div className='p-1.5 bg-primary  rounded-md'>
+							<Database size={18} />
+						</div>
+						<h2 className='font-serif font-bold text-lg leading-none'>DM Console</h2>
+					</div>
+
+					{/* THEME TOGGLE BUTTON */}
+					<button
+						onClick={cycleTheme}
+						className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors hover:text-foreground'
+						title={`Current Theme: ${theme}`}>
+						<ThemeIcon />
+					</button>
+				</div>
+
+				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
+					<div className='px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						System
+					</div>
+					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
+					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
+					<NavItem to='/dm/tools/migration' icon={Database} label='Map Migration' />
+					<NavItem to='/dm/tools/atlas' icon={MapPin} label='Atlas Manager' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Entities
+					</div>
+					<NavItem to='/dm/manage/character' icon={Users} label='Characters' />
+					<NavItem to='/dm/manage/npc' icon={Users} label='NPCs' />
+					<NavItem to='/dm/manage/location' icon={MapPin} label='Locations' />
+					<NavItem to='/dm/manage/faction' icon={Shield} label='Factions' />
+					<NavItem to='/dm/manage/item' icon={Gem} label='Items' />
+					<NavItem to='/dm/manage/encounter' icon={Sword} label='Encounters' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Campaign
+					</div>
+					<NavItem to='/dm/manage/session' icon={BookOpen} label='Chronicles' />
+					<NavItem to='/dm/manage/narrative_arc' icon={Drama} label='Narrative Arcs' />
+					<NavItem to='/dm/manage/quest' icon={Scroll} label='Quests' />
+				</nav>
+
+				<div className='p-3 border-t border-border space-y-1'>
+					{campaignId && (
+						<Link
+							to='/'
+							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/10 rounded-md transition-colors dark:text-emerald-400 dark:hover:bg-emerald-900/20'
+							title={`Return to Campaign ID: ${campaignId}`}>
+							<Play size={14} /> Enter Campaign
+						</Link>
+					)}
+
+					<button
+						onClick={handleSwitch}
+						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors text-left dark:hover:text-red-400 dark:hover:bg-red-900/20'>
+						<LogOut size={14} /> Campaign Select
+					</button>
+				</div>
+			</aside>
+
+			{/* Main Content */}
+			<main className='flex-1 h-full overflow-y-auto custom-scrollba'>
+				<div className='mx-auto'>
+					<Outlet />
+				</div>
+			</main>
+		</div>
+	);
+}
+
+--- END OF features\admin\layouts\AdminLayout.jsx ---
+

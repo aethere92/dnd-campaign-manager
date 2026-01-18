@@ -1,0 +1,506 @@
+================================================================
+SPLIT BUNDLE: FEATURES_GRAPH - COMPONENTS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\graph\components\CytoscapeCanvas.jsx ---
+import { useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import cytoscape from 'cytoscape';
+import fcose from 'cytoscape-fcose';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { getGraphStyles, LAYOUT_CONFIG } from '@/features/graph/config/graphStyles';
+
+cytoscape.use(fcose);
+
+export const CytoscapeCanvas = ({
+	elements,
+	layoutConfig = LAYOUT_CONFIG,
+	stylesheet,
+	onNodeClick,
+	interactive = true,
+}) => {
+	const containerRef = useRef(null);
+	const cyRef = useRef(null);
+
+	// STABILITY FIX: Store callbacks in refs to prevent re-init on render
+	const onNodeClickRef = useRef(onNodeClick);
+	onNodeClickRef.current = onNodeClick;
+
+	const navigate = useNavigate();
+	const { theme } = useTheme();
+
+	const styles = useMemo(() => {
+		if (stylesheet) return stylesheet;
+		return getGraphStyles(theme);
+	}, [theme, stylesheet]);
+
+	// Style Update (Lightweight)
+	useEffect(() => {
+		if (cyRef.current) {
+			cyRef.current.style().fromJson(styles).update();
+		}
+	}, [styles]);
+
+	// Initialization (Run ONCE)
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		cyRef.current = cytoscape({
+			container: containerRef.current,
+			elements: [], // Elements added in separate effect
+			style: styles,
+			layout: { name: 'preset' }, // Initial static layout
+			wheelSensitivity: 3,
+			minZoom: 0.2,
+			maxZoom: 4,
+			zoomingEnabled: interactive,
+			panningEnabled: interactive,
+			userZoomingEnabled: interactive,
+			userPanningEnabled: interactive,
+			boxSelectionEnabled: false,
+			autoungrabify: true,
+		});
+
+		const cy = cyRef.current;
+
+		// Resize Observer
+		const resizeObserver = new ResizeObserver(() => {
+			if (cy && !cy.destroyed()) {
+				cy.resize();
+				cy.fit(null, 30);
+			}
+		});
+		resizeObserver.observe(containerRef.current);
+
+		// Event Delegation using Refs
+		cy.on('tap', 'node', (evt) => {
+			const data = evt.target.data();
+			// 1. Priority: Custom Handler
+			if (onNodeClickRef.current) {
+				onNodeClickRef.current(data);
+				return;
+			}
+			// 2. Default: Navigate (Global Graph behavior)
+			// Note: In global graph, we might want double-click,
+			// but preserving existing logic structure here.
+			// If explicit onNodeClick is missing, we check interactive mode behavior
+		});
+
+		// Hover Effects
+		if (interactive) {
+			cy.on('mouseover', 'node', () => (containerRef.current.style.cursor = 'pointer'));
+			cy.on('mouseout', 'node', () => (containerRef.current.style.cursor = 'default'));
+		}
+
+		// Default Global Graph Logic (Only if no custom handler passed)
+		if (!onNodeClick) {
+			cy.on('tap', (evt) => {
+				if (evt.target === cy) cy.elements().removeClass('highlighted dimmed');
+				else {
+					const node = evt.target;
+					cy.elements().removeClass('highlighted dimmed');
+					const connectedEdges = node.connectedEdges();
+					const connectedNodes = connectedEdges.connectedNodes();
+					cy.elements().difference(connectedNodes.union(connectedEdges).union(node)).addClass('dimmed');
+					node.addClass('highlighted');
+					connectedNodes.addClass('highlighted');
+					connectedEdges.addClass('highlighted');
+				}
+			});
+
+			cy.on('dblclick', 'node', (evt) => {
+				const { id, type } = evt.target.data();
+				if (id && type) navigate(`/wiki/${type}/${id}`);
+			});
+		}
+
+		return () => {
+			resizeObserver.disconnect();
+			if (cyRef.current) {
+				cyRef.current.destroy();
+				cyRef.current = null;
+			}
+		};
+		// CRITICAL: Dependencies list is small. interactive/navigate shouldn't change often.
+	}, [interactive, navigate]);
+
+	// Data & Layout Updates
+	useEffect(() => {
+		if (!cyRef.current || !elements) return;
+		const cy = cyRef.current;
+
+		// Batch update elements
+		cy.batch(() => {
+			cy.elements().remove();
+			cy.add(elements);
+		});
+
+		// Run Layout only if we have elements
+		if (elements.length > 0) {
+			// Apply Layout
+			const layout = cy.layout({
+				...layoutConfig,
+				// Ensure fit happens AFTER layout finishes
+				stop: () => {
+					cy.fit(null, 30);
+				},
+			});
+			layout.run();
+		}
+	}, [elements, layoutConfig]);
+
+	return <div ref={containerRef} className='absolute inset-0 w-full h-full' />;
+};
+
+--- END OF features\graph\components\CytoscapeCanvas.jsx ---
+
+--- FILE: features\graph\components\GraphLegend.jsx ---
+import { ENTITY_CONFIG } from '@/domain/entity/config/entityConfig'; // Adjust path
+
+export const GraphLegend = () => {
+	// Filter out the 'default' config to keep legend clean
+	const legendItems = Object.values(ENTITY_CONFIG).filter((c) => c.label !== 'Entity');
+
+	return (
+		<div className='absolute top-4 left-4 z-10 bg-background/90 p-3 rounded shadow border border-border backdrop-blur pointer-events-none select-none'>
+			<h2 className='text-xs font-bold uppercase text-muted-foreground/70 mb-2'>Legend</h2>
+			<div className='space-y-1.5'>
+				{legendItems.map((config) => (
+					<div key={config.label} className='flex items-center gap-2 text-xs font-medium text-muted-foreground'>
+						<div className='w-2.5 h-2.5 rounded-full shadow-sm' style={{ backgroundColor: config.color }} />
+						{config.label}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\graph\components\GraphLegend.jsx ---
+

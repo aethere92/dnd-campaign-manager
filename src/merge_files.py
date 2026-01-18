@@ -63,6 +63,44 @@ def categorize_file(relative_path):
     else:
         return 'root'
 
+def get_subcategory(relative_path, main_category):
+    """
+    Determine subcategory for splitting based on standard React patterns.
+    Returns tuple: (subcategory_name, is_deep_folder)
+    
+    Standard patterns: components, pages, hooks, api, utils, config, layouts
+    Deep folders: subfolders within standard patterns
+    """
+    parts = relative_path.split(os.sep)
+    
+    # Extract the feature/domain path (e.g., features/admin, domain/entity)
+    if parts[0] in ['features', 'domain'] and len(parts) > 1:
+        base_idx = 2  # Start after features/admin or domain/entity
+        remaining_parts = parts[base_idx:] if len(parts) > base_idx else []
+    else:
+        return None, False
+    
+    if not remaining_parts:
+        return None, False
+    
+    # Standard React folder patterns
+    standard_patterns = ['components', 'pages', 'hooks', 'api', 'utils', 'config', 'layouts', 'services', 'context', 'data']
+    
+    first_folder = remaining_parts[0]
+    
+    # If it's a standard pattern folder
+    if first_folder in standard_patterns:
+        # Check if there's a subfolder within it
+        if len(remaining_parts) > 2 and os.path.isdir(os.path.join(*parts[:base_idx+2])):
+            # This is a deep folder (e.g., components/atlas)
+            subfolder_name = remaining_parts[1]
+            return subfolder_name, True
+        else:
+            # Top-level file in standard folder
+            return first_folder, False
+    
+    return None, False
+
 def get_file_stats(file_path):
     """Get statistics for a single file."""
     try:
@@ -94,6 +132,9 @@ def prepare_parts_directory(parts_dir):
 def write_part_file(parts_dir, category, files_content, tree_structure):
     """Write a part file for a specific category."""
     filename = os.path.join(parts_dir, f"{category}.txt")
+    
+    # Ensure subdirectory exists if needed
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     
     with open(filename, 'w', encoding='utf-8') as f:
         f.write("================================================================\n")
@@ -212,22 +253,22 @@ def generate_stats_file(stats_data, output_file):
             f.write(f"  Lines: {data['lines']:,}\n")
             f.write(f"  Size: {data['size']:,} bytes ({data['size'] / 1024:.2f} KB)\n\n")
 
-def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_list=None):
-    if ignore_list is None:
-        ignore_list = []
-
-    processed_count = 0
+def organize_files_for_splitting(source_folder, ignore_list):
+    """
+    Organize files into main categories and subcategories for splitting.
+    Returns: {
+        'category_name': {
+            'full': [(path, content), ...],  # All files for full bundle
+            'splits': {
+                'subcategory_name': [(path, content), ...],
+                ...
+            }
+        }
+    }
+    """
+    organized = defaultdict(lambda: {'full': [], 'splits': defaultdict(list)})
     dependency_data = {}
     stats_data = {}
-    
-    # Prepare parts directory
-    prepare_parts_directory(parts_dir)
-    
-    # Organize files by category
-    files_by_category = defaultdict(list)
-    
-    # First pass: collect all files and their content
-    all_files_content = []
     
     for root, dirs, files in os.walk(source_folder):
         dirs[:] = [d for d in dirs if d not in ignore_list]
@@ -239,9 +280,6 @@ def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_l
             file_path = os.path.join(root, file)
             relative_path = os.path.relpath(file_path, source_folder)
             
-            if os.path.abspath(file_path) == os.path.abspath(output_filename):
-                continue
-
             try:
                 with open(file_path, 'r', encoding='utf-8') as infile:
                     content = infile.read()
@@ -255,22 +293,44 @@ def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_l
                     if stats:
                         stats_data[relative_path] = stats
                     
-                    # Categorize and store
-                    category = categorize_file(relative_path)
-                    files_by_category[category].append((relative_path, content))
-                    all_files_content.append((relative_path, content))
+                    # Main category (e.g., features_admin, features_wiki)
+                    main_category = categorize_file(relative_path)
                     
-                processed_count += 1
-                print(f"Processed: {relative_path} → {category}")
-                
+                    # Add to full bundle
+                    organized[main_category]['full'].append((relative_path, content))
+                    
+                    # Determine subcategory for splitting
+                    subcategory, is_deep = get_subcategory(relative_path, main_category)
+                    
+                    if subcategory:
+                        organized[main_category]['splits'][subcategory].append((relative_path, content))
+                    
+                    print(f"Processed: {relative_path} → {main_category}" + (f" → {subcategory}" if subcategory else ""))
+                    
             except (UnicodeDecodeError, PermissionError) as e:
                 print(f"Skipped: {relative_path} ({e})")
                 continue
+    
+    return organized, dependency_data, stats_data
 
+def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_list=None):
+    if ignore_list is None:
+        ignore_list = []
+
+    # Prepare parts directory
+    prepare_parts_directory(parts_dir)
+    
+    # Organize all files
+    organized, dependency_data, stats_data = organize_files_for_splitting(source_folder, ignore_list)
+    
     # Generate tree structure once
     tree_structure = generate_directory_tree(source_folder, ignore_list)
     
-    # Write complete bundle
+    # Write complete bundle (all files)
+    all_files_content = []
+    for category_data in organized.values():
+        all_files_content.extend(category_data['full'])
+    
     with open(output_filename, 'w', encoding='utf-8') as outfile:
         outfile.write("================================================================\n")
         outfile.write("PROJECT CONTEXT BUNDLE: D&D CAMPAIGN MANAGER\n")
@@ -293,10 +353,41 @@ def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_l
             outfile.write(content)
             outfile.write(f"\n--- END OF {relative_path} ---\n\n")
     
-    # Write part files
-    for category, files_content in files_by_category.items():
-        write_part_file(parts_dir, category, files_content, tree_structure)
-        print(f"Created part file: {category}.txt ({len(files_content)} files)")
+    print(f"\nGenerated complete bundle: {output_filename}")
+    
+    # Write main category bundles and their splits
+    for category, data in organized.items():
+        # Write full category bundle (e.g., features_admin.txt)
+        category_file = os.path.join(parts_dir, f"{category}.txt")
+        write_part_file(parts_dir, category, data['full'], tree_structure)
+        print(f"Created full bundle: {category}.txt ({len(data['full'])} files)")
+        
+        # If this category has splits, create a split directory
+        if data['splits']:
+            split_dir = os.path.join(parts_dir, f"{category}_split")
+            os.makedirs(split_dir, exist_ok=True)
+            
+            for subcategory, files_content in data['splits'].items():
+                split_file = os.path.join(split_dir, f"{subcategory}.txt")
+                
+                # Write split file
+                with open(split_file, 'w', encoding='utf-8') as f:
+                    f.write("================================================================\n")
+                    f.write(f"SPLIT BUNDLE: {category.upper()} - {subcategory.upper()}\n")
+                    f.write("================================================================\n\n")
+                    
+                    f.write("### PROJECT MAP (FILE STRUCTURE)\n")
+                    f.write(tree_structure)
+                    f.write("\n\n================================================================\n")
+                    f.write("### SOURCE CODE\n")
+                    f.write("================================================================\n\n")
+                    
+                    for relative_path, content in files_content:
+                        f.write(f"--- FILE: {relative_path} ---\n")
+                        f.write(content)
+                        f.write(f"\n--- END OF {relative_path} ---\n\n")
+                
+                print(f"  Created split: {category}_split/{subcategory}.txt ({len(files_content)} files)")
     
     # Generate dependency graph
     dep_graph_file = os.path.join(os.path.dirname(output_filename), 'dependency_graph.txt')
@@ -308,8 +399,8 @@ def merge_files_in_directory(source_folder, output_filename, parts_dir, ignore_l
     generate_stats_file(stats_data, stats_file)
     print(f"Generated statistics: {stats_file}")
     
-    print(f"\nSuccessfully bundled {processed_count} files into {output_filename}")
-    print(f"Created {len(files_by_category)} part files in {parts_dir}/")
+    print(f"\nSuccessfully processed {len(all_files_content)} files")
+    print(f"Created {len(organized)} main category bundles")
 
 if __name__ == "__main__":
     TARGET_FOLDER = '.' 

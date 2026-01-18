@@ -1,0 +1,817 @@
+================================================================
+SPLIT BUNDLE: FEATURES_WIKI - NAVIGATION
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\wiki\components\navigation\SidebarEmptyState.jsx ---
+import { BookOpen } from 'lucide-react';
+import EmptyState from '@/shared/components/ui/EmptyState'; // Adjust path
+
+export const SidebarEmptyState = ({ label }) => {
+	// Remove 's' from end for singular usage if needed, or just use as is
+	const singular = label.endsWith('s') ? label.slice(0, -1) : label;
+
+	return (
+		<EmptyState
+			icon={BookOpen}
+			title={`No ${label} Yet`}
+			description={`Create your first ${singular.toLowerCase()} to get started.`}
+			className='py-8'
+		/>
+	);
+};
+
+--- END OF features\wiki\components\navigation\SidebarEmptyState.jsx ---
+
+--- FILE: features\wiki\components\navigation\WikiSidebar.jsx ---
+import { useState } from 'react';
+import { clsx } from 'clsx';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { WikiSidebarHeader } from './WikiSidebarHeader';
+import { WikiSidebarList } from './WikiSidebarList';
+
+export const WikiSidebar = ({ navigation, className }) => {
+	const [mobileOpen, setMobileOpen] = useState(false);
+	const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+	return (
+		<>
+			{/* COLLAPSED STATE (Slim Bar) */}
+			{desktopCollapsed && (
+				<div className='hidden lg:flex flex-col h-full border-l border-border bg-muted/50 w-10 shrink-0 z-30 transition-all duration-300 lg:order-2 items-center'>
+					<div className='h-14 w-full flex items-center justify-center border-b border-border/50'>
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								setDesktopCollapsed(false);
+							}}
+							className='p-1.5 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors'
+							title='Expand Sidebar'>
+							<PanelLeftClose size={18} />
+						</button>
+					</div>
+				</div>
+			)}
+
+			{/* FULL SIDEBAR */}
+			<div
+				className={clsx(
+					'flex flex-col bg-muted border-b border-border',
+					'sticky top-0 w-full z-30', // Mobile
+					'lg:static lg:border-b-0 lg:h-full lg:transition-all lg:duration-300', // Desktop
+					desktopCollapsed
+						? 'lg:w-0 lg:border-l-0 lg:overflow-hidden opacity-0 lg:opacity-100'
+						: 'lg:w-72 lg:border-l lg:border-border',
+					className
+				)}>
+				<WikiSidebarHeader
+					config={navigation.config}
+					search={navigation.search}
+					onSearchChange={navigation.setSearch}
+					onToggle={() => setMobileOpen(!mobileOpen)}
+					isOpen={mobileOpen}
+					renderDesktopToggle={() => (
+						<button
+							onClick={(e) => {
+								// FIX: Stop propagation to prevent header click logic
+								e.stopPropagation();
+								setDesktopCollapsed(true);
+							}}
+							className='text-muted-foreground hover:text-primary transition-colors p-0.5 rounded'
+							title='Collapse Sidebar'>
+							<PanelLeftOpen size={18} />
+						</button>
+					)}
+				/>
+
+				{/* Content Wrapper */}
+				<div
+					className={clsx(
+						'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+						'lg:flex lg:flex-col lg:flex-1 lg:min-h-0',
+						mobileOpen ? 'grid-rows-[1fr] border-b border-border shadow-xl' : 'grid-rows-[0fr]'
+					)}>
+					<div className={clsx('overflow-hidden', 'lg:flex lg:flex-col lg:flex-1 lg:h-auto')}>
+						<div
+							className={clsx(
+								'lg:flex-1 lg:min-h-0 lg:overflow-y-auto custom-scrollbar',
+								mobileOpen && 'max-h-[70dvh] overflow-y-auto custom-scrollbar'
+							)}>
+							<WikiSidebarList
+								groups={navigation.groups}
+								isLoading={navigation.isLoading}
+								hasItems={navigation.hasItems}
+								config={navigation.config}
+								onItemClick={() => setMobileOpen(false)}
+							/>
+						</div>
+					</div>
+				</div>
+
+				{/* Mobile Backdrop */}
+				<div
+					className={clsx(
+						'fixed inset-0 top-[110px] bg-black/40 z-[-1] lg:hidden backdrop-blur-[1px] transition-opacity duration-300',
+						mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+					)}
+					onClick={() => setMobileOpen(false)}
+					style={{ touchAction: 'none' }}
+				/>
+			</div>
+		</>
+	);
+};
+
+--- END OF features\wiki\components\navigation\WikiSidebar.jsx ---
+
+--- FILE: features\wiki\components\navigation\WikiSidebarHeader.jsx ---
+import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, isOpen, renderDesktopToggle }) => {
+	const { Icon, label, textClass } = config;
+
+	return (
+		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
+			{/* Title Row */}
+			<div
+				className={clsx(
+					'flex items-center justify-between h-8 select-none',
+					// FIX: Pointer cursor only on mobile. Default on desktop to indicate non-clickable.
+					'cursor-pointer lg:cursor-default'
+				)}
+				onClick={(e) => {
+					// FIX: Only allow toggle on mobile (width < 1024px)
+					if (window.innerWidth < 1024) {
+						onToggle();
+					}
+				}}>
+				<div className='flex items-center gap-3 min-w-0 w-full'>
+					{Icon && <Icon size={18} className={clsx(textClass, 'shrink-0')} />}
+					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide truncate'>{label}</h1>
+					{/* Desktop Toggle Button */}
+					{renderDesktopToggle && (
+						<div
+							className='hidden lg:block shrink-0 ml-auto'
+							// FIX: Stop propagation to prevent any parent click handlers
+							onClick={(e) => e.stopPropagation()}>
+							{renderDesktopToggle()}
+						</div>
+					)}
+				</div>
+
+				{/* Mobile Toggle Button */}
+				<button
+					className='lg:hidden text-muted-foreground hover:text-foreground active:bg-black/10 p-2 -mr-2 rounded-md transition-colors'
+					aria-label={isOpen ? 'Collapse' : 'Expand'}>
+					{isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+				</button>
+			</div>
+
+			{/* Search Bar */}
+			<div className={clsx('mt-3 relative', !isOpen && 'hidden lg:block')}>
+				<Search className='absolute left-3 top-2.5 text-muted-foreground/70' size={14} />
+				<input
+					type='text'
+					placeholder='Filter list...'
+					value={search}
+					onChange={(e) => onSearchChange(e.target.value)}
+					onClick={(e) => e.stopPropagation()}
+					className='w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-base lg:text-xs focus:ring-1 focus:ring-primary/50 focus:border-primary outline-none transition-shadow shadow-sm'
+				/>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\navigation\WikiSidebarHeader.jsx ---
+
+--- FILE: features\wiki\components\navigation\WikiSidebarList.jsx ---
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { SidebarEmptyState } from './SidebarEmptyState';
+import { CollapsibleGroup } from './sidebar/CollapsibleGroup';
+import { EntityListItem } from './sidebar/EntityListItem';
+import { SidebarTreeItem } from './sidebar/SidebarTreeItem';
+
+export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemClick }) => {
+	if (isLoading) {
+		return (
+			<div className='p-8 flex justify-center'>
+				<LoadingSpinner size='sm' text='Loading...' />
+			</div>
+		);
+	}
+
+	if (!hasItems) {
+		return <SidebarEmptyState label={config.label} />;
+	}
+
+	const totalItems = groups.reduce((acc, g) => acc + g.items.length, 0);
+	if (totalItems === 0) {
+		return <div className='p-6 text-center text-xs text-muted-foreground/70 italic'>No matches found.</div>;
+	}
+
+	const isGrouped = !groups[0].isTree && (groups.length > 1 || (groups.length === 1 && groups[0].title !== null));
+
+	return (
+		// FIX: Removed 'pb-10'. The parent flex container handles the scroll bounds now.
+		// Added 'pb-2' just for a tiny bit of visual breathing room at the very end.
+		<div className='bg-muted py-1 pb-2'>
+			{/* MODE 1: TREE (Recursive) */}
+			{groups[0].isTree ? (
+				<div className='px-1 space-y-0.5'>
+					{groups[0].items.map((item) => (
+						<SidebarTreeItem key={item.id} item={item} onItemClick={onItemClick} />
+					))}
+				</div>
+			) : /* MODE 2: GROUPED (Collapsible Categories) */
+			isGrouped ? (
+				<div className='space-y-1'>
+					{groups.map((group) => (
+						<CollapsibleGroup key={group.id} group={group} onItemClick={onItemClick} />
+					))}
+				</div>
+			) : (
+				/* MODE 3: FLAT LIST */
+				<div className='px-2 space-y-0.5'>
+					{groups[0].items.map((item) => {
+						const showStatus = ['npc', 'faction', 'quest'].includes(item.type);
+						return <EntityListItem key={item.id} item={item} showStatus={showStatus} onItemClick={onItemClick} />;
+					})}
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\navigation\WikiSidebarList.jsx ---
+
+--- FILE: features\wiki\components\navigation\sidebar\CollapsibleGroup.jsx ---
+import { useState } from 'react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+import { EntityListItem } from './EntityListItem';
+
+export const CollapsibleGroup = ({ group, onItemClick }) => {
+	const [isOpen, setIsOpen] = useState(true);
+
+	// Determine if we should show status icons
+	const showStatus = group.items.some((item) => ['npc', 'faction', 'quest'].includes(item.type));
+
+	return (
+		<div className='select-none'>
+			{/* Group Header - Collapsible */}
+			<button
+				onClick={() => setIsOpen(!isOpen)}
+				className='w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground/80 hover:bg-black/5 transition-colors'>
+				{isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+				<span className='truncate'>{group.title}</span>
+				<span className='ml-auto text-[10px] font-normal text-muted-foreground/70'>{group.items.length}</span>
+			</button>
+
+			{/* Items */}
+			{isOpen && (
+				<div className='space-y-0.5 pb-1'>
+					{group.items.map((item) => (
+						<EntityListItem key={item.id} item={item} showStatus={showStatus} onItemClick={onItemClick} />
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\navigation\sidebar\CollapsibleGroup.jsx ---
+
+--- FILE: features\wiki\components\navigation\sidebar\EntityListItem.jsx ---
+import { NavLink } from 'react-router-dom';
+import { clsx } from 'clsx';
+import { StatusIcon } from './StatusIcon';
+import { PriorityIcon } from './PriorityIcon';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { resolveEntityIcon } from '@/domain/entity/config/entityIcons'; // Import Central Config
+
+export const EntityListItem = ({ item, showStatus, onItemClick }) => {
+	const isQuest = item.type === 'quest';
+	const hasPriority = isQuest && item.meta.priority;
+
+	const iconUrl = resolveImageUrl(item.attributes, 'icon');
+	const hasCustomIcon = !!iconUrl;
+
+	// Use Centralized Resolver
+	const ResolvedIcon = resolveEntityIcon({ type: item.type, attributes: item.attributes });
+
+	// Determine if we show the icon.
+	const shouldShowIcon = hasCustomIcon || !['quest', 'faction'].includes(item.type);
+
+	return (
+		<NavLink
+			to={item.path}
+			onClick={onItemClick}
+			className={({ isActive }) =>
+				clsx(
+					'group flex items-center w-full text-left pl-6 pr-2 py-1 text-[13px] transition-colors',
+					// FIX: Replaced 'bg-accent/10' with 'bg-primary/10' and text color for visibility
+					isActive
+						? 'bg-primary/10 text-primary font-bold'
+						: 'text-foreground/80 hover:bg-black/5 hover:text-foreground'
+				)
+			}>
+			{shouldShowIcon && (
+				<span
+					className={clsx(
+						'shrink-0 flex items-center justify-center mr-2',
+						!hasCustomIcon && 'opacity-70 text-muted-foreground',
+						// Ensure icon inherits color when active
+						hasCustomIcon ? '' : 'group-[.active]:text-primary'
+					)}>
+					{hasCustomIcon ? (
+						<EntityIcon type={item.type} customIconUrl={iconUrl} size={16} className='rounded-full object-cover' />
+					) : (
+						<ResolvedIcon size={14} />
+					)}
+				</span>
+			)}
+
+			{showStatus && (
+				<span
+					className={clsx(
+						'flex-shrink-0 flex items-center justify-center opacity-70',
+						hasPriority ? 'mr-1' : 'mr-2',
+						!shouldShowIcon && 'ml-[-2px]'
+					)}>
+					<StatusIcon entity={item} />
+				</span>
+			)}
+
+			{hasPriority && (
+				<span className='mr-2 flex-shrink-0 flex items-center justify-center opacity-90'>
+					<PriorityIcon priority={item.meta.priority} />
+				</span>
+			)}
+
+			<span className='truncate flex-1'>{item.name}</span>
+		</NavLink>
+	);
+};
+
+--- END OF features\wiki\components\navigation\sidebar\EntityListItem.jsx ---
+
+--- FILE: features\wiki\components\navigation\sidebar\PriorityIcon.jsx ---
+import { ChevronUp, ChevronsUp, ChevronsDown, Minus, AlertCircle } from 'lucide-react';
+
+export const PriorityIcon = ({ priority }) => {
+	if (!priority) return null;
+	const p = priority.toLowerCase();
+
+	// Critical
+	if (p.includes('critical')) {
+		return <ChevronsUp size={14} className='text-orange-600' strokeWidth={3} />;
+	}
+
+	// High / Urgent
+	if (p.includes('high')) {
+		return <ChevronUp size={14} className='text-orange-600' strokeWidth={3} />;
+	}
+
+	// Low
+	if (p.includes('low')) {
+		return <ChevronsDown size={14} className='text-slate-400' strokeWidth={3} />;
+	}
+
+	// Medium / Normal
+	if (p.includes('medium') || p.includes('normal')) {
+		return <Minus size={14} className='text-blue-400' strokeWidth={3} />;
+	}
+
+	return null;
+};
+
+--- END OF features\wiki\components\navigation\sidebar\PriorityIcon.jsx ---
+
+--- FILE: features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx ---
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { ChevronRight, ChevronDown } from 'lucide-react';
+import { clsx } from 'clsx';
+import EntityIcon from '@/domain/entity/components/EntityIcon';
+import { StatusIcon } from './StatusIcon';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { resolveEntityIcon } from '@/domain/entity/config/entityIcons'; // Import
+
+export const SidebarTreeItem = ({ item, onItemClick }) => {
+	const [isExpanded, setIsExpanded] = useState(true);
+	const hasChildren = item.children && item.children.length > 0;
+	const showStatus = ['npc', 'faction', 'quest'].includes(item.type);
+
+	const iconUrl = resolveImageUrl(item.attributes, 'icon');
+	const hasCustomIcon = !!iconUrl;
+
+	// Use centralized resolver
+	const ResolvedIcon = resolveEntityIcon({ type: item.type, attributes: item.attributes });
+
+	return (
+		<div className='select-none font-sans'>
+			<div className='flex items-center w-full group py-0.5 hover:bg-black/5 rounded-sm transition-colors'>
+				<button
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						if (hasChildren) setIsExpanded(!isExpanded);
+					}}
+					className={clsx(
+						'w-5 h-6 flex items-center justify-center shrink-0 text-muted-foreground/70 hover:text-foreground transition-colors cursor-pointer',
+						!hasChildren && 'invisible pointer-events-none'
+					)}>
+					{isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+				</button>
+
+				<NavLink
+					to={item.path}
+					onClick={onItemClick}
+					className={({ isActive }) =>
+						clsx(
+							'flex-1 flex items-center gap-1.5 pr-2 text-[13px] truncate transition-colors rounded-r-sm',
+							isActive ? 'text-primary font-bold bg-primary/10' : 'text-foreground/80'
+						)
+					}>
+					<span
+						className={clsx(
+							'shrink-0 flex items-center justify-center',
+							!hasCustomIcon && 'opacity-100',
+							// Ensure icon inherits color when active
+							!hasCustomIcon && (item.type === 'location' ? 'text-muted-foreground' : 'text-muted-foreground')
+						)}>
+						{hasCustomIcon ? (
+							<EntityIcon type={item.type} customIconUrl={iconUrl} size={14} />
+						) : (
+							<ResolvedIcon size={14} strokeWidth={2} />
+						)}
+					</span>
+
+					<span className='truncate'>{item.name}</span>
+					{showStatus && (
+						<span className='ml-auto opacity-70 flex items-center'>
+							<StatusIcon entity={item} />
+						</span>
+					)}
+				</NavLink>
+			</div>
+			{isExpanded && hasChildren && (
+				<div className='ml-[9px] border-l border-border/60 pl-1'>
+					{item.children.map((child) => (
+						<SidebarTreeItem key={child.id} item={child} onItemClick={onItemClick} />
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
+
+--- END OF features\wiki\components\navigation\sidebar\SidebarTreeItem.jsx ---
+
+--- FILE: features\wiki\components\navigation\sidebar\StatusIcon.jsx ---
+import { getStatusIcon } from '@/domain/entity/utils/statusUtils';
+
+/**
+ * StatusIcon Component
+ * Displays status/affinity icon for entities in sidebar
+ *
+ * @param {Object} entity - Entity with status/affinity
+ */
+export const StatusIcon = ({ entity }) => {
+	// Prioritize affinity over status for NPCs/Factions
+	const statusValue = entity.affinity && entity.affinity !== 'unknown' ? entity.affinity : entity.status;
+
+	const { Icon, className } = getStatusIcon(statusValue, entity.type);
+
+	return <Icon size={12} className={className} strokeWidth={2.5} />;
+};
+
+--- END OF features\wiki\components\navigation\sidebar\StatusIcon.jsx ---
+

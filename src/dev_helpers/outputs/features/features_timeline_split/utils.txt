@@ -1,0 +1,456 @@
+================================================================
+SPLIT BUNDLE: FEATURES_TIMELINE - UTILS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\timeline\utils\eventStyles.js ---
+import { getEntityStyles } from '@/domain/entity/config/entityStyles';
+import {
+	Sword,
+	Skull,
+	MessageSquare,
+	Scroll,
+	CheckCircle2,
+	Footprints,
+	Map,
+	MapPin,
+	User,
+	Flag,
+	Search,
+	BookOpen,
+	Sparkles,
+	Eye,
+	ShoppingBag,
+	Star,
+	Tent,
+} from 'lucide-react';
+
+export const getEventStyle = (eventType) => {
+	const type = eventType?.toLowerCase() || '';
+
+	let entityType = 'default';
+	let Icon = Star;
+
+	switch (type) {
+		case 'combat':
+			entityType = 'encounter'; // Orange
+			Icon = Skull;
+			break;
+		case 'social':
+			entityType = 'npc'; // Amber
+			Icon = MessageSquare;
+			break;
+		case 'quest_started':
+			entityType = 'quest'; // Blue
+			Icon = Scroll;
+			break;
+		case 'quest_progressed':
+			entityType = 'quest'; // Blue
+			Icon = CheckCircle2;
+			break;
+		case 'travel':
+			entityType = 'location'; // Emerald
+			Icon = Footprints; // Journeys
+			break;
+		case 'location_discovered':
+			entityType = 'location'; // Emerald
+			Icon = Map; // Finding new places
+			break;
+		case 'location_visited':
+			entityType = 'location'; // Emerald
+			Icon = MapPin; // Arriving at known places
+			break;
+		case 'npc_encountered':
+			entityType = 'npc'; // Amber
+			Icon = User;
+			break;
+		case 'faction_discovered':
+			entityType = 'faction'; // Purple
+			Icon = Flag;
+			break;
+		case 'investigation':
+			entityType = 'default'; // Gray (Neutral/Mechanics)
+			Icon = Search;
+			break;
+		case 'backstory':
+			entityType = 'character'; // Red (Personal)
+			Icon = BookOpen;
+			break;
+		case 'discovery':
+			entityType = 'encounter'; // Orange (Loot/Items/Secrets)
+			Icon = Sparkles;
+			break;
+		case 'vision':
+			entityType = 'faction'; // Purple (Magic/Mystical)
+			Icon = Eye;
+			break;
+		case 'shopping':
+			entityType = 'npc'; // Amber (Trade/Commerce)
+			Icon = ShoppingBag;
+			break;
+		case 'special_event':
+			entityType = 'session'; // Slate (Meta/Unique)
+			Icon = Star;
+			break;
+		// Fallbacks for legacy types or fuzzy matches
+		default:
+			if (type.match(/combat|fight|kill/)) {
+				entityType = 'encounter';
+				Icon = Sword;
+			} else if (type.match(/npc|social|meet/)) {
+				entityType = 'npc';
+				Icon = MessageSquare;
+			} else if (type.match(/location|visit|arrive/)) {
+				entityType = 'location';
+				Icon = MapPin;
+			} else if (type.match(/quest|mission/)) {
+				entityType = 'quest';
+				Icon = Scroll;
+			} else if (type.match(/camp|rest/)) {
+				entityType = 'location';
+				Icon = Tent;
+			} else {
+				entityType = 'default';
+				Icon = Star;
+			}
+	}
+
+	// Use centralized styles
+	const styles = getEntityStyles(entityType);
+
+	return {
+		Icon,
+		// Map standard styles to timeline specific class structure
+		container: `${styles.border} ${styles.bg} ${styles.text}`,
+		// Heuristic for line color (usually 200 or 300 shade) based on bg class
+		// line: styles.bg.replace('-50', '-200'),
+	};
+};
+
+--- END OF features\timeline\utils\eventStyles.js ---
+

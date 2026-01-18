@@ -1,0 +1,731 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\admin\config\adminStrategies.js ---
+export const ADMIN_STRATEGIES = {
+	// 0. CAMPAIGN (Meta Entity)
+	campaign: {
+		label: 'Campaign',
+		type: 'campaign',
+		primaryTable: 'campaigns',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true, // Use Markdown for description
+		defaultAttributes: [
+			{ key: 'campaign_id', label: 'Campaign ID (Integer)', type: 'number' }, // Required by your schema
+			{ key: 'map_data', label: 'Map Data (JSON)', type: 'text' }, // Advanced: map config
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 1. NPC
+	npc: {
+		label: 'NPC',
+		type: 'npc',
+		primaryTable: 'npcs',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'race', label: 'Race/Ancestry', type: 'text' },
+			{ key: 'class', label: 'Class/Occupation', type: 'text' },
+			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy', 'Unknown'] },
+			{ key: 'status', label: 'Status', type: 'text' },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 2. LOCATION
+	location: {
+		label: 'Location',
+		type: 'location',
+		primaryTable: 'locations',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
+		],
+	},
+
+	// 3. SESSION
+	session: {
+		label: 'Chronicles',
+		type: 'session',
+		primaryTable: 'sessions',
+		colMapping: { name: 'title', description: 'narrative' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'session_number', label: 'Session Number', type: 'number' },
+			{ key: 'session_date', label: 'In-Game Date', type: 'text' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
+		],
+	},
+
+	// 4. QUEST
+	quest: {
+		label: 'Quest',
+		type: 'quest',
+		primaryTable: 'quests',
+		colMapping: { name: 'title', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'status', label: 'Status', type: 'select', options: ['Active', 'Completed', 'Failed', 'Pending'] },
+			{
+				key: 'quest type',
+				label: 'Quest Type',
+				type: 'select',
+				options: ['Main Quest', 'Side Quest', 'Personal Quest'],
+			},
+			{ key: 'priority', label: 'Priority', type: 'select', options: ['Critical', 'High', 'Medium', 'Low', 'Trivial'] },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 5. FACTION
+	faction: {
+		label: 'Faction',
+		type: 'faction',
+		primaryTable: 'factions',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'leader', label: 'Leader', type: 'text' },
+			{ key: 'affinity', label: 'Affinity', type: 'select', options: ['Ally', 'Neutral', 'Enemy'] },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 6. ITEM
+	item: {
+		label: 'Item',
+		type: 'item',
+		primaryTable: 'items',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{
+				key: 'type',
+				label: 'Type',
+				type: 'select',
+				options: ['Weapon', 'Armor', 'Potion', 'Scroll', 'Wondrous Weapon', 'Wondrous Armor', 'Key Item', 'Treasure'],
+			},
+			{
+				key: 'rarity',
+				label: 'Rarity',
+				type: 'select',
+				options: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'],
+			},
+			{ key: 'attunement', label: 'Attunement?', type: 'select', options: ['Yes', 'No'] },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 7. CHARACTER (The Party)
+	character: {
+		label: 'Character',
+		type: 'character',
+		primaryTable: 'characters',
+		// 'background' is usually the column name for description in D&D schemas
+		// If your table uses 'description', change 'background' to 'description'
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'race', label: 'Race', type: 'text' },
+			{ key: 'class', label: 'Class', type: 'text' },
+			{ key: 'level', label: 'Level', type: 'number' },
+			{ key: 'speed', label: 'Speed', type: 'text' },
+			{ key: 'hit points', label: 'Hit Points', type: 'text' },
+			{ key: 'armor class', label: 'Armor Class', type: 'text' },
+			{ key: 'icon', label: 'Icon URL', type: 'image' },
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+		],
+	},
+
+	// 8. ENCOUNTER
+	encounter: {
+		label: 'Encounter',
+		type: 'encounter',
+		primaryTable: 'encounters',
+		colMapping: { name: 'name', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{
+				key: 'status',
+				label: 'Status',
+				type: 'select',
+				options: ['Planned', 'In Progress', 'Completed', 'Skipped'],
+			},
+			{ key: 'background_image', label: 'Background Image', type: 'image' },
+			{ key: 'map_image', label: 'Map Image', type: 'image' },
+		],
+	},
+
+	// 9. Narrative Arc
+
+	narrative_arc: {
+		label: 'Narrative Arc',
+		type: 'narrative_arc',
+		primaryTable: 'narrative_arcs',
+		colMapping: { name: 'title', description: 'description' },
+		hasNarrative: true,
+		defaultAttributes: [
+			{ key: 'order', label: 'Sort Order', type: 'number' },
+			{ key: 'type', label: 'Arc Type', type: 'select', options: ['Primary', 'Secondary', 'Character Arc'] },
+			{ key: 'background_image', label: 'Cover Image', type: 'image' },
+		],
+	},
+
+	default: {
+		label: 'Entity',
+		primaryTable: 'entities',
+		colMapping: { name: 'name', description: 'description' },
+		defaultAttributes: [
+			{ key: 'type', label: 'Type', type: 'text' },
+			{ key: 'map_image', label: 'Tactical Map Image', type: 'image' }, // Added this
+			{ key: 'background_image', label: 'Header Background', type: 'image' },
+		],
+	},
+};
+
+export const getStrategy = (type) => {
+	return ADMIN_STRATEGIES[type] || ADMIN_STRATEGIES.default;
+};
+
+--- END OF features\admin\config\adminStrategies.js ---
+
+--- FILE: features\admin\config\imageManifest.json ---
+[
+  {
+    "category": "_archive > Maps",
+    "path": "images/_archive/maps/",
+    "files": [
+      "brindol_map_backup.webp",
+      "drellin_ferry_map_backup.webp",
+      "elsir_vale_map_backup_1.webp",
+      "elsir_vale_map_backup_2.webp",
+      "witchwood_map_backup.webp"
+    ]
+  },
+  {
+    "category": "_archive > Overlays",
+    "path": "images/_archive/overlays/",
+    "files": [
+      "penal_colony_mine_overlay_backup.webp"
+    ]
+  },
+  {
+    "category": "C01 > Chars",
+    "path": "images/c01/chars/",
+    "files": [
+      "aenwyn_portrait.webp",
+      "aethere_portrait.webp",
+      "alezander_portrait.webp",
+      "nora_portrait.webp",
+      "samantha_portrait.webp",
+      "smasherina_portrait.webp"
+    ]
+  },
+  {
+    "category": "C01 > Items",
+    "path": "images/c01/items/",
+    "files": [
+      "amulet_mualthar_icon.webp",
+      "amulet_slow_icon.webp",
+      "boots_speed_icon.webp",
+      "ring_haste_icon.webp",
+      "trinket_tiny_oracle_icon.webp"
+    ]
+  },
+  {
+    "category": "C01 > Locs",
+    "path": "images/c01/locs/",
+    "files": [
+      "korinis_harbour_map.webp",
+      "korinis_lower_map.webp",
+      "korinis_upper_map.webp",
+      "lobart_farm_map.webp",
+      "penal_colony_barracks_overlay.webp",
+      "penal_colony_chapel_overlay.webp",
+      "penal_colony_merchant_cave_overlay.webp",
+      "penal_colony_mine_overlay.webp",
+      "penal_colony_spider_cave_overlay.webp"
+    ]
+  },
+  {
+    "category": "C02 > Chars",
+    "path": "images/c02/chars/",
+    "files": [
+      "bonnie_header.webp",
+      "bonnie_icon.webp",
+      "bonnie_portrait.webp",
+      "kaedin_header.webp",
+      "kaedin_icon.webp",
+      "kaedin_portrait.webp",
+      "norr_header.webp",
+      "norr_icon.webp",
+      "olek_header.webp",
+      "olek_icon.webp",
+      "olek_portrait.webp",
+      "party_header.webp",
+      "party_icon.webp",
+      "soshi_header.webp",
+      "soshi_icon.webp",
+      "soshi_portrait.webp"
+    ]
+  },
+  {
+    "category": "C02 > Encounters",
+    "path": "images/c02/encounters/",
+    "files": [
+      "crossroads_battle_header.webp",
+      "demonic_ambush_header.webp",
+      "demonic_ambush_map.webp",
+      "hydra_swamp_header.webp",
+      "strategic_bridge_header.webp",
+      "strategic_bridge_map.webp",
+      "thylacoleo_ambush_header.webp",
+      "vraath_courtyard_map.webp"
+    ]
+  },
+  {
+    "category": "C02 > Factions",
+    "path": "images/c02/factions/",
+    "files": [
+      "arcane_brotherhood_icon.webp",
+      "circle_land_icon.webp",
+      "crazy_hogs_icon.webp",
+      "kryn_dynasty_icon.webp",
+      "red_hand_icon.webp",
+      "thay_red_wizards_icon.webp",
+      "thieves_guild_icon.webp"
+    ]
+  },
+  {
+    "category": "C02 > Items",
+    "path": "images/c02/items/",
+    "files": [
+      "boots_jungle_strider_icon.webp",
+      "bracers_spell_plague_icon.webp",
+      "dagger_crocodile_tears_icon.webp",
+      "gloves_brotherhood_icon.webp",
+      "staff_veilbranch_icon.webp",
+      "talisman_elemental_icon.webp"
+    ]
+  },
+  {
+    "category": "C02 > Locs",
+    "path": "images/c02/locs/",
+    "files": [
+      "avarthel_grove_header.webp",
+      "brindol_header.webp",
+      "brindol_map.webp",
+      "dennovar_header.webp",
+      "drellin_ferry_header.webp",
+      "drellin_ferry_map.webp",
+      "dusk_way_header.webp",
+      "elsir_vale_map.webp",
+      "faerun_header.webp",
+      "feywild_header.webp",
+      "grackledorn_header.webp",
+      "leviathan_hull_header.webp",
+      "luskan_header.webp",
+      "neverwinter_header.webp",
+      "pahuax_header.webp",
+      "pelagos_header.webp",
+      "strategic_bridge_header.webp",
+      "temple_underground_header.webp",
+      "underdark_header.webp",
+      "velkynvelve_header.webp",
+      "vraath_keep_header.webp",
+      "witchwood_map.webp",
+      "yuma_caves_header.webp"
+    ]
+  },
+  {
+    "category": "C02 > Npcs",
+    "path": "images/c02/npcs/",
+    "files": [
+      "avarthel_header.webp",
+      "soranna_header.webp",
+      "thalos_header.webp",
+      "yoghurt_header.webp"
+    ]
+  },
+  {
+    "category": "C02 > Sessions",
+    "path": "images/c02/sessions/",
+    "files": [
+      "s01_header.webp"
+    ]
+  },
+  {
+    "category": "Global > Backgrounds",
+    "path": "images/global/backgrounds/",
+    "files": [
+      "background_texture.webp"
+    ]
+  },
+  {
+    "category": "Global > Icons",
+    "path": "images/global/icons/",
+    "files": [
+      "avian.webp",
+      "deity.webp",
+      "dice.webp",
+      "dwarf.webp",
+      "earth_genasi.webp",
+      "elemental.webp",
+      "encounter.webp",
+      "faction.webp",
+      "feline.webp",
+      "female.webp",
+      "gnome.webp",
+      "goblin.webp",
+      "hobgoblin.webp",
+      "location.webp",
+      "male.webp",
+      "monster.webp",
+      "ogre.webp",
+      "phoenix.webp",
+      "quest.webp",
+      "quickling.webp",
+      "rat.webp",
+      "session.webp",
+      "tabaxi.webp"
+    ]
+  }
+]
+--- END OF features\admin\config\imageManifest.json ---
+

@@ -1,0 +1,499 @@
+================================================================
+SPLIT BUNDLE: FEATURES_CAMPAIGN - COMPONENTS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\campaign\components\CampaignCard.jsx ---
+import { ArrowRight, Users, Map, BookOpen } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import { clsx } from 'clsx';
+
+export const CampaignCard = ({ campaign, onSelect }) => {
+	const initial = (campaign.name?.[0] || 'C').toUpperCase();
+	const bgImage = campaign.attributes?.background_image;
+	const campaignIcon = campaign.attributes?.icon; // Check for icon in attributes
+	const mapData = campaign.attributes?.map_data ? 'Atlas active' : 'No Atlas';
+
+	// Fallback pattern if no image is provided
+	const hasBg = !!bgImage;
+
+	return (
+		<div className='group relative flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden'>
+			{/* Banner / Header Image */}
+			<div className={clsx('relative h-32 w-full shrink-0 overflow-hidden', !hasBg && 'bg-muted')}>
+				{hasBg ? (
+					<img
+						src={bgImage}
+						alt='Campaign Cover'
+						className='w-full h-full object-cover transition-transform duration-700 group-hover:scale-105'
+					/>
+				) : (
+					<div
+						className='absolute inset-0 opacity-10'
+						style={{
+							backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+							backgroundSize: '16px 16px',
+						}}
+					/>
+				)}
+
+				{/* Gradient Overlay for Text Readability/Transition */}
+				<div className='absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent' />
+			</div>
+
+			{/* Card Content */}
+			<div className='flex flex-col flex-1 px-6 pb-6 relative'>
+				{/* Avatar Badge (Icon or Initial) */}
+				<div className='-mt-12 mb-6'>
+					<div className='w-20 h-20 border-border rounded-xl bg-background border hover:shadow-md flex items-center justify-center overflow-hidden transition-colors'>
+						{campaignIcon ? (
+							<img src={campaignIcon} alt={`${campaign.name} icon`} className='w-full h-full object-cover' />
+						) : (
+							<span className='text-4xl font-serif font-bold text-primary/80 group-hover:text-primary'>{initial}</span>
+						)}
+					</div>
+				</div>
+
+				{/* Title & Description */}
+				<div className='mb-6'>
+					<h3 className='text-[clamp(1rem,5vw,1.2rem)] font-bold font-serif text-foreground leading-tight mb-2 group-hover:text-primary transition-colors'>
+						{campaign.name}
+					</h3>
+					<p className='text-sm text-muted-foreground line-clamp-5 leading-relaxed'>
+						{campaign.description || 'A journey into the unknown.'}
+					</p>
+				</div>
+
+				{/* Metadata / Stats Row */}
+				<div className='mt-auto pt-4 border-t border-border/50 grid grid-cols-2 gap-4 mb-6'>
+					<div className='flex flex-col'>
+						<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1.5'>
+							<Users size={10} /> Party Size
+						</span>
+						<span className='text-sm font-medium text-foreground'>{campaign.characterNames?.length || 0} Heroes</span>
+					</div>
+					<div className='flex flex-col'>
+						<span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1 flex items-center gap-1.5'>
+							<Map size={10} /> Setting
+						</span>
+						<span className='text-sm font-medium text-foreground'>{mapData}</span>
+					</div>
+				</div>
+
+				{/* Action Button */}
+				<Button
+					onClick={() => onSelect(campaign.id)}
+					fullWidth
+					variant='outline'
+					className='bg-primary text-primary-foreground border-primary transition-colors'
+					icon={ArrowRight}>
+					Enter Campaign
+				</Button>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\campaign\components\CampaignCard.jsx ---
+
+--- FILE: features\campaign\components\CampaignSelect.jsx ---
+import { useCampaignSelection } from '@/features/campaign/useCampaignSelection';
+import { CampaignCard } from './CampaignCard';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useTheme } from '@/shared/hooks/useTheme';
+import { useMemo } from 'react';
+
+export default function CampaignSelect() {
+	// 1. Initialize Theme to ensure dark mode works on full-page reload
+	const { theme } = useTheme();
+	const isDark = theme === 'dark';
+
+	const { campaigns, isLoading, selectCampaign } = useCampaignSelection();
+	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
+
+	const backgroundStyle = useMemo(() => {
+		if (isDark) {
+			return {
+				backgroundImage:
+					'radial-gradient(circle at center, rgba(255,255,255,0.05) 1px, transparent 1px), radial-gradient(circle at center, rgba(255,255,255,0.03) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+				backgroundColor: 'var(--background)',
+			};
+		}
+		return {
+			backgroundColor: 'var(--background)',
+			opacity: 0.9,
+		};
+	}, [isDark]);
+
+	if (isLoading) {
+		return (
+			<div className='h-full w-full bg-muted flex flex-col items-center justify-center'>
+				<LoadingSpinner size='lg' text='Consulting the Archives...' />
+			</div>
+		);
+	}
+
+	return (
+		<div
+			className='h-full w-full overflow-y-auto custom-scrollbar font-sans bg-background text-foreground'
+			style={backgroundStyle}>
+			<div className='min-h-full w-full flex items-center justify-center p-6 md:p-12'>
+				<div className='max-w-6xl w-full mx-auto'>
+					{/* Header Section */}
+					<div className='text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700'>
+						<img src={logoPath} alt='Logo' className='h-32 md:h-40 mx-auto mb-8 drop-shadow-2xl' />
+						<h1 className='text-4xl md:text-5xl font-serif font-bold text-foreground mb-4'>Select Campaign</h1>
+						<p className='text-muted-foreground text-lg max-w-xl mx-auto'>
+							Choose a world to enter. Your adventures, characters, and chronicles await.
+						</p>
+					</div>
+
+					{/* Grid Section */}
+					<div className='flex flex-wrap justify-center gap-8 pb-8'>
+						{campaigns.map((campaign) => (
+							<div key={campaign.id} className='w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.33%-1.5rem)] max-w-sm'>
+								<CampaignCard campaign={campaign} onSelect={selectCampaign} />
+							</div>
+						))}
+
+						{campaigns.length === 0 && (
+							<div className='w-full py-20 text-center border-2 border-dashed border-border rounded-xl bg-card/50 backdrop-blur-sm shadow-sm'>
+								<p className='text-muted-foreground/70 font-serif text-xl'>No campaigns found in the library.</p>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\campaign\components\CampaignSelect.jsx ---
+

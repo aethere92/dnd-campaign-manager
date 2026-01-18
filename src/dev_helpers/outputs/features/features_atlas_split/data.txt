@@ -1,0 +1,736 @@
+================================================================
+SPLIT BUNDLE: FEATURES_ATLAS - DATA
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\atlas\data\modularize.js ---
+import fs from 'fs';
+import path from 'path';
+
+// ==========================================
+// CONFIGURATION
+// ==========================================
+const INPUT_FILE = 'campaign_01.js';
+
+// We output deep into src so it's ready for Vite to pick up
+const OUTPUT_DIR = 'campaign_01';
+
+// ==========================================
+// 1. HELPER: JS Stringifier
+// ==========================================
+function toJsString(obj, indentLevel = 0) {
+	const indent = '\t'.repeat(indentLevel);
+	const nextIndent = '\t'.repeat(indentLevel + 1);
+
+	if (obj === null) return 'null';
+	if (typeof obj === 'undefined') return 'undefined';
+
+	// Force single quotes for strings
+	if (typeof obj === 'string') {
+		const escaped = obj.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+		return `'${escaped}'`;
+	}
+
+	if (typeof obj !== 'object') return String(obj);
+
+	if (Array.isArray(obj)) {
+		if (obj.length === 0) return '[]';
+		// Keep coordinates [x, y] on one line
+		if (obj.length === 2 && typeof obj[0] === 'number') {
+			return `[${obj.join(', ')}]`;
+		}
+		const items = obj.map((item) => toJsString(item, indentLevel + 1));
+		return `[\n${nextIndent}${items.join(`,\n${nextIndent}`)}\n${indent}]`;
+	}
+
+	const keys = Object.keys(obj);
+	if (keys.length === 0) return '{}';
+
+	const props = keys.map((key) => {
+		const value = toJsString(obj[key], indentLevel + 1);
+		// Don't quote simple keys
+		const cleanKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+		return `${cleanKey}: ${value}`;
+	});
+
+	return `{\n${nextIndent}${props.join(`,\n${nextIndent}`)}\n${indent}}`;
+}
+
+// ==========================================
+// 2. HELPER: Recursive Extractor
+// ==========================================
+function extractMapsRecursively(obj, parentId = null, collectedMaps = []) {
+	// If it has metadata, we treat it as a Map configuration
+	if (obj.metadata) {
+		const mapId = obj.metadata.mapId || 'unknown_map';
+
+		// Clone to avoid mutating the original deeply nested structure immediately
+		const mapData = { ...obj };
+
+		// Add explicit parent ID for navigation logic
+		if (parentId) {
+			mapData.parentId = parentId;
+		}
+
+		// Check for children (submaps)
+		if (obj.submaps) {
+			Object.keys(obj.submaps).forEach((category) => {
+				const categoryObj = obj.submaps[category];
+				Object.keys(categoryObj).forEach((submapKey) => {
+					// Recurse down
+					extractMapsRecursively(categoryObj[submapKey], mapId, collectedMaps);
+				});
+			});
+		}
+
+		// Clean up the object (we don't want the nested submaps in the flat config)
+		delete mapData.submaps;
+
+		collectedMaps.push({
+			id: mapId,
+			data: mapData,
+		});
+	} else {
+		// If it's the root container (CAMPAIGN_01)
+		Object.keys(obj).forEach((key) => {
+			if (obj[key] && typeof obj[key] === 'object') {
+				extractMapsRecursively(obj[key], null, collectedMaps);
+			}
+		});
+	}
+	return collectedMaps;
+}
+
+// ==========================================
+// 3. MAIN PROCESS
+// ==========================================
+try {
+	console.log(`📖 Reading ${INPUT_FILE}...`);
+	let fileContent = fs.readFileSync(INPUT_FILE, 'utf8');
+
+	// Remove "export" keywords so we can eval it locally
+	const cleanCode = fileContent.replace(/export const/g, 'const');
+
+	// Evaluate to get the object
+	const { CAMPAIGN_01 } = eval(`${cleanCode}; ({ CAMPAIGN_01 });`);
+
+	console.log(`🔨 Flattening map hierarchy...`);
+	const allMaps = extractMapsRecursively(CAMPAIGN_01);
+	console.log(`   Found ${allMaps.length} maps.`);
+
+	// Prepare Directories
+	if (fs.existsSync(OUTPUT_DIR)) {
+		fs.rmSync(OUTPUT_DIR, { recursive: true, force: true });
+	}
+	fs.mkdirSync(path.join(OUTPUT_DIR, 'maps'), { recursive: true });
+
+	const registryImports = [];
+	const registryExports = [];
+
+	// Process every map found
+	allMaps.forEach((map) => {
+		const mapId = map.id;
+		const mapData = map.data;
+		const mapDir = path.join(OUTPUT_DIR, 'maps', mapId);
+
+		fs.mkdirSync(mapDir, { recursive: true });
+
+		const localImports = [];
+
+		// -----------------------------------------------------
+		// FILE EXTRACTION LOGIC
+		// We replace data with strings like 'PLACEHOLDER_PATHS'
+		// and then regex replace them later.
+		// -----------------------------------------------------
+
+		// 1. Paths
+		if (mapData.paths && mapData.paths.length > 0) {
+			const content = `export const paths = ${toJsString(mapData.paths)};`;
+			fs.writeFileSync(path.join(mapDir, 'paths.js'), content);
+
+			localImports.push(`import { paths } from './paths.js';`);
+			mapData.paths = 'PLACEHOLDER_PATHS';
+		}
+
+		// 2. Annotations (POIs, NPCs, etc)
+		if (mapData.annotations && Object.keys(mapData.annotations).length > 0) {
+			const content = `export const annotations = ${toJsString(mapData.annotations)};`;
+			fs.writeFileSync(path.join(mapDir, 'annotations.js'), content);
+
+			localImports.push(`import { annotations } from './annotations.js';`);
+			mapData.annotations = 'PLACEHOLDER_ANNOTATIONS';
+		}
+
+		// 3. Areas (Polygons)
+		if (mapData.areas && Object.keys(mapData.areas).length > 0) {
+			const content = `export const areas = ${toJsString(mapData.areas)};`;
+			fs.writeFileSync(path.join(mapDir, 'areas.js'), content);
+
+			localImports.push(`import { areas } from './areas.js';`);
+			mapData.areas = 'PLACEHOLDER_AREAS';
+		}
+
+		// 4. Overlays
+		if (mapData.overlays && mapData.overlays.length > 0) {
+			const content = `export const overlays = ${toJsString(mapData.overlays)};`;
+			fs.writeFileSync(path.join(mapDir, 'overlays.js'), content);
+
+			localImports.push(`import { overlays } from './overlays.js';`);
+			mapData.overlays = 'PLACEHOLDER_OVERLAYS';
+		}
+
+		// Generate the Map Config String
+		let configStr = toJsString(mapData);
+
+		// Replace Placeholders with actual variables
+		// We match quotes around them because toJsString adds quotes to strings
+		configStr = configStr.replace(/['"]PLACEHOLDER_PATHS['"]/g, 'paths');
+		configStr = configStr.replace(/['"]PLACEHOLDER_ANNOTATIONS['"]/g, 'annotations');
+		configStr = configStr.replace(/['"]PLACEHOLDER_AREAS['"]/g, 'areas');
+		configStr = configStr.replace(/['"]PLACEHOLDER_OVERLAYS['"]/g, 'overlays');
+
+		const mapVarName = mapId.toUpperCase();
+
+		const indexContent = `
+${localImports.join('\n')}
+
+export const ${mapVarName} = ${configStr};
+`;
+		fs.writeFileSync(path.join(mapDir, 'index.js'), indexContent.trim());
+
+		// Prepare Registry
+		registryImports.push(`import { ${mapVarName} } from './maps/${mapId}/index.js';`);
+		registryExports.push(`    [${mapVarName}.metadata.mapId]: ${mapVarName}`);
+	});
+
+	// ==========================================
+	// 4. GENERATE REGISTRY
+	// ==========================================
+	const registryContent = `
+${registryImports.join('\n')}
+
+export const CAMPAIGN_01 = {
+    name: 'Campaign 01',
+    maps: {
+${registryExports.join(',\n')}
+    }
+};
+`;
+	fs.writeFileSync(path.join(OUTPUT_DIR, 'index.js'), registryContent.trim());
+
+	console.log(`✅ Done! Created modular React structure in:`);
+	console.log(`   📂 ${OUTPUT_DIR}/`);
+	console.log(`      📄 index.js (Import this in your App)`);
+	console.log(`      📂 maps/ (Individual map configs)`);
+} catch (err) {
+	console.error('❌ Error:', err.message);
+	console.error(err.stack);
+}
+
+--- END OF features\atlas\data\modularize.js ---
+
+--- FILE: features\atlas\data\refactor.js ---
+import fs from 'fs';
+
+// 1. CONFIGURATION
+const INPUT_FILE = 'campaign_01.js';
+const OUTPUT_FILE = 'campaign_01_cleaned.js';
+
+// Keys to completely remove
+const KEYS_TO_REMOVE = ['icon', 'iconType', 'animation', 'pointColor', 'pointWidth', 'filter', 'loot', 'image'];
+
+// Keys to force to the top of objects
+const KEY_ORDER = ['label', 'name', 'lat', 'lng', 'coordinates', 'text'];
+
+// 2. HELPERS
+
+/**
+ * Recursively cleans and reorders objects
+ */
+function cleanAndReorder(obj) {
+	if (!obj || typeof obj !== 'object') {
+		return obj;
+	}
+
+	if (Array.isArray(obj)) {
+		return obj.map(cleanAndReorder);
+	}
+
+	const newObj = {};
+
+	// 1. Add High Priority Keys first
+	KEY_ORDER.forEach((key) => {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+			newObj[key] = cleanAndReorder(obj[key]);
+		}
+	});
+
+	// 2. Add remaining keys (filtering out removed ones)
+	Object.keys(obj).forEach((key) => {
+		if (KEYS_TO_REMOVE.includes(key)) return;
+		if (KEY_ORDER.includes(key)) return;
+
+		newObj[key] = cleanAndReorder(obj[key]);
+	});
+
+	return newObj;
+}
+
+/**
+ * Converts object to formatted JS string using single quotes
+ */
+function toJsString(obj, indentLevel = 0) {
+	const indent = '\t'.repeat(indentLevel);
+	const nextIndent = '\t'.repeat(indentLevel + 1);
+
+	if (obj === null) return 'null';
+	if (typeof obj === 'undefined') return 'undefined';
+
+	// Force single quotes for strings
+	if (typeof obj === 'string') {
+		const escaped = obj.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+		return `'${escaped}'`;
+	}
+
+	if (typeof obj !== 'object') return String(obj);
+
+	if (Array.isArray(obj)) {
+		if (obj.length === 0) return '[]';
+
+		// Keep coordinate arrays [x, y] on one line
+		if (obj.length === 2 && typeof obj[0] === 'number') {
+			return `[${obj.join(', ')}]`;
+		}
+
+		const items = obj.map((item) => toJsString(item, indentLevel + 1));
+		return `[\n${nextIndent}${items.join(`,\n${nextIndent}`)}\n${indent}]`;
+	}
+
+	const keys = Object.keys(obj);
+	if (keys.length === 0) return '{}';
+
+	const props = keys.map((key) => {
+		const value = toJsString(obj[key], indentLevel + 1);
+		const cleanKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+		return `${cleanKey}: ${value}`;
+	});
+
+	return `{\n${nextIndent}${props.join(`,\n${nextIndent}`)}\n${indent}}`;
+}
+
+// 3. MAIN LOGIC
+try {
+	console.log(`Reading ${INPUT_FILE}...`);
+	let fileContent = fs.readFileSync(INPUT_FILE, 'utf8');
+
+	// Remove "export" keywords to allow local eval
+	const cleanCode = fileContent.replace(/export const/g, 'const');
+
+	// Evaluate code to get objects
+	const { CAMPAIGN_01, CAMPAIGN_01_ALIASES } = eval(`
+        ${cleanCode}
+        ;({ CAMPAIGN_01, CAMPAIGN_01_ALIASES });
+    `);
+
+	console.log('Cleaning and reordering data...');
+	const cleanedCampaign = cleanAndReorder(CAMPAIGN_01);
+	const cleanedAliases = cleanAndReorder(CAMPAIGN_01_ALIASES);
+
+	// 4. DATA EXTRACTION
+
+	// Extract Paths
+	let WORLD_MAP_PATHS = [];
+	if (cleanedCampaign.world_maps?.paths) {
+		WORLD_MAP_PATHS = cleanedCampaign.world_maps.paths;
+		// Set placeholder
+		cleanedCampaign.world_maps.paths = 'PLACEHOLDER_PATHS';
+	}
+
+	// Extract Korinis
+	let KORINIS_ISLAND = null;
+	if (cleanedCampaign.world_maps?.submaps?.islands?.korinis_island) {
+		KORINIS_ISLAND = cleanedCampaign.world_maps.submaps.islands.korinis_island;
+		cleanedCampaign.world_maps.submaps.islands.korinis_island = 'PLACEHOLDER_KORINIS';
+	}
+
+	// Extract Unnamed Island
+	let UNNAMED_ISLAND = null;
+	if (cleanedCampaign.world_maps?.submaps?.islands?.unnamed_island_01) {
+		UNNAMED_ISLAND = cleanedCampaign.world_maps.submaps.islands.unnamed_island_01;
+		cleanedCampaign.world_maps.submaps.islands.unnamed_island_01 = 'PLACEHOLDER_UNNAMED';
+	}
+
+	// 5. FILE GENERATION
+	console.log('Generating output string...');
+
+	let output = `// ==========================================
+// ALIASES
+// ==========================================
+export const CAMPAIGN_01_ALIASES = ${toJsString(cleanedAliases)};
+
+// ==========================================
+// EXTRACTED DATA
+// ==========================================
+
+// --- World Map Paths ---
+const WORLD_MAP_PATHS = ${toJsString(WORLD_MAP_PATHS)};
+
+`;
+
+	if (KORINIS_ISLAND) {
+		output += `// --- Submap: Korinis Island ---\nconst KORINIS_ISLAND = ${toJsString(KORINIS_ISLAND)};\n\n`;
+	}
+
+	if (UNNAMED_ISLAND) {
+		output += `// --- Submap: Unnamed Island ---\nconst UNNAMED_ISLAND = ${toJsString(UNNAMED_ISLAND)};\n\n`;
+	}
+
+	// Generate main string
+	let mainString = toJsString(cleanedCampaign);
+
+	// 6. REPLACE PLACEHOLDERS (Robust Regex)
+	// Matches 'PLACEHOLDER' or "PLACEHOLDER"
+	mainString = mainString.replace(/['"]PLACEHOLDER_PATHS['"]/g, 'WORLD_MAP_PATHS');
+	mainString = mainString.replace(/['"]PLACEHOLDER_KORINIS['"]/g, 'KORINIS_ISLAND');
+	mainString = mainString.replace(/['"]PLACEHOLDER_UNNAMED['"]/g, 'UNNAMED_ISLAND');
+
+	output += `// ==========================================
+// MAIN CAMPAIGN OBJECT
+// ==========================================
+export const CAMPAIGN_01 = ${mainString};
+`;
+
+	fs.writeFileSync(OUTPUT_FILE, output);
+	console.log(`\n✅ Success! File saved to: ${OUTPUT_FILE}`);
+} catch (err) {
+	console.error('❌ Error:', err.message);
+	console.error(err.stack);
+}
+
+--- END OF features\atlas\data\refactor.js ---
+

@@ -1,0 +1,691 @@
+================================================================
+SPLIT BUNDLE: FEATURES_WIKI - LAYOUTS
+================================================================
+
+### PROJECT MAP (FILE STRUCTURE)
+./
+  main.jsx
+  merge_specific_files.py
+  todo.md
+  app/
+    App.jsx
+    AppRoutes.jsx
+    components/
+      RouteLoading.jsx
+    styles/
+      global.css
+  domain/
+    entity/
+      api/
+        entityService.js
+      components/
+        EntityBadge.jsx
+        EntityIcon.jsx
+        EntityLink.jsx
+        EntityStatusIcon.jsx
+      config/
+        entityColors.js
+        entityConfig.js
+        entityIcons.js
+        entityStyles.js
+        entityTypes.js
+      utils/
+        attributeParser.js
+        entityUtils.js
+        statusUtils.js
+  features/
+    admin/
+      api/
+        adminService.js
+      components/
+        AdminForm.jsx
+        AdminFormStyles.js
+        AdvancedFilter.jsx
+        EncounterManager.jsx
+        EntitySearch.jsx
+        EventTagger.jsx
+        ImageLibraryModal.jsx
+        MarkdownEditor.jsx
+        MarkdownEditorImpl.jsx
+        QuestObjectiveManager.jsx
+        RelationshipManager.jsx
+        SessionEventManager.jsx
+        SmartColorPicker.jsx
+        SmartImageInput.jsx
+        TacticalMapManager.jsx
+        atlas/
+          AtlasEditor.jsx
+          AtlasEditorContext.jsx
+          components/
+            EditorContextMenu.jsx
+            EditorLayerList.jsx
+            EditorMapEvents.jsx
+            EditorSidebar.jsx
+            EditorToolbar.jsx
+            MapZoomHandler.jsx
+            PathStylePopup.jsx
+            PatternDefs.jsx
+            SegmentedControl.jsx
+            ShapeSelector.jsx
+            TileSelector.jsx
+            VertexHandle.jsx
+            VisualIconPicker.jsx
+          forms/
+            AreaForm.jsx
+            MarkerForm.jsx
+            OverlayForm.jsx
+            PathForm.jsx
+          hooks/
+            useAtlasActions.js
+            useAtlasReducer.js
+          layers/
+            EditAreasLayer.jsx
+            EditMarkersLayer.jsx
+            EditOverlaysLayer.jsx
+            EditPathsLayer.jsx
+          services/
+            atlasMapper.js
+            geometryUtils.js
+      config/
+        adminStrategies.js
+        imageManifest.json
+      layouts/
+        AdminLayout.jsx
+      pages/
+        BulkReplaceTool.jsx
+        EntityEditorPage.jsx
+        EntityListPage.jsx
+        MapManagerPage.jsx
+        MapMigrationTool.jsx
+        SplitPaneManager.jsx
+      utils/
+        filterUtils.js
+    atlas/
+      MapPage.jsx
+      useMapData.js
+      api/
+        mapService.js
+      components/
+        AtlasSidebar.jsx
+        MapCanvas.jsx
+        MapTools.jsx
+        MapZoomHandler.jsx
+        useMapCanvasViewModel.js
+        __MapLayerControl.jsx
+        layers/
+          MapAreas.jsx
+          MapMarkers.jsx
+          MapOverlays.jsx
+          MapRecaps.jsx
+          TextAlongPath.jsx
+        sidebar/
+          SidebarGroup.jsx
+          SidebarItem.jsx
+      config/
+        mapConfig.js
+      context/
+        AtlasContext.jsx
+      data/
+        modularize.js
+        refactor.js
+        campaign_02/
+          index.js
+          faerun/
+            index.js
+      utils/
+        mapNavigation.js
+        markerUtils.js
+        pathUtils.js
+        useAtlasSearch.jsx
+    campaign/
+      CampaignContext.jsx
+      useCampaignData.js
+      useCampaignPersistence.js
+      useCampaignSelection.js
+      api/
+        campaignService.js
+      components/
+        CampaignCard.jsx
+        CampaignSelect.jsx
+    dashboard/
+      DashboardPage.jsx
+      api/
+        dashboardService.js
+      components/
+        ActiveThreads.jsx
+        ArchiveTree.jsx
+        CampaignHeader.jsx
+        CurrentArcMetadata.jsx
+        CurrentStoryStack.jsx
+        InsightsGrid.jsx
+        PartyWidget.jsx
+        QuickInsights.jsx
+    graph/
+      GraphPage.jsx
+      useGraphView.js
+      api/
+        graphService.js
+      components/
+        CytoscapeCanvas.jsx
+        GraphLegend.jsx
+      config/
+        graphStyles.js
+      hooks/
+      utils/
+        graphMapper.js
+    navigation/
+      MainLayout.jsx
+      useNavigation.js
+      components/
+        Sidebar.jsx
+        SidebarFooter.jsx
+        SidebarHeader.jsx
+        SidebarNav.jsx
+      config/
+        navConfig.js
+    search/
+      GlobalSearch.jsx
+      SearchContext.jsx
+      useGlobalSearch.js
+      api/
+        searchService.js
+      components/
+        SearchFooter.jsx
+        SearchModal.jsx
+        SearchResultItem.jsx
+        SearchResults.jsx
+        SearchTrigger.jsx
+      utils/
+        searchMapper.js
+    smart-text/
+      SmartMarkdown.jsx
+      useEntityIndex.js
+      useSmartText.js
+      components/
+        EntityEmbed.jsx
+        SmartEntityLink.jsx
+    smart-tooltip/
+      TooltipContainer.jsx
+      TooltipContext.jsx
+      useSmartPosition.js
+      useTooltipState.js
+      components/
+        TooltipCard.jsx
+      config/
+        tooltipProfiles.js
+    table-of-contents/
+      TableOfContents.jsx
+      components/
+        TocItem.jsx
+        TocMobileDrawer.jsx
+      hooks/
+        useTocObserver.js
+        useTocScroll.js
+    timeline/
+      TimelinePage.jsx
+      useTimelineView.js
+      api/
+        timelineService.js
+      components/
+        TimelineArcHeader.jsx
+        TimelineEvent.jsx
+        TimelineSession.jsx
+      utils/
+        eventStyles.js
+    wiki/
+      useEntityView.js
+      useWikiNavigation.js
+      WikiLayout.jsx
+      api/
+        wikiService.js
+      components/
+        EncounterTimeline.jsx
+        EntityBody.jsx
+        EntityHeader.jsx
+        EntityHistory.jsx
+        EntityLocalGraph.jsx
+        EntityMiniMap.jsx
+        EntitySidebar.jsx
+        QuestObjectives.jsx
+        SessionMentions.jsx
+        WikiEntryView.jsx
+        character/
+          CharacterSidebar.jsx
+          CharacterStats.jsx
+          RelationshipNetwork.jsx
+        landing/
+          EntityGridCard.jsx
+          EntityPosterCard.jsx
+          EntityTableGroup.jsx
+          Swimlane.jsx
+        navigation/
+          SidebarEmptyState.jsx
+          WikiSidebar.jsx
+          WikiSidebarHeader.jsx
+          WikiSidebarList.jsx
+          sidebar/
+            CollapsibleGroup.jsx
+            EntityListItem.jsx
+            PriorityIcon.jsx
+            SidebarTreeItem.jsx
+            StatusIcon.jsx
+      config/
+        groupingConfig.js
+        viewStrategies.js
+      hooks/
+        useEntityContent.js
+        useEntityFetching.js
+        useEntityGrouping.js
+        useEntityHeader.js
+        useEntitySidebar.js
+      layouts/
+        CharacterLayout.jsx
+        SessionLayout.jsx
+        StandardLayout.jsx
+      pages/
+        WikiDetailPage.jsx
+        WikiLandingPage.jsx
+      utils/
+        attributeMapper.js
+        eventMapper.js
+        relationshipMapper.js
+        wikiEntryMapper.js
+        wikiUtils.js
+  shared/
+    api/
+      supabaseClient.js
+    components/
+      ErrorBoundary.jsx
+      layout/
+        CollapsibleSection.jsx
+        SplitView.jsx
+        TabContainer.jsx
+      markdown/
+        MarkdownRenderer.jsx
+        MarkdownWithToC.jsx
+      ui/
+        Breadcrumbs.jsx
+        Button.jsx
+        Card.jsx
+        DevAdminButton.jsx
+        Drawer.jsx
+        EmptyState.jsx
+        HighlightBadge.jsx
+        LoadingSpinner.jsx
+        SectionDivider.jsx
+    hooks/
+      useBreadcrumbs.js
+      useTheme.js
+    utils/
+      imageUtils.js
+      markdownUtils.js
+      textUtils.js
+      theme/
+        colorUtils.js
+        cssUtils.js
+
+================================================================
+### SOURCE CODE
+================================================================
+
+--- FILE: features\wiki\layouts\CharacterLayout.jsx ---
+import { useState, useMemo } from 'react';
+import { User, Network, History as HistoryIcon, BookOpen, Info, X } from 'lucide-react';
+import { Drawer } from 'vaul';
+import TabContainer from '@/shared/components/layout/TabContainer';
+import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
+import { CharacterSidebar } from '@/features/wiki/components/character/CharacterSidebar';
+import { CharacterStats } from '@/features/wiki/components/character/CharacterStats';
+import { RelationshipNetwork } from '@/features/wiki/components/character/RelationshipNetwork';
+import { extractHeaders } from '@/shared/utils/markdownUtils';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import { EntityLocalGraph } from '@/features/wiki/components/EntityLocalGraph'; // Import
+
+export default function CharacterLayout({ viewModel }) {
+	const { raw } = viewModel;
+	const [activeTab, setActiveTab] = useState('bio');
+
+	const gear = useMemo(() => (raw.relationships || []).filter((r) => r.entity_type === 'item'), [raw.relationships]);
+	const personalQuests = useMemo(
+		() =>
+			(raw.relationships || []).filter(
+				(r) => r.entity_type === 'quest' && ['quest_giver', 'quest_participant'].includes(r.type)
+			),
+		[raw.relationships]
+	);
+
+	// TOC for Bio
+	const tocItems = useMemo(() => {
+		if (activeTab === 'bio' && viewModel.content.summary) {
+			return extractHeaders(viewModel.content.summary);
+		}
+		return [];
+	}, [activeTab, viewModel.content.summary]);
+
+	// --- TAB 1: BIOGRAPHY ---
+	const renderBio = () => (
+		<div className='w-full px-4 sm:px-6 py-8'>
+			<div className='max-w-6xl mx-auto'>
+				{/* 1. HERO STATS (Bio Exclusive) */}
+				<CharacterStats attributes={raw.attributes} />
+
+				{/* 2. SPLIT LAYOUT */}
+				<div className='grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 xl:gap-12'>
+					{/* Desktop Sidebar (Hidden on Mobile) */}
+					<div className='hidden lg:block lg:order-first min-w-0'>
+						<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
+					</div>
+
+					{/* Content */}
+					<div className='min-w-0 flex gap-8'>
+						<div className='flex-1 min-w-0'>
+							<EntityBody summary={viewModel.content.summary} sections={viewModel.content.sections} history={null} />
+						</div>
+						{tocItems.length > 0 && (
+							<div className='hidden xl:block w-56 shrink-0 sticky top-4 border-l border-border pl-4 h-fit'>
+								<TableOfContents items={tocItems} />
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+
+	// --- TAB 2: NETWORK ---
+	const renderNetwork = () => (
+		<div className='w-full px-4 sm:px-6 py-8'>
+			<div className='max-w-6xl mx-auto'>
+				{/* NEW: Graph Section */}
+				{raw.relationships && raw.relationships.length > 0 && (
+					<div className='mb-10'>
+						<EntityLocalGraph entity={raw} relationships={raw.relationships} height='h-[400px]' className='mb-8' />
+					</div>
+				)}
+				<RelationshipNetwork relationships={raw.relationships} />
+			</div>
+		</div>
+	);
+
+	// --- TAB 3: CHRONICLE ---
+	const renderChronicle = () => (
+		<div className='w-full px-4 sm:px-6 py-8'>
+			<div className='max-w-4xl mx-auto space-y-10'>
+				{personalQuests.length > 0 && (
+					<div>
+						<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>
+							<BookOpen size={14} /> Personal Quests
+						</h3>
+						<div className='grid gap-2'>
+							{personalQuests.map((q) => (
+								<div
+									key={q.entity_id}
+									className='p-3 border border-border rounded bg-card flex justify-between items-center'>
+									<span className='font-bold text-sm text-foreground'>{q.entity_name}</span>
+									<span className='text-[10px] uppercase font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded'>
+										{q.type.replace(/_/g, ' ')}
+									</span>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+				<div>
+					<h3 className='text-xs font-bold font-sans uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2 border-b border-border pb-2'>
+						<HistoryIcon size={14} /> Timeline
+					</h3>
+					<EntityHistory events={viewModel.content.history} fullHeight />
+				</div>
+			</div>
+		</div>
+	);
+
+	// --- ROOT RENDER ---
+	return (
+		<div className='w-full bg-background min-h-screen relative'>
+			<TabContainer
+				tabs={[
+					{ id: 'bio', label: 'Biography', icon: User, content: renderBio() },
+					{ id: 'network', label: 'Network', icon: Network, content: renderNetwork() },
+					{ id: 'chronicle', label: 'Chronicle', icon: HistoryIcon, content: renderChronicle() },
+				]}
+				defaultTab={activeTab}
+				onChange={setActiveTab}
+			/>
+
+			{/* MOBILE INFO DRAWER */}
+			<div className='lg:hidden'>
+				<Drawer.Root shouldScaleBackground>
+					<Drawer.Trigger asChild>
+						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform hover:border-primary/50'>
+							<Info size={18} />
+							<span>Info</span>
+						</button>
+					</Drawer.Trigger>
+
+					<Drawer.Portal>
+						<Drawer.Overlay className='fixed inset-0 bg-black/60 z-[60] backdrop-blur-[2px]' />
+						<Drawer.Content className='bg-background flex flex-col rounded-t-[10px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-[60] focus:outline-none border-t border-border'>
+							{/* Drag Handle & Header */}
+							<div className='p-4 bg-muted/30 rounded-t-[10px] flex-shrink-0 border-b border-border'>
+								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mb-4' />
+								<div className='flex justify-between items-center'>
+									<Drawer.Title className='font-serif font-bold text-xl text-foreground'>
+										Character Details
+									</Drawer.Title>
+									<Drawer.Close className='p-2 bg-muted/50 hover:bg-muted rounded-full text-muted-foreground transition-colors'>
+										<X size={18} />
+									</Drawer.Close>
+								</div>
+							</div>
+
+							{/* Content */}
+							<div className='p-4 overflow-y-auto custom-scrollbar flex-1'>
+								<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
+							</div>
+						</Drawer.Content>
+					</Drawer.Portal>
+				</Drawer.Root>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\wiki\layouts\CharacterLayout.jsx ---
+
+--- FILE: features\wiki\layouts\SessionLayout.jsx ---
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { BookOpen, History, Network } from 'lucide-react';
+import TabContainer from '@/shared/components/layout/TabContainer';
+import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
+import { SessionMentions } from '@/features/wiki/components/SessionMentions';
+import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
+import { extractHeaders } from '@/shared/utils/markdownUtils';
+import { ThreeColumnLayout } from '@/shared/components/layout/SplitView';
+import { EntityLocalGraph } from '@/features/wiki/components/EntityLocalGraph'; // Import
+
+export default function SessionLayout({ viewModel }) {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const activeTab = searchParams.get('tab') || 'narrative';
+
+	const setActiveTab = (tabId) => {
+		setSearchParams(
+			(prev) => {
+				prev.set('tab', tabId);
+				return prev;
+			},
+			{ replace: true }
+		);
+	};
+
+	const tocItems = useMemo(() => {
+		if (viewModel.content.narrative) {
+			return extractHeaders(viewModel.content.narrative);
+		}
+		return [];
+	}, [viewModel.content.narrative]);
+
+	if (!viewModel) return null;
+
+	const renderNarrative = () => (
+		<ThreeColumnLayout
+			left={null}
+			center={
+				<div className='max-w-3xl mx-auto px-4 sm:px-6 py-10'>
+					<EntityBody
+						summary={viewModel.content.narrative}
+						sections={[]}
+						history={null}
+						levelUp={viewModel.content.levelUp}
+					/>
+				</div>
+			}
+			right={
+				tocItems.length > 0 ? (
+					<TableOfContents
+						items={tocItems}
+						className='ml-4'
+						visibilityClass='hidden min-[1650px]:block'
+						mobileToggleClass='min-[1650px]:hidden'
+					/>
+				) : null
+			}
+		/>
+	);
+
+	const renderMentions = () => (
+		<div className='max-w-6xl mx-auto px-4 sm:px-6 py-10'>
+			{/* NEW: Graph Section */}
+			{viewModel.raw.relationships && viewModel.raw.relationships.length > 0 && (
+				<div className='mb-10 max-w-6xl mx-auto'>
+					<EntityLocalGraph entity={viewModel.raw} relationships={viewModel.raw.relationships} height='h-[350px]' />
+				</div>
+			)}
+			<SessionMentions mentions={viewModel.content.mentions} />
+		</div>
+	);
+
+	const renderTimeline = () => (
+		<div className='max-w-3xl mx-auto px-4 sm:px-6 py-10'>
+			<EntityHistory events={viewModel.content.history} fullHeight={true} />
+		</div>
+	);
+
+	return (
+		<>
+			<TabContainer
+				tabs={[
+					{
+						id: 'narrative',
+						label: 'Narrative',
+						icon: BookOpen,
+						content: renderNarrative(),
+					},
+					{
+						id: 'mentions',
+						label: 'Mentions',
+						icon: Network,
+						content: renderMentions(),
+					},
+					{
+						id: 'events',
+						label: 'Timeline',
+						icon: History,
+						content: renderTimeline(),
+					},
+				]}
+				defaultTab={activeTab}
+				sticky
+				onChange={setActiveTab}
+			/>
+
+			{tocItems.length > 0 && activeTab === 'narrative' && (
+				<div className='xl:hidden'>
+					<TableOfContents items={tocItems} />
+				</div>
+			)}
+		</>
+	);
+}
+
+--- END OF features\wiki\layouts\SessionLayout.jsx ---
+
+--- FILE: features\wiki\layouts\StandardLayout.jsx ---
+import { Drawer } from 'vaul';
+import { Info, X } from 'lucide-react';
+import { EntitySidebar } from '@/features/wiki/components/EntitySidebar';
+import { EntityBody } from '@/features/wiki/components/EntityBody';
+
+export default function StandardLayout({ viewModel }) {
+	if (!viewModel) return null;
+	return (
+		<div className='w-full px-4 sm:px-6 py-10'>
+			<div className='max-w-6xl mx-auto'>
+				<div className='grid grid-cols-1 lg:grid-cols-[260px_1fr] xl:grid-cols-[280px_1fr] gap-4 lg:gap-6 xl:gap-8'>
+					{/* --- DESKTOP SIDEBAR (Hidden on Mobile) --- */}
+					<div className='hidden lg:block lg:order-first min-w-0'>
+						<EntitySidebar
+							entity={viewModel.raw}
+							traits={viewModel.sidebar.traits}
+							connections={viewModel.sidebar.connections}
+						/>
+					</div>
+
+					{/* --- MAIN CONTENT --- */}
+					<div className='min-w-0 pb-20'>
+						<EntityBody
+							summary={viewModel.content.summary}
+							sections={viewModel.content.sections}
+							history={viewModel.content.history}
+							objectives={viewModel.content.objectives}
+							combatRounds={viewModel.content.combatRounds}
+							mapImageUrl={viewModel.content.mapImageUrl}
+							mapMarkers={viewModel.content.mapMarkers}
+						/>
+					</div>
+				</div>
+			</div>
+
+			{/* --- MOBILE BOTTOM SHEET --- */}
+			<div className='lg:hidden'>
+				<Drawer.Root shouldScaleBackground>
+					<Drawer.Trigger asChild>
+						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
+							<Info size={18} />
+							<span>Info</span>
+						</button>
+					</Drawer.Trigger>
+
+					<Drawer.Portal>
+						<Drawer.Overlay className='fixed inset-0 bg-black/40 z-50 backdrop-blur-[2px]' />
+						<Drawer.Content className='bg-background flex flex-col rounded-t-[10px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-50 focus:outline-none border-t border-border'>
+							{/* Drag Handle */}
+							<div className='p-4 bg-muted/50 rounded-t-[10px] flex-shrink-0'>
+								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-4' />
+								<div className='flex justify-between items-center'>
+									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
+									<Drawer.Close className='p-2 bg-muted rounded-full text-muted-foreground'>
+										<X size={16} />
+									</Drawer.Close>
+								</div>
+							</div>
+
+							{/* Content */}
+							<div className='p-4 bg-background flex-1 overflow-y-auto custom-scrollbar'>
+								<EntitySidebar
+									entity={viewModel.raw}
+									traits={viewModel.sidebar.traits}
+									connections={viewModel.sidebar.connections}
+								/>
+							</div>
+						</Drawer.Content>
+					</Drawer.Portal>
+				</Drawer.Root>
+			</div>
+		</div>
+	);
+}
+
+--- END OF features\wiki\layouts\StandardLayout.jsx ---
+
