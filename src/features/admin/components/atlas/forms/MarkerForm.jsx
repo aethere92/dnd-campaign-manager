@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, X, MapPin, Circle, Image as ImageIcon, Type, Minus, Plus, Tag, Palette, RotateCw } from 'lucide-react';
+import {
+	Trash2,
+	X,
+	MapPin,
+	Circle,
+	Image as ImageIcon,
+	Type,
+	Minus,
+	Plus,
+	Tag,
+	Palette,
+	RotateCw,
+	Eye,
+	EyeOff,
+	ExternalLink,
+	Clipboard,
+} from 'lucide-react';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 import ShapeSelector from '../components/ShapeSelector';
@@ -59,7 +75,39 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 		textRotation: 0,
 		paddingX: 8,
 		paddingY: 4,
+		targetLat: 0,
+		targetLng: 0,
+		targetZoom: 2,
 		...data,
+	};
+
+	// Helper to handle coordinate pasting
+	const handlePasteCoords = async () => {
+		try {
+			const text = await navigator.clipboard.readText();
+			// Matches formats like "-123.45, 67.89" or "Lat: -123.45 Lng: 67.89"
+			const matches = text.match(/([-+]?\d*\.?\d+)/g);
+			if (matches && matches.length >= 2) {
+				onChange('targetLat', parseFloat(matches[0]));
+				onChange('targetLng', parseFloat(matches[1]));
+			} else {
+				alert('Could not parse coordinates from clipboard. Expected format: "Lat, Lng"');
+			}
+		} catch (err) {
+			console.error('Failed to read clipboard', err);
+		}
+	};
+
+	// Helper for inputs to allow typing negatives without NaN issues
+	const handleNumInput = (field, val) => {
+		// Pass raw value to state to allow "-" character while typing
+		onChange(field, val);
+	};
+
+	const handleNumBlur = (field, val) => {
+		// On blur, sanitize to number
+		const num = parseFloat(val);
+		onChange(field, isNaN(num) ? 0 : num);
 	};
 
 	return (
@@ -176,7 +224,7 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 
 						<div className='h-px bg-border/50' />
 
-						{/* NEW: Padding Controls */}
+						{/* Padding Controls */}
 						<div className='space-y-2'>
 							<div className='flex justify-between items-center'>
 								<span className='text-[10px] font-medium text-muted-foreground'>Padding</span>
@@ -247,12 +295,12 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 										onClick={() => onChange('labelHasBorder', !safeData.labelHasBorder)}
 										className={clsx(
 											'w-8 h-4 rounded-full transition-colors relative border',
-											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border'
+											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border',
 										)}>
 										<div
 											className={clsx(
 												'absolute top-0.5 bottom-0.5 w-3 bg-white rounded-full transition-all shadow-sm',
-												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5'
+												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5',
 											)}
 										/>
 									</button>
@@ -319,6 +367,79 @@ export default function MarkerForm({ data, onChange, onDelete, onClose }) {
 								<Plus size={14} />
 							</button>
 						</div>
+					</div>
+
+					<div className='space-y-4 pt-4 border-t border-border'>
+						<div className='space-y-2'>
+							<label className={LABEL_CLASS}>Link to Map</label>
+							<select
+								className={ADMIN_INPUT_CLASS}
+								value={safeData.mapLink || ''}
+								onChange={(e) => onChange('mapLink', e.target.value)}>
+								<option value=''>-- None --</option>
+								{mapOptions.map((m) => (
+									<option key={m.key} value={m.key}>
+										{m.title}
+									</option>
+								))}
+							</select>
+						</div>
+
+						{/* TARGET VIEW */}
+						{safeData.mapLink && (
+							<div className='bg-background border border-border rounded-lg p-3 space-y-3'>
+								<div className='flex items-center justify-between'>
+									<div className='flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase'>
+										<ExternalLink size={12} /> Target Entry Point
+									</div>
+									<button
+										onClick={handlePasteCoords}
+										className='flex items-center gap-1 text-[9px] bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded transition-colors uppercase font-bold'
+										title='Paste [Lat, Lng] from clipboard'>
+										<Clipboard size={10} /> Paste
+									</button>
+								</div>
+
+								<div className='grid grid-cols-3 gap-2'>
+									<div>
+										<label className='text-[9px] text-muted-foreground block mb-0.5'>Lat</label>
+										<input
+											type='number'
+											step='any'
+											className={ADMIN_INPUT_CLASS}
+											value={safeData.targetLat}
+											onChange={(e) => handleNumInput('targetLat', e.target.value)}
+											onBlur={(e) => handleNumBlur('targetLat', e.target.value)}
+										/>
+									</div>
+									<div>
+										<label className='text-[9px] text-muted-foreground block mb-0.5'>Lng</label>
+										<input
+											type='number'
+											step='any'
+											className={ADMIN_INPUT_CLASS}
+											value={safeData.targetLng}
+											onChange={(e) => handleNumInput('targetLng', e.target.value)}
+											onBlur={(e) => handleNumBlur('targetLng', e.target.value)}
+										/>
+									</div>
+									<div>
+										<label className='text-[9px] text-muted-foreground block mb-0.5'>Zoom</label>
+										<input
+											type='number'
+											step='1'
+											max='8'
+											className={ADMIN_INPUT_CLASS}
+											value={safeData.targetZoom}
+											onChange={(e) => onChange('targetZoom', parseInt(e.target.value) || 0)}
+										/>
+									</div>
+								</div>
+								<p className='text-[10px] text-muted-foreground'>
+									Coordinates on the destination map where the camera will focus.
+								</p>
+							</div>
+						)}
 					</div>
 
 					<div className='grid grid-cols-2 gap-4 pt-2'>

@@ -6,35 +6,33 @@ import { updateMapData } from '@/features/atlas/api/mapService';
 
 const AtlasEditorContext = createContext(null);
 
-// UPDATED: Added onSave prop
 export const AtlasEditorProvider = ({ initialData, onSave, children }) => {
-	// 1. Initialize State
 	const normalizedInitialState = useMemo(() => {
 		return {
 			...normalizeMapData(initialData),
 			mapId: initialData.id,
-			mapConfig: initialData.metadata,
+			mapConfig: initialData.metadata || {},
 		};
 	}, [initialData]);
 
-	// 2. Load Reducer
 	const [state, dispatch] = useAtlasReducer(normalizedInitialState);
-
-	// 3. Load Actions
 	const actions = useAtlasActions(dispatch);
 
-	// 4. Define Save Handler
 	const saveMap = async () => {
 		dispatch({ type: 'SET_SAVING', payload: true });
 		try {
 			const payload = serializeMapData(state);
 
-			// FIX: Check if a custom save handler exists (for Tactical Map)
+			// CRITICAL: We also send the updated mapConfig (metadata)
+			const configPayload = {
+				...state.mapConfig,
+				initialView: state.mapConfig.initialView,
+			};
+
 			if (onSave) {
-				await onSave(payload);
+				await onSave(payload, configPayload);
 			} else {
-				// Default behavior: Update DB
-				await updateMapData(state.mapId, payload);
+				await updateMapData(state.mapId, payload, configPayload);
 				alert('Map saved successfully.');
 			}
 		} catch (e) {

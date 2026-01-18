@@ -3,7 +3,7 @@ import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { Polyline, Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
-import { createPathHandleIcon, createPathMidpointIcon } from '@/features/atlas/utils/markerUtils';
+import { createPathHandleIcon, createPathMidpointIcon, createPathPointIcon } from '@/features/atlas/utils/markerUtils';
 import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
 import { TextAlongPath } from '@/features/atlas/components/layers/TextAlongPath';
 
@@ -35,7 +35,7 @@ const PathItem = React.memo(
 					actions.selectItem('path', path._id || path.id);
 				});
 			},
-			[isInteractive, path._id, path.id, actions]
+			[isInteractive, path._id, path.id, actions],
 		);
 
 		// --- DRAG HANDLERS ---
@@ -58,7 +58,7 @@ const PathItem = React.memo(
 				}
 				polylineRef.current.setLatLngs(visualPoints);
 			},
-			[path.curviness]
+			[path.curviness],
 		);
 
 		const onVertexDragEnd = useCallback(
@@ -67,7 +67,7 @@ const PathItem = React.memo(
 				actions.updatePathPoint(path._id || path.id, index, { coordinates: [latlng.lat, latlng.lng] });
 				dragStartRef.current = null;
 			},
-			[path._id, path.id, actions]
+			[path._id, path.id, actions],
 		);
 
 		if (positions.length === 0 && !isSelected) return null;
@@ -130,28 +130,41 @@ const PathItem = React.memo(
 
 				{isSelected && (
 					<>
-						{path.points.map((pt, idx) => (
-							<Marker
-								key={`v-${idx}`}
-								position={pt.coordinates}
-								icon={createPathHandleIcon(selectedPointIndex === idx, !!pt.text)}
-								draggable={true}
-								zIndexOffset={1000}
-								eventHandlers={{
-									dragstart: onVertexDragStart,
-									drag: (e) => onVertexDrag(e, idx),
-									dragend: (e) => onVertexDragEnd(e, idx),
-									click: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.selectItem('path', path._id || path.id, idx);
-									},
-									contextmenu: (e) => {
-										L.DomEvent.stopPropagation(e);
-										actions.deletePathPoint(path._id || path.id, idx);
-									},
-								}}
-							/>
-						))}
+						{path.points.map((pt, idx) => {
+							// LOGIC: If an icon is set, use the fancy icon. Otherwise, use the standard edit handle.
+							// We pass the path color to the icon generator so it matches the line.
+							const icon =
+								pt.icon && pt.icon !== 'default'
+									? createPathPointIcon(pt.icon, path.color || '#d97706')
+									: createPathHandleIcon(selectedPointIndex === idx, !!pt.text);
+
+							// If using a custom icon, we might want to scale it up slightly when selected
+							const isCustomIcon = !!(pt.icon && pt.icon !== 'default');
+							const zIndex = isCustomIcon ? 1100 : 1000;
+
+							return (
+								<Marker
+									key={`v-${idx}`}
+									position={pt.coordinates}
+									icon={icon}
+									draggable={true}
+									zIndexOffset={zIndex}
+									eventHandlers={{
+										dragstart: onVertexDragStart,
+										drag: (e) => onVertexDrag(e, idx),
+										dragend: (e) => onVertexDragEnd(e, idx),
+										click: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.selectItem('path', path._id || path.id, idx);
+										},
+										contextmenu: (e) => {
+											L.DomEvent.stopPropagation(e);
+											actions.deletePathPoint(path._id || path.id, idx);
+										},
+									}}
+								/>
+							);
+						})}
 						{path.points.map((pt, idx) => {
 							if (idx === path.points.length - 1) return null;
 							const nextPt = path.points[idx + 1];
@@ -183,7 +196,7 @@ const PathItem = React.memo(
 		if (prev.isSelected !== next.isSelected) return false;
 		if (prev.selectedPointIndex !== next.selectedPointIndex) return false;
 		return true;
-	}
+	},
 );
 
 export default function EditPathsLayer() {

@@ -57,6 +57,7 @@ SPLIT BUNDLE: FEATURES_ADMIN - INPUTS
           AtlasEditor.jsx
           AtlasEditorContext.jsx
           components/
+            CoordinatesDisplay.jsx
             EditorContextMenu.jsx
             EditorLayerList.jsx
             EditorMapEvents.jsx
@@ -72,6 +73,7 @@ SPLIT BUNDLE: FEATURES_ADMIN - INPUTS
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
             PathForm.jsx

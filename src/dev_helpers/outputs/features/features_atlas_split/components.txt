@@ -57,6 +57,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - COMPONENTS
           AtlasEditor.jsx
           AtlasEditorContext.jsx
           components/
+            CoordinatesDisplay.jsx
             EditorContextMenu.jsx
             EditorLayerList.jsx
             EditorMapEvents.jsx
@@ -72,6 +73,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - COMPONENTS
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
             PathForm.jsx
@@ -560,28 +562,59 @@ import { MapTools } from './MapTools';
 import { MapZoomHandler } from './MapZoomHandler';
 import { useAtlas } from '../context/AtlasContext';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useSearchParams } from 'react-router-dom';
 
 const MapController = ({ config, flyToTarget }) => {
 	const map = useMap();
 	const prevMapId = useRef();
+	const [searchParams] = useSearchParams();
+
+	// Use mapId from DB config, fallback to key if needed
+	const uniqueMapId = config.mapId || config.key;
 
 	useEffect(() => {
 		if (!config || !config.sizes) return;
+
 		const scaleFactor = Math.pow(2, config.sizes.maxZoom);
 		const bounds = [
 			[-config.sizes.imageHeight / scaleFactor, 0],
 			[0, config.sizes.imageWidth / scaleFactor],
 		];
-
 		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
-		if (prevMapId.current !== config.key) {
-			map.fitBounds(bounds, { animate: false });
-			prevMapId.current = config.key;
+
+		if (prevMapId.current !== uniqueMapId) {
+			let viewSet = false;
+
+			// FIX: Force Leaflet to recognize container size before setting view
+			map.invalidateSize();
+
+			const urlLat = searchParams.get('lat');
+			const urlLng = searchParams.get('lng');
+			const urlZ = searchParams.get('z');
+
+			if (urlLat && urlLng && urlZ) {
+				map.setView([urlLat, urlLng], urlZ, { animate: false });
+				viewSet = true;
+			} else if (config.initialView) {
+				const { lat, lng, zoom } = config.initialView;
+				map.setView([lat, lng], zoom, { animate: false });
+				viewSet = true;
+			}
+
+			if (!viewSet) {
+				map.fitBounds(bounds, { animate: false });
+			}
+
+			prevMapId.current = uniqueMapId;
 		}
-	}, [map, config]);
+	}, [map, config, searchParams, uniqueMapId]);
 
 	useEffect(() => {
-		if (flyToTarget) map.flyTo(flyToTarget, config.sizes.maxZoom, { animate: true, duration: 1.5 });
+		if (flyToTarget) {
+			// FIX: Invalidate size before flying to ensure target is centered visually
+			map.invalidateSize();
+			map.flyTo(flyToTarget, config.sizes.maxZoom, { animate: true, duration: 1.5 });
+		}
 	}, [map, flyToTarget, config]);
 
 	return null;

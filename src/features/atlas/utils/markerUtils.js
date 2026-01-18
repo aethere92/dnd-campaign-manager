@@ -250,7 +250,7 @@ export const resolveMarkerIcon = (marker) => {
 				color: color,
 				fill: 'currentColor',
 				fillOpacity: 0.2,
-			})
+			}),
 		);
 		return L.divIcon({
 			className: 'marker-icon-only',
@@ -269,7 +269,7 @@ export const resolveMarkerIcon = (marker) => {
 			size: 14,
 			strokeWidth: 2.5,
 			color: contrastColor,
-		})
+		}),
 	);
 
 	let svgContent = '';
@@ -391,3 +391,37 @@ export const createPathMidpointIcon = () =>
 		iconSize: [10, 10],
 		iconAnchor: [5, 5],
 	});
+
+export const createPathPointIcon = (iconName, color = '#ffffff') => {
+	const IconComponent = getIconComponent(iconName);
+	const iconHtml = renderToString(
+		React.createElement(IconComponent, {
+			size: 14,
+			strokeWidth: 2.5,
+			color: '#ffffff', // Always white icon for contrast
+		}),
+	);
+
+	return L.divIcon({
+		className: 'path-point-icon',
+		html: `
+            <div style="
+                width: 24px; 
+                height: 24px; 
+                background-color: ${color}; 
+                border: 2px solid white; 
+                border-radius: 50%; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                transform: translate(0, 0); /* Fix alignment */
+            ">
+                ${iconHtml}
+            </div>
+        `,
+		iconSize: [24, 24],
+		iconAnchor: [12, 12], // Center it exactly on the line
+		popupAnchor: [0, -12],
+	});
+};

@@ -31,7 +31,6 @@ export const AtlasProvider = ({ children }) => {
 		let isMounted = true;
 		const load = async () => {
 			if (!campaignId || !currentMapKey) return;
-
 			setIsLoading(true);
 			try {
 				const data = await fetchMapByKey(campaignId, currentMapKey);
@@ -61,7 +60,7 @@ export const AtlasProvider = ({ children }) => {
 				if (cat.items) {
 					cat.items.forEach((item, index) => {
 						const id = item.id || generateId('marker', key, index, item.label);
-						initial[id] = true;
+						initial[id] = item.visibleOnLoad !== false;
 					});
 				}
 			});
@@ -73,21 +72,30 @@ export const AtlasProvider = ({ children }) => {
 				if (cat.items) {
 					cat.items.forEach((item, index) => {
 						const id = item.id || generateId('area', key, index, item.name);
-						initial[id] = false;
+						initial[id] = item.visibleOnLoad === true;
 					});
 				}
 			});
 		}
 
 		// Default OFF
-		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = false));
-		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = false));
+		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = p.visibleOnLoad === true));
+		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = o.visibleOnLoad === true));
 
 		setVisibility(initial);
 	};
 
 	// 3. Actions
-	const navigateToMap = (key) => setSearchParams({ map: key });
+	const navigateToMap = (key, targetView = null) => {
+		const params = { map: key };
+		if (targetView) {
+			// We pass these via URL params so they persist on reload/sharing
+			if (targetView.lat) params.lat = targetView.lat;
+			if (targetView.lng) params.lng = targetView.lng;
+			if (targetView.zoom) params.z = targetView.zoom;
+		}
+		setSearchParams(params);
+	};
 
 	const flyTo = useCallback((position) => {
 		setFlyToTarget(position);
@@ -149,8 +157,8 @@ export const AtlasProvider = ({ children }) => {
 							label: item.name,
 							position: pos,
 						};
-					})
-			  )
+					}),
+				)
 			: [];
 
 		return {

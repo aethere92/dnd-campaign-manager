@@ -57,6 +57,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - LAYERS
           AtlasEditor.jsx
           AtlasEditorContext.jsx
           components/
+            CoordinatesDisplay.jsx
             EditorContextMenu.jsx
             EditorLayerList.jsx
             EditorMapEvents.jsx
@@ -72,6 +73,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - LAYERS
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
             PathForm.jsx
@@ -471,7 +473,7 @@ export const MapMarkers = ({ markers }) => {
 
 				// Attempt to link Marker -> Entity (by Name)
 				const entityMatch = Array.from(entityMap.values()).find(
-					(e) => e.name.toLowerCase() === marker.label.toLowerCase()
+					(e) => e.name.toLowerCase() === marker.label.toLowerCase(),
 				);
 
 				const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
@@ -483,13 +485,13 @@ export const MapMarkers = ({ markers }) => {
 						marker.category && marker.category !== 'default'
 							? marker.category
 							: entityMatch
-							? entityMatch.type
-							: 'Point of Interest',
+								? entityMatch.type
+								: 'Point of Interest',
 					description: marker.description
 						? marker.description
 						: entityMatch
-						? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
-						: null,
+							? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
+							: null,
 					image: entityMatch ? resolveImageUrl(entityAttrs, 'background') : null,
 				};
 
@@ -507,7 +509,12 @@ export const MapMarkers = ({ markers }) => {
 				const handleMapNav = (e) => {
 					e.stopPropagation();
 					if (marker.mapLink) {
-						navigateToMap(marker.mapLink);
+						const targetView =
+							marker.targetLat !== undefined && marker.targetLng !== undefined
+								? { lat: marker.targetLat, lng: marker.targetLng, zoom: marker.targetZoom || 2 }
+								: null;
+
+						navigateToMap(marker.mapLink, targetView);
 					}
 				};
 
@@ -534,7 +541,7 @@ export const MapMarkers = ({ markers }) => {
 											<span
 												className={clsx(
 													'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
-													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
+													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground',
 												)}>
 												{displayData.category}
 											</span>
@@ -547,7 +554,7 @@ export const MapMarkers = ({ markers }) => {
 												className={clsx(
 													'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
 													entityConfig.tailwind.border,
-													entityConfig.tailwind.text
+													entityConfig.tailwind.text,
 												)}>
 												<entityConfig.icon size={14} />
 											</div>
@@ -627,10 +634,11 @@ export const MapOverlays = ({ overlays }) => {
 --- END OF features\atlas\components\layers\MapOverlays.jsx ---
 
 --- FILE: features\atlas\components\layers\MapRecaps.jsx ---
+/* --- FILE: features/atlas/components/layers/MapRecaps.jsx --- */
 import React, { useMemo, useRef, useState } from 'react';
 import { Polyline, Marker, Popup, Tooltip } from 'react-leaflet';
 import { Calendar } from 'lucide-react';
-import { createDotIcon } from '@/features/atlas/utils/markerUtils';
+import { createDotIcon, createPathPointIcon } from '@/features/atlas/utils/markerUtils';
 import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
 import { TextAlongPath } from '@/features/atlas/components/layers/TextAlongPath';
 
@@ -711,22 +719,37 @@ const PathRenderer = ({ session }) => {
 				)}
 			</Polyline>
 
-			{/* Narrative Points */}
+			{/* Narrative Points & Icons */}
 			{session.points.map((point, idx) => {
-				if (!point.text) return null;
-				// Ensure safe coordinates
+				// RENDER IF: Has Text OR Has Icon
+				if (!point.text && (!point.icon || point.icon === 'default')) return null;
+
 				const coords = point.coordinates || point;
+
+				// Determine Icon
+				let icon;
+				if (point.icon && point.icon !== 'default') {
+					// Use custom icon with path color
+					icon = createPathPointIcon(point.icon, color);
+				} else {
+					// Fallback to simple dot for text-only nodes
+					icon = createDotIcon(color);
+				}
+
 				return (
-					<Marker key={`${session.name}-p-${idx}`} position={coords} icon={createDotIcon(color)}>
-						<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
-							<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
-								<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
-									<Calendar size={12} className='text-primary' />
-									<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>{session.name}</span>
+					<Marker key={`${session.name}-p-${idx}`} position={coords} icon={icon}>
+						{/* Only show popup if there is text */}
+						{point.text && (
+							<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
+								<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
+									<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
+										<Calendar size={12} className='text-primary' />
+										<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>{session.name}</span>
+									</div>
+									<div className='p-3 text-xs text-foreground/90 leading-snug'>{point.text}</div>
 								</div>
-								<div className='p-3 text-xs text-foreground/90 leading-snug'>{point.text}</div>
-							</div>
-						</Popup>
+							</Popup>
+						)}
 					</Marker>
 				);
 			})}

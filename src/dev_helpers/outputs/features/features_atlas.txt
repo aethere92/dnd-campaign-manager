@@ -57,6 +57,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
           AtlasEditor.jsx
           AtlasEditorContext.jsx
           components/
+            CoordinatesDisplay.jsx
             EditorContextMenu.jsx
             EditorLayerList.jsx
             EditorMapEvents.jsx
@@ -72,6 +73,7 @@ PARTIAL BUNDLE: FEATURES ATLAS
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
             PathForm.jsx
@@ -558,14 +560,18 @@ export const fetchCampaignMaps = async (campaignId) => {
 /**
  * Updates only the content data (markers, paths, etc) of a map.
  */
-export const updateMapData = async (mapId, contentData) => {
-	const { error } = await supabase
-		.from('maps')
-		.update({
-			data: contentData,
-			updated_at: new Date(),
-		})
-		.eq('id', mapId);
+export const updateMapData = async (mapId, contentData, configData = null) => {
+	const payload = {
+		data: contentData,
+		updated_at: new Date(),
+	};
+
+	// If config (metadata) is provided, update that column too
+	if (configData) {
+		payload.config = configData;
+	}
+
+	const { error } = await supabase.from('maps').update(payload).eq('id', mapId);
 
 	if (error) throw error;
 	return true;
@@ -802,28 +808,59 @@ import { MapTools } from './MapTools';
 import { MapZoomHandler } from './MapZoomHandler';
 import { useAtlas } from '../context/AtlasContext';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useSearchParams } from 'react-router-dom';
 
 const MapController = ({ config, flyToTarget }) => {
 	const map = useMap();
 	const prevMapId = useRef();
+	const [searchParams] = useSearchParams();
+
+	// Use mapId from DB config, fallback to key if needed
+	const uniqueMapId = config.mapId || config.key;
 
 	useEffect(() => {
 		if (!config || !config.sizes) return;
+
 		const scaleFactor = Math.pow(2, config.sizes.maxZoom);
 		const bounds = [
 			[-config.sizes.imageHeight / scaleFactor, 0],
 			[0, config.sizes.imageWidth / scaleFactor],
 		];
-
 		map.setMaxBounds(L.latLngBounds(bounds).pad(0.1));
-		if (prevMapId.current !== config.key) {
-			map.fitBounds(bounds, { animate: false });
-			prevMapId.current = config.key;
+
+		if (prevMapId.current !== uniqueMapId) {
+			let viewSet = false;
+
+			// FIX: Force Leaflet to recognize container size before setting view
+			map.invalidateSize();
+
+			const urlLat = searchParams.get('lat');
+			const urlLng = searchParams.get('lng');
+			const urlZ = searchParams.get('z');
+
+			if (urlLat && urlLng && urlZ) {
+				map.setView([urlLat, urlLng], urlZ, { animate: false });
+				viewSet = true;
+			} else if (config.initialView) {
+				const { lat, lng, zoom } = config.initialView;
+				map.setView([lat, lng], zoom, { animate: false });
+				viewSet = true;
+			}
+
+			if (!viewSet) {
+				map.fitBounds(bounds, { animate: false });
+			}
+
+			prevMapId.current = uniqueMapId;
 		}
-	}, [map, config]);
+	}, [map, config, searchParams, uniqueMapId]);
 
 	useEffect(() => {
-		if (flyToTarget) map.flyTo(flyToTarget, config.sizes.maxZoom, { animate: true, duration: 1.5 });
+		if (flyToTarget) {
+			// FIX: Invalidate size before flying to ensure target is centered visually
+			map.invalidateSize();
+			map.flyTo(flyToTarget, config.sizes.maxZoom, { animate: true, duration: 1.5 });
+		}
 	}, [map, flyToTarget, config]);
 
 	return null;
@@ -1446,7 +1483,7 @@ export const MapMarkers = ({ markers }) => {
 
 				// Attempt to link Marker -> Entity (by Name)
 				const entityMatch = Array.from(entityMap.values()).find(
-					(e) => e.name.toLowerCase() === marker.label.toLowerCase()
+					(e) => e.name.toLowerCase() === marker.label.toLowerCase(),
 				);
 
 				const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
@@ -1458,13 +1495,13 @@ export const MapMarkers = ({ markers }) => {
 						marker.category && marker.category !== 'default'
 							? marker.category
 							: entityMatch
-							? entityMatch.type
-							: 'Point of Interest',
+								? entityMatch.type
+								: 'Point of Interest',
 					description: marker.description
 						? marker.description
 						: entityMatch
-						? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
-						: null,
+							? getAttributeValue(entityAttrs, ['summary', 'narrative']) || entityMatch.description
+							: null,
 					image: entityMatch ? resolveImageUrl(entityAttrs, 'background') : null,
 				};
 
@@ -1482,7 +1519,12 @@ export const MapMarkers = ({ markers }) => {
 				const handleMapNav = (e) => {
 					e.stopPropagation();
 					if (marker.mapLink) {
-						navigateToMap(marker.mapLink);
+						const targetView =
+							marker.targetLat !== undefined && marker.targetLng !== undefined
+								? { lat: marker.targetLat, lng: marker.targetLng, zoom: marker.targetZoom || 2 }
+								: null;
+
+						navigateToMap(marker.mapLink, targetView);
 					}
 				};
 
@@ -1509,7 +1551,7 @@ export const MapMarkers = ({ markers }) => {
 											<span
 												className={clsx(
 													'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
-													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
+													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground',
 												)}>
 												{displayData.category}
 											</span>
@@ -1522,7 +1564,7 @@ export const MapMarkers = ({ markers }) => {
 												className={clsx(
 													'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
 													entityConfig.tailwind.border,
-													entityConfig.tailwind.text
+													entityConfig.tailwind.text,
 												)}>
 												<entityConfig.icon size={14} />
 											</div>
@@ -1602,10 +1644,11 @@ export const MapOverlays = ({ overlays }) => {
 --- END OF features\atlas\components\layers\MapOverlays.jsx ---
 
 --- FILE: features\atlas\components\layers\MapRecaps.jsx ---
+/* --- FILE: features/atlas/components/layers/MapRecaps.jsx --- */
 import React, { useMemo, useRef, useState } from 'react';
 import { Polyline, Marker, Popup, Tooltip } from 'react-leaflet';
 import { Calendar } from 'lucide-react';
-import { createDotIcon } from '@/features/atlas/utils/markerUtils';
+import { createDotIcon, createPathPointIcon } from '@/features/atlas/utils/markerUtils';
 import { getSmoothPath } from '@/features/atlas/utils/pathUtils';
 import { TextAlongPath } from '@/features/atlas/components/layers/TextAlongPath';
 
@@ -1686,22 +1729,37 @@ const PathRenderer = ({ session }) => {
 				)}
 			</Polyline>
 
-			{/* Narrative Points */}
+			{/* Narrative Points & Icons */}
 			{session.points.map((point, idx) => {
-				if (!point.text) return null;
-				// Ensure safe coordinates
+				// RENDER IF: Has Text OR Has Icon
+				if (!point.text && (!point.icon || point.icon === 'default')) return null;
+
 				const coords = point.coordinates || point;
+
+				// Determine Icon
+				let icon;
+				if (point.icon && point.icon !== 'default') {
+					// Use custom icon with path color
+					icon = createPathPointIcon(point.icon, color);
+				} else {
+					// Fallback to simple dot for text-only nodes
+					icon = createDotIcon(color);
+				}
+
 				return (
-					<Marker key={`${session.name}-p-${idx}`} position={coords} icon={createDotIcon(color)}>
-						<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
-							<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
-								<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
-									<Calendar size={12} className='text-primary' />
-									<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>{session.name}</span>
+					<Marker key={`${session.name}-p-${idx}`} position={coords} icon={icon}>
+						{/* Only show popup if there is text */}
+						{point.text && (
+							<Popup closeButton={false} className='custom-popup-clean' maxWidth={240}>
+								<div className='flex flex-col w-full font-sans bg-background rounded-md overflow-hidden shadow-sm border border-border/50'>
+									<div className='px-3 py-2 bg-primary/10 border-b border-primary/20 flex items-center gap-2'>
+										<Calendar size={12} className='text-primary' />
+										<span className='text-[10px] font-bold uppercase tracking-wider text-primary'>{session.name}</span>
+									</div>
+									<div className='p-3 text-xs text-foreground/90 leading-snug'>{point.text}</div>
 								</div>
-								<div className='p-3 text-xs text-foreground/90 leading-snug'>{point.text}</div>
-							</div>
-						</Popup>
+							</Popup>
+						)}
 					</Marker>
 				);
 			})}
@@ -2040,7 +2098,6 @@ export const AtlasProvider = ({ children }) => {
 		let isMounted = true;
 		const load = async () => {
 			if (!campaignId || !currentMapKey) return;
-
 			setIsLoading(true);
 			try {
 				const data = await fetchMapByKey(campaignId, currentMapKey);
@@ -2070,7 +2127,7 @@ export const AtlasProvider = ({ children }) => {
 				if (cat.items) {
 					cat.items.forEach((item, index) => {
 						const id = item.id || generateId('marker', key, index, item.label);
-						initial[id] = true;
+						initial[id] = item.visibleOnLoad !== false;
 					});
 				}
 			});
@@ -2082,21 +2139,30 @@ export const AtlasProvider = ({ children }) => {
 				if (cat.items) {
 					cat.items.forEach((item, index) => {
 						const id = item.id || generateId('area', key, index, item.name);
-						initial[id] = false;
+						initial[id] = item.visibleOnLoad === true;
 					});
 				}
 			});
 		}
 
 		// Default OFF
-		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = false));
-		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = false));
+		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = p.visibleOnLoad === true));
+		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = o.visibleOnLoad === true));
 
 		setVisibility(initial);
 	};
 
 	// 3. Actions
-	const navigateToMap = (key) => setSearchParams({ map: key });
+	const navigateToMap = (key, targetView = null) => {
+		const params = { map: key };
+		if (targetView) {
+			// We pass these via URL params so they persist on reload/sharing
+			if (targetView.lat) params.lat = targetView.lat;
+			if (targetView.lng) params.lng = targetView.lng;
+			if (targetView.zoom) params.z = targetView.zoom;
+		}
+		setSearchParams(params);
+	};
 
 	const flyTo = useCallback((position) => {
 		setFlyToTarget(position);
@@ -2158,8 +2224,8 @@ export const AtlasProvider = ({ children }) => {
 							label: item.name,
 							position: pos,
 						};
-					})
-			  )
+					}),
+				)
 			: [];
 
 		return {
@@ -2925,7 +2991,7 @@ export const resolveMarkerIcon = (marker) => {
 				color: color,
 				fill: 'currentColor',
 				fillOpacity: 0.2,
-			})
+			}),
 		);
 		return L.divIcon({
 			className: 'marker-icon-only',
@@ -2944,7 +3010,7 @@ export const resolveMarkerIcon = (marker) => {
 			size: 14,
 			strokeWidth: 2.5,
 			color: contrastColor,
-		})
+		}),
 	);
 
 	let svgContent = '';
@@ -3066,6 +3132,40 @@ export const createPathMidpointIcon = () =>
 		iconSize: [10, 10],
 		iconAnchor: [5, 5],
 	});
+
+export const createPathPointIcon = (iconName, color = '#ffffff') => {
+	const IconComponent = getIconComponent(iconName);
+	const iconHtml = renderToString(
+		React.createElement(IconComponent, {
+			size: 14,
+			strokeWidth: 2.5,
+			color: '#ffffff', // Always white icon for contrast
+		}),
+	);
+
+	return L.divIcon({
+		className: 'path-point-icon',
+		html: `
+            <div style="
+                width: 24px; 
+                height: 24px; 
+                background-color: ${color}; 
+                border: 2px solid white; 
+                border-radius: 50%; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                transform: translate(0, 0); /* Fix alignment */
+            ">
+                ${iconHtml}
+            </div>
+        `,
+		iconSize: [24, 24],
+		iconAnchor: [12, 12], // Center it exactly on the line
+		popupAnchor: [0, -12],
+	});
+};
 
 --- END OF features\atlas\utils\markerUtils.js ---
 

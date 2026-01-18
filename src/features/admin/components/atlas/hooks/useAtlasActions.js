@@ -88,7 +88,10 @@ export const useAtlasActions = (dispatch) => {
 
 			openContextMenu: (payload) => dispatch({ type: 'OPEN_CONTEXT_MENU', payload }),
 			closeContextMenu: () => dispatch({ type: 'CLOSE_CONTEXT_MENU' }),
+
+			updateMapConfig: (updates) => dispatch({ type: 'UPDATE_MAP_CONFIG', updates }),
+			updateViewport: (center, zoom) => dispatch({ type: 'UPDATE_VIEWPORT', payload: { center, zoom } }),
 		}),
-		[dispatch]
+		[dispatch],
 	);
 };

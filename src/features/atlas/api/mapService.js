@@ -62,14 +62,18 @@ export const fetchCampaignMaps = async (campaignId) => {
 /**
  * Updates only the content data (markers, paths, etc) of a map.
  */
-export const updateMapData = async (mapId, contentData) => {
-	const { error } = await supabase
-		.from('maps')
-		.update({
-			data: contentData,
-			updated_at: new Date(),
-		})
-		.eq('id', mapId);
+export const updateMapData = async (mapId, contentData, configData = null) => {
+	const payload = {
+		data: contentData,
+		updated_at: new Date(),
+	};
+
+	// If config (metadata) is provided, update that column too
+	if (configData) {
+		payload.config = configData;
+	}
+
+	const { error } = await supabase.from('maps').update(payload).eq('id', mapId);
 
 	if (error) throw error;
 	return true;

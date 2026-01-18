@@ -18,6 +18,7 @@ const initialState = {
 	contextMenu: null, // { type: 'map'|'entity', position: {x,y}, latlng: {lat,lng}, target: {type, id, ...data} }
 	mapId: null,
 	mapConfig: null,
+	viewport: { center: [0, 0], zoom: 0 },
 };
 
 const reducer = (state, action) => {
@@ -34,6 +35,18 @@ const reducer = (state, action) => {
 				mode: action.payload,
 				contextMenu: null, // Close menu on mode change
 			};
+
+		case 'UPDATE_MAP_CONFIG':
+			return {
+				...state,
+				mapConfig: {
+					...state.mapConfig,
+					...action.updates,
+				},
+			};
+
+		case 'UPDATE_VIEWPORT':
+			return { ...state, viewport: action.payload };
 
 		case 'SET_TOOL':
 			return {
@@ -101,7 +114,7 @@ const reducer = (state, action) => {
 		case 'ADD_PATH':
 			return {
 				...state,
-				paths: [...state.paths, action.payload],
+				paths: [...state.paths, { ...action.payload, visibleOnLoad: false }],
 				selection: { type: 'path', id: action.payload._id },
 				mode: 'draw', // Auto enter draw mode
 				contextMenu: null,
@@ -178,6 +191,7 @@ const reducer = (state, action) => {
 				labelRadius: 4,
 				labelHasBorder: false,
 				labelBorderColor: '#ffffff',
+				visibleOnLoad: false,
 			};
 
 			return {
@@ -243,7 +257,7 @@ const reducer = (state, action) => {
 		case 'ADD_OVERLAY':
 			return {
 				...state,
-				overlays: [...state.overlays, action.payload],
+				overlays: [...state.overlays, { ...action.payload, visibleOnLoad: false }],
 				selection: { type: 'overlay', id: action.payload._id },
 				contextMenu: null,
 			};

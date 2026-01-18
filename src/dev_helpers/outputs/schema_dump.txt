@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 1/17/2026, 9:56:05 AM
+   Generated: 1/18/2026, 4:00:06 PM
 =========================================
 
 -----------------------------------------
@@ -107,67 +107,21 @@ TABLE: characters [⚠️ RLS DISABLED]
     }
   },
   {
-    "id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Olek",
-    "created_at": "2025-11-21T11:18:32.073Z",
-    "updated_at": "2026-01-13T15:50:04.281Z",
-    "description": "He is devotion given form - an angelic soul clad in armor, kind and just, friendly and ever ready for conversation. Olek is honorable to his very core, though humble in his ways, never one to boast or seek glory. His story is unlike any other. As a child, he and his sibling were raised not by kin of their own kind, but by wolves, deep within the forest. How they came to be there, he cannot say. The memory is lost to time or fate. But the pack was family, and he knew love in fur and fang. Then... [TRUNCATED AT 100 WORDS]",
+    "name": "Loraine",
+    "created_at": "2025-12-07T20:22:47.251Z",
+    "updated_at": "2026-01-17T10:29:54.453Z",
+    "description": "Work in progress, will be available later.",
     "attributes": {
-      "icon": "images/c02/chars/olek_icon.webp",
-      "race": "Aasimar",
-      "class": "Paladin / Warlock",
+      "race": "Vampire",
+      "class": "Fighter Battlemaster",
       "level": "8",
-      "speed": "40ft.",
-      "gender": "Male",
-      "skills": [
-        "Acrobatics (-1)",
-        "Animal Handling (+4)",
-        "Arcana (+0)",
-        "Athletics (+5)",
-        "Deception (+4)",
-        "History (+0)",
-        "Insight (+4)",
-        "Intimidation (+4)",
-        "Investigation (+0)",
-        "Medicine (+1)",
-        "Nature (+0)",
-        "Perception (+4)",
-        "Performance (+4)",
-        "Persuasion (+7)",
-        "Religion (+0)",
-        "Sleight of Hand (-1)",
-        "Stealth (-1)",
-        "Survival (+1)"
-      ],
-      "is_active": "true",
-      "languages": "Common, Common Sign Language, Goblin",
-      "hit points": "67",
-      "initiative": "+2",
-      "armor class": "19",
-      "proficiency": "+3",
-      "saving throw": [
-        "STR +6",
-        "DEX +3",
-        "CON +6",
-        "INT +4",
-        "WIS +8",
-        "CHA +11"
-      ],
-      "ability score": [
-        "STR 14 (+2)",
-        "DEX 8 (-1)",
-        "CON 14 (+2)",
-        "INT 10 (+0)",
-        "WIS 12 (+1)",
-        "CHA 18 (+4)"
-      ],
-      "background_image": "images/c02/chars/olek_header.webp",
-      "additional senses": [
-        "Passive Perception 14",
-        "Passive Investigation 10",
-        "Passive Insight 14"
-      ]
+      "speed": "30ft.",
+      "gender": "Female",
+      "is_active": "false",
+      "hit points": "N/A",
+      "armor class": "N/A"
     }
   }
 ]
@@ -286,12 +240,12 @@ TABLE: entities [⚠️ RLS DISABLED]
     "description": "A resurrected deity who serves as the admiral and spiritual leader of the Angevin Fleet. He appeared in the shared vision of Olek and Norr, leading a devastating naval assault on the Paladin fortress of Bremen."
   },
   {
-    "id": "c555bcd2-a3bc-49be-8240-a8df5360d476",
+    "id": "72cfbf66-7b3b-1a10-12c7-065220922391",
     "type": "npc",
-    "name": "Lem",
-    "created_at": "2025-11-20T19:29:42.106Z",
+    "name": "Sandro",
+    "created_at": "2025-11-23T17:09:23.293Z",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "description": "Lem is a 19-year-old human, surprisingly short and rotund for a guard (1.5 meters tall). Last seen, he was recovering in the barracks infirmary after a patrol gone wrong."
+    "description": "A powerful Necromancer and usurper king from the continent of Lustria. He is the arch-nemesis of Commander Bianca and Turiados, having murdered the King of Pelagos and seized their throne."
   }
 ]
 
@@ -459,74 +413,6 @@ TABLE: maps [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "082ec861-317a-4656-ad18-7a19f9497e48",
-    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
-    "key": "khorinis_spider_cave",
-    "title": "khorinis_spider_cave",
-    "config": {
-      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis_island/penal_colony_spider_cave",
-      "mapId": "khorinis_spider_cave",
-      "sizes": {
-        "maxZoom": 4,
-        "imageWidth": 2048,
-        "imageHeight": 3072
-      },
-      "parentId": "khorinis",
-      "fileExtension": "webp"
-    },
-    "data": {
-      "areas": {
-        "regions": {
-          "name": "Regions",
-          "items": []
-        }
-      },
-      "paths": [],
-      "overlays": [],
-      "annotations": {
-        "navigation": {
-          "name": "Navigation",
-          "items": [
-            {
-              "lat": -189.5,
-              "lng": 63.75,
-              "map": {
-                "exitZoom": 4,
-                "exitCoordinates": [
-                  -395,
-                  710
-                ]
-              },
-              "icon": "ArrowDown",
-              "type": "people",
-              "color": "#15803d",
-              "label": "To Penal Colony",
-              "mapLink": "khorinis"
-            },
-            {
-              "lat": -6.75,
-              "lng": 105,
-              "map": {
-                "exitZoom": 4,
-                "exitCoordinates": [
-                  -395,
-                  710
-                ]
-              },
-              "icon": "ArrowUp",
-              "type": "people",
-              "color": "#15803d",
-              "label": "To Shortcut Terrace",
-              "mapLink": "khorinis"
-            }
-          ]
-        }
-      }
-    },
-    "created_at": "2026-01-07T19:18:00.850Z",
-    "updated_at": "2026-01-15T17:25:00.441Z"
-  },
-  {
     "id": "c65e65c8-dc37-4f5e-9a7c-f1be1fadc220",
     "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
     "key": "finneas_encounter",
@@ -553,22 +439,105 @@ TABLE: maps [⚠️ RLS DISABLED]
       "overlays": [],
       "annotations": {
         "default": {
-          "name": "Default",
+          "name": "default",
           "items": [
             {
+              "id": "a0b805bd-a9bf-4a09-928d-b2cc0441732f",
               "lat": -60.6875,
               "lng": 8.8125,
               "type": "place",
               "color": "#059669",
               "label": "Exit to Island",
-              "mapLink": "unnamed_island_01"
+              "mapLink": "unnamed_island_01",
+              "targetLat": -24,
+              "targetLng": 98,
+              "targetZoom": 4,
+              "visibleOnLoad": true
             }
           ]
         }
       }
     },
     "created_at": "2026-01-07T19:18:01.351Z",
-    "updated_at": "2026-01-11T07:21:10.897Z"
+    "updated_at": "2026-01-18T11:49:23.511Z"
+  },
+  {
+    "id": "082ec861-317a-4656-ad18-7a19f9497e48",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "key": "khorinis_spider_cave",
+    "title": "khorinis_spider_cave",
+    "config": {
+      "path": "https://yffukfulnggfhlgoyowg.supabase.co/storage/v1/object/public/atlas/maps/khorinis_island/penal_colony_spider_cave",
+      "mapId": "khorinis_spider_cave",
+      "sizes": {
+        "maxZoom": 4,
+        "imageWidth": 2048,
+        "imageHeight": 3072
+      },
+      "parentId": "khorinis",
+      "fileExtension": "webp"
+    },
+    "data": {
+      "areas": {
+        "regions": {
+          "name": "Regions",
+          "items": []
+        }
+      },
+      "paths": [],
+      "overlays": [],
+      "annotations": {
+        "navigation": {
+          "name": "navigation",
+          "items": [
+            {
+              "id": "e0fd6ee8-40e3-435f-bf08-18f1068d2102",
+              "lat": -189.5,
+              "lng": 63.75,
+              "map": {
+                "exitZoom": 4,
+                "exitCoordinates": [
+                  -395,
+                  710
+                ]
+              },
+              "icon": "ArrowDown",
+              "type": "people",
+              "color": "#15803d",
+              "label": "To Penal Colony",
+              "mapLink": "khorinis",
+              "targetLat": -88.5156,
+              "targetLng": 162,
+              "targetZoom": 6,
+              "visibleOnLoad": true
+            },
+            {
+              "id": "b92fe943-5b39-490e-8154-bb3c1c25e3d9",
+              "lat": -6.75,
+              "lng": 105,
+              "map": {
+                "exitZoom": 4,
+                "exitCoordinates": [
+                  -395,
+                  710
+                ]
+              },
+              "icon": "ArrowUp",
+              "type": "people",
+              "color": "#15803d",
+              "label": "To Shortcut Terrace",
+              "mapLink": "khorinis",
+              "targetLat": -88.5156,
+              "targetLng": 162.0938,
+              "targetZoom": 6,
+              "visibleOnLoad": true
+            }
+          ]
+        }
+      }
+    },
+    "created_at": "2026-01-07T19:18:00.850Z",
+    "updated_at": "2026-01-18T11:40:57.172Z"
   }
 ]
 
@@ -587,18 +556,6 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "Thunder and Ash",
-    "description": "With the enemy army mere days from Drellin's Ferry, the party makes a desperate gambit: allying with Dreshi, a zealous goblin follower of Lamashtu, to destroy the only bridge across the gorge. The sabotage succeeds spectacularly, buying precious time for the town's evacuation. As refugees flee westward, the party encounters Loraine Martinique, a vampire noble investigating fey portals, and receives troubling news of an alliance between the Archlich of Pahuax and the approaching horde. The arc closes with Drellin's Ferry emptied, its people scattered, and new mysteries beckoning the heroes toward darker conspiracies.",
-    "created_at": "2026-01-01T08:15:08.410Z",
-    "updated_at": "2026-01-01T08:15:08.410Z",
-    "order": 5,
-    "attributes": {
-      "type": "primary"
-    }
-  },
-  {
     "id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "Shadows of the Witchwood",
@@ -607,7 +564,21 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
     "updated_at": "2026-01-01T08:13:56.636Z",
     "order": 2,
     "attributes": {
-      "type": "primary"
+      "type": "Primary",
+      "order": 2
+    }
+  },
+  {
+    "id": "c8ae0ed1-edba-4330-8853-a59cc6ea416d",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "title": "The Pirate Bargain",
+    "description": "Escaping the subterranean hell of the caves, the party is rescued - or perhaps captured - by the pirate warship Leviathan's Hull. Commander Bianca, the exiled Queen of Pelagos, and her towering companion Turiados command a crew bound by blood oaths and dreams of vengeance against the necromancer Sandro. Stranded far from home, the pirates negotiate passage and speak of a mysterious General Lee. This chance encounter opens a window to conflicts brewing across distant seas, planting seeds for future entanglements with pirate queens and resurrected gods.",
+    "created_at": "2026-01-01T08:14:50.735Z",
+    "updated_at": "2026-01-01T08:14:50.735Z",
+    "order": 3,
+    "attributes": {
+      "type": "Secondary",
+      "order": 3
     }
   }
 ]
@@ -626,30 +597,12 @@ TABLE: npcs [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
-    "id": "964c0ea9-838b-46b0-a606-8d109749624f",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Glass",
-    "description": "Massive ice elemental who speaks agonizingly slowly except when conducting business.\n",
-    "created_at": "2025-11-20T20:53:50.456Z",
-    "updated_at": "2026-01-07T14:16:48.828Z",
-    "attributes": {
-      "icon": "images/global/icons/elemental.webp",
-      "race": "Ice Elemental",
-      "role": "Quartermaster",
-      "gender": "male",
-      "status": "alive",
-      "affinity": "Neutral",
-      "is_active": "true",
-      "personality": "Loyal, methodical, all-business when negotiating."
-    }
-  },
-  {
     "id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "name": "Jareth",
     "description": "A remarkably muscled Drow found in the shopping district, operating a general store in Drellin's Ferry under an illusion magic to appear clothed, though he is actually nude. He has been waiting 20 years for a signal from Matron Zaya. During the evacuation, his shop was abandoned, looted by thieves, and subsequently became the site of trigger of the demon battle in Drellin's Ferry.\n",
     "created_at": "2025-11-21T16:55:16.081Z",
-    "updated_at": "2026-01-07T14:17:06.199Z",
+    "updated_at": "2026-01-18T07:42:46.688Z",
     "attributes": {
       "icon": "images/global/icons/male.webp",
       "race": "Drow",
@@ -658,16 +611,32 @@ TABLE: npcs [⚠️ RLS DISABLED]
       "gender": "Male",
       "status": "alive",
       "affinity": "Neutral",
-      "is_active": "true",
+      "is_active": true,
       "personality": [
-        {
-          "value": "**Patient**: He has waited 20 years for a single signal.",
-          "is_private": false
-        },
-        {
-          "value": "**Obedient**: He follows the matriarchal hierarchy of his culture without question.",
-          "is_private": false
-        }
+        "**Patient**: He has waited 20 years for a single signal.",
+        "**Obedient**: He follows the matriarchal hierarchy of his culture without question."
+      ]
+    }
+  },
+  {
+    "id": "c555bcd2-a3bc-49be-8240-a8df5360d476",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "name": "Lem",
+    "description": "Lem is a 19-year-old human, surprisingly short and rotund for a guard (1.5 meters tall). Last seen, he was recovering in the barracks infirmary after a patrol gone wrong.",
+    "created_at": "2025-11-20T19:29:42.106Z",
+    "updated_at": "2026-01-18T07:43:46.486Z",
+    "attributes": {
+      "icon": "images/global/icons/male.webp",
+      "race": "Human",
+      "role": "Town Guard",
+      "gender": "Male",
+      "status": "alive",
+      "affinity": "Neutral",
+      "is_active": true,
+      "personality": [
+        "**Oblivious**: He failed to notice the seriousness of his partner's feelings or situation.",
+        "**Incompetent**: He was easily dispatched by Worg riders during his shift.",
+        "**Callous**: He viewed his relationship with Anya as \"just fun\" and was indifferent to her pregnancy."
       ]
     }
   }
@@ -803,6 +772,20 @@ TABLE: sessions [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
+    "id": "513d48be-935f-4076-81a5-af859fc708be",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "title": "00 - Introduction",
+    "narrative": "### The beginnings The story of our five heroes begins, as many do, on a road leading toward a town. But this is no well-traveled path of cobblestones and dust - instead, it winds through a thick tangle of knee-high weeds and scattered trees, draped in the vibrant green of a subtropical forest. The air is heavy with the scent of life and growth, and the sound of distant creatures echoes beneath the canopy. Our heroes are quite the unlikely bunch - a rare mix of races and origins - but they travel together in good spirits, friendly and merry,... [TRUNCATED AT 100 WORDS]",
+    "created_at": "2025-11-19T18:59:43.807Z",
+    "updated_at": "2026-01-17T13:36:57.276Z",
+    "attributes": {
+      "synopsis": "Five heroes are travelling on the road to Drellin's Ferry: Olek, an aasimar paladin raised by wolves and chosen by Helm's servant; Norr, a dragon-blooded sorcerer trained by Zella who fled the Arcane Brotherhood with a stolen map; Soshi, an Eladrin wizard from the Feywild who joined and fled the Brotherhood with Norr; Kaedin, an earth genasi Echo Knight searching for his lost friend Thalos; and Bonnie, a pixie rogue exiled from the Feywild for saving her friend Clyde.",
+      "map_image": "",
+      "session_date": "2025-04-12",
+      "session_number": "1"
+    }
+  },
+  {
     "id": "14230e1c-07ea-4fe8-9157-335fb1554508",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "04 - Echoes of the Arena",
@@ -813,19 +796,6 @@ TABLE: sessions [⚠️ RLS DISABLED]
       "synopsis": "Deeper in the caves, they find a laboratory with notes about opening demon lord gates to breed creatures for arena games. Kalistra's name appears in burned ledgers mentioning Kilgor and the Festival of Life. They befriend two Megatherium named Gicuța and Mișu, then battle acid-blooded Arthropleura spiders. Victory secured, they discover an underwater chest and more ritual evidence. Vandal and the mercenaries explosively collapse a wall, freeing a submerged pirate ship that surges through collapsing tunnels, launching everyone through a waterfall into the open sea.",
       "session_date": "2025-06-15",
       "session_number": "5"
-    }
-  },
-  {
-    "id": "2249578d-60be-4968-b0c3-ba14fba1ed22",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "06 - The Ruined Fortress",
-    "narrative": "### An Uneasy Respite The party arrived at the inn weary and travel-worn, the day's combat having left them in dire need of rest. It was eight o'clock in the evening, and the common room was surprisingly quiet as they entered. The source of the tranquility soon became apparent; the innkeeper, a woman with an adventurous culinary spirit, was experimenting with a new stew. An intensely aromatic and pleasant scent, a mix of mushrooms and exotic herbs, wafted from the kitchen, promising a unique meal. While most of the party was drawn to the scent of food and the promise... [TRUNCATED AT 100 WORDS]",
-    "created_at": "2025-11-21T10:55:19.821Z",
-    "updated_at": "2026-01-06T08:21:03.581Z",
-    "attributes": {
-      "synopsis": "The party's thylacoleo cubs cause chaos at the inn, with Kaedin's cats literally eating through the wall on a hunting spree. After restocking supplies and selling materials to Sertieren, they investigate missing scouts. Following orc tracks from burned caravans, they reach the ruined fortress, Vraath Keep. Norr's opening fireball triggers battle against Manticore, Minotaur, Mud Elemental, hobgoblins, and wargs. The fleeing survivors shout to alert the Wyrmlord.",
-      "session_date": "2025-07-26",
-      "session_number": "7"
     }
   }
 ]

@@ -1,6 +1,16 @@
 // --- FILE: components/EditorToolbar.jsx ---
 import React from 'react';
-import { MousePointer2, MapPin, Type, Hexagon, Waypoints, Save, Loader2, Image as ImageIcon } from 'lucide-react';
+import {
+	MousePointer2,
+	MapPin,
+	Type,
+	Hexagon,
+	Waypoints,
+	Save,
+	Loader2,
+	Image as ImageIcon,
+	Settings,
+} from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import clsx from 'clsx';
 
@@ -16,7 +26,7 @@ const ToolBtn = ({ icon: Icon, active, onClick, title, disabled, className }) =>
 				? 'bg-primary text-primary-foreground shadow-sm'
 				: 'text-muted-foreground hover:bg-muted hover:text-foreground',
 			disabled && 'opacity-50 cursor-not-allowed',
-			className
+			className,
 		)}>
 		<Icon size={20} strokeWidth={active ? 2.5 : 2} />
 	</button>
@@ -24,7 +34,9 @@ const ToolBtn = ({ icon: Icon, active, onClick, title, disabled, className }) =>
 
 export default function EditorToolbar() {
 	const { state, actions, saveMap } = useAtlasEditor();
-	const { activeTool, isSaving } = state;
+	const { activeTool, isSaving, selection } = state;
+
+	const isSettingsActive = selection?.type === 'settings';
 
 	return (
 		<div className='absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 pointer-events-none'>
@@ -71,6 +83,13 @@ export default function EditorToolbar() {
 					title='Overlays (O)'
 					active={activeTool === 'overlays'}
 					onClick={() => actions.setTool('overlays')}
+				/>
+
+				<ToolBtn
+					icon={Settings}
+					title='Map Properties'
+					active={isSettingsActive}
+					onClick={() => actions.selectItem('settings', 'global')}
 				/>
 
 				{/* 7. SAVE Button */}

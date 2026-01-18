@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { Trash2, X, Hexagon, Square, CircleDashed, Type, Palette, Settings2, RotateCw } from 'lucide-react';
+import {
+	Trash2,
+	X,
+	Hexagon,
+	Square,
+	CircleDashed,
+	Type,
+	Palette,
+	Settings2,
+	RotateCw,
+	Eye,
+	EyeOff,
+} from 'lucide-react';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 import clsx from 'clsx';
@@ -44,7 +56,7 @@ const ToggleGroup = ({ options, value, onChange }) => (
 				onClick={() => onChange(opt.value)}
 				className={clsx(
 					'p-1 rounded-[3px] transition-all',
-					value === opt.value ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:bg-black/5'
+					value === opt.value ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:bg-black/5',
 				)}
 				title={opt.label}>
 				{opt.icon}
@@ -58,7 +70,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
 		onClick={onClick}
 		className={clsx(
 			'flex-1 flex items-center justify-center gap-2 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-colors',
-			active ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:bg-muted'
+			active ? 'border-primary text-primary bg-primary/5' : 'border-transparent text-muted-foreground hover:bg-muted',
 		)}>
 		<Icon size={14} />
 		{label}
@@ -93,6 +105,7 @@ export default function AreaForm({ data, onChange, onDelete, onClose }) {
 		labelBorderColor: '#ffffff',
 		paddingX: 8,
 		paddingY: 4,
+		visibleOnLoad: false, // Default
 		...data,
 	};
 
@@ -109,6 +122,24 @@ export default function AreaForm({ data, onChange, onDelete, onClose }) {
 					onChange={(e) => update('name', e.target.value)}
 					placeholder='Region Name...'
 				/>
+			</div>
+
+			{/* NEW: VISIBILITY TOGGLE */}
+			<div className='px-4 pt-4'>
+				<div className='flex items-center justify-between bg-background border border-border rounded-md p-2'>
+					<span className='text-xs font-bold text-muted-foreground uppercase'>Initial State</span>
+					<button
+						onClick={() => update('visibleOnLoad', !safeData.visibleOnLoad)}
+						className={clsx(
+							'flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold transition-colors border',
+							safeData.visibleOnLoad
+								? 'bg-green-500/10 text-green-600 border-green-500/20'
+								: 'bg-muted text-muted-foreground border-transparent',
+						)}>
+						{safeData.visibleOnLoad ? <Eye size={12} /> : <EyeOff size={12} />}
+						{safeData.visibleOnLoad ? 'Visible' : 'Hidden'}
+					</button>
+				</div>
 			</div>
 
 			<div className='flex border-b border-border mt-4 px-2'>
@@ -290,7 +321,6 @@ export default function AreaForm({ data, onChange, onDelete, onClose }) {
 									onChange={(val) => update('labelColor', val)}
 								/>
 							</PropRow>
-							{/* NEW: Padding Controls */}
 							<div className='pb-4'>
 								<PropRow label='Padding'>
 									<div className='flex gap-2 w-full flex-wrap'>
@@ -373,12 +403,12 @@ export default function AreaForm({ data, onChange, onDelete, onClose }) {
 										onClick={() => update('labelHasBorder', !safeData.labelHasBorder)}
 										className={clsx(
 											'w-8 h-4 rounded-full transition-colors relative border',
-											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border'
+											safeData.labelHasBorder ? 'bg-primary border-primary' : 'bg-muted border-border',
 										)}>
 										<div
 											className={clsx(
 												'absolute top-0.5 bottom-0.5 w-3 bg-white rounded-full transition-all shadow-sm',
-												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5'
+												safeData.labelHasBorder ? 'right-0.5' : 'left-0.5',
 											)}
 										/>
 									</button>

@@ -4,8 +4,10 @@ import { useAtlasEditor } from '../AtlasEditorContext';
 import MarkerForm from '@/features/admin/components/atlas/forms/MarkerForm';
 import PathForm from '@/features/admin/components/atlas/forms/PathForm';
 import AreaForm from '@/features/admin/components/atlas/forms/AreaForm';
-import { OverlayForm } from '@/features/admin/components/atlas/forms/OverlayForm'; // New Import
+import { OverlayForm } from '@/features/admin/components/atlas/forms/OverlayForm';
+import MapPropertiesForm from '@/features/admin/components/atlas/forms/MapPropertiesForm';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+import VisualIconPicker from '../components/VisualIconPicker';
 import { Trash2, X, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 
@@ -55,6 +57,15 @@ export default function EditorSidebar() {
 		}
 	};
 
+	// NEW: Handle Settings
+	if (selection.type === 'settings') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+				<MapPropertiesForm onClose={handleClose} />
+			</div>
+		);
+	}
+
 	// --- PATH POINT EDITOR ---
 	if (selection.type === 'path' && selection.index !== undefined) {
 		const pathData = paths.find((p) => p._id === selection.id);
@@ -66,8 +77,9 @@ export default function EditorSidebar() {
 		return (
 			<SidebarWrapper
 				title={`Path Node #${selection.index + 1}`}
-				onClose={() => actions.selectItem('path', selection.id)} // Back to parent
+				onClose={() => actions.selectItem('path', selection.id)}
 				actions={
+					/* ... (keep existing navigation buttons) ... */
 					<div className='flex mr-2 bg-muted rounded border border-border'>
 						<button
 							disabled={selection.index === 0}
@@ -84,23 +96,34 @@ export default function EditorSidebar() {
 					</div>
 				}>
 				<div className='space-y-4'>
-					<div className='bg-primary/10 border border-primary/20 p-3 rounded-md text-xs text-primary flex gap-2'>
-						<MessageSquare size={16} className='shrink-0' />
-						<span>Add narrative text here. This will appear as a clickable dot on the map.</span>
+					{/* NEW: ICON PICKER */}
+					<div>
+						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Point Icon</label>
+						<VisualIconPicker
+							value={point.icon || 'default'}
+							onChange={(val) => actions.updatePathPoint(selection.id, selection.index, { icon: val })}
+						/>
+						<p className='text-[10px] text-muted-foreground mt-1'>
+							Select an icon to display at this specific point on the path.
+						</p>
 					</div>
 
+					<div className='w-full h-px bg-border/50' />
+
+					{/* EXISTING TEXT AREA */}
 					<div>
 						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Narrative Text</label>
 						<textarea
 							className={ADMIN_INPUT_CLASS}
 							rows={6}
 							value={point.text || ''}
-							placeholder='e.g. "The party was ambushed by goblins here..."'
+							placeholder='e.g. "The party was ambushed..."'
 							onChange={(e) => actions.updatePathPoint(selection.id, selection.index, { text: e.target.value })}
 						/>
 					</div>
 
 					<div className='pt-4 border-t border-border'>
+						{/* ... delete button ... */}
 						<Button
 							variant='secondary'
 							size='sm'

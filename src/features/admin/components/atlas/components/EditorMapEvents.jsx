@@ -1,26 +1,65 @@
-// --- FILE: components/EditorMapEvents.jsx ---
-import { useMapEvents } from 'react-leaflet';
+import { useEffect } from 'react';
+import { useMapEvents, useMap } from 'react-leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
 
 export default function EditorMapEvents() {
 	const { state, actions } = useAtlasEditor();
 	const { mode, selection, activeTool } = state;
+	const map = useMap();
+
+	// HELPER: Measure the DOM to find the truth
+	const updateVisualViewport = () => {
+		const targetEl = document.getElementById('viewport-target');
+		let centerPoint;
+
+		if (targetEl) {
+			// 1. Get exact screen coordinates of the crosshair
+			const rect = targetEl.getBoundingClientRect();
+			const centerX = rect.left + rect.width / 2;
+			const centerY = rect.top + rect.height / 2;
+
+			// 2. Ask Leaflet: "What Lat/Lng is under this screen pixel?"
+			// containerPointToLatLng takes coordinates relative to the map container.
+			// mouseEventToContainerPoint converts global screen (client) coordinates to map container coordinates.
+			// We simulate a mouse event structure { clientX, clientY } to leverage Leaflet's built-in math.
+			const containerPoint = map.mouseEventToContainerPoint({ clientX: centerX, clientY: centerY });
+			centerPoint = map.containerPointToLatLng(containerPoint);
+		} else {
+			// Fallback if Reticle is hidden (Sidebar closed)
+			centerPoint = map.getCenter();
+		}
+
+		actions.updateViewport(centerPoint, map.getZoom());
+	};
+
+	// Force update when selection changes (Sidebar toggles)
+	// We use RequestAnimationFrame to ensure the DOM has updated (Reticle rendered)
+	useEffect(() => {
+		const handle = requestAnimationFrame(updateVisualViewport);
+		return () => cancelAnimationFrame(handle);
+	}, [selection]);
 
 	useMapEvents({
+		moveend: updateVisualViewport,
+		zoomend: updateVisualViewport,
+
 		click(e) {
 			actions.closeContextMenu();
 			const pos = [e.latlng.lat, e.latlng.lng];
 
-			// 1. Drawing Logic (Append points to existing shapes)
+			if (selection?.type === 'settings') {
+				actions.deselect();
+				return;
+			}
+
+			// ... (Keep existing creation logic exactly as is) ...
 			if (mode === 'draw' && selection) {
 				if (selection.type === 'path') {
 					actions.appendPathPoint(selection.id, pos);
 				} else if (selection.type === 'area') {
 					actions.appendAreaPoint(selection.id, pos);
 				}
-			}
-			// 2. Creation Logic: MARKERS
-			else if (activeTool === 'markers' && !selection) {
+			} else if (activeTool === 'markers' && !selection) {
 				actions.addMarker({
 					_id: crypto.randomUUID(),
 					label: 'New Marker',
@@ -32,9 +71,7 @@ export default function EditorMapEvents() {
 					variant: 'large',
 					shape: 'pin',
 				});
-			}
-			// 3. Creation Logic: TEXT LABELS
-			else if (activeTool === 'text' && !selection) {
+			} else if (activeTool === 'text' && !selection) {
 				actions.addMarker({
 					_id: crypto.randomUUID(),
 					label: 'New Label',
@@ -46,40 +83,32 @@ export default function EditorMapEvents() {
 					variant: 'text',
 					shape: 'pin',
 				});
-			}
-			// 4. Creation Logic: AREAS
-			else if (activeTool === 'areas' && !selection) {
+			} else if (activeTool === 'areas' && !selection) {
 				actions.addArea({
 					_id: crypto.randomUUID(),
 					name: 'New Region',
 					interiorColor: '#ff0000',
 					points: [{ coordinates: pos }],
 				});
-			}
-			// 5. Creation Logic: PATHS
-			else if (activeTool === 'paths' && !selection) {
+			} else if (activeTool === 'paths' && !selection) {
 				actions.addPath({
 					_id: crypto.randomUUID(),
 					name: 'New Path',
 					color: '#d97706',
 					points: [{ coordinates: pos, text: '' }],
 				});
-			}
-			// 6. Creation Logic: OVERLAYS (Added)
-			else if (activeTool === 'overlays' && !selection) {
-				const size = 50; // Creates a 100x100 unit box
+			} else if (activeTool === 'overlays' && !selection) {
+				const size = 50;
 				actions.addOverlay({
 					_id: crypto.randomUUID(),
 					name: 'New Overlay',
-					image: '', // User will set this in the form
+					image: '',
 					bounds: [
-						[pos[0] + size, pos[1] - size], // Top Left
-						[pos[0] - size, pos[1] + size], // Bottom Right
+						[pos[0] + size, pos[1] - size],
+						[pos[0] - size, pos[1] + size],
 					],
 				});
-			}
-			// 7. Select Mode / Deselect Logic
-			else {
+			} else {
 				actions.deselect();
 			}
 		},

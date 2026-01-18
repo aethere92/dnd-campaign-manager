@@ -1,6 +1,6 @@
 // --- FILE: forms/PathForm.jsx ---
 import React from 'react';
-import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon, AlignCenter } from 'lucide-react'; // Added AlignCenter
+import { Trash2, X, Footprints, LayoutTemplate, Type as TypeIcon, AlignCenter, EyeOff, Eye } from 'lucide-react'; // Added AlignCenter
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
 
@@ -49,6 +49,22 @@ export default function PathForm({ data, onChange, onDelete, onClose }) {
 		<div className='flex flex-col h-full bg-muted/10 w-full'>
 			<Header title='Edit Path' onDelete={onDelete} onClose={onClose} />
 			<div className='p-5 space-y-6 overflow-y-auto flex-1 custom-scrollbar'>
+				{/* NEW VISIBILITY TOGGLE */}
+				<div className='space-y-4 p-4 rounded-xl border border-border bg-card/50'>
+					<div className='flex items-center justify-between'>
+						<span className='text-xs font-bold text-muted-foreground uppercase'>Initial State</span>
+						<button
+							onClick={() => onChange('visibleOnLoad', !safeData.visibleOnLoad)}
+							className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold transition-colors border ${
+								safeData.visibleOnLoad
+									? 'bg-green-500/10 text-green-600 border-green-500/20'
+									: 'bg-muted text-muted-foreground border-transparent'
+							}`}>
+							{safeData.visibleOnLoad ? <Eye size={12} /> : <EyeOff size={12} />}
+							{safeData.visibleOnLoad ? 'Visible on Load' : 'Hidden on Load'}
+						</button>
+					</div>
+				</div>
 				<div className={SECTION_CLASS}>
 					<div className='flex gap-3'>
 						<div className='w-12 h-12 rounded-lg shrink-0 flex items-center justify-center border border-border bg-card shadow-sm'>
