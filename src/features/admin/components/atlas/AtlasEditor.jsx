@@ -76,7 +76,15 @@ function AtlasEditorInner() {
 	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration or Missing Metadata</div>;
 
 	return (
-		<div className='flex h-full w-full relative overflow-hidden bg-[#1a1412]'>
+		<div
+			className='flex h-full w-full relative overflow-hidden'
+			style={{
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			<div className='hidden lg:block shrink-0 relative z-[500]'>
 				<EditorLayerList />
 			</div>

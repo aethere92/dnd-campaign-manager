@@ -93,7 +93,16 @@ export const MapCanvas = () => {
 	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${config.fileExtension || 'png'}`;
 
 	return (
-		<div ref={wrapperRef} className='flex-1 relative h-full bg-background'>
+		<div
+			ref={wrapperRef}
+			className='flex-1 relative h-full'
+			style={{
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			<MapContainer
 				center={[0, 0]}
 				zoom={Math.ceil(config.sizes.maxZoom / 2)}
