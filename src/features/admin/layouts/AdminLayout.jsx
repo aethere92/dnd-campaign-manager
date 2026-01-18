@@ -33,7 +33,7 @@ const NavItem = ({ to, icon: Icon, label }) => {
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
 					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
-					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground',
 			)}>
 			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
 			{label}
@@ -87,8 +87,13 @@ export default function AdminLayout() {
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
 					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Atlas
+					</div>
 					<NavItem to='/dm/tools/migration' icon={Database} label='Map Migration' />
 					<NavItem to='/dm/tools/atlas' icon={MapPin} label='Atlas Manager' />
+					<NavItem to='/dm/manage/map' icon={MapPin} label='Maps (DB)' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities

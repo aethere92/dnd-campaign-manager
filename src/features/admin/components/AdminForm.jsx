@@ -12,6 +12,8 @@ import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER
 // Inputs
 import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
 import SmartImageInput from '@/features/admin/components/SmartImageInput';
+import AttributeValueInput from './inputs/AttributeValueInput';
+import StoragePathInput from './inputs/StoragePathInput';
 
 // Sub-Managers
 import SessionEventManager from './SessionEventManager';
@@ -54,6 +56,7 @@ export default function AdminForm({ type, id }) {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [mapKeys, setMapKeys] = useState([]);
 
 	const {
 		register,
@@ -92,17 +95,33 @@ export default function AdminForm({ type, id }) {
 					let value = attr.value;
 					let dataType = 'string';
 
-					// FIX: Detect Object/Array explicitly
-					if (typeof value === 'object' && value !== null) {
-						value = JSON.stringify(value, null, 2);
-						dataType = 'json';
+					// --- FIX START: Better Detection Logic ---
+					if (typeof value === 'boolean' || value === 'true' || value === 'false') {
+						dataType = 'boolean';
+						value = String(value); // Standardize to string for the form state
 					} else if (typeof value === 'number') {
 						dataType = 'number';
+					} else if (Array.isArray(value)) {
+						// CRITICAL CHECK: Is this a simple list (strings/numbers) or complex objects?
+						const isSimpleList = value.every((item) => ['string', 'number'].includes(typeof item));
+
+						if (isSimpleList) {
+							dataType = 'list';
+							value = JSON.stringify(value);
+						} else {
+							// It contains Objects -> Force JSON mode so we can see the data
+							dataType = 'json';
+							value = JSON.stringify(value, null, 2);
+						}
+					} else if (typeof value === 'object' && value !== null) {
+						// It's an object -> Use Map
+						dataType = 'map';
+						value = JSON.stringify(value, null, 2);
 					}
+					// --- FIX END ---
 
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
-						// For standard attrs, we don't push to custom array
 					} else {
 						customAttrs.push({ key, value, type: dataType });
 					}
@@ -122,6 +141,15 @@ export default function AdminForm({ type, id }) {
 		};
 		loadEntity();
 	}, [type, id, reset, strategy]);
+
+	useEffect(() => {
+		if (type === 'map' && campaignId) {
+			// Import fetchMapKeys from adminService first!
+			import('@/features/admin/api/adminService').then((mod) => {
+				mod.fetchMapKeys(campaignId).then(setMapKeys);
+			});
+		}
+	}, [type, campaignId]);
 
 	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
@@ -147,11 +175,15 @@ export default function AdminForm({ type, id }) {
 				// Explicit Type Casting
 				if (item.type === 'number') {
 					finalValue = Number(item.value);
-				} else if (item.type === 'json') {
+				} else if (item.type === 'boolean') {
+					// Handle "true"/"false" string back to boolean
+					finalValue = String(item.value) === 'true';
+				} else if (item.type === 'json' || item.type === 'list' || item.type === 'map') {
+					// These are stored as stringified JSON in the form state,
+					// so we parse them back to real objects before sending to Supabase
 					try {
 						finalValue = JSON.parse(item.value);
 					} catch (e) {
-						// Fallback: save as string if invalid JSON, but warn user ideally
 						console.warn(`Failed to parse JSON for ${item.key}, saving as string.`);
 					}
 				}
@@ -321,12 +353,32 @@ export default function AdminForm({ type, id }) {
 										</option>
 									))}
 								</select>
-							) : (
-								<input
-									type={attr.type === 'number' ? 'number' : 'text'}
-									{...register(`attributes.${attr.key}`)}
-									className={ADMIN_INPUT_CLASS}
+							) : attr.type === 'storage_path' ? (
+								<StoragePathInput
+									value={watch(`attributes.${attr.key}`)}
+									onChange={(val) => setValue(`attributes.${attr.key}`, val)}
+									placeholder={attr.placeholder}
 								/>
+							) : (
+								/* STANDARD INPUT WITH OPTIONAL DATALIST */
+								<>
+									<input
+										type={attr.type === 'number' ? 'number' : 'text'}
+										{...register(`attributes.${attr.key}`)}
+										className={ADMIN_INPUT_CLASS}
+										placeholder={attr.placeholder}
+										list={attr.suggestions ? `${attr.key}-suggestions` : undefined} // Connect to datalist
+									/>
+
+									{/* Render Datalist if suggestions enabled */}
+									{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
+										<datalist id={`${attr.key}-suggestions`}>
+											{mapKeys.map((k) => (
+												<option key={k} value={k} />
+											))}
+										</datalist>
+									)}
+								</>
 							)}
 						</div>
 					))}
@@ -349,10 +401,13 @@ export default function AdminForm({ type, id }) {
 
 				<div className='space-y-3'>
 					{fields.map((field, index) => {
+						// 1. Get current values specifically for this row
 						const attrType = watch(`customAttributes.${index}.type`);
+						const attrValue = watch(`customAttributes.${index}.value`);
+
 						return (
 							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
-								{/* Key Input */}
+								{/* Key Input (unchanged) */}
 								<div className='w-1/4 pt-1'>
 									<input
 										type='text'
@@ -362,7 +417,7 @@ export default function AdminForm({ type, id }) {
 									/>
 								</div>
 
-								{/* Type Selector */}
+								{/* Type Selector (UPDATED) */}
 								<div className='w-24 pt-1'>
 									<div className='relative'>
 										<select
@@ -370,8 +425,12 @@ export default function AdminForm({ type, id }) {
 											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
 											<option value='string'>Text</option>
 											<option value='number'>Number</option>
+											<option value='boolean'>Toggle</option> {/* NEW */}
+											<option value='list'>List</option> {/* NEW */}
+											<option value='map'>Map</option> {/* NEW */}
 											<option value='json'>JSON</option>
 										</select>
+										{/* Icon Decorator */}
 										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
 											{attrType === 'json' ? (
 												<Braces size={12} />
@@ -384,16 +443,16 @@ export default function AdminForm({ type, id }) {
 									</div>
 								</div>
 
-								{/* Value Input */}
+								{/* Value Input (REPLACED) */}
 								<div className='flex-1 relative'>
-									<AutoSizeTextarea
-										register={register}
-										path={`customAttributes.${index}.value`}
+									<AttributeValueInput
+										type={attrType}
+										value={attrValue}
+										onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
 										placeholder='Value'
-										className={ADMIN_INPUT_CLASS}
 									/>
 
-									{/* JSON Format Button */}
+									{/* Keep JSON Format button just for JSON type */}
 									{attrType === 'json' && (
 										<button
 											type='button'

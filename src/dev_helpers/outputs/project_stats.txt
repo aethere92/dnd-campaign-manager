@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-18 09:04:02
+Generated: 2026-01-18 11:23:50
 ================================================================
 
 ### OVERALL STATISTICS
 
-Total files: 233
-Total lines: 25,187
-Non-empty lines: 22,323
-Comment lines: 1,759
-Total size: 788,654 bytes (770.17 KB)
-Average lines per file: 108.1
+Total files: 235
+Total lines: 25,840
+Non-empty lines: 22,909
+Comment lines: 1,802
+Total size: 809,333 bytes (790.36 KB)
+Average lines per file: 110.0
 
 
 ### STATISTICS BY FILE TYPE
@@ -22,8 +22,8 @@ Average lines per file: 108.1
 
 .js:
   Files: 75
-  Lines: 7,537
-  Size: 209,665 bytes (204.75 KB)
+  Lines: 7,650
+  Size: 213,440 bytes (208.44 KB)
 
 .json:
   Files: 1
@@ -31,9 +31,9 @@ Average lines per file: 108.1
   Size: 4,874 bytes (4.76 KB)
 
 .jsx:
-  Files: 154
-  Lines: 16,465
-  Size: 541,828 bytes (529.13 KB)
+  Files: 156
+  Lines: 17,005
+  Size: 558,732 bytes (545.64 KB)
 
 .md:
   Files: 1
@@ -49,25 +49,25 @@ Average lines per file: 108.1
 ### LARGEST FILES (by lines)
 
 app\styles\global.css: 491 lines
+features\admin\components\AdminForm.jsx: 489 lines
 merge_specific_files.py: 483 lines
-features\admin\components\AdminForm.jsx: 430 lines
+features\admin\api\adminService.js: 431 lines
 features\admin\components\RelationshipManager.jsx: 420 lines
 features\admin\components\atlas\forms\AreaForm.jsx: 402 lines
 features\atlas\utils\markerUtils.js: 394 lines
-features\admin\api\adminService.js: 362 lines
 features\admin\components\atlas\layers\EditAreasLayer.jsx: 362 lines
 features\admin\components\atlas\forms\MarkerForm.jsx: 356 lines
 features\admin\components\EncounterManager.jsx: 354 lines
 features\admin\components\MarkdownEditorImpl.jsx: 350 lines
+features\admin\components\inputs\AttributeValueInput.jsx: 305 lines
 features\wiki\components\EntityLocalGraph.jsx: 301 lines
+domain\entity\api\entityService.js: 294 lines
 features\admin\components\atlas\hooks\useAtlasReducer.js: 275 lines
-domain\entity\api\entityService.js: 274 lines
 features\wiki\components\EntityMiniMap.jsx: 272 lines
 features\admin\components\QuestObjectiveManager.jsx: 269 lines
 features\wiki\components\landing\EntityTableGroup.jsx: 267 lines
 features\admin\pages\SplitPaneManager.jsx: 265 lines
 features\smart-tooltip\components\TooltipCard.jsx: 251 lines
-features\admin\components\atlas\components\EditorContextMenu.jsx: 241 lines
 
 
 ### STATISTICS BY CATEGORY
@@ -79,13 +79,13 @@ app:
 
 domain_entity:
   Files: 13
-  Lines: 1,430
-  Size: 38,609 bytes (37.70 KB)
+  Lines: 1,450
+  Size: 39,156 bytes (38.24 KB)
 
 features_admin:
-  Files: 53
-  Lines: 8,722
-  Size: 282,560 bytes (275.94 KB)
+  Files: 55
+  Lines: 9,355
+  Size: 302,692 bytes (295.60 KB)
 
 features_atlas:
   Files: 26

@@ -86,6 +86,9 @@ PARTIAL BUNDLE: FEATURES ADMIN
           services/
             atlasMapper.js
             geometryUtils.js
+        inputs/
+          AttributeValueInput.jsx
+          StoragePathInput.jsx
       config/
         adminStrategies.js
         imageManifest.json
@@ -335,7 +338,10 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 /**
  * Helper to determine which column stores JSON attributes.
  */
-const getAttrColumn = (type) => 'attributes';
+const getAttrColumn = (type) => {
+	const strategy = getStrategy(type);
+	return strategy.jsonField || 'attributes';
+};
 
 /**
  * Escape Regex characters for JS processing
@@ -350,6 +356,32 @@ function escapeRegExp(string) {
 function escapeSqlLike(string) {
 	return string.replace(/[%_]/g, '\\$&');
 }
+
+const buildMapPayload = (data, jsonStorage) => {
+	// 1. Construct the Config Object (Nested)
+	const config = {
+		path: jsonStorage.path,
+		parentId: jsonStorage.parentId || null, // null if empty string
+		fileExtension: jsonStorage.fileExtension || 'webp',
+		mapId: jsonStorage.key || data.name?.toLowerCase().replace(/\s+/g, '_'),
+		sizes: {
+			maxZoom: parseInt(jsonStorage.maxZoom || 4),
+			imageWidth: parseInt(jsonStorage.imageWidth || 0),
+			imageHeight: parseInt(jsonStorage.imageHeight || 0),
+		},
+	};
+
+	// 2. Construct the Data Object (Skeleton)
+	// Only set this on CREATE, not UPDATE (unless you want to overwrite data)
+	const initialData = {
+		areas: {},
+		paths: [],
+		overlays: [],
+		annotations: {},
+	};
+
+	return { config, initialData };
+};
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
@@ -388,6 +420,20 @@ export const createEntity = async (type, data) => {
 		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
 	}
 	// --- FIX END ---
+
+	if (type === 'map') {
+		// Handle Map Specifics
+		corePayload.key = jsonStorage.key || (data.name || '').toLowerCase().replace(/\s+/g, '_');
+
+		const { config, initialData } = buildMapPayload(data, jsonStorage);
+		corePayload.config = config;
+		corePayload.data = initialData; // Safe default skeleton
+
+		// Remove flattened keys so they don't try to save as non-existent columns
+		delete corePayload.attributes;
+	} else {
+		corePayload[attrCol] = jsonStorage;
+	}
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -429,7 +475,16 @@ export const updateEntity = async (type, id, data) => {
 	}
 	// --- FIX END ---
 
-	corePayload[attrCol] = jsonStorage;
+	if (type === 'map') {
+		// Use the "key" from the form, or fallback to existing if not editable
+		if (jsonStorage.key) corePayload.key = jsonStorage.key;
+
+		const { config } = buildMapPayload(data, jsonStorage);
+		corePayload.config = config;
+		// Do NOT overwrite corePayload.data on update
+	} else {
+		corePayload[attrCol] = jsonStorage;
+	}
 
 	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
 
@@ -439,7 +494,7 @@ export const updateEntity = async (type, id, data) => {
 
 export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-	const attrCol = getAttrColumn(type);
+	const attrCol = strategy.jsonField || 'attributes'; // 'config' for maps
 
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
@@ -450,29 +505,39 @@ export const fetchRawEntity = async (type, id) => {
 	if (coreError) throw coreError;
 
 	const formData = { ...coreData };
+
+	// Map Core Columns (Title -> Name)
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
-			if (coreData[dbCol] !== undefined) {
-				formData[formField] = coreData[dbCol];
-			}
+			if (dbCol && coreData[dbCol] !== undefined) formData[formField] = coreData[dbCol];
 		});
 	}
 
 	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
-	Object.entries(jsonSource).forEach(([key, value]) => {
-		attributesList.push({ name: key, value: value });
-	});
+	// --- MAP SPECIFIC FLATTENING ---
+	if (type === 'map') {
+		// 1. Pull core columns into attributes
+		if (coreData.key) attributesList.push({ name: 'key', value: coreData.key });
 
-	if (strategy.defaultAttributes) {
-		strategy.defaultAttributes.forEach((defAttr) => {
-			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
-				attributesList.push({
-					name: defAttr.key,
-					value: coreData[defAttr.key],
-				});
-			}
+		// 2. Pull root config items
+		['path', 'parentId', 'fileExtension'].forEach((k) => {
+			if (jsonSource[k]) attributesList.push({ name: k, value: jsonSource[k] });
+		});
+
+		// 3. Pull nested sizes
+		if (jsonSource.sizes) {
+			['imageWidth', 'imageHeight', 'maxZoom'].forEach((k) => {
+				if (jsonSource.sizes[k] !== undefined) {
+					attributesList.push({ name: k, value: jsonSource.sizes[k] });
+				}
+			});
+		}
+	} else {
+		// Standard Entity Logic (Existing)
+		Object.entries(jsonSource).forEach(([key, value]) => {
+			attributesList.push({ name: key, value: value });
 		});
 	}
 
@@ -490,7 +555,7 @@ export const fetchRelationships = async (id) => {
             is_bidirectional,
             is_hidden,
             target:entities!to_entity_id ( id, name, type )
-        `
+        `,
 		)
 		.eq('from_entity_id', id);
 
@@ -601,7 +666,7 @@ export const fetchSessionEventsWithRelationships = async (sessionId) => {
             id,
             from_entity_id,
             target:entities!to_entity_id ( id, name, type )
-        `
+        `,
 		)
 		.in('from_entity_id', eventIds);
 
@@ -627,7 +692,7 @@ export const fetchEncounterActions = async (encounterId) => {
 			*,
 			actor:entities!actor_entity_id(name, type),
 			target:entities!target_entity_id(name, type)
-		`
+		`,
 		)
 		.eq('encounter_id', encounterId)
 		.order('round_number', { ascending: true })
@@ -691,6 +756,13 @@ export const executeBulkReplace = async (changeList) => {
 	return results;
 };
 
+export const fetchMapKeys = async (campaignId) => {
+	const { data, error } = await supabase.from('maps').select('key').eq('campaign_id', campaignId).order('key');
+
+	if (error) return [];
+	return data.map((m) => m.key);
+};
+
 --- END OF features\admin\api\adminService.js ---
 
 --- FILE: features\admin\components\AdminForm.jsx ---
@@ -708,6 +780,8 @@ import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER
 // Inputs
 import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
 import SmartImageInput from '@/features/admin/components/SmartImageInput';
+import AttributeValueInput from './inputs/AttributeValueInput';
+import StoragePathInput from './inputs/StoragePathInput';
 
 // Sub-Managers
 import SessionEventManager from './SessionEventManager';
@@ -750,6 +824,7 @@ export default function AdminForm({ type, id }) {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [mapKeys, setMapKeys] = useState([]);
 
 	const {
 		register,
@@ -788,17 +863,33 @@ export default function AdminForm({ type, id }) {
 					let value = attr.value;
 					let dataType = 'string';
 
-					// FIX: Detect Object/Array explicitly
-					if (typeof value === 'object' && value !== null) {
-						value = JSON.stringify(value, null, 2);
-						dataType = 'json';
+					// --- FIX START: Better Detection Logic ---
+					if (typeof value === 'boolean' || value === 'true' || value === 'false') {
+						dataType = 'boolean';
+						value = String(value); // Standardize to string for the form state
 					} else if (typeof value === 'number') {
 						dataType = 'number';
+					} else if (Array.isArray(value)) {
+						// CRITICAL CHECK: Is this a simple list (strings/numbers) or complex objects?
+						const isSimpleList = value.every((item) => ['string', 'number'].includes(typeof item));
+
+						if (isSimpleList) {
+							dataType = 'list';
+							value = JSON.stringify(value);
+						} else {
+							// It contains Objects -> Force JSON mode so we can see the data
+							dataType = 'json';
+							value = JSON.stringify(value, null, 2);
+						}
+					} else if (typeof value === 'object' && value !== null) {
+						// It's an object -> Use Map
+						dataType = 'map';
+						value = JSON.stringify(value, null, 2);
 					}
+					// --- FIX END ---
 
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
-						// For standard attrs, we don't push to custom array
 					} else {
 						customAttrs.push({ key, value, type: dataType });
 					}
@@ -818,6 +909,15 @@ export default function AdminForm({ type, id }) {
 		};
 		loadEntity();
 	}, [type, id, reset, strategy]);
+
+	useEffect(() => {
+		if (type === 'map' && campaignId) {
+			// Import fetchMapKeys from adminService first!
+			import('@/features/admin/api/adminService').then((mod) => {
+				mod.fetchMapKeys(campaignId).then(setMapKeys);
+			});
+		}
+	}, [type, campaignId]);
 
 	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
@@ -843,11 +943,15 @@ export default function AdminForm({ type, id }) {
 				// Explicit Type Casting
 				if (item.type === 'number') {
 					finalValue = Number(item.value);
-				} else if (item.type === 'json') {
+				} else if (item.type === 'boolean') {
+					// Handle "true"/"false" string back to boolean
+					finalValue = String(item.value) === 'true';
+				} else if (item.type === 'json' || item.type === 'list' || item.type === 'map') {
+					// These are stored as stringified JSON in the form state,
+					// so we parse them back to real objects before sending to Supabase
 					try {
 						finalValue = JSON.parse(item.value);
 					} catch (e) {
-						// Fallback: save as string if invalid JSON, but warn user ideally
 						console.warn(`Failed to parse JSON for ${item.key}, saving as string.`);
 					}
 				}
@@ -1017,12 +1121,32 @@ export default function AdminForm({ type, id }) {
 										</option>
 									))}
 								</select>
-							) : (
-								<input
-									type={attr.type === 'number' ? 'number' : 'text'}
-									{...register(`attributes.${attr.key}`)}
-									className={ADMIN_INPUT_CLASS}
+							) : attr.type === 'storage_path' ? (
+								<StoragePathInput
+									value={watch(`attributes.${attr.key}`)}
+									onChange={(val) => setValue(`attributes.${attr.key}`, val)}
+									placeholder={attr.placeholder}
 								/>
+							) : (
+								/* STANDARD INPUT WITH OPTIONAL DATALIST */
+								<>
+									<input
+										type={attr.type === 'number' ? 'number' : 'text'}
+										{...register(`attributes.${attr.key}`)}
+										className={ADMIN_INPUT_CLASS}
+										placeholder={attr.placeholder}
+										list={attr.suggestions ? `${attr.key}-suggestions` : undefined} // Connect to datalist
+									/>
+
+									{/* Render Datalist if suggestions enabled */}
+									{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
+										<datalist id={`${attr.key}-suggestions`}>
+											{mapKeys.map((k) => (
+												<option key={k} value={k} />
+											))}
+										</datalist>
+									)}
+								</>
 							)}
 						</div>
 					))}
@@ -1045,10 +1169,13 @@ export default function AdminForm({ type, id }) {
 
 				<div className='space-y-3'>
 					{fields.map((field, index) => {
+						// 1. Get current values specifically for this row
 						const attrType = watch(`customAttributes.${index}.type`);
+						const attrValue = watch(`customAttributes.${index}.value`);
+
 						return (
 							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
-								{/* Key Input */}
+								{/* Key Input (unchanged) */}
 								<div className='w-1/4 pt-1'>
 									<input
 										type='text'
@@ -1058,7 +1185,7 @@ export default function AdminForm({ type, id }) {
 									/>
 								</div>
 
-								{/* Type Selector */}
+								{/* Type Selector (UPDATED) */}
 								<div className='w-24 pt-1'>
 									<div className='relative'>
 										<select
@@ -1066,8 +1193,12 @@ export default function AdminForm({ type, id }) {
 											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
 											<option value='string'>Text</option>
 											<option value='number'>Number</option>
+											<option value='boolean'>Toggle</option> {/* NEW */}
+											<option value='list'>List</option> {/* NEW */}
+											<option value='map'>Map</option> {/* NEW */}
 											<option value='json'>JSON</option>
 										</select>
+										{/* Icon Decorator */}
 										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
 											{attrType === 'json' ? (
 												<Braces size={12} />
@@ -1080,16 +1211,16 @@ export default function AdminForm({ type, id }) {
 									</div>
 								</div>
 
-								{/* Value Input */}
+								{/* Value Input (REPLACED) */}
 								<div className='flex-1 relative'>
-									<AutoSizeTextarea
-										register={register}
-										path={`customAttributes.${index}.value`}
+									<AttributeValueInput
+										type={attrType}
+										value={attrValue}
+										onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
 										placeholder='Value'
-										className={ADMIN_INPUT_CLASS}
 									/>
 
-									{/* JSON Format Button */}
+									{/* Keep JSON Format button just for JSON type */}
 									{attrType === 'json' && (
 										<button
 											type='button'
@@ -7674,6 +7805,488 @@ export const calculateNewOverlayBounds = (handle, newLat, newLng, oldBounds) => 
 
 --- END OF features\admin\components\atlas\services\geometryUtils.js ---
 
+--- FILE: features\admin\components\inputs\AttributeValueInput.jsx ---
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { X, Plus, Trash2 } from 'lucide-react';
+import { ADMIN_INPUT_CLASS } from '../AdminFormStyles';
+
+// --- 1. AUTO-EXPANDING STRING INPUT ---
+// Looks like an input for short text, grows like a textarea for long text
+const AutoStringInput = ({ value, onChange, placeholder }) => {
+	const textareaRef = useRef(null);
+
+	// Auto-resize logic
+	const adjustHeight = () => {
+		const el = textareaRef.current;
+		if (el) {
+			el.style.height = 'auto'; // Reset to calculate shrink
+			el.style.height = el.scrollHeight + 2 + 'px'; // Set to scroll height
+		}
+	};
+
+	// Adjust on mount and value change
+	useLayoutEffect(() => {
+		adjustHeight();
+	}, [value]);
+
+	return (
+		<textarea
+			ref={textareaRef}
+			rows={1}
+			value={value}
+			onChange={(e) => onChange(e.target.value)}
+			placeholder={placeholder}
+			// min-h-[38px] matches the standard input height of the other fields
+			className={`${ADMIN_INPUT_CLASS} min-h-[38px] resize-none overflow-hidden leading-relaxed`}
+			style={{ height: '38px' }}
+		/>
+	);
+};
+
+// --- 2. TOGGLE ---
+const BooleanInput = ({ value, onChange }) => {
+	const isChecked = String(value) === 'true';
+	return (
+		<div className='flex items-center h-[38px] select-none'>
+			<button
+				type='button'
+				onClick={() => onChange(!isChecked)}
+				className={`
+                    relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+                    ${isChecked ? 'bg-emerald-500' : 'bg-muted-foreground/30'}
+                `}
+				role='switch'
+				aria-checked={isChecked}>
+				<span
+					aria-hidden='true'
+					className={`
+                        pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+                        ${isChecked ? 'translate-x-5' : 'translate-x-0'}
+                    `}
+				/>
+			</button>
+			<span
+				onClick={() => onChange(!isChecked)}
+				className='ml-3 text-xs font-bold uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground'>
+				{isChecked ? 'True' : 'False'}
+			</span>
+		</div>
+	);
+};
+
+// --- 3. EDITABLE TAG HELPER ---
+const EditableTag = ({ text, onUpdate, onDelete }) => {
+	const [isEditing, setIsEditing] = useState(false);
+	const [editValue, setEditValue] = useState(text);
+	const inputRef = useRef(null);
+
+	useEffect(() => {
+		if (isEditing && inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, [isEditing]);
+
+	const handleSave = () => {
+		if (editValue.trim()) {
+			onUpdate(editValue.trim());
+		}
+		setIsEditing(false);
+	};
+
+	const handleKeyDown = (e) => {
+		if (e.key === 'Enter') handleSave();
+		if (e.key === 'Escape') {
+			setEditValue(text);
+			setIsEditing(false);
+		}
+	};
+
+	if (isEditing) {
+		return (
+			<input
+				ref={inputRef}
+				type='text'
+				value={editValue}
+				onChange={(e) => setEditValue(e.target.value)}
+				onBlur={handleSave}
+				onKeyDown={handleKeyDown}
+				className='h-6 min-w-[60px] max-w-[150px] px-1 text-xs bg-background border border-primary rounded outline-none shadow-sm'
+			/>
+		);
+	}
+
+	return (
+		<span
+			className='inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 cursor-pointer transition-colors group'
+			onClick={() => setIsEditing(true)}
+			title='Click to edit'>
+			{text}
+			<button
+				type='button'
+				onClick={(e) => {
+					e.stopPropagation();
+					onDelete();
+				}}
+				className='ml-1 text-primary/60 hover:text-red-500 transition-colors focus:outline-none'>
+				<X size={12} strokeWidth={3} />
+			</button>
+		</span>
+	);
+};
+
+// --- 4. LIST INPUT ---
+const ListInput = ({ value, onChange }) => {
+	const [items, setItems] = useState(() => {
+		try {
+			if (Array.isArray(value)) return value;
+			return JSON.parse(value || '[]');
+		} catch {
+			return [];
+		}
+	});
+	const [draft, setDraft] = useState('');
+
+	useEffect(() => {
+		onChange(JSON.stringify(items));
+	}, [items]);
+
+	const addItem = () => {
+		if (!draft.trim()) return;
+		setItems([...items, draft.trim()]);
+		setDraft('');
+	};
+
+	const updateItem = (index, newVal) => {
+		const newItems = [...items];
+		newItems[index] = newVal;
+		setItems(newItems);
+	};
+
+	const deleteItem = (index) => {
+		setItems(items.filter((_, i) => i !== index));
+	};
+
+	const handleKeyDown = (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			addItem();
+		}
+		if (e.key === 'Backspace' && draft === '' && items.length > 0) {
+			deleteItem(items.length - 1);
+		}
+	};
+
+	return (
+		<div className='min-h-[38px] w-full bg-background border border-border rounded-md px-2 py-1.5 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all flex flex-wrap gap-2 items-center'>
+			{items.map((item, idx) => (
+				<EditableTag
+					key={`${idx}-${item}`}
+					text={item}
+					onUpdate={(val) => updateItem(idx, val)}
+					onDelete={() => deleteItem(idx)}
+				/>
+			))}
+
+			<div className='flex-1 min-w-[120px]'>
+				<input
+					type='text'
+					value={draft}
+					onChange={(e) => setDraft(e.target.value)}
+					onKeyDown={handleKeyDown}
+					onBlur={addItem}
+					placeholder={items.length === 0 ? 'Type items... (Press Enter)' : 'Add another...'}
+					className='w-full h-6 bg-transparent text-sm focus:outline-none placeholder:text-muted-foreground/50'
+				/>
+			</div>
+		</div>
+	);
+};
+
+// --- 5. MAP INPUT ---
+const MapInput = ({ value, onChange }) => {
+	const [rows, setRows] = useState(() => {
+		try {
+			const obj = typeof value === 'string' ? JSON.parse(value) : value;
+			if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return [];
+			return Object.entries(obj).map(([k, v]) => ({
+				id: Math.random(),
+				key: k,
+				val: v,
+			}));
+		} catch {
+			return [];
+		}
+	});
+
+	useEffect(() => {
+		const newObj = {};
+		rows.forEach((r) => {
+			if (r.key.trim()) {
+				const isNum = !isNaN(r.val) && r.val !== '' && String(r.val).trim() !== '';
+				newObj[r.key] = isNum ? Number(r.val) : r.val;
+			}
+		});
+		onChange(JSON.stringify(newObj));
+	}, [rows]);
+
+	const updateRow = (index, field, newVal) => {
+		const newRows = [...rows];
+		newRows[index][field] = newVal;
+		setRows(newRows);
+	};
+
+	const addRow = () => setRows([...rows, { id: Math.random(), key: '', val: '' }]);
+	const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
+
+	return (
+		<div className='space-y-2 border border-border rounded-md p-3 bg-muted/20'>
+			{rows.map((row, idx) => (
+				<div key={row.id} className='flex gap-2 items-center'>
+					<input
+						type='text'
+						placeholder='Key'
+						value={row.key}
+						onChange={(e) => updateRow(idx, 'key', e.target.value)}
+						className={`${ADMIN_INPUT_CLASS} font-bold w-1/3`}
+					/>
+					<span className='text-muted-foreground font-bold'>:</span>
+					<input
+						type='text'
+						placeholder='Value'
+						value={row.val}
+						onChange={(e) => updateRow(idx, 'val', e.target.value)}
+						className={`${ADMIN_INPUT_CLASS} flex-1`}
+					/>
+					<button
+						type='button'
+						onClick={() => removeRow(idx)}
+						className='text-muted-foreground hover:text-red-500 p-2'
+						tabIndex={-1}>
+						<X size={16} />
+					</button>
+				</div>
+			))}
+			<button
+				type='button'
+				onClick={addRow}
+				className='flex items-center gap-1 text-xs font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded transition-colors'>
+				<Plus size={14} /> Add Property
+			</button>
+		</div>
+	);
+};
+
+// --- MAIN EXPORT ---
+export default function AttributeValueInput({ type, value, onChange, placeholder, ...props }) {
+	if (type === 'boolean') return <BooleanInput value={value} onChange={onChange} />;
+	if (type === 'list') return <ListInput value={value} onChange={onChange} />;
+	if (type === 'map') return <MapInput value={value} onChange={onChange} />;
+
+	if (type === 'number') {
+		return (
+			<input
+				type='number'
+				value={value}
+				onChange={(e) => onChange(e.target.value)}
+				className={ADMIN_INPUT_CLASS}
+				placeholder={placeholder}
+				{...props}
+			/>
+		);
+	}
+
+	if (type === 'json') {
+		return (
+			<textarea
+				value={value}
+				onChange={(e) => onChange(e.target.value)}
+				className={`${ADMIN_INPUT_CLASS} font-mono text-xs min-h-[60px] leading-relaxed resize-y`}
+				placeholder={placeholder}
+				{...props}
+			/>
+		);
+	}
+
+	// Default: Auto-Expanding String
+	return <AutoStringInput value={value} onChange={onChange} placeholder={placeholder} />;
+}
+
+--- END OF features\admin\components\inputs\AttributeValueInput.jsx ---
+
+--- FILE: features\admin\components\inputs\StoragePathInput.jsx ---
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/shared/api/supabaseClient';
+import { Folder, ChevronRight, CornerLeftUp, Check, Loader2, Search } from 'lucide-react';
+import { Drawer } from '@/shared/components/ui/Drawer'; // Re-using your existing Drawer
+import { ADMIN_INPUT_CLASS } from '../AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+
+const BUCKET_NAME = 'atlas'; // Hardcoded based on your URLs
+const BASE_URL_PREFIX = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/`;
+
+// --- THE MODAL CONTENT ---
+const StorageBrowser = ({ onSelect, onClose }) => {
+	const [path, setPath] = useState(''); // Current folder path (e.g. 'maps/khorinis/')
+	const [items, setItems] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
+
+	// Load items whenever path changes
+	useEffect(() => {
+		const fetchItems = async () => {
+			setLoading(true);
+			setError(null);
+			try {
+				const { data, error } = await supabase.storage.from(BUCKET_NAME).list(path, {
+					limit: 100,
+					sortBy: { column: 'name', order: 'asc' },
+				});
+
+				if (error) throw error;
+
+				// Separate Folders vs Files
+				// In Supabase Storage, "Folders" usually don't have an ID, or we check structure
+				// But mostly we just want to let you navigate.
+				// Tiles usually have extensions (.webp). Folders don't.
+				const folders = data.filter((item) => !item.metadata); // Items without metadata are usually folders
+				const files = data.filter((item) => item.metadata);
+
+				setItems({ folders, files });
+			} catch (err) {
+				console.error(err);
+				setError(err.message);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchItems();
+	}, [path]);
+
+	const handleNavigate = (folderName) => {
+		setPath((prev) => (prev ? `${prev}/${folderName}` : folderName));
+	};
+
+	const handleUp = () => {
+		if (!path) return;
+		const parts = path.split('/');
+		parts.pop(); // Remove last segment
+		setPath(parts.length > 0 ? parts.join('/') : '');
+	};
+
+	const confirmSelection = () => {
+		// Construct the final public URL
+		// We remove trailing slashes to be clean
+		const cleanPath = path.replace(/\/$/, '');
+		const fullUrl = `${BASE_URL_PREFIX}${cleanPath}`;
+		onSelect(fullUrl);
+	};
+
+	return (
+		<div className='flex flex-col h-full pb-4'>
+			{/* Header: Breadcrumbs & Up Button */}
+			<div className='flex items-center gap-2 mb-4 bg-muted/30 p-2 rounded-md border border-border'>
+				<button
+					onClick={handleUp}
+					disabled={!path}
+					className='p-1.5 hover:bg-background rounded-md disabled:opacity-30 transition-colors'
+					title='Go Up'>
+					<CornerLeftUp size={16} />
+				</button>
+				<div className='font-mono text-xs flex-1 truncate select-all'>
+					{BUCKET_NAME}/{path || ''}
+				</div>
+			</div>
+
+			{/* Folder List */}
+			<div className='flex-1 overflow-y-auto custom-scrollbar min-h-[300px] border border-border rounded-md bg-background'>
+				{loading ? (
+					<div className='flex items-center justify-center h-full text-muted-foreground gap-2'>
+						<Loader2 className='animate-spin' size={20} /> Loading...
+					</div>
+				) : error ? (
+					<div className='p-4 text-red-500 text-xs'>{error}</div>
+				) : items.folders?.length === 0 && items.files?.length === 0 ? (
+					<div className='p-8 text-center text-muted-foreground text-xs italic'>Empty Folder</div>
+				) : (
+					<div className='divide-y divide-border/50'>
+						{/* Render Folders */}
+						{items.folders?.map((folder) => (
+							<button
+								key={folder.name}
+								onClick={() => handleNavigate(folder.name)}
+								className='w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left group'>
+								<Folder size={18} className='text-amber-500 fill-amber-500/20' />
+								<span className='text-sm font-medium flex-1'>{folder.name}</span>
+								<ChevronRight size={14} className='text-muted-foreground opacity-50 group-hover:opacity-100' />
+							</button>
+						))}
+
+						{/* Optional: Show file count or greyed out files just for context */}
+						{items.files?.length > 0 && (
+							<div className='p-3 text-[10px] text-muted-foreground uppercase tracking-widest bg-muted/10'>
+								{items.files.length} Files (Tiles)
+							</div>
+						)}
+					</div>
+				)}
+			</div>
+
+			{/* Footer Action */}
+			<div className='pt-4 mt-auto border-t border-border'>
+				<Button fullWidth variant='primary' icon={Check} onClick={confirmSelection}>
+					Select This Folder
+				</Button>
+				<p className='text-[10px] text-center text-muted-foreground mt-2'>
+					Selected path: <strong>{path || '(Root)'}</strong>
+				</p>
+			</div>
+		</div>
+	);
+};
+
+// --- MAIN INPUT COMPONENT ---
+export default function StoragePathInput({ value, onChange, placeholder }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<>
+			<div className='flex gap-2'>
+				<input
+					type='text'
+					value={value || ''}
+					onChange={(e) => onChange(e.target.value)}
+					placeholder={placeholder}
+					className={`${ADMIN_INPUT_CLASS} font-mono text-[11px]`}
+				/>
+				<Button
+					type='button'
+					variant='secondary'
+					icon={Search}
+					onClick={() => setIsOpen(true)}
+					className='shrink-0'
+					title='Browse Storage'>
+					Browse
+				</Button>
+			</div>
+
+			<Drawer isOpen={isOpen} onClose={() => setIsOpen(false)} title='Select Map Tile Folder' position='right'>
+				<div className='p-4 h-full'>
+					<StorageBrowser
+						onSelect={(url) => {
+							onChange(url);
+							setIsOpen(false);
+						}}
+						onClose={() => setIsOpen(false)}
+					/>
+				</div>
+			</Drawer>
+		</>
+	);
+}
+
+--- END OF features\admin\components\inputs\StoragePathInput.jsx ---
+
 --- FILE: features\admin\config\adminStrategies.js ---
 export const ADMIN_STRATEGIES = {
 	// 0. CAMPAIGN (Meta Entity)
@@ -7850,6 +8463,30 @@ export const ADMIN_STRATEGIES = {
 			{ key: 'order', label: 'Sort Order', type: 'number' },
 			{ key: 'type', label: 'Arc Type', type: 'select', options: ['Primary', 'Secondary', 'Character Arc'] },
 			{ key: 'background_image', label: 'Cover Image', type: 'image' },
+		],
+	},
+
+	// 10. ATLAS MAP
+	map: {
+		label: 'Atlas Map',
+		type: 'map',
+		primaryTable: 'maps',
+		colMapping: { name: 'title', description: null }, // Maps Title to DB Title, ignores description
+		jsonField: 'config', // Tells service this is the JSON column, not 'attributes'
+		hasNarrative: false,
+		defaultAttributes: [
+			{ key: 'key', label: 'Map Key (Unique ID)', type: 'text', required: true },
+			{
+				key: 'parentId',
+				label: 'Parent Map Key',
+				type: 'text',
+				suggestions: 'map_keys', // Custom flag we'll use in the Form
+			},
+			{ key: 'path', label: 'Storage Path / URL', type: 'storage_path', placeholder: 'https://.../folder_name' },
+			{ key: 'fileExtension', label: 'Extension', type: 'text', defaultValue: 'webp' },
+			{ key: 'imageWidth', label: 'Width (px)', type: 'number' },
+			{ key: 'imageHeight', label: 'Height (px)', type: 'number' },
+			{ key: 'maxZoom', label: 'Max Zoom', type: 'number', defaultValue: 4 },
 		],
 	},
 
@@ -8111,7 +8748,7 @@ const NavItem = ({ to, icon: Icon, label }) => {
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
 					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
-					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground',
 			)}>
 			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
 			{label}
@@ -8165,8 +8802,13 @@ export default function AdminLayout() {
 					</div>
 					<NavItem to='/dm/manage/campaign' icon={Database} label='Campaigns' />
 					<NavItem to='/dm/tools/replace' icon={Replace} label='Find & Replace' />
+
+					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
+						Atlas
+					</div>
 					<NavItem to='/dm/tools/migration' icon={Database} label='Map Migration' />
 					<NavItem to='/dm/tools/atlas' icon={MapPin} label='Atlas Manager' />
+					<NavItem to='/dm/manage/map' icon={MapPin} label='Maps (DB)' />
 
 					<div className='mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60'>
 						Entities

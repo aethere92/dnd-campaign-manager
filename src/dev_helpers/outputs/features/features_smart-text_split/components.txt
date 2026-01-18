@@ -86,6 +86,9 @@ SPLIT BUNDLE: FEATURES_SMART-TEXT - COMPONENTS
           services/
             atlasMapper.js
             geometryUtils.js
+        inputs/
+          AttributeValueInput.jsx
+          StoragePathInput.jsx
       config/
         adminStrategies.js
         imageManifest.json

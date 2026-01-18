@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-01-18 09:04:02
+Generated: 2026-01-18 11:23:50
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -91,6 +91,9 @@ features\admin\components\AdminForm.jsx:
   → ./EncounterManager
   → ./SessionEventManager
   → ./TacticalMapManager
+  → ./inputs/AttributeValueInput
+  → ./inputs/StoragePathInput
+  → @/features/admin/api/adminService
   → @/features/admin/api/adminService
   → @/features/admin/components/MarkdownEditor
   → @/features/admin/components/QuestObjectiveManager
@@ -368,6 +371,19 @@ features\admin\components\atlas\layers\EditPathsLayer.jsx:
   → leaflet
   → react
   → react-leaflet
+
+features\admin\components\inputs\AttributeValueInput.jsx:
+  → ../AdminFormStyles
+  → lucide-react
+  → react
+
+features\admin\components\inputs\StoragePathInput.jsx:
+  → ../AdminFormStyles
+  → @/shared/api/supabaseClient
+  → @/shared/components/ui/Button
+  → @/shared/components/ui/Drawer
+  → lucide-react
+  → react
 
 features\admin\layouts\AdminLayout.jsx:
   → @/features/campaign/CampaignContext
@@ -1298,6 +1314,7 @@ Most imported files (relative imports):
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
   ../components/VertexHandle: 2 imports
+  ../AdminFormStyles: 2 imports
   ../context/AtlasContext: 2 imports
   ./StatusIcon: 2 imports
   ./AppRoutes: 1 imports
@@ -1306,19 +1323,18 @@ Most imported files (relative imports):
   ./entityIcons: 1 imports
   ./entityColors: 1 imports
   ./entityStyles: 1 imports
+  ./inputs/AttributeValueInput: 1 imports
+  ./inputs/StoragePathInput: 1 imports
   ./SessionEventManager: 1 imports
   ./EncounterManager: 1 imports
   ./TacticalMapManager: 1 imports
   ../config/imageManifest.json: 1 imports
-  ./MarkdownEditorImpl: 1 imports
-  ./EventTagger: 1 imports
-  ./ImageLibraryModal: 1 imports
 
 
 Files with most outgoing dependencies:
+  features\admin\components\AdminForm.jsx: 20 imports
   app\AppRoutes.jsx: 18 imports
   features\admin\components\TacticalMapManager.jsx: 18 imports
-  features\admin\components\AdminForm.jsx: 17 imports
   features\wiki\components\EntityMiniMap.jsx: 15 imports
   features\admin\components\atlas\AtlasEditor.jsx: 14 imports
   features\dashboard\DashboardPage.jsx: 12 imports

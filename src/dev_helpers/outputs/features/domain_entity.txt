@@ -86,6 +86,9 @@ PARTIAL BUNDLE: DOMAIN ENTITY
           services/
             atlasMapper.js
             geometryUtils.js
+        inputs/
+          AttributeValueInput.jsx
+          StoragePathInput.jsx
       config/
         adminStrategies.js
         imageManifest.json
@@ -394,7 +397,7 @@ export const getCampaignArcs = async (campaignId) => {
 		.eq('relationship_type', 'part_of')
 		.in(
 			'to_entity_id',
-			arcs.map((a) => a.id)
+			arcs.map((a) => a.id),
 		); // Only get links for these arcs
 
 	if (relError) throw relError;
@@ -481,7 +484,7 @@ const fetchSessionWikiEntry = async (id) => {
 					entity_name: tag.name,
 					entity_type: tag.type,
 					type: 'mention',
-				}))
+				})),
 			);
 		}
 	});
@@ -532,7 +535,7 @@ const fetchQuestWikiEntry = async (id, entityData) => {
                 title,
                 attributes
             )
-        `
+        `,
 		)
 		.eq('quest_id', id)
 		.order('order_index', { ascending: true });
@@ -596,9 +599,29 @@ export const getTooltipData = async (id, type) => {
 	return data;
 };
 
+const getMaps = async (campaignId) => {
+	const { data, error } = await supabase
+		.from('maps')
+		.select('id, title, key, config')
+		.eq('campaign_id', campaignId)
+		.order('title');
+
+	if (error) throw error;
+
+	// Map DB structure to Domain Entity structure for the UI
+	return (data || []).map((m) => ({
+		id: m.id,
+		name: m.title, // UI expects 'name'
+		type: 'map',
+		description: m.key, // Use the key/slug as the description line
+		attributes: m.config || {}, // Expose config (width, height, path) as attributes
+	}));
+};
+
 const entityStrategies = {
 	session: getSessions,
 	quest: getCompleteEntities,
+	map: getMaps,
 	default: getCompleteEntities,
 	campaign: async () => getCampaigns(),
 };

@@ -86,6 +86,9 @@ SPLIT BUNDLE: FEATURES_ADMIN - API
           services/
             atlasMapper.js
             geometryUtils.js
+        inputs/
+          AttributeValueInput.jsx
+          StoragePathInput.jsx
       config/
         adminStrategies.js
         imageManifest.json
@@ -335,7 +338,10 @@ import { getStrategy } from '@/features/admin/config/adminStrategies';
 /**
  * Helper to determine which column stores JSON attributes.
  */
-const getAttrColumn = (type) => 'attributes';
+const getAttrColumn = (type) => {
+	const strategy = getStrategy(type);
+	return strategy.jsonField || 'attributes';
+};
 
 /**
  * Escape Regex characters for JS processing
@@ -350,6 +356,32 @@ function escapeRegExp(string) {
 function escapeSqlLike(string) {
 	return string.replace(/[%_]/g, '\\$&');
 }
+
+const buildMapPayload = (data, jsonStorage) => {
+	// 1. Construct the Config Object (Nested)
+	const config = {
+		path: jsonStorage.path,
+		parentId: jsonStorage.parentId || null, // null if empty string
+		fileExtension: jsonStorage.fileExtension || 'webp',
+		mapId: jsonStorage.key || data.name?.toLowerCase().replace(/\s+/g, '_'),
+		sizes: {
+			maxZoom: parseInt(jsonStorage.maxZoom || 4),
+			imageWidth: parseInt(jsonStorage.imageWidth || 0),
+			imageHeight: parseInt(jsonStorage.imageHeight || 0),
+		},
+	};
+
+	// 2. Construct the Data Object (Skeleton)
+	// Only set this on CREATE, not UPDATE (unless you want to overwrite data)
+	const initialData = {
+		areas: {},
+		paths: [],
+		overlays: [],
+		annotations: {},
+	};
+
+	return { config, initialData };
+};
 
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
@@ -388,6 +420,20 @@ export const createEntity = async (type, data) => {
 		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
 	}
 	// --- FIX END ---
+
+	if (type === 'map') {
+		// Handle Map Specifics
+		corePayload.key = jsonStorage.key || (data.name || '').toLowerCase().replace(/\s+/g, '_');
+
+		const { config, initialData } = buildMapPayload(data, jsonStorage);
+		corePayload.config = config;
+		corePayload.data = initialData; // Safe default skeleton
+
+		// Remove flattened keys so they don't try to save as non-existent columns
+		delete corePayload.attributes;
+	} else {
+		corePayload[attrCol] = jsonStorage;
+	}
 
 	corePayload[attrCol] = jsonStorage;
 
@@ -429,7 +475,16 @@ export const updateEntity = async (type, id, data) => {
 	}
 	// --- FIX END ---
 
-	corePayload[attrCol] = jsonStorage;
+	if (type === 'map') {
+		// Use the "key" from the form, or fallback to existing if not editable
+		if (jsonStorage.key) corePayload.key = jsonStorage.key;
+
+		const { config } = buildMapPayload(data, jsonStorage);
+		corePayload.config = config;
+		// Do NOT overwrite corePayload.data on update
+	} else {
+		corePayload[attrCol] = jsonStorage;
+	}
 
 	const { error: updateError } = await supabase.from(strategy.primaryTable).update(corePayload).eq('id', id);
 
@@ -439,7 +494,7 @@ export const updateEntity = async (type, id, data) => {
 
 export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-	const attrCol = getAttrColumn(type);
+	const attrCol = strategy.jsonField || 'attributes'; // 'config' for maps
 
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
@@ -450,29 +505,39 @@ export const fetchRawEntity = async (type, id) => {
 	if (coreError) throw coreError;
 
 	const formData = { ...coreData };
+
+	// Map Core Columns (Title -> Name)
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
-			if (coreData[dbCol] !== undefined) {
-				formData[formField] = coreData[dbCol];
-			}
+			if (dbCol && coreData[dbCol] !== undefined) formData[formField] = coreData[dbCol];
 		});
 	}
 
 	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
-	Object.entries(jsonSource).forEach(([key, value]) => {
-		attributesList.push({ name: key, value: value });
-	});
+	// --- MAP SPECIFIC FLATTENING ---
+	if (type === 'map') {
+		// 1. Pull core columns into attributes
+		if (coreData.key) attributesList.push({ name: 'key', value: coreData.key });
 
-	if (strategy.defaultAttributes) {
-		strategy.defaultAttributes.forEach((defAttr) => {
-			if (coreData[defAttr.key] !== undefined && !jsonSource[defAttr.key]) {
-				attributesList.push({
-					name: defAttr.key,
-					value: coreData[defAttr.key],
-				});
-			}
+		// 2. Pull root config items
+		['path', 'parentId', 'fileExtension'].forEach((k) => {
+			if (jsonSource[k]) attributesList.push({ name: k, value: jsonSource[k] });
+		});
+
+		// 3. Pull nested sizes
+		if (jsonSource.sizes) {
+			['imageWidth', 'imageHeight', 'maxZoom'].forEach((k) => {
+				if (jsonSource.sizes[k] !== undefined) {
+					attributesList.push({ name: k, value: jsonSource.sizes[k] });
+				}
+			});
+		}
+	} else {
+		// Standard Entity Logic (Existing)
+		Object.entries(jsonSource).forEach(([key, value]) => {
+			attributesList.push({ name: key, value: value });
 		});
 	}
 
@@ -490,7 +555,7 @@ export const fetchRelationships = async (id) => {
             is_bidirectional,
             is_hidden,
             target:entities!to_entity_id ( id, name, type )
-        `
+        `,
 		)
 		.eq('from_entity_id', id);
 
@@ -601,7 +666,7 @@ export const fetchSessionEventsWithRelationships = async (sessionId) => {
             id,
             from_entity_id,
             target:entities!to_entity_id ( id, name, type )
-        `
+        `,
 		)
 		.in('from_entity_id', eventIds);
 
@@ -627,7 +692,7 @@ export const fetchEncounterActions = async (encounterId) => {
 			*,
 			actor:entities!actor_entity_id(name, type),
 			target:entities!target_entity_id(name, type)
-		`
+		`,
 		)
 		.eq('encounter_id', encounterId)
 		.order('round_number', { ascending: true })
@@ -689,6 +754,13 @@ export const executeBulkReplace = async (changeList) => {
 		if (!error) results.count++;
 	}
 	return results;
+};
+
+export const fetchMapKeys = async (campaignId) => {
+	const { data, error } = await supabase.from('maps').select('key').eq('campaign_id', campaignId).order('key');
+
+	if (error) return [];
+	return data.map((m) => m.key);
 };
 
 --- END OF features\admin\api\adminService.js ---

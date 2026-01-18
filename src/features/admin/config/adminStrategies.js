@@ -176,6 +176,30 @@ export const ADMIN_STRATEGIES = {
 		],
 	},
 
+	// 10. ATLAS MAP
+	map: {
+		label: 'Atlas Map',
+		type: 'map',
+		primaryTable: 'maps',
+		colMapping: { name: 'title', description: null }, // Maps Title to DB Title, ignores description
+		jsonField: 'config', // Tells service this is the JSON column, not 'attributes'
+		hasNarrative: false,
+		defaultAttributes: [
+			{ key: 'key', label: 'Map Key (Unique ID)', type: 'text', required: true },
+			{
+				key: 'parentId',
+				label: 'Parent Map Key',
+				type: 'text',
+				suggestions: 'map_keys', // Custom flag we'll use in the Form
+			},
+			{ key: 'path', label: 'Storage Path / URL', type: 'storage_path', placeholder: 'https://.../folder_name' },
+			{ key: 'fileExtension', label: 'Extension', type: 'text', defaultValue: 'webp' },
+			{ key: 'imageWidth', label: 'Width (px)', type: 'number' },
+			{ key: 'imageHeight', label: 'Height (px)', type: 'number' },
+			{ key: 'maxZoom', label: 'Max Zoom', type: 'number', defaultValue: 4 },
+		],
+	},
+
 	default: {
 		label: 'Entity',
 		primaryTable: 'entities',
