@@ -11,6 +11,7 @@ import {
 	PanelLeftOpen,
 	Menu,
 	X,
+	CloudFog,
 } from 'lucide-react';
 import { useAtlas } from '../context/AtlasContext';
 import { useAtlasSearch } from '../utils/useAtlasSearch';
@@ -39,7 +40,7 @@ export const AtlasSidebar = () => {
 				'flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors border-b-2',
 				activeTab === id
 					? 'border-primary text-primary bg-primary/5'
-					: 'border-transparent text-muted-foreground hover:bg-black/5'
+					: 'border-transparent text-muted-foreground hover:bg-black/5',
 			)}>
 			<Icon size={14} />
 			<span className='hidden md:inline'>{label}</span>
@@ -76,7 +77,7 @@ export const AtlasSidebar = () => {
 					'flex flex-col h-full bg-muted border-l border-border shadow-2xl z-[500] transition-transform duration-300',
 					'absolute top-0 left-0 w-full md:w-72 md:static',
 					isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-					isDesktopCollapsed && 'md:hidden'
+					isDesktopCollapsed && 'md:hidden',
 				)}>
 				{/* Header */}
 				<div className='p-3 border-b border-border bg-muted flex flex-col gap-2 shrink-0'>
@@ -156,6 +157,23 @@ export const AtlasSidebar = () => {
 					{/* LAYERS TAB */}
 					{activeTab === 'layers' && (
 						<div className='space-y-4 p-2 pb-10'>
+							{/* NEW: Fog Toggle Section */}
+							{mapData.fog && mapData.fog.enabled && (
+								<div className='bg-background/50 rounded-lg p-2 border border-border/50'>
+									<div className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-2'>
+										<CloudFog size={12} /> Atmosphere
+									</div>
+									<SidebarItem
+										label='Fog of War'
+										icon={CloudFog}
+										isVisible={visibility['fog']}
+										onToggle={() => toggleItem('fog')}
+										// No navigation for fog, it covers everything
+										onNavigate={() => {}}
+									/>
+								</div>
+							)}
+
 							{/* Base Layers */}
 							<div className='bg-background/50 rounded-lg p-2 border border-border/50'>
 								<div className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-2'>

@@ -70,7 +70,7 @@ export function useMapData() {
 	const viewData = useMemo(() => {
 		if (!mapConfig) return null;
 
-		const { metadata, annotations, paths, areas, overlays } = mapConfig;
+		const { metadata, annotations, paths, areas, overlays, fog } = mapConfig;
 
 		if (!metadata) return null;
 
@@ -115,6 +115,7 @@ export function useMapData() {
 			sessions: paths || [],
 			areas: mapAreas,
 			overlays: overlays || [],
+			fog: fog || { enabled: false, shapes: [] },
 		};
 	}, [mapConfig]);
 

@@ -14,11 +14,20 @@ const initialState = {
 		paths: true,
 		areas: true,
 		overlays: true,
+		fog: true,
 	},
 	contextMenu: null, // { type: 'map'|'entity', position: {x,y}, latlng: {lat,lng}, target: {type, id, ...data} }
 	mapId: null,
 	mapConfig: null,
 	viewport: { center: [0, 0], zoom: 0 },
+	fog: {
+		enabled: false,
+		opacity: 0.9,
+		color: '#1a1d21', // Dark charcoal
+		edgeSoftness: 20, // px
+		invert: false, // false = Shroud (Cut holes), true = Cloud (Add patches)
+		shapes: [], // { id, points: [[lat,lng],...] }
+	},
 };
 
 const reducer = (state, action) => {
@@ -272,6 +281,50 @@ const reducer = (state, action) => {
 				overlays: state.overlays.filter((o) => o._id !== action.id),
 				selection: state.selection?.id === action.id ? null : state.selection,
 				contextMenu: null,
+			};
+
+		// ===========================================
+		// FOG OF WAR
+		// ===========================================
+
+		// --- FOG ACTIONS ---
+		case 'UPDATE_FOG_CONFIG':
+			return {
+				...state,
+				fog: { ...state.fog, ...action.updates },
+			};
+		case 'ADD_FOG_SHAPE':
+			return {
+				...state,
+				fog: {
+					...state.fog,
+					shapes: [...state.fog.shapes, action.payload],
+				},
+				// Auto-select the new shape to allow immediate drawing
+				selection: { type: 'fog', id: action.payload.id, data: action.payload },
+				mode: 'draw',
+			};
+		case 'UPDATE_FOG_SHAPE':
+			return {
+				...state,
+				fog: {
+					...state.fog,
+					shapes: state.fog.shapes.map((s) => (s.id === action.id ? { ...s, ...action.updates } : s)),
+				},
+				// Keep selection in sync so drawing continues smoothly
+				selection:
+					state.selection?.id === action.id
+						? { ...state.selection, data: { ...state.selection.data, ...action.updates } }
+						: state.selection,
+			};
+		case 'DELETE_FOG_SHAPE':
+			return {
+				...state,
+				fog: {
+					...state.fog,
+					shapes: state.fog.shapes.filter((s) => s.id !== action.id),
+				},
+				selection: null,
 			};
 
 		default:

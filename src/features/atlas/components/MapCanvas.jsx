@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Pane } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapMarkers } from './layers/MapMarkers';
@@ -11,6 +11,7 @@ import { MapZoomHandler } from './MapZoomHandler';
 import { useAtlas } from '../context/AtlasContext';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { useSearchParams } from 'react-router-dom';
+import { MapFogLayer } from './layers/MapFogLayer';
 
 const MapController = ({ config, flyToTarget }) => {
 	const map = useMap();
@@ -80,7 +81,7 @@ export const MapCanvas = () => {
 		);
 	}
 
-	const { config, markers, sessions, overlays, areas } = mapData;
+	const { config, markers, sessions, overlays, areas, fog } = mapData;
 	const visibleMarkers = markers.filter((m) => visibility[m.id]);
 	const visibleSessions = sessions.filter((s) => visibility[`session-${s.name}`]);
 	const visibleOverlays = overlays.filter((o) => visibility[`overlay-${o.name}`]);
@@ -91,6 +92,12 @@ export const MapCanvas = () => {
 		? config.path
 		: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}`;
 	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${config.fileExtension || 'png'}`;
+	const scaleFactor = Math.pow(2, config.sizes.maxZoom);
+	const bounds = [
+		[-config.sizes.imageHeight / scaleFactor, 0],
+		[0, config.sizes.imageWidth / scaleFactor],
+	];
+	const showFog = fog && fog.enabled === true && visibility['fog'] === true;
 
 	return (
 		<div
@@ -121,6 +128,9 @@ export const MapCanvas = () => {
 				<MapAreas areas={visibleAreas} />
 				<MapRecaps sessions={visibleSessions} />
 				<MapMarkers markers={visibleMarkers} />
+				<Pane name='fogPane' style={{ zIndex: 620, pointerEvents: 'none' }}>
+					{showFog && <MapFogLayer fogConfig={fog} bounds={bounds} />}
+				</Pane>
 				<MapTools containerRef={wrapperRef} />
 			</MapContainer>
 		</div>

@@ -91,6 +91,11 @@ export const useAtlasActions = (dispatch) => {
 
 			updateMapConfig: (updates) => dispatch({ type: 'UPDATE_MAP_CONFIG', updates }),
 			updateViewport: (center, zoom) => dispatch({ type: 'UPDATE_VIEWPORT', payload: { center, zoom } }),
+
+			updateFogConfig: (updates) => dispatch({ type: 'UPDATE_FOG_CONFIG', updates }),
+			addFogShape: (shape) => dispatch({ type: 'ADD_FOG_SHAPE', payload: shape }),
+			updateFogShape: (id, updates) => dispatch({ type: 'UPDATE_FOG_SHAPE', id, updates }),
+			deleteFogShape: (id) => dispatch({ type: 'DELETE_FOG_SHAPE', id }),
 		}),
 		[dispatch],
 	);

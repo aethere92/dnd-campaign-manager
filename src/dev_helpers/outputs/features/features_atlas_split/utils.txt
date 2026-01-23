@@ -73,6 +73,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - UTILS
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            FogForm.jsx
             MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
@@ -82,6 +83,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - UTILS
             useAtlasReducer.js
           layers/
             EditAreasLayer.jsx
+            EditFogLayer.jsx
             EditMarkersLayer.jsx
             EditOverlaysLayer.jsx
             EditPathsLayer.jsx
@@ -119,6 +121,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - UTILS
         __MapLayerControl.jsx
         layers/
           MapAreas.jsx
+          MapFogLayer.jsx
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx

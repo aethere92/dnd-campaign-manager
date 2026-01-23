@@ -73,6 +73,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - COMPONENTS
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            FogForm.jsx
             MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
@@ -82,6 +83,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - COMPONENTS
             useAtlasReducer.js
           layers/
             EditAreasLayer.jsx
+            EditFogLayer.jsx
             EditMarkersLayer.jsx
             EditOverlaysLayer.jsx
             EditPathsLayer.jsx
@@ -119,6 +121,7 @@ SPLIT BUNDLE: FEATURES_ATLAS - COMPONENTS
         __MapLayerControl.jsx
         layers/
           MapAreas.jsx
+          MapFogLayer.jsx
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
@@ -347,6 +350,7 @@ import {
 	PanelLeftOpen,
 	Menu,
 	X,
+	CloudFog,
 } from 'lucide-react';
 import { useAtlas } from '../context/AtlasContext';
 import { useAtlasSearch } from '../utils/useAtlasSearch';
@@ -375,7 +379,7 @@ export const AtlasSidebar = () => {
 				'flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors border-b-2',
 				activeTab === id
 					? 'border-primary text-primary bg-primary/5'
-					: 'border-transparent text-muted-foreground hover:bg-black/5'
+					: 'border-transparent text-muted-foreground hover:bg-black/5',
 			)}>
 			<Icon size={14} />
 			<span className='hidden md:inline'>{label}</span>
@@ -412,7 +416,7 @@ export const AtlasSidebar = () => {
 					'flex flex-col h-full bg-muted border-l border-border shadow-2xl z-[500] transition-transform duration-300',
 					'absolute top-0 left-0 w-full md:w-72 md:static',
 					isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-					isDesktopCollapsed && 'md:hidden'
+					isDesktopCollapsed && 'md:hidden',
 				)}>
 				{/* Header */}
 				<div className='p-3 border-b border-border bg-muted flex flex-col gap-2 shrink-0'>
@@ -492,6 +496,23 @@ export const AtlasSidebar = () => {
 					{/* LAYERS TAB */}
 					{activeTab === 'layers' && (
 						<div className='space-y-4 p-2 pb-10'>
+							{/* NEW: Fog Toggle Section */}
+							{mapData.fog && mapData.fog.enabled && (
+								<div className='bg-background/50 rounded-lg p-2 border border-border/50'>
+									<div className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-2'>
+										<CloudFog size={12} /> Atmosphere
+									</div>
+									<SidebarItem
+										label='Fog of War'
+										icon={CloudFog}
+										isVisible={visibility['fog']}
+										onToggle={() => toggleItem('fog')}
+										// No navigation for fog, it covers everything
+										onNavigate={() => {}}
+									/>
+								</div>
+							)}
+
 							{/* Base Layers */}
 							<div className='bg-background/50 rounded-lg p-2 border border-border/50'>
 								<div className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-2'>
@@ -551,7 +572,7 @@ export const AtlasSidebar = () => {
 
 --- FILE: features\atlas\components\MapCanvas.jsx ---
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Pane } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapMarkers } from './layers/MapMarkers';
@@ -563,6 +584,7 @@ import { MapZoomHandler } from './MapZoomHandler';
 import { useAtlas } from '../context/AtlasContext';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { useSearchParams } from 'react-router-dom';
+import { MapFogLayer } from './layers/MapFogLayer';
 
 const MapController = ({ config, flyToTarget }) => {
 	const map = useMap();
@@ -632,7 +654,7 @@ export const MapCanvas = () => {
 		);
 	}
 
-	const { config, markers, sessions, overlays, areas } = mapData;
+	const { config, markers, sessions, overlays, areas, fog } = mapData;
 	const visibleMarkers = markers.filter((m) => visibility[m.id]);
 	const visibleSessions = sessions.filter((s) => visibility[`session-${s.name}`]);
 	const visibleOverlays = overlays.filter((o) => visibility[`overlay-${o.name}`]);
@@ -643,9 +665,24 @@ export const MapCanvas = () => {
 		? config.path
 		: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}`;
 	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${config.fileExtension || 'png'}`;
+	const scaleFactor = Math.pow(2, config.sizes.maxZoom);
+	const bounds = [
+		[-config.sizes.imageHeight / scaleFactor, 0],
+		[0, config.sizes.imageWidth / scaleFactor],
+	];
+	const showFog = fog && fog.enabled === true && visibility['fog'] === true;
 
 	return (
-		<div ref={wrapperRef} className='flex-1 relative h-full bg-background'>
+		<div
+			ref={wrapperRef}
+			className='flex-1 relative h-full'
+			style={{
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			<MapContainer
 				center={[0, 0]}
 				zoom={Math.ceil(config.sizes.maxZoom / 2)}
@@ -664,6 +701,9 @@ export const MapCanvas = () => {
 				<MapAreas areas={visibleAreas} />
 				<MapRecaps sessions={visibleSessions} />
 				<MapMarkers markers={visibleMarkers} />
+				<Pane name='fogPane' style={{ zIndex: 620, pointerEvents: 'none' }}>
+					{showFog && <MapFogLayer fogConfig={fog} bounds={bounds} />}
+				</Pane>
 				<MapTools containerRef={wrapperRef} />
 			</MapContainer>
 		</div>

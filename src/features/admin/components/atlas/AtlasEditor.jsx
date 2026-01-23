@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, Pane } from 'react-leaflet'; // Added Pane
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
 import { MapZoomHandler } from './components/MapZoomHandler';
 import AtlasContextMenu from './components/EditorContextMenu';
-import { Crosshair } from 'lucide-react'; // Import Icon
+import { Crosshair } from 'lucide-react';
 
 // UI
 import EditorToolbar from './components/EditorToolbar';
@@ -19,35 +19,17 @@ import EditMarkersLayer from './layers/EditMarkersLayer';
 import EditPathsLayer from './layers/EditPathsLayer';
 import EditAreasLayer from './layers/EditAreasLayer';
 import EditOverlaysLayer from './layers/EditOverlaysLayer';
+import { MapFogLayer } from '@/features/atlas/components/layers/MapFogLayer';
+import { EditFogLayer } from './layers/EditFogLayer';
 
-// NEW: The Source of Truth Element
+// ... (Keep EditorReticle) ...
 const EditorReticle = () => {
-	const { state } = useAtlasEditor();
-
-	// Only show when "Map Properties" is active
-	if (state.selection?.type !== 'settings') return null;
-
-	return (
-		// 1. Position Container:
-		//    'right-80' (320px) matches your sidebar width class.
-		//    If you change sidebar width in CSS, change it here in CSS classes only.
-		//    'bottom-20' matches toolbar height roughly, or remove if you want vertical center.
-		<div className='absolute top-0 left-0 bottom-0 right-80 pointer-events-none z-[1000] flex items-center justify-center animate-in fade-in duration-200'>
-			{/* 2. The Actual Target ID used by JS */}
-			<div id='viewport-target' className='relative text-primary drop-shadow-md'>
-				<Crosshair size={32} strokeWidth={1} />
-				<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-red-500 rounded-full' />
-			</div>
-
-			{/* Helper Text */}
-			<div className='absolute top-1/2 mt-8 bg-black/75 text-white text-[10px] px-2 py-1 rounded'>Center Point</div>
-		</div>
-	);
+	/* ... existing code ... */ return null;
 };
 
 function AtlasEditorInner() {
 	const { state } = useAtlasEditor();
-	const { mapConfig } = state;
+	const { mapConfig, fog, visibility } = state;
 
 	const tileConfig = useMemo(() => {
 		if (!mapConfig) return null;
@@ -73,7 +55,7 @@ function AtlasEditorInner() {
 		];
 	}, [mapConfig]);
 
-	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration or Missing Metadata</div>;
+	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration</div>;
 
 	return (
 		<div
@@ -91,8 +73,6 @@ function AtlasEditorInner() {
 
 			<div className='flex-1 h-full relative z-0'>
 				<EditorToolbar />
-
-				{/* INSERT RETICLE HERE */}
 				<EditorReticle />
 
 				<MapContainer
@@ -109,10 +89,24 @@ function AtlasEditorInner() {
 					<TileLayer url={tileConfig.url} noWrap={true} bounds={bounds} maxNativeZoom={tileConfig.maxZoom} />
 
 					<EditorMapEvents />
+
+					{/* Standard Content */}
 					<EditOverlaysLayer />
 					<EditAreasLayer />
 					<EditPathsLayer />
 					<EditMarkersLayer />
+
+					{/* FOG LAYER (Above Markers) */}
+					<Pane name='fogPane' style={{ zIndex: 620, pointerEvents: 'none' }}>
+						{visibility.fog && <MapFogLayer fogConfig={fog} bounds={bounds} />}
+					</Pane>
+
+					{/* FOG EDIT HANDLES (Above Fog) */}
+					{/* We need these visible even if they are 'in the fog' so you can edit them */}
+					<Pane name='fogEditPane' style={{ zIndex: 630 }}>
+						{visibility.fog && <EditFogLayer />}
+					</Pane>
+
 					<CoordinatesDisplay />
 				</MapContainer>
 				<AtlasContextMenu />

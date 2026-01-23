@@ -1,14 +1,14 @@
 import React from 'react';
 import { useAtlasEditor } from '../AtlasEditorContext';
-// UPDATE these lines at the top of EditorSidebar.jsx
 import MarkerForm from '@/features/admin/components/atlas/forms/MarkerForm';
 import PathForm from '@/features/admin/components/atlas/forms/PathForm';
 import AreaForm from '@/features/admin/components/atlas/forms/AreaForm';
 import { OverlayForm } from '@/features/admin/components/atlas/forms/OverlayForm';
 import MapPropertiesForm from '@/features/admin/components/atlas/forms/MapPropertiesForm';
+import { FogForm } from '@/features/admin/components/atlas/forms/FogForm';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import VisualIconPicker from '../components/VisualIconPicker';
-import { Trash2, X, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 
 // Wrapper
@@ -32,8 +32,19 @@ const SidebarWrapper = ({ children, title, onClose, actions }) => (
 
 export default function EditorSidebar() {
 	const { state, actions } = useAtlasEditor();
-	const { selection, markers, paths, areas, overlays } = state;
+	const { selection, markers, paths, areas, overlays, activeTool, fog } = state;
 
+	// --- 1. TOOL-BASED FORMS (Sticky) ---
+	// If Fog Tool is active, ALWAYS show Fog Form, regardless of selection state.
+	if (activeTool === 'fog') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+				<FogForm config={fog} actions={actions} onClose={() => actions.setTool('select')} />
+			</div>
+		);
+	}
+
+	// --- 2. SELECTION-BASED FORMS ---
 	if (!selection) return null;
 
 	const handleClose = () => actions.deselect();
@@ -54,10 +65,13 @@ export default function EditorSidebar() {
 			case 'overlay':
 				actions.deleteOverlay(selection.id);
 				break;
+			case 'fog':
+				actions.deleteFogShape(selection.id);
+				break;
 		}
 	};
 
-	// NEW: Handle Settings
+	// Map Properties
 	if (selection.type === 'settings') {
 		return (
 			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
@@ -66,7 +80,16 @@ export default function EditorSidebar() {
 		);
 	}
 
-	// --- PATH POINT EDITOR ---
+	// Fog Shape (Selected via map click in Select Mode)
+	if (selection.type === 'fog') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+				<FogForm config={fog} actions={actions} onClose={handleClose} />
+			</div>
+		);
+	}
+
+	// Path Node Editor
 	if (selection.type === 'path' && selection.index !== undefined) {
 		const pathData = paths.find((p) => p._id === selection.id);
 		if (!pathData) return null;
@@ -79,7 +102,6 @@ export default function EditorSidebar() {
 				title={`Path Node #${selection.index + 1}`}
 				onClose={() => actions.selectItem('path', selection.id)}
 				actions={
-					/* ... (keep existing navigation buttons) ... */
 					<div className='flex mr-2 bg-muted rounded border border-border'>
 						<button
 							disabled={selection.index === 0}
@@ -96,21 +118,14 @@ export default function EditorSidebar() {
 					</div>
 				}>
 				<div className='space-y-4'>
-					{/* NEW: ICON PICKER */}
 					<div>
 						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Point Icon</label>
 						<VisualIconPicker
 							value={point.icon || 'default'}
 							onChange={(val) => actions.updatePathPoint(selection.id, selection.index, { icon: val })}
 						/>
-						<p className='text-[10px] text-muted-foreground mt-1'>
-							Select an icon to display at this specific point on the path.
-						</p>
 					</div>
-
 					<div className='w-full h-px bg-border/50' />
-
-					{/* EXISTING TEXT AREA */}
 					<div>
 						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Narrative Text</label>
 						<textarea
@@ -121,9 +136,7 @@ export default function EditorSidebar() {
 							onChange={(e) => actions.updatePathPoint(selection.id, selection.index, { text: e.target.value })}
 						/>
 					</div>
-
 					<div className='pt-4 border-t border-border'>
-						{/* ... delete button ... */}
 						<Button
 							variant='secondary'
 							size='sm'
@@ -143,7 +156,7 @@ export default function EditorSidebar() {
 		);
 	}
 
-	// --- STANDARD ENTITY FORMS ---
+	// Standard Forms
 	let data = null;
 	let FormComponent = null;
 	let updateFn = null;
@@ -162,7 +175,6 @@ export default function EditorSidebar() {
 		updateFn = (f, v) => actions.updateArea(selection.id, { [f]: v });
 	} else if (selection.type === 'overlay') {
 		data = overlays.find((o) => o._id === selection.id);
-		// OverlayForm uses `actions` directly, not the generic updateFn pattern
 		return (
 			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
 				<OverlayForm data={data} actions={actions} onClose={handleClose} />

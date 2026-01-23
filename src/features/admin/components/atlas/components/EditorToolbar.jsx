@@ -10,6 +10,7 @@ import {
 	Loader2,
 	Image as ImageIcon,
 	Settings,
+	CloudFog,
 } from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import clsx from 'clsx';
@@ -83,6 +84,13 @@ export default function EditorToolbar() {
 					title='Overlays (O)'
 					active={activeTool === 'overlays'}
 					onClick={() => actions.setTool('overlays')}
+				/>
+
+				<ToolBtn
+					icon={CloudFog}
+					title='Fog of War (F)'
+					active={activeTool === 'fog'}
+					onClick={() => actions.setTool('fog')}
 				/>
 
 				<ToolBtn

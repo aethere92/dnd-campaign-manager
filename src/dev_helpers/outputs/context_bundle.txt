@@ -79,6 +79,7 @@ INSTRUCTIONS FOR AI:
             VisualIconPicker.jsx
           forms/
             AreaForm.jsx
+            FogForm.jsx
             MapPropertiesForm.jsx
             MarkerForm.jsx
             OverlayForm.jsx
@@ -88,6 +89,7 @@ INSTRUCTIONS FOR AI:
             useAtlasReducer.js
           layers/
             EditAreasLayer.jsx
+            EditFogLayer.jsx
             EditMarkersLayer.jsx
             EditOverlaysLayer.jsx
             EditPathsLayer.jsx
@@ -125,6 +127,7 @@ INSTRUCTIONS FOR AI:
         __MapLayerControl.jsx
         layers/
           MapAreas.jsx
+          MapFogLayer.jsx
           MapMarkers.jsx
           MapOverlays.jsx
           MapRecaps.jsx
@@ -6660,13 +6663,13 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 
 --- FILE: features\admin\components\atlas\AtlasEditor.jsx ---
 import React, { useMemo } from 'react';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, Pane } from 'react-leaflet'; // Added Pane
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AtlasEditorProvider, useAtlasEditor } from './AtlasEditorContext';
 import { MapZoomHandler } from './components/MapZoomHandler';
 import AtlasContextMenu from './components/EditorContextMenu';
-import { Crosshair } from 'lucide-react'; // Import Icon
+import { Crosshair } from 'lucide-react';
 
 // UI
 import EditorToolbar from './components/EditorToolbar';
@@ -6680,35 +6683,17 @@ import EditMarkersLayer from './layers/EditMarkersLayer';
 import EditPathsLayer from './layers/EditPathsLayer';
 import EditAreasLayer from './layers/EditAreasLayer';
 import EditOverlaysLayer from './layers/EditOverlaysLayer';
+import { MapFogLayer } from '@/features/atlas/components/layers/MapFogLayer';
+import { EditFogLayer } from './layers/EditFogLayer';
 
-// NEW: The Source of Truth Element
+// ... (Keep EditorReticle) ...
 const EditorReticle = () => {
-	const { state } = useAtlasEditor();
-
-	// Only show when "Map Properties" is active
-	if (state.selection?.type !== 'settings') return null;
-
-	return (
-		// 1. Position Container:
-		//    'right-80' (320px) matches your sidebar width class.
-		//    If you change sidebar width in CSS, change it here in CSS classes only.
-		//    'bottom-20' matches toolbar height roughly, or remove if you want vertical center.
-		<div className='absolute top-0 left-0 bottom-0 right-80 pointer-events-none z-[1000] flex items-center justify-center animate-in fade-in duration-200'>
-			{/* 2. The Actual Target ID used by JS */}
-			<div id='viewport-target' className='relative text-primary drop-shadow-md'>
-				<Crosshair size={32} strokeWidth={1} />
-				<div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-red-500 rounded-full' />
-			</div>
-
-			{/* Helper Text */}
-			<div className='absolute top-1/2 mt-8 bg-black/75 text-white text-[10px] px-2 py-1 rounded'>Center Point</div>
-		</div>
-	);
+	/* ... existing code ... */ return null;
 };
 
 function AtlasEditorInner() {
 	const { state } = useAtlasEditor();
-	const { mapConfig } = state;
+	const { mapConfig, fog, visibility } = state;
 
 	const tileConfig = useMemo(() => {
 		if (!mapConfig) return null;
@@ -6734,18 +6719,24 @@ function AtlasEditorInner() {
 		];
 	}, [mapConfig]);
 
-	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration or Missing Metadata</div>;
+	if (!bounds || !tileConfig) return <div className='text-white p-10'>Invalid Configuration</div>;
 
 	return (
-		<div className='flex h-full w-full relative overflow-hidden bg-[#1a1412]'>
+		<div
+			className='flex h-full w-full relative overflow-hidden'
+			style={{
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			<div className='hidden lg:block shrink-0 relative z-[500]'>
 				<EditorLayerList />
 			</div>
 
 			<div className='flex-1 h-full relative z-0'>
 				<EditorToolbar />
-
-				{/* INSERT RETICLE HERE */}
 				<EditorReticle />
 
 				<MapContainer
@@ -6762,10 +6753,24 @@ function AtlasEditorInner() {
 					<TileLayer url={tileConfig.url} noWrap={true} bounds={bounds} maxNativeZoom={tileConfig.maxZoom} />
 
 					<EditorMapEvents />
+
+					{/* Standard Content */}
 					<EditOverlaysLayer />
 					<EditAreasLayer />
 					<EditPathsLayer />
 					<EditMarkersLayer />
+
+					{/* FOG LAYER (Above Markers) */}
+					<Pane name='fogPane' style={{ zIndex: 620, pointerEvents: 'none' }}>
+						{visibility.fog && <MapFogLayer fogConfig={fog} bounds={bounds} />}
+					</Pane>
+
+					{/* FOG EDIT HANDLES (Above Fog) */}
+					{/* We need these visible even if they are 'in the fog' so you can edit them */}
+					<Pane name='fogEditPane' style={{ zIndex: 630 }}>
+						{visibility.fog && <EditFogLayer />}
+					</Pane>
+
 					<CoordinatesDisplay />
 				</MapContainer>
 				<AtlasContextMenu />
@@ -7162,6 +7167,7 @@ import {
 	Search,
 	Eye,
 	EyeOff,
+	CloudFog,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -7186,7 +7192,7 @@ const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection,
 					}}
 					className={clsx(
 						'p-1 ml-2 rounded hover:bg-background transition-colors',
-						isVisible ? 'text-primary' : 'text-muted-foreground opacity-50'
+						isVisible ? 'text-primary' : 'text-muted-foreground opacity-50',
 					)}
 					title={isVisible ? 'Hide Layer' : 'Show Layer'}>
 					{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -7204,7 +7210,7 @@ const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection,
 									'flex items-center w-full text-left px-8 py-1.5 text-xs transition-colors border-l-2',
 									isSelected
 										? 'bg-primary/10 border-primary text-primary font-medium'
-										: 'border-transparent text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+										: 'border-transparent text-foreground/80 hover:bg-muted/50 hover:text-foreground',
 								)}>
 								<span className='truncate'>{item.label || item.name || 'Untitled'}</span>
 							</button>
@@ -7218,7 +7224,7 @@ const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection,
 
 export default function EditorLayerList() {
 	const { state, actions } = useAtlasEditor();
-	const { markers, paths, areas, overlays, selection, visibility } = state;
+	const { markers, paths, areas, overlays, selection, visibility, fog } = state;
 	const [search, setSearch] = useState('');
 
 	// Optimize filtering with useMemo
@@ -7249,6 +7255,20 @@ export default function EditorLayerList() {
 				</div>
 			</div>
 			<div className='flex-1 overflow-y-auto custom-scrollbar py-2'>
+				{/* NEW: Fog Group */}
+				{/* We treat Fog as a single item group for consistency */}
+				{fog && (
+					<Group
+						title='Fog of War'
+						icon={CloudFog}
+						items={fog.enabled ? [{ _id: 'fog-config', label: 'Fog Layer', type: 'fog-layer' }] : []}
+						type='fog' // This doesn't matter much since we select via tool
+						onSelect={() => actions.setTool('fog')} // Clicking the item activates the tool
+						selection={selection} // Pass selection to highlight if active
+						isVisible={visibility.fog !== false} // Default true
+						onToggle={() => actions.toggleVisibility('fog')} // New action needed below
+					/>
+				)}
 				<Group
 					title='Markers'
 					icon={MapPin}
@@ -7300,7 +7320,6 @@ export default function EditorLayerList() {
 import { useEffect } from 'react';
 import { useMapEvents, useMap } from 'react-leaflet';
 import { useAtlasEditor } from '../AtlasEditorContext';
-
 export default function EditorMapEvents() {
 	const { state, actions } = useAtlasEditor();
 	const { mode, selection, activeTool } = state;
@@ -7312,27 +7331,19 @@ export default function EditorMapEvents() {
 		let centerPoint;
 
 		if (targetEl) {
-			// 1. Get exact screen coordinates of the crosshair
 			const rect = targetEl.getBoundingClientRect();
 			const centerX = rect.left + rect.width / 2;
 			const centerY = rect.top + rect.height / 2;
-
-			// 2. Ask Leaflet: "What Lat/Lng is under this screen pixel?"
-			// containerPointToLatLng takes coordinates relative to the map container.
-			// mouseEventToContainerPoint converts global screen (client) coordinates to map container coordinates.
-			// We simulate a mouse event structure { clientX, clientY } to leverage Leaflet's built-in math.
 			const containerPoint = map.mouseEventToContainerPoint({ clientX: centerX, clientY: centerY });
 			centerPoint = map.containerPointToLatLng(containerPoint);
 		} else {
-			// Fallback if Reticle is hidden (Sidebar closed)
 			centerPoint = map.getCenter();
 		}
 
 		actions.updateViewport(centerPoint, map.getZoom());
 	};
 
-	// Force update when selection changes (Sidebar toggles)
-	// We use RequestAnimationFrame to ensure the DOM has updated (Reticle rendered)
+	// Force update when selection changes
 	useEffect(() => {
 		const handle = requestAnimationFrame(updateVisualViewport);
 		return () => cancelAnimationFrame(handle);
@@ -7346,71 +7357,100 @@ export default function EditorMapEvents() {
 			actions.closeContextMenu();
 			const pos = [e.latlng.lat, e.latlng.lng];
 
-			if (selection?.type === 'settings') {
+			// 1. Handle Settings Selection (Safe check)
+			if (selection && selection.type === 'settings') {
 				actions.deselect();
 				return;
 			}
 
-			// ... (Keep existing creation logic exactly as is) ...
+			// 2. DRAWING MODE (Appending points to existing shape)
 			if (mode === 'draw' && selection) {
 				if (selection.type === 'path') {
 					actions.appendPathPoint(selection.id, pos);
 				} else if (selection.type === 'area') {
 					actions.appendAreaPoint(selection.id, pos);
+				} else if (selection.type === 'fog') {
+					// Append point to Fog Shape
+					// selection.data might be stale, so we rely on the reducer to handle the append logic usually,
+					// or we pass the new array.
+					const currentPoints = selection.data?.points || [];
+					actions.updateFogShape(selection.id, {
+						points: [...currentPoints, pos],
+					});
 				}
-			} else if (activeTool === 'markers' && !selection) {
-				actions.addMarker({
-					_id: crypto.randomUUID(),
-					label: 'New Marker',
-					lat: pos[0],
-					lng: pos[1],
-					category: 'default',
-					color: '#d97706',
-					scale: 1,
-					variant: 'large',
-					shape: 'pin',
-				});
-			} else if (activeTool === 'text' && !selection) {
-				actions.addMarker({
-					_id: crypto.randomUUID(),
-					label: 'New Label',
-					lat: pos[0],
-					lng: pos[1],
-					category: 'default',
-					color: '#ffffff',
-					scale: 1.5,
-					variant: 'text',
-					shape: 'pin',
-				});
-			} else if (activeTool === 'areas' && !selection) {
-				actions.addArea({
-					_id: crypto.randomUUID(),
-					name: 'New Region',
-					interiorColor: '#ff0000',
-					points: [{ coordinates: pos }],
-				});
-			} else if (activeTool === 'paths' && !selection) {
-				actions.addPath({
-					_id: crypto.randomUUID(),
-					name: 'New Path',
-					color: '#d97706',
-					points: [{ coordinates: pos, text: '' }],
-				});
-			} else if (activeTool === 'overlays' && !selection) {
-				const size = 50;
-				actions.addOverlay({
-					_id: crypto.randomUUID(),
-					name: 'New Overlay',
-					image: '',
-					bounds: [
-						[pos[0] + size, pos[1] - size],
-						[pos[0] - size, pos[1] + size],
-					],
-				});
+				return; // Stop here if we processed a draw event
+			}
+
+			// 3. CREATION MODE (Starting new shapes)
+			// Only runs if we are NOT selecting something (selection is null)
+			if (!selection) {
+				if (activeTool === 'markers') {
+					actions.addMarker({
+						_id: crypto.randomUUID(),
+						label: 'New Marker',
+						lat: pos[0],
+						lng: pos[1],
+						category: 'default',
+						color: '#d97706',
+						scale: 1,
+						variant: 'large',
+						shape: 'pin',
+					});
+				} else if (activeTool === 'text') {
+					actions.addMarker({
+						_id: crypto.randomUUID(),
+						label: 'New Label',
+						lat: pos[0],
+						lng: pos[1],
+						category: 'default',
+						color: '#ffffff',
+						scale: 1.5,
+						variant: 'text',
+						shape: 'pin',
+					});
+				} else if (activeTool === 'areas') {
+					actions.addArea({
+						_id: crypto.randomUUID(),
+						name: 'New Region',
+						interiorColor: '#ff0000',
+						points: [{ coordinates: pos }],
+					});
+				} else if (activeTool === 'paths') {
+					actions.addPath({
+						_id: crypto.randomUUID(),
+						name: 'New Path',
+						color: '#d97706',
+						points: [{ coordinates: pos, text: '' }],
+					});
+				} else if (activeTool === 'overlays') {
+					const size = 50;
+					actions.addOverlay({
+						_id: crypto.randomUUID(),
+						name: 'New Overlay',
+						image: '',
+						bounds: [
+							[pos[0] + size, pos[1] - size],
+							[pos[0] - size, pos[1] + size],
+						],
+					});
+				} else if (activeTool === 'fog') {
+					// START FOG SHAPE
+					const newId = crypto.randomUUID();
+					actions.addFogShape({
+						id: newId,
+						points: [pos],
+					});
+					// Note: addFogShape in reducer automatically sets mode='draw' and selection
+				} else {
+					// If no tool is active and we clicked empty space, deselect
+					actions.deselect();
+				}
 			} else {
+				// If we have a selection but mode is NOT draw (e.g. selected a marker), clicking map deselects
 				actions.deselect();
 			}
 		},
+
 		contextmenu(e) {
 			e.originalEvent.preventDefault();
 			actions.openContextMenu({
@@ -7428,15 +7468,15 @@ export default function EditorMapEvents() {
 --- FILE: features\admin\components\atlas\components\EditorSidebar.jsx ---
 import React from 'react';
 import { useAtlasEditor } from '../AtlasEditorContext';
-// UPDATE these lines at the top of EditorSidebar.jsx
 import MarkerForm from '@/features/admin/components/atlas/forms/MarkerForm';
 import PathForm from '@/features/admin/components/atlas/forms/PathForm';
 import AreaForm from '@/features/admin/components/atlas/forms/AreaForm';
 import { OverlayForm } from '@/features/admin/components/atlas/forms/OverlayForm';
 import MapPropertiesForm from '@/features/admin/components/atlas/forms/MapPropertiesForm';
+import { FogForm } from '@/features/admin/components/atlas/forms/FogForm';
 import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
 import VisualIconPicker from '../components/VisualIconPicker';
-import { Trash2, X, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 
 // Wrapper
@@ -7460,8 +7500,19 @@ const SidebarWrapper = ({ children, title, onClose, actions }) => (
 
 export default function EditorSidebar() {
 	const { state, actions } = useAtlasEditor();
-	const { selection, markers, paths, areas, overlays } = state;
+	const { selection, markers, paths, areas, overlays, activeTool, fog } = state;
 
+	// --- 1. TOOL-BASED FORMS (Sticky) ---
+	// If Fog Tool is active, ALWAYS show Fog Form, regardless of selection state.
+	if (activeTool === 'fog') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+				<FogForm config={fog} actions={actions} onClose={() => actions.setTool('select')} />
+			</div>
+		);
+	}
+
+	// --- 2. SELECTION-BASED FORMS ---
 	if (!selection) return null;
 
 	const handleClose = () => actions.deselect();
@@ -7482,10 +7533,13 @@ export default function EditorSidebar() {
 			case 'overlay':
 				actions.deleteOverlay(selection.id);
 				break;
+			case 'fog':
+				actions.deleteFogShape(selection.id);
+				break;
 		}
 	};
 
-	// NEW: Handle Settings
+	// Map Properties
 	if (selection.type === 'settings') {
 		return (
 			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
@@ -7494,7 +7548,16 @@ export default function EditorSidebar() {
 		);
 	}
 
-	// --- PATH POINT EDITOR ---
+	// Fog Shape (Selected via map click in Select Mode)
+	if (selection.type === 'fog') {
+		return (
+			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
+				<FogForm config={fog} actions={actions} onClose={handleClose} />
+			</div>
+		);
+	}
+
+	// Path Node Editor
 	if (selection.type === 'path' && selection.index !== undefined) {
 		const pathData = paths.find((p) => p._id === selection.id);
 		if (!pathData) return null;
@@ -7507,7 +7570,6 @@ export default function EditorSidebar() {
 				title={`Path Node #${selection.index + 1}`}
 				onClose={() => actions.selectItem('path', selection.id)}
 				actions={
-					/* ... (keep existing navigation buttons) ... */
 					<div className='flex mr-2 bg-muted rounded border border-border'>
 						<button
 							disabled={selection.index === 0}
@@ -7524,21 +7586,14 @@ export default function EditorSidebar() {
 					</div>
 				}>
 				<div className='space-y-4'>
-					{/* NEW: ICON PICKER */}
 					<div>
 						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Point Icon</label>
 						<VisualIconPicker
 							value={point.icon || 'default'}
 							onChange={(val) => actions.updatePathPoint(selection.id, selection.index, { icon: val })}
 						/>
-						<p className='text-[10px] text-muted-foreground mt-1'>
-							Select an icon to display at this specific point on the path.
-						</p>
 					</div>
-
 					<div className='w-full h-px bg-border/50' />
-
-					{/* EXISTING TEXT AREA */}
 					<div>
 						<label className='text-[10px] font-bold uppercase text-muted-foreground mb-1 block'>Narrative Text</label>
 						<textarea
@@ -7549,9 +7604,7 @@ export default function EditorSidebar() {
 							onChange={(e) => actions.updatePathPoint(selection.id, selection.index, { text: e.target.value })}
 						/>
 					</div>
-
 					<div className='pt-4 border-t border-border'>
-						{/* ... delete button ... */}
 						<Button
 							variant='secondary'
 							size='sm'
@@ -7571,7 +7624,7 @@ export default function EditorSidebar() {
 		);
 	}
 
-	// --- STANDARD ENTITY FORMS ---
+	// Standard Forms
 	let data = null;
 	let FormComponent = null;
 	let updateFn = null;
@@ -7590,7 +7643,6 @@ export default function EditorSidebar() {
 		updateFn = (f, v) => actions.updateArea(selection.id, { [f]: v });
 	} else if (selection.type === 'overlay') {
 		data = overlays.find((o) => o._id === selection.id);
-		// OverlayForm uses `actions` directly, not the generic updateFn pattern
 		return (
 			<div className='absolute top-4 right-4 bottom-4 w-80 bg-card border border-border shadow-2xl rounded-lg flex flex-col z-[1001] animate-in slide-in-from-right-4'>
 				<OverlayForm data={data} actions={actions} onClose={handleClose} />
@@ -7622,6 +7674,7 @@ import {
 	Loader2,
 	Image as ImageIcon,
 	Settings,
+	CloudFog,
 } from 'lucide-react';
 import { useAtlasEditor } from '../AtlasEditorContext';
 import clsx from 'clsx';
@@ -7695,6 +7748,13 @@ export default function EditorToolbar() {
 					title='Overlays (O)'
 					active={activeTool === 'overlays'}
 					onClick={() => actions.setTool('overlays')}
+				/>
+
+				<ToolBtn
+					icon={CloudFog}
+					title='Fog of War (F)'
+					active={activeTool === 'fog'}
+					onClick={() => actions.setTool('fog')}
 				/>
 
 				<ToolBtn
@@ -8638,6 +8698,180 @@ export default function AreaForm({ data, onChange, onDelete, onClose }) {
 }
 
 --- END OF features\admin\components\atlas\forms\AreaForm.jsx ---
+
+--- FILE: features\admin\components\atlas\forms\FogForm.jsx ---
+import React from 'react';
+import { CloudFog, X, Trash2, CheckCircle2 } from 'lucide-react'; // Added CheckCircle2
+import SmartColorPicker from '@/features/admin/components/SmartColorPicker';
+import { ADMIN_INPUT_CLASS } from '@/features/admin/components/AdminFormStyles';
+
+export const FogForm = ({ config, actions, onClose }) => {
+	if (!config) return null;
+
+	return (
+		<div className='flex flex-col h-full bg-card shadow-2xl z-[1001] w-full border-l border-border rounded-lg'>
+			{/* HEADER */}
+			<div className='flex justify-between items-center p-4 border-b border-border bg-muted/40 shrink-0'>
+				<span className='font-bold text-sm uppercase flex items-center gap-2'>
+					<CloudFog size={16} /> Fog of War
+				</span>
+				<div className='flex gap-1'>
+					{/* NEW: Finish Button to deselect/close shape */}
+					<button
+						onClick={() => actions.setTool('select')} // Deselects and stops drawing
+						className='flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 border border-green-500/20 rounded text-[10px] font-bold uppercase transition-colors mr-2'
+						title='Finish drawing current shape'>
+						<CheckCircle2 size={12} /> Finish
+					</button>
+					<button onClick={onClose} className='p-1.5 hover:bg-muted rounded text-muted-foreground'>
+						<X size={16} />
+					</button>
+				</div>
+			</div>
+
+			<div className='p-5 space-y-6 overflow-y-auto custom-scrollbar flex-1'>
+				{/* ENABLE TOGGLE */}
+				<div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border'>
+					<span className='text-xs font-bold text-muted-foreground uppercase'>Fog Layer</span>
+					<button
+						onClick={() => actions.updateFogConfig({ enabled: !config.enabled })}
+						className={`px-3 py-1 rounded text-xs font-bold transition-colors border ${
+							config.enabled
+								? 'bg-green-500/10 text-green-600 border-green-500/20'
+								: 'bg-muted text-muted-foreground border-transparent'
+						}`}>
+						{config.enabled ? 'Enabled' : 'Disabled'}
+					</button>
+				</div>
+
+				{/* MODE SELECTOR */}
+				<div className='space-y-2'>
+					<label className='text-[10px] font-bold uppercase text-muted-foreground'>Drawing Mode</label>
+					<div className='flex bg-muted/50 p-1 rounded-lg border border-border'>
+						<button
+							onClick={() => actions.updateFogConfig({ invert: false })}
+							className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all ${
+								!config.invert ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+							}`}>
+							Reveal Areas
+						</button>
+						<button
+							onClick={() => actions.updateFogConfig({ invert: true })}
+							className={`flex-1 py-1.5 text-[10px] font-bold uppercase rounded-md transition-all ${
+								config.invert ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'
+							}`}>
+							Hide Areas
+						</button>
+					</div>
+				</div>
+
+				<div className='h-px bg-border/50 w-full' />
+
+				{/* APPEARANCE */}
+				<div className='space-y-4'>
+					<h4 className='text-[10px] font-bold uppercase text-muted-foreground'>Appearance</h4>
+
+					<div className='space-y-2'>
+						<label className='text-xs font-medium text-muted-foreground'>Color</label>
+						<SmartColorPicker value={config.color} onChange={(c) => actions.updateFogConfig({ color: c })} />
+					</div>
+
+					<div className='space-y-2'>
+						<label className='text-xs font-medium text-muted-foreground'>Opacity</label>
+						<div className='flex items-center gap-3'>
+							<input
+								type='range'
+								min='0'
+								max='1'
+								step='0.01'
+								value={config.opacity}
+								onChange={(e) => actions.updateFogConfig({ opacity: parseFloat(e.target.value) })}
+								className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+							/>
+							<span className='text-xs font-mono w-8 text-right'>{Math.round(config.opacity * 100)}%</span>
+						</div>
+					</div>
+
+					{/* FIX: Updated Range for Blur */}
+					<div className='space-y-2'>
+						<div className='flex justify-between'>
+							<label className='text-xs font-medium text-muted-foreground'>Edge Softness</label>
+							<span className='text-[10px] text-muted-foreground italic'>(Map Units: {config.edgeSoftness})</span>
+						</div>
+						<div className='flex items-center gap-3'>
+							<input
+								type='range'
+								min='0'
+								max='5'
+								step='0.05'
+								value={config.edgeSoftness}
+								onChange={(e) => actions.updateFogConfig({ edgeSoftness: parseFloat(e.target.value) })}
+								className='flex-1 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary'
+							/>
+						</div>
+						<p className='text-[10px] text-muted-foreground opacity-70'>
+							Adjusts the blur radius relative to map coordinates. Lower values are sharper.
+						</p>
+					</div>
+				</div>
+
+				<div className='h-px bg-border/50 w-full' />
+
+				{/* SHAPES LIST */}
+				<div className='space-y-2'>
+					<div className='flex justify-between items-center'>
+						<h4 className='text-[10px] font-bold uppercase text-muted-foreground'>Shapes ({config.shapes.length})</h4>
+						{config.shapes.length > 0 && (
+							<button
+								onClick={() => {
+									if (confirm('Clear all fog shapes?')) {
+										config.shapes.forEach((s) => actions.deleteFogShape(s.id));
+									}
+								}}
+								className='text-[10px] text-red-500 hover:underline'>
+								Clear All
+							</button>
+						)}
+					</div>
+
+					<div className='max-h-40 overflow-y-auto space-y-1 pr-1 custom-scrollbar'>
+						{config.shapes.length === 0 && (
+							<div className='text-xs text-muted-foreground italic p-2 text-center border border-dashed border-border rounded'>
+								Click map to draw shapes.
+								<br />
+								Click the start point to close loop.
+							</div>
+						)}
+						{config.shapes.map((shape, idx) => (
+							<div
+								key={shape.id}
+								className='flex items-center justify-between p-2 rounded bg-muted/20 border border-border/50 text-xs group hover:bg-muted/50 transition-colors'>
+								<span className='font-mono text-muted-foreground'>
+									Shape #{idx + 1} <span className='opacity-50'>({shape.points.length} pts)</span>
+								</span>
+								<div className='flex gap-2'>
+									<button
+										onClick={() => actions.selectItem('fog', shape.id)}
+										className='text-primary hover:text-primary/80 opacity-0 group-hover:opacity-100'
+										title='Edit Shape'>
+										Edit
+									</button>
+									<button
+										onClick={() => actions.deleteFogShape(shape.id)}
+										className='text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all'>
+										<Trash2 size={12} />
+									</button>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\admin\components\atlas\forms\FogForm.jsx ---
 
 --- FILE: features\admin\components\atlas\forms\MapPropertiesForm.jsx ---
 import React from 'react';
@@ -9641,6 +9875,11 @@ export const useAtlasActions = (dispatch) => {
 
 			updateMapConfig: (updates) => dispatch({ type: 'UPDATE_MAP_CONFIG', updates }),
 			updateViewport: (center, zoom) => dispatch({ type: 'UPDATE_VIEWPORT', payload: { center, zoom } }),
+
+			updateFogConfig: (updates) => dispatch({ type: 'UPDATE_FOG_CONFIG', updates }),
+			addFogShape: (shape) => dispatch({ type: 'ADD_FOG_SHAPE', payload: shape }),
+			updateFogShape: (id, updates) => dispatch({ type: 'UPDATE_FOG_SHAPE', id, updates }),
+			deleteFogShape: (id) => dispatch({ type: 'DELETE_FOG_SHAPE', id }),
 		}),
 		[dispatch],
 	);
@@ -9665,11 +9904,20 @@ const initialState = {
 		paths: true,
 		areas: true,
 		overlays: true,
+		fog: true,
 	},
 	contextMenu: null, // { type: 'map'|'entity', position: {x,y}, latlng: {lat,lng}, target: {type, id, ...data} }
 	mapId: null,
 	mapConfig: null,
 	viewport: { center: [0, 0], zoom: 0 },
+	fog: {
+		enabled: false,
+		opacity: 0.9,
+		color: '#1a1d21', // Dark charcoal
+		edgeSoftness: 20, // px
+		invert: false, // false = Shroud (Cut holes), true = Cloud (Add patches)
+		shapes: [], // { id, points: [[lat,lng],...] }
+	},
 };
 
 const reducer = (state, action) => {
@@ -9923,6 +10171,50 @@ const reducer = (state, action) => {
 				overlays: state.overlays.filter((o) => o._id !== action.id),
 				selection: state.selection?.id === action.id ? null : state.selection,
 				contextMenu: null,
+			};
+
+		// ===========================================
+		// FOG OF WAR
+		// ===========================================
+
+		// --- FOG ACTIONS ---
+		case 'UPDATE_FOG_CONFIG':
+			return {
+				...state,
+				fog: { ...state.fog, ...action.updates },
+			};
+		case 'ADD_FOG_SHAPE':
+			return {
+				...state,
+				fog: {
+					...state.fog,
+					shapes: [...state.fog.shapes, action.payload],
+				},
+				// Auto-select the new shape to allow immediate drawing
+				selection: { type: 'fog', id: action.payload.id, data: action.payload },
+				mode: 'draw',
+			};
+		case 'UPDATE_FOG_SHAPE':
+			return {
+				...state,
+				fog: {
+					...state.fog,
+					shapes: state.fog.shapes.map((s) => (s.id === action.id ? { ...s, ...action.updates } : s)),
+				},
+				// Keep selection in sync so drawing continues smoothly
+				selection:
+					state.selection?.id === action.id
+						? { ...state.selection, data: { ...state.selection.data, ...action.updates } }
+						: state.selection,
+			};
+		case 'DELETE_FOG_SHAPE':
+			return {
+				...state,
+				fog: {
+					...state.fog,
+					shapes: state.fog.shapes.filter((s) => s.id !== action.id),
+				},
+				selection: null,
 			};
 
 		default:
@@ -10304,6 +10596,99 @@ export default function EditAreasLayer() {
 }
 
 --- END OF features\admin\components\atlas\layers\EditAreasLayer.jsx ---
+
+--- FILE: features\admin\components\atlas\layers\EditFogLayer.jsx ---
+import React from 'react';
+import { Polyline, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { useAtlasEditor } from '../AtlasEditorContext';
+
+// Standard Handle
+const handleIcon = L.divIcon({
+	className: 'vertex-handle',
+	html: `<div style="width: 10px; height: 10px; background: white; border: 2px solid #6366f1; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>`,
+	iconSize: [10, 10],
+	iconAnchor: [5, 5],
+});
+
+// NEW: "Start/Close" Handle (Green)
+const startHandleIcon = L.divIcon({
+	className: 'vertex-handle-start',
+	html: `<div style="width: 14px; height: 14px; background: #22c55e; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.5); cursor: pointer;"></div>`,
+	iconSize: [14, 14],
+	iconAnchor: [7, 7],
+});
+
+export const EditFogLayer = () => {
+	const { state, actions } = useAtlasEditor();
+	const { fog, selection, activeTool } = state;
+
+	if (activeTool !== 'fog' && selection?.type !== 'fog') return null;
+	if (!fog.shapes) return null;
+
+	return (
+		<>
+			{fog.shapes.map((shape) => {
+				const isSelected = selection?.type === 'fog' && selection.id === shape.id;
+
+				return (
+					<React.Fragment key={shape.id}>
+						<Polyline
+							positions={shape.points}
+							pathOptions={{
+								color: isSelected ? '#6366f1' : '#ffffff',
+								weight: 2,
+								dashArray: '5, 5',
+								opacity: 0.8,
+								fill: false,
+								interactive: false,
+							}}
+						/>
+
+						{isSelected &&
+							shape.points.map((pt, idx) => {
+								// Logic: If it's the first point (idx 0), give it the "Close" handle
+								const isStart = idx === 0;
+								const icon = isStart ? startHandleIcon : handleIcon;
+
+								return (
+									<Marker
+										key={`${shape.id}-${idx}`}
+										position={pt}
+										icon={icon}
+										draggable={true}
+										zIndexOffset={isStart ? 1000 : 0} // Keep start on top
+										eventHandlers={{
+											click: (e) => {
+												L.DomEvent.stopPropagation(e);
+												if (isStart) {
+													// CLICKING START POINT -> CLOSE SHAPE / DESELECT
+													actions.deselect();
+												}
+											},
+											dragend: (e) => {
+												const { lat, lng } = e.target.getLatLng();
+												const newPoints = [...shape.points];
+												newPoints[idx] = [lat, lng];
+												actions.updateFogShape(shape.id, { points: newPoints });
+											},
+											contextmenu: (e) => {
+												L.DomEvent.stopPropagation(e);
+												const newPoints = shape.points.filter((_, i) => i !== idx);
+												actions.updateFogShape(shape.id, { points: newPoints });
+											},
+										}}
+									/>
+								);
+							})}
+					</React.Fragment>
+				);
+			})}
+		</>
+	);
+};
+
+--- END OF features\admin\components\atlas\layers\EditFogLayer.jsx ---
 
 --- FILE: features\admin\components\atlas\layers\EditMarkersLayer.jsx ---
 // --- FILE: layers/EditMarkersLayer.jsx ---
@@ -10814,7 +11199,17 @@ export const normalizeMapData = (dbData) => {
 					],
 	}));
 
-	return { markers, paths, areas, overlays, mapConfig };
+	// 6. FOG OF WAR
+	const fog = data.fog || {
+		enabled: false,
+		opacity: 0.9,
+		color: '#1a1d21',
+		edgeSoftness: 20,
+		invert: false,
+		shapes: [],
+	};
+
+	return { markers, paths, areas, overlays, mapConfig, fog };
 };
 
 export const serializeMapData = (state) => {
@@ -10873,7 +11268,10 @@ export const serializeMapData = (state) => {
 		visibleOnLoad: !!o.visibleOnLoad,
 	}));
 
-	return { annotations, paths, areas, overlays };
+	// 5. FOG
+	const fog = state.fog;
+
+	return { annotations, paths, areas, overlays, fog };
 };
 
 --- END OF features\admin\components\atlas\services\atlasMapper.js ---
@@ -13077,7 +13475,7 @@ export function useMapData() {
 	const viewData = useMemo(() => {
 		if (!mapConfig) return null;
 
-		const { metadata, annotations, paths, areas, overlays } = mapConfig;
+		const { metadata, annotations, paths, areas, overlays, fog } = mapConfig;
 
 		if (!metadata) return null;
 
@@ -13122,6 +13520,7 @@ export function useMapData() {
 			sessions: paths || [],
 			areas: mapAreas,
 			overlays: overlays || [],
+			fog: fog || { enabled: false, shapes: [] },
 		};
 	}, [mapConfig]);
 
@@ -13237,6 +13636,7 @@ import {
 	PanelLeftOpen,
 	Menu,
 	X,
+	CloudFog,
 } from 'lucide-react';
 import { useAtlas } from '../context/AtlasContext';
 import { useAtlasSearch } from '../utils/useAtlasSearch';
@@ -13265,7 +13665,7 @@ export const AtlasSidebar = () => {
 				'flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors border-b-2',
 				activeTab === id
 					? 'border-primary text-primary bg-primary/5'
-					: 'border-transparent text-muted-foreground hover:bg-black/5'
+					: 'border-transparent text-muted-foreground hover:bg-black/5',
 			)}>
 			<Icon size={14} />
 			<span className='hidden md:inline'>{label}</span>
@@ -13302,7 +13702,7 @@ export const AtlasSidebar = () => {
 					'flex flex-col h-full bg-muted border-l border-border shadow-2xl z-[500] transition-transform duration-300',
 					'absolute top-0 left-0 w-full md:w-72 md:static',
 					isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-					isDesktopCollapsed && 'md:hidden'
+					isDesktopCollapsed && 'md:hidden',
 				)}>
 				{/* Header */}
 				<div className='p-3 border-b border-border bg-muted flex flex-col gap-2 shrink-0'>
@@ -13382,6 +13782,23 @@ export const AtlasSidebar = () => {
 					{/* LAYERS TAB */}
 					{activeTab === 'layers' && (
 						<div className='space-y-4 p-2 pb-10'>
+							{/* NEW: Fog Toggle Section */}
+							{mapData.fog && mapData.fog.enabled && (
+								<div className='bg-background/50 rounded-lg p-2 border border-border/50'>
+									<div className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-2'>
+										<CloudFog size={12} /> Atmosphere
+									</div>
+									<SidebarItem
+										label='Fog of War'
+										icon={CloudFog}
+										isVisible={visibility['fog']}
+										onToggle={() => toggleItem('fog')}
+										// No navigation for fog, it covers everything
+										onNavigate={() => {}}
+									/>
+								</div>
+							)}
+
 							{/* Base Layers */}
 							<div className='bg-background/50 rounded-lg p-2 border border-border/50'>
 								<div className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2 px-2'>
@@ -13441,7 +13858,7 @@ export const AtlasSidebar = () => {
 
 --- FILE: features\atlas\components\MapCanvas.jsx ---
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Pane } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapMarkers } from './layers/MapMarkers';
@@ -13453,6 +13870,7 @@ import { MapZoomHandler } from './MapZoomHandler';
 import { useAtlas } from '../context/AtlasContext';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { useSearchParams } from 'react-router-dom';
+import { MapFogLayer } from './layers/MapFogLayer';
 
 const MapController = ({ config, flyToTarget }) => {
 	const map = useMap();
@@ -13522,7 +13940,7 @@ export const MapCanvas = () => {
 		);
 	}
 
-	const { config, markers, sessions, overlays, areas } = mapData;
+	const { config, markers, sessions, overlays, areas, fog } = mapData;
 	const visibleMarkers = markers.filter((m) => visibility[m.id]);
 	const visibleSessions = sessions.filter((s) => visibility[`session-${s.name}`]);
 	const visibleOverlays = overlays.filter((o) => visibility[`overlay-${o.name}`]);
@@ -13533,9 +13951,24 @@ export const MapCanvas = () => {
 		? config.path
 		: `https://raw.githubusercontent.com/aethere92/dnd-campaign-map/main/${config.path}`;
 	const tileUrl = `${baseUrl}/{z}/{x}_{y}.${config.fileExtension || 'png'}`;
+	const scaleFactor = Math.pow(2, config.sizes.maxZoom);
+	const bounds = [
+		[-config.sizes.imageHeight / scaleFactor, 0],
+		[0, config.sizes.imageWidth / scaleFactor],
+	];
+	const showFog = fog && fog.enabled === true && visibility['fog'] === true;
 
 	return (
-		<div ref={wrapperRef} className='flex-1 relative h-full bg-background'>
+		<div
+			ref={wrapperRef}
+			className='flex-1 relative h-full'
+			style={{
+				backgroundColor: 'var(--background)',
+				backgroundImage:
+					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
+				backgroundSize: '40px 40px, 20px 20px',
+				backgroundPosition: '0 0, 20px 20px',
+			}}>
 			<MapContainer
 				center={[0, 0]}
 				zoom={Math.ceil(config.sizes.maxZoom / 2)}
@@ -13554,6 +13987,9 @@ export const MapCanvas = () => {
 				<MapAreas areas={visibleAreas} />
 				<MapRecaps sessions={visibleSessions} />
 				<MapMarkers markers={visibleMarkers} />
+				<Pane name='fogPane' style={{ zIndex: 620, pointerEvents: 'none' }}>
+					{showFog && <MapFogLayer fogConfig={fog} bounds={bounds} />}
+				</Pane>
 				<MapTools containerRef={wrapperRef} />
 			</MapContainer>
 		</div>
@@ -14097,6 +14533,108 @@ export const MapAreas = ({ areas }) => {
 };
 
 --- END OF features\atlas\components\layers\MapAreas.jsx ---
+
+--- FILE: features\atlas\components\layers\MapFogLayer.jsx ---
+import React, { useMemo } from 'react';
+import { SVGOverlay } from 'react-leaflet';
+
+export const MapFogLayer = ({ fogConfig, bounds }) => {
+	if (!fogConfig || !fogConfig.enabled || !bounds) return null;
+
+	// 1. Calculate Map Dimensions
+	// In CRS.Simple, bounds are usually [[-Height, 0], [0, Width]]
+	// We need absolute width/height for the SVG viewBox
+	const height = Math.abs(bounds[0][0] - bounds[1][0]);
+	const width = Math.abs(bounds[1][1] - bounds[0][1]);
+
+	// 2. Generate SVG Path Data
+	// Transformation: Map(lat, lng) -> SVG(x, y)
+	// x = lng
+	// y = -lat (Since lat is negative down, -lat is positive down)
+	const shapePaths = useMemo(() => {
+		return fogConfig.shapes.map((shape) => {
+			if (!shape.points || shape.points.length === 0) return '';
+			// Map [lat, lng] to "lng -lat"
+			const d = shape.points.map((p) => `${p[1]} ${-p[0]}`).join(' L ');
+			return `M ${d} Z`;
+		});
+	}, [fogConfig.shapes]);
+
+	// 3. Configuration
+	const isCloudMode = fogConfig.invert; // false = Reveal (Holes), true = Cloud (Patches)
+
+	// Cloud Mode: Base is transparent, Shapes are fog color
+	// Reveal Mode: Base is fog color, Shapes are "holes"
+
+	// We use a Mask to achieve the "Reveal" effect with soft edges.
+	// Mask White = Visible, Mask Black = Transparent
+
+	const maskBaseFill = 'white';
+	const maskShapeFill = 'black';
+
+	// 4. Blur Calculation
+	// We use a fixed percentage of map width to ensure blur stays relative to map features
+	// (A 10-mile fog bank is always 10 miles wide, regardless of zoom level)
+	// Alternatively, use the config value as "Map Units".
+	const blurStdDev = fogConfig.edgeSoftness || 0;
+
+	return (
+		<SVGOverlay attributes={{ viewBox: `0 0 ${width} ${height}` }} bounds={bounds} opacity={1} zIndex={500}>
+			<defs>
+				{/* 
+                    filterUnits="userSpaceOnUse" ensures the blur value is treated as MAP COORDINATES 
+                    (e.g. 20 = 20 pixels of the original image), not screen pixels. 
+                    This stops the "opacity changing on zoom" issue.
+                */}
+				<filter id='fog-blur' filterUnits='userSpaceOnUse'>
+					<feGaussianBlur stdDeviation={blurStdDev} />
+				</filter>
+
+				<mask id='fog-mask'>
+					{/* The Base Canvas (The Shroud) */}
+					<rect x='0' y='0' width='100%' height='100%' fill={maskBaseFill} />
+
+					{/* The Cutouts (The Revealed Areas) */}
+					{shapePaths.map((d, i) => (
+						<path key={i} d={d} fill={maskShapeFill} filter='url(#fog-blur)' />
+					))}
+				</mask>
+			</defs>
+
+			{/* RENDER LOGIC */}
+			{!isCloudMode ? (
+				// REVEAL MODE (Standard Fog of War)
+				// We render a giant rect covered by the mask
+				<rect
+					x='0'
+					y='0'
+					width='100%'
+					height='100%'
+					fill={fogConfig.color || '#1a1d21'}
+					fillOpacity={fogConfig.opacity || 0.9}
+					mask='url(#fog-mask)'
+					style={{ pointerEvents: 'none' }}
+				/>
+			) : (
+				// CLOUD MODE (Adding Fog Patches)
+				// We render just the shapes directly
+				<g style={{ pointerEvents: 'none' }}>
+					{shapePaths.map((d, i) => (
+						<path
+							key={i}
+							d={d}
+							fill={fogConfig.color || '#1a1d21'}
+							fillOpacity={fogConfig.opacity || 0.9}
+							filter='url(#fog-blur)'
+						/>
+					))}
+				</g>
+			)}
+		</SVGOverlay>
+	);
+};
+
+--- END OF features\atlas\components\layers\MapFogLayer.jsx ---
 
 --- FILE: features\atlas\components\layers\MapMarkers.jsx ---
 import { Marker, Popup } from 'react-leaflet';
@@ -14713,13 +15251,10 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { useSearchParams } from 'react-router-dom';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { fetchMapByKey } from '../api/mapService';
-
 const AtlasContext = createContext(null);
-
 export const AtlasProvider = ({ children }) => {
 	const { campaignId, campaignData } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
-
 	// -- Data State --
 	const [mapData, setMapData] = useState(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -14793,6 +15328,11 @@ export const AtlasProvider = ({ children }) => {
 		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = p.visibleOnLoad === true));
 		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = o.visibleOnLoad === true));
 
+		// NEW: Fog Visibility
+		// FIX: Always default to FALSE (Hidden) so the user has to toggle it on.
+		// Use 'fog' key to track layer visibility.
+		initial['fog'] = false;
+
 		setVisibility(initial);
 	};
 
@@ -14800,7 +15340,6 @@ export const AtlasProvider = ({ children }) => {
 	const navigateToMap = (key, targetView = null) => {
 		const params = { map: key };
 		if (targetView) {
-			// We pass these via URL params so they persist on reload/sharing
 			if (targetView.lat) params.lat = targetView.lat;
 			if (targetView.lng) params.lng = targetView.lng;
 			if (targetView.zoom) params.z = targetView.zoom;
@@ -14837,7 +15376,6 @@ export const AtlasProvider = ({ children }) => {
 			Object.entries(mapData.annotations).forEach(([key, category]) => {
 				const groupItems = (category.items || []).map((item, index) => ({
 					...item,
-					// Generate stable, unique ID using index
 					id: item.id || generateId('marker', key, index, item.label),
 					category: category.name,
 					categoryId: key,
@@ -14860,7 +15398,6 @@ export const AtlasProvider = ({ children }) => {
 		const areas = mapData.areas
 			? Object.entries(mapData.areas).flatMap(([key, cat]) =>
 					(cat.items || []).map((item, index) => {
-						// Centroid fallback
 						const pos = item.labelPosition || (item.positions && item.positions[0]) || [0, 0];
 						return {
 							...item,
@@ -14872,6 +15409,9 @@ export const AtlasProvider = ({ children }) => {
 				)
 			: [];
 
+		// Pass Fog Data safely
+		const fog = mapData.fog || { enabled: false, shapes: [] };
+
 		return {
 			config: mapData,
 			markers,
@@ -14879,6 +15419,7 @@ export const AtlasProvider = ({ children }) => {
 			sessions: mapData.paths || [],
 			overlays: mapData.overlays || [],
 			areas: areas,
+			fog: fog,
 		};
 	}, [mapData]);
 

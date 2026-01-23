@@ -71,7 +71,17 @@ export const normalizeMapData = (dbData) => {
 					],
 	}));
 
-	return { markers, paths, areas, overlays, mapConfig };
+	// 6. FOG OF WAR
+	const fog = data.fog || {
+		enabled: false,
+		opacity: 0.9,
+		color: '#1a1d21',
+		edgeSoftness: 20,
+		invert: false,
+		shapes: [],
+	};
+
+	return { markers, paths, areas, overlays, mapConfig, fog };
 };
 
 export const serializeMapData = (state) => {
@@ -130,5 +140,8 @@ export const serializeMapData = (state) => {
 		visibleOnLoad: !!o.visibleOnLoad,
 	}));
 
-	return { annotations, paths, areas, overlays };
+	// 5. FOG
+	const fog = state.fog;
+
+	return { annotations, paths, areas, overlays, fog };
 };

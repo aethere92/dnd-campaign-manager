@@ -11,6 +11,7 @@ import {
 	Search,
 	Eye,
 	EyeOff,
+	CloudFog,
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -35,7 +36,7 @@ const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection,
 					}}
 					className={clsx(
 						'p-1 ml-2 rounded hover:bg-background transition-colors',
-						isVisible ? 'text-primary' : 'text-muted-foreground opacity-50'
+						isVisible ? 'text-primary' : 'text-muted-foreground opacity-50',
 					)}
 					title={isVisible ? 'Hide Layer' : 'Show Layer'}>
 					{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -53,7 +54,7 @@ const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection,
 									'flex items-center w-full text-left px-8 py-1.5 text-xs transition-colors border-l-2',
 									isSelected
 										? 'bg-primary/10 border-primary text-primary font-medium'
-										: 'border-transparent text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+										: 'border-transparent text-foreground/80 hover:bg-muted/50 hover:text-foreground',
 								)}>
 								<span className='truncate'>{item.label || item.name || 'Untitled'}</span>
 							</button>
@@ -67,7 +68,7 @@ const Group = React.memo(({ title, icon: Icon, items, type, onSelect, selection,
 
 export default function EditorLayerList() {
 	const { state, actions } = useAtlasEditor();
-	const { markers, paths, areas, overlays, selection, visibility } = state;
+	const { markers, paths, areas, overlays, selection, visibility, fog } = state;
 	const [search, setSearch] = useState('');
 
 	// Optimize filtering with useMemo
@@ -98,6 +99,20 @@ export default function EditorLayerList() {
 				</div>
 			</div>
 			<div className='flex-1 overflow-y-auto custom-scrollbar py-2'>
+				{/* NEW: Fog Group */}
+				{/* We treat Fog as a single item group for consistency */}
+				{fog && (
+					<Group
+						title='Fog of War'
+						icon={CloudFog}
+						items={fog.enabled ? [{ _id: 'fog-config', label: 'Fog Layer', type: 'fog-layer' }] : []}
+						type='fog' // This doesn't matter much since we select via tool
+						onSelect={() => actions.setTool('fog')} // Clicking the item activates the tool
+						selection={selection} // Pass selection to highlight if active
+						isVisible={visibility.fog !== false} // Default true
+						onToggle={() => actions.toggleVisibility('fog')} // New action needed below
+					/>
+				)}
 				<Group
 					title='Markers'
 					icon={MapPin}

@@ -2,13 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { useSearchParams } from 'react-router-dom';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { fetchMapByKey } from '../api/mapService';
-
 const AtlasContext = createContext(null);
-
 export const AtlasProvider = ({ children }) => {
 	const { campaignId, campaignData } = useCampaign();
 	const [searchParams, setSearchParams] = useSearchParams();
-
 	// -- Data State --
 	const [mapData, setMapData] = useState(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +79,11 @@ export const AtlasProvider = ({ children }) => {
 		if (data.paths) data.paths.forEach((p) => (initial[`session-${p.name}`] = p.visibleOnLoad === true));
 		if (data.overlays) data.overlays.forEach((o) => (initial[`overlay-${o.name}`] = o.visibleOnLoad === true));
 
+		// NEW: Fog Visibility
+		// FIX: Always default to FALSE (Hidden) so the user has to toggle it on.
+		// Use 'fog' key to track layer visibility.
+		initial['fog'] = false;
+
 		setVisibility(initial);
 	};
 
@@ -89,7 +91,6 @@ export const AtlasProvider = ({ children }) => {
 	const navigateToMap = (key, targetView = null) => {
 		const params = { map: key };
 		if (targetView) {
-			// We pass these via URL params so they persist on reload/sharing
 			if (targetView.lat) params.lat = targetView.lat;
 			if (targetView.lng) params.lng = targetView.lng;
 			if (targetView.zoom) params.z = targetView.zoom;
@@ -126,7 +127,6 @@ export const AtlasProvider = ({ children }) => {
 			Object.entries(mapData.annotations).forEach(([key, category]) => {
 				const groupItems = (category.items || []).map((item, index) => ({
 					...item,
-					// Generate stable, unique ID using index
 					id: item.id || generateId('marker', key, index, item.label),
 					category: category.name,
 					categoryId: key,
@@ -149,7 +149,6 @@ export const AtlasProvider = ({ children }) => {
 		const areas = mapData.areas
 			? Object.entries(mapData.areas).flatMap(([key, cat]) =>
 					(cat.items || []).map((item, index) => {
-						// Centroid fallback
 						const pos = item.labelPosition || (item.positions && item.positions[0]) || [0, 0];
 						return {
 							...item,
@@ -161,6 +160,9 @@ export const AtlasProvider = ({ children }) => {
 				)
 			: [];
 
+		// Pass Fog Data safely
+		const fog = mapData.fog || { enabled: false, shapes: [] };
+
 		return {
 			config: mapData,
 			markers,
@@ -168,6 +170,7 @@ export const AtlasProvider = ({ children }) => {
 			sessions: mapData.paths || [],
 			overlays: mapData.overlays || [],
 			areas: areas,
+			fog: fog,
 		};
 	}, [mapData]);
 
