@@ -55,24 +55,27 @@ const simplifyPath = (points, tolerance = 0.5) => {
 	return simplified;
 };
 
-// Debounced zoom tracker
+// Only update on significant zoom changes (prevents re-render on every frame)
 const useZoomLevel = () => {
 	const map = useMap();
-	const [zoom, setZoom] = React.useState(map.getZoom());
-	const timeoutRef = useRef(null);
+	const [zoom, setZoom] = React.useState(() => Math.floor(map.getZoom()));
 
 	useEffect(() => {
-		const handleZoom = () => {
-			if (timeoutRef.current) clearTimeout(timeoutRef.current);
-			timeoutRef.current = setTimeout(() => {
-				setZoom(map.getZoom());
-			}, 150);
+		const handleZoomEnd = () => {
+			const currentZoom = Math.floor(map.getZoom());
+			setZoom((prevZoom) => {
+				// Only update if zoom level changed significantly (full integer)
+				if (Math.abs(currentZoom - prevZoom) >= 1) {
+					return currentZoom;
+				}
+				return prevZoom;
+			});
 		};
 
-		map.on('zoomend', handleZoom);
+		// ONLY listen to zoomend, not zoom events during animation
+		map.on('zoomend', handleZoomEnd);
 		return () => {
-			map.off('zoomend', handleZoom);
-			if (timeoutRef.current) clearTimeout(timeoutRef.current);
+			map.off('zoomend', handleZoomEnd);
 		};
 	}, [map]);
 
@@ -153,9 +156,10 @@ export const MapFogLayer = ({ fogConfig, bounds }) => {
 
 	const baseStyle = {
 		pointerEvents: 'none',
+		// Force GPU rendering to be stable during transforms
+		transform: 'translate3d(0,0,0)',
 		...(renderStrategy.useLayerPromotion && {
 			willChange: 'transform',
-			transform: 'translateZ(0)',
 		}),
 	};
 
@@ -167,7 +171,9 @@ export const MapFogLayer = ({ fogConfig, bounds }) => {
 			}}
 			bounds={bounds}
 			opacity={1}
-			zIndex={500}>
+			zIndex={500}
+			// CRITICAL: Prevent interaction events during zoom
+			interactive={false}>
 			<defs>
 				{!renderStrategy.skipBlur && !renderStrategy.useCSS && (
 					<filter id={filterId} filterUnits='userSpaceOnUse' colorInterpolationFilters='sRGB'>
