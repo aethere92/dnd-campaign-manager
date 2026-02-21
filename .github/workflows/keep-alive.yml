@@ -1,0 +1,16 @@
+name: Supabase Keep Alive
+on:
+  schedule:
+    # Runs at midnight every Sunday and Thursday
+    - cron: '0 0 * * 0,4'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          curl -X GET "https://yffukfulnggfhlgoyowg.supabase.co/rest/v1/campaigns?select=id&limit=1" \
+          -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}"
