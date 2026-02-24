@@ -18,12 +18,12 @@ export default function SmartImageInput({ value, onChange, placeholder, classNam
 	const handleChange = (e) => {
 		const val = e.target.value;
 		setInputValue(val);
-		if (onChange) onChange(val);
+		if (onChange) onChange(e);
 	};
 
 	const handleClear = () => {
 		setInputValue('');
-		if (onChange) onChange('');
+		if (onChange) onChange({ target: { value: '' } });
 	};
 
 	const handleLibrarySelect = (image) => {
@@ -32,7 +32,7 @@ export default function SmartImageInput({ value, onChange, placeholder, classNam
 
 		if (url) {
 			setInputValue(url);
-			if (onChange) onChange(url);
+			if (onChange) onChange({ target: { value: url } });
 		}
 		setIsLibraryOpen(false);
 	};
