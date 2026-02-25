@@ -4,11 +4,12 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Load variables from .env
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load variables from .env (look in project root, not current directory)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const { Client } = pg;
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_FILE = path.join(__dirname, './outputs/schema_dump.txt');
 
 // Safety Check
@@ -44,6 +45,7 @@ const processRows = (rows) => {
 const run = async () => {
 	try {
 		console.log('🔌 Connecting to Database...');
+		console.log(`   Host: ${new URL(process.env.DATABASE_URL).hostname}`);
 		await client.connect();
 		console.log('✅ Connected.');
 
@@ -216,6 +218,14 @@ const run = async () => {
 		console.log(`✅ COMPLETE. Full Diagnostic saved to: ${OUTPUT_FILE}`);
 	} catch (err) {
 		console.error('❌ Error:', err.message);
+		if (err.message.includes('ENOTFOUND')) {
+			console.error('\n💡 Troubleshooting Tips:');
+			console.error('   1. Check your internet connection');
+			console.error('   2. Verify the DATABASE_URL in .env is correct');
+			console.error('   3. Check if you can access Supabase dashboard');
+			console.error('   4. Try running: ping db.yffukfulnggfhlgoyowg.supabase.co');
+			console.error('   5. Check firewall/VPN settings that might block database connections');
+		}
 	} finally {
 		await client.end();
 	}

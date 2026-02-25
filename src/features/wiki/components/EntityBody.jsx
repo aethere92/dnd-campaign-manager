@@ -5,24 +5,20 @@ import { EntityHistory } from './EntityHistory';
 import { QuestObjectives } from './QuestObjectives';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 import { EncounterTimeline } from './EncounterTimeline';
+import { EncounterNarrativeTimeline } from './EncounterNarrativeTimeline'; // NEW
 import { EntityMiniMap } from '@/features/wiki/components/EntityMiniMap';
 
-// Re-exporting History for use in tabs if needed by parent
 export { EntityHistory } from './EntityHistory';
 
 const LevelUpBanner = ({ level }) => {
+	// ... (unchanged)
 	const logoPath = `${import.meta.env.BASE_URL}logo_detailed.png`;
-
 	return (
 		<div className='mt-4 mb-6 w-full'>
-			{/* Full Width, Fixed Height (~64px) Banner */}
 			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-primary rounded-lg shadow-sm w-full overflow-hidden'>
-				{/* Logo Section - Vertical Center */}
 				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10/50 border-r border-border/40'>
 					<img src={logoPath} alt='Campaign Logo' className='h-12 w-auto object-contain opacity-80 drop-shadow-sm' />
 				</div>
-
-				{/* Text Content */}
 				<div className='flex-1 flex flex-col justify-center px-4'>
 					<h3 className='text-xs font-serif font-bold text-primary uppercase tracking-[0.15em] leading-none m-0! p-0!'>
 						Level Up
@@ -42,10 +38,21 @@ export const EntityBody = ({
 	history,
 	objectives,
 	combatRounds,
+	narrativeTimeline,
+	timelineMode,
 	levelUp,
 	mapImageUrl,
 	mapMarkers,
 }) => {
+	// Determine which timeline to show based on Admin Setting
+	const hasNarrative = narrativeTimeline && Object.keys(narrativeTimeline).length > 0;
+	const hasLegacy = combatRounds && Object.keys(combatRounds).length > 0;
+	
+	// If "Narrative Timeline" is strictly set, show it. Otherwise, show it ONLY if legacy is empty.
+	const showNarrative = timelineMode === 'Narrative Timeline' ? hasNarrative : (!hasLegacy && hasNarrative);
+	// Vice versa for Legacy
+	const showLegacy = timelineMode !== 'Narrative Timeline' ? hasLegacy : (!hasNarrative && hasLegacy);
+
 	return (
 		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
 			{summary && (
@@ -53,13 +60,14 @@ export const EntityBody = ({
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}
-			{/* Quest Objectives */}
+			
 			{objectives && objectives.length > 0 && (
 				<>
 					<SectionDivider />
 					<QuestObjectives objectives={objectives} />
 				</>
 			)}
+			
 			{mapImageUrl && mapImageUrl.length > 0 && (
 				<>
 					<SectionDivider />
@@ -67,14 +75,20 @@ export const EntityBody = ({
 				</>
 			)}
 
-			{/* Combat Timeline */}
-			{combatRounds && Object.keys(combatRounds).length > 0 && (
+			{/* ENCOUNTER RENDERING LOGIC */}
+			{showNarrative && (
+				<>
+					<SectionDivider />
+					<EncounterNarrativeTimeline timeline={narrativeTimeline} />
+				</>
+			)}
+			{showLegacy && (
 				<>
 					<SectionDivider />
 					<EncounterTimeline rounds={combatRounds} />
 				</>
 			)}
-			{/* Narrative Sections */}
+
 			{sections.map((prop) => {
 				if (prop.displayType === 'list' && Array.isArray(prop.value)) {
 					return (
@@ -110,6 +124,7 @@ export const EntityBody = ({
 					</div>
 				);
 			})}
+			
 			{history && history.length > 0 && (
 				<div className='mt-2'>
 					<SectionDivider />
@@ -119,7 +134,7 @@ export const EntityBody = ({
 					<EntityHistory events={history} fullHeight />
 				</div>
 			)}
-			{/* Level Up Banner */}
+			
 			{levelUp && <LevelUpBanner level={levelUp} />}
 		</div>
 	);

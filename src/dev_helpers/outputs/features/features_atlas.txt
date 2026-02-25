@@ -90,12 +90,17 @@ PARTIAL BUNDLE: FEATURES ATLAS
           services/
             atlasMapper.js
             geometryUtils.js
+        forms/
         inputs/
           AttributeValueInput.jsx
           StoragePathInput.jsx
+        lists/
+        search/
+        ui/
       config/
         adminStrategies.js
         imageManifest.json
+      hooks/
       layouts/
         AdminLayout.jsx
       pages/
@@ -105,6 +110,10 @@ PARTIAL BUNDLE: FEATURES ATLAS
         MapManagerPage.jsx
         MapMigrationTool.jsx
         SplitPaneManager.jsx
+        atlas/
+          components/
+          hooks/
+      styles/
       utils/
         filterUtils.js
     atlas/
@@ -1496,98 +1505,212 @@ export const MapAreas = ({ areas }) => {
 --- END OF features\atlas\components\layers\MapAreas.jsx ---
 
 --- FILE: features\atlas\components\layers\MapFogLayer.jsx ---
-import React, { useMemo } from 'react';
-import { SVGOverlay } from 'react-leaflet';
+import React, { useMemo, useRef, useEffect } from 'react';
+import { SVGOverlay, useMap } from 'react-leaflet';
+
+// Conservative Ramer-Douglas-Peucker simplification
+// Only removes points that are truly redundant (nearly collinear)
+const simplifyPath = (points, tolerance = 0.5) => {
+	if (points.length <= 2) return points;
+
+	const getSqSegDist = (p, p1, p2) => {
+		let x = p1[0],
+			y = p1[1];
+		let dx = p2[0] - x,
+			dy = p2[1] - y;
+
+		if (dx !== 0 || dy !== 0) {
+			const t = ((p[0] - x) * dx + (p[1] - y) * dy) / (dx * dx + dy * dy);
+			if (t > 1) {
+				x = p2[0];
+				y = p2[1];
+			} else if (t > 0) {
+				x += dx * t;
+				y += dy * t;
+			}
+		}
+
+		dx = p[0] - x;
+		dy = p[1] - y;
+		return dx * dx + dy * dy;
+	};
+
+	const simplifyDPStep = (points, first, last, sqTolerance, simplified) => {
+		let maxSqDist = sqTolerance;
+		let index = 0;
+
+		for (let i = first + 1; i < last; i++) {
+			const sqDist = getSqSegDist(points[i], points[first], points[last]);
+			if (sqDist > maxSqDist) {
+				index = i;
+				maxSqDist = sqDist;
+			}
+		}
+
+		if (maxSqDist > sqTolerance) {
+			if (index - first > 1) simplifyDPStep(points, first, index, sqTolerance, simplified);
+			simplified.push(points[index]);
+			if (last - index > 1) simplifyDPStep(points, index, last, sqTolerance, simplified);
+		}
+	};
+
+	const last = points.length - 1;
+	const simplified = [points[0]];
+	simplifyDPStep(points, 0, last, tolerance * tolerance, simplified);
+	simplified.push(points[last]);
+
+	return simplified;
+};
+
+// Only update on significant zoom changes (prevents re-render on every frame)
+const useZoomLevel = () => {
+	const map = useMap();
+	const [zoom, setZoom] = React.useState(() => Math.floor(map.getZoom()));
+
+	useEffect(() => {
+		const handleZoomEnd = () => {
+			const currentZoom = Math.floor(map.getZoom());
+			setZoom((prevZoom) => {
+				// Only update if zoom level changed significantly (full integer)
+				if (Math.abs(currentZoom - prevZoom) >= 1) {
+					return currentZoom;
+				}
+				return prevZoom;
+			});
+		};
+
+		// ONLY listen to zoomend, not zoom events during animation
+		map.on('zoomend', handleZoomEnd);
+		return () => {
+			map.off('zoomend', handleZoomEnd);
+		};
+	}, [map]);
+
+	return zoom;
+};
 
 export const MapFogLayer = ({ fogConfig, bounds }) => {
 	if (!fogConfig || !fogConfig.enabled || !bounds) return null;
 
-	// 1. Calculate Map Dimensions
-	// In CRS.Simple, bounds are usually [[-Height, 0], [0, Width]]
-	// We need absolute width/height for the SVG viewBox
+	const zoom = useZoomLevel();
 	const height = Math.abs(bounds[0][0] - bounds[1][0]);
 	const width = Math.abs(bounds[1][1] - bounds[0][1]);
 
-	// 2. Generate SVG Path Data
-	// Transformation: Map(lat, lng) -> SVG(x, y)
-	// x = lng
-	// y = -lat (Since lat is negative down, -lat is positive down)
-	const shapePaths = useMemo(() => {
-		return fogConfig.shapes.map((shape) => {
-			if (!shape.points || shape.points.length === 0) return '';
-			// Map [lat, lng] to "lng -lat"
-			const d = shape.points.map((p) => `${p[1]} ${-p[0]}`).join(' L ');
-			return `M ${d} Z`;
+	const processedData = useMemo(() => {
+		// MUCH more conservative tolerance
+		// Only simplify at very low zoom levels, and minimally
+		const baseTolerance = width / 2000; // Very conservative base
+		const zoomFactor = Math.max(0, 10 - zoom); // Only simplify at zoom < 10
+		const tolerance = baseTolerance * Math.pow(1.5, zoomFactor);
+
+		const blurAmount = fogConfig.edgeSoftness || 0;
+
+		const paths = fogConfig.shapes.map((shape) => {
+			if (!shape.points || shape.points.length === 0) return { path: '', pointCount: 0 };
+
+			// Only simplify if we have excessive points AND are zoomed out
+			const shouldSimplify = shape.points.length > 200 && zoom < 12;
+			const processedPoints = shouldSimplify ? simplifyPath(shape.points, tolerance) : shape.points;
+
+			// Convert to SVG path
+			const d = processedPoints.map((p) => `${p[1]} ${-p[0]}`).join(' L ');
+
+			return {
+				path: `M ${d} Z`,
+				pointCount: processedPoints.length,
+				original: shape.points.length,
+			};
 		});
-	}, [fogConfig.shapes]);
 
-	// 3. Configuration
-	const isCloudMode = fogConfig.invert; // false = Reveal (Holes), true = Cloud (Patches)
+		const totalPoints = paths.reduce((sum, p) => sum + p.pointCount, 0);
 
-	// Cloud Mode: Base is transparent, Shapes are fog color
-	// Reveal Mode: Base is fog color, Shapes are "holes"
+		return {
+			paths: paths.map((p) => p.path),
+			stats: {
+				totalPoints,
+				shapeCount: paths.length,
+				zoom,
+			},
+			renderStrategy: {
+				// More intelligent blur strategy
+				useCSS: blurAmount > 0 && blurAmount < 10 && totalPoints < 800,
+				skipBlur: blurAmount < 0.3,
+				// Only promote complex scenes
+				useLayerPromotion: totalPoints > 2000 || (paths.length > 30 && blurAmount > 5),
+			},
+		};
+	}, [fogConfig.shapes, fogConfig.edgeSoftness, zoom, width]);
 
-	// We use a Mask to achieve the "Reveal" effect with soft edges.
-	// Mask White = Visible, Mask Black = Transparent
-
-	const maskBaseFill = 'white';
-	const maskShapeFill = 'black';
-
-	// 4. Blur Calculation
-	// We use a fixed percentage of map width to ensure blur stays relative to map features
-	// (A 10-mile fog bank is always 10 miles wide, regardless of zoom level)
-	// Alternatively, use the config value as "Map Units".
+	const isCloudMode = fogConfig.invert;
 	const blurStdDev = fogConfig.edgeSoftness || 0;
+	const fogColor = fogConfig.color || '#1a1d21';
+	const fogOpacity = fogConfig.opacity || 0.9;
+
+	const { paths, renderStrategy } = processedData;
+	const filterId = useRef(`fog-blur-${Math.random().toString(36).substr(2, 9)}`).current;
+
+	// Blur strategy
+	let blurStyle = {};
+	let svgFilter = null;
+
+	if (!renderStrategy.skipBlur) {
+		if (renderStrategy.useCSS) {
+			blurStyle = { filter: `blur(${blurStdDev * 0.25}px)` };
+		} else {
+			svgFilter = `url(#${filterId})`;
+		}
+	}
+
+	const baseStyle = {
+		pointerEvents: 'none',
+		// Force GPU rendering to be stable during transforms
+		transform: 'translate3d(0,0,0)',
+		...(renderStrategy.useLayerPromotion && {
+			willChange: 'transform',
+		}),
+	};
 
 	return (
-		<SVGOverlay attributes={{ viewBox: `0 0 ${width} ${height}` }} bounds={bounds} opacity={1} zIndex={500}>
+		<SVGOverlay
+			attributes={{
+				viewBox: `0 0 ${width} ${height}`,
+				shapeRendering: 'geometricPrecision', // Better for organic shapes
+			}}
+			bounds={bounds}
+			opacity={1}
+			zIndex={500}
+			// CRITICAL: Prevent interaction events during zoom
+			interactive={false}>
 			<defs>
-				{/* 
-                    filterUnits="userSpaceOnUse" ensures the blur value is treated as MAP COORDINATES 
-                    (e.g. 20 = 20 pixels of the original image), not screen pixels. 
-                    This stops the "opacity changing on zoom" issue.
-                */}
-				<filter id='fog-blur' filterUnits='userSpaceOnUse'>
-					<feGaussianBlur stdDeviation={blurStdDev} />
-				</filter>
+				{!renderStrategy.skipBlur && !renderStrategy.useCSS && (
+					<filter id={filterId} filterUnits='userSpaceOnUse' colorInterpolationFilters='sRGB'>
+						<feGaussianBlur stdDeviation={blurStdDev} in='SourceGraphic' />
+					</filter>
+				)}
 
 				<mask id='fog-mask'>
-					{/* The Base Canvas (The Shroud) */}
-					<rect x='0' y='0' width='100%' height='100%' fill={maskBaseFill} />
-
-					{/* The Cutouts (The Revealed Areas) */}
-					{shapePaths.map((d, i) => (
-						<path key={i} d={d} fill={maskShapeFill} filter='url(#fog-blur)' />
+					<rect x='0' y='0' width='100%' height='100%' fill='white' />
+					{paths.map((d, i) => (
+						<path key={i} d={d} fill='black' filter={svgFilter} style={blurStyle} />
 					))}
 				</mask>
 			</defs>
 
-			{/* RENDER LOGIC */}
 			{!isCloudMode ? (
-				// REVEAL MODE (Standard Fog of War)
-				// We render a giant rect covered by the mask
 				<rect
 					x='0'
 					y='0'
 					width='100%'
 					height='100%'
-					fill={fogConfig.color || '#1a1d21'}
-					fillOpacity={fogConfig.opacity || 0.9}
+					fill={fogColor}
+					fillOpacity={fogOpacity}
 					mask='url(#fog-mask)'
-					style={{ pointerEvents: 'none' }}
+					style={baseStyle}
 				/>
 			) : (
-				// CLOUD MODE (Adding Fog Patches)
-				// We render just the shapes directly
-				<g style={{ pointerEvents: 'none' }}>
-					{shapePaths.map((d, i) => (
-						<path
-							key={i}
-							d={d}
-							fill={fogConfig.color || '#1a1d21'}
-							fillOpacity={fogConfig.opacity || 0.9}
-							filter='url(#fog-blur)'
-						/>
+				<g style={baseStyle}>
+					{paths.map((d, i) => (
+						<path key={i} d={d} fill={fogColor} fillOpacity={fogOpacity} filter={svgFilter} style={blurStyle} />
 					))}
 				</g>
 			)}

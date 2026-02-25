@@ -109,6 +109,7 @@ export const CharacterSidebar = ({ attributes, gear, quests }) => {
 		'icon',
 		'background_image',
 		'is_active',
+		'timeline_mode',
 		'campaign_id',
 	]);
 

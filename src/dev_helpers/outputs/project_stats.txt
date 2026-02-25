@@ -1,16 +1,16 @@
 ================================================================
 PROJECT STATISTICS
-Generated: 2026-01-23 19:59:25
+Generated: 2026-02-25 20:37:22
 ================================================================
 
 ### OVERALL STATISTICS
 
 Total files: 240
-Total lines: 26,916
-Non-empty lines: 23,886
-Comment lines: 1,867
-Total size: 845,905 bytes (826.08 KB)
-Average lines per file: 112.2
+Total lines: 27,030
+Non-empty lines: 23,981
+Comment lines: 1,859
+Total size: 848,669 bytes (828.78 KB)
+Average lines per file: 112.6
 
 
 ### STATISTICS BY FILE TYPE
@@ -32,8 +32,8 @@ Average lines per file: 112.2
 
 .jsx:
   Files: 161
-  Lines: 17,947
-  Size: 591,483 bytes (577.62 KB)
+  Lines: 18,061
+  Size: 594,247 bytes (580.32 KB)
 
 .md:
   Files: 1
@@ -85,12 +85,12 @@ domain_entity:
 features_admin:
   Files: 59
   Lines: 10,193
-  Size: 331,277 bytes (323.51 KB)
+  Size: 331,321 bytes (323.56 KB)
 
 features_atlas:
   Files: 27
-  Lines: 3,051
-  Size: 92,718 bytes (90.54 KB)
+  Lines: 3,165
+  Size: 95,438 bytes (93.20 KB)
 
 features_campaign:
   Files: 7

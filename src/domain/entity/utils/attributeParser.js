@@ -140,6 +140,7 @@ export const isIgnoredAttribute = (key) => {
 		'map_image',
 		'map_markers',
 		'aliases',
+		'timeline_mode'
 	];
 
 	return ignoredKeys.includes(key.toLowerCase());

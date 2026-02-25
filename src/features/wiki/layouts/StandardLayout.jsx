@@ -26,6 +26,8 @@ export default function StandardLayout({ viewModel }) {
 							history={viewModel.content.history}
 							objectives={viewModel.content.objectives}
 							combatRounds={viewModel.content.combatRounds}
+							narrativeTimeline={viewModel.content.narrativeTimeline} // <-- ADDED THIS
+							timelineMode={viewModel.content.timelineMode}           // <-- ADDED THIS
 							mapImageUrl={viewModel.content.mapImageUrl}
 							mapMarkers={viewModel.content.mapMarkers}
 						/>

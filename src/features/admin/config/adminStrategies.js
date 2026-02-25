@@ -147,9 +147,15 @@ export const ADMIN_STRATEGIES = {
 		label: 'Encounter',
 		type: 'encounter',
 		primaryTable: 'encounters',
-		colMapping: { name: 'name', description: 'description' },
+		colMapping: { name: 'name', description: 'description', timeline: 'timeline' },
 		hasNarrative: true,
 		defaultAttributes: [
+			{
+				key: 'timeline_mode',
+				label: 'Public Display Mode',
+				type: 'select',
+				options: ['Legacy Combat Log', 'Narrative Timeline'],
+			},
 			{
 				key: 'status',
 				label: 'Status',

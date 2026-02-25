@@ -52,58 +52,46 @@ const buildMapPayload = (data, jsonStorage) => {
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
-
-	// 1. Prepare Core Payload
 	const corePayload = {};
 
-	// Standard campaign_id link for non-campaign entities
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
-	// Map generic name/description to specific table columns
+	// Refactored to loop through all defined mappings dynamically (picks up timeline)
 	if (strategy.colMapping) {
-		if (data.name) corePayload[strategy.colMapping.name] = data.name;
-		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
+			if (dbCol && data[formField] !== undefined) {
+				corePayload[dbCol] = data[formField];
+			}
+		});
 	}
 
 	if (strategy.primaryTable === 'entities') corePayload.type = type;
 
-	// 2. Process Attributes -> JSONB
 	const rawAttributes =
 		data.attributesList ||
-		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) :[]);
 
 	const jsonStorage = {};
-
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// --- FIX START: Extract campaign_id from attributes for the Campaign table itself ---
 	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
-		// The 'campaigns' table requires an integer 'campaign_id' column
 		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
 	}
-	// --- FIX END ---
 
 	if (type === 'map') {
-		// Handle Map Specifics
 		corePayload.key = jsonStorage.key || (data.name || '').toLowerCase().replace(/\s+/g, '_');
-
 		const { config, initialData } = buildMapPayload(data, jsonStorage);
 		corePayload.config = config;
-		corePayload.data = initialData; // Safe default skeleton
-
-		// Remove flattened keys so they don't try to save as non-existent columns
+		corePayload.data = initialData;
 		delete corePayload.attributes;
 	} else {
 		corePayload[attrCol] = jsonStorage;
 	}
 
-	corePayload[attrCol] = jsonStorage;
-
-	// 3. Insert Single Row
 	const { data: insertedRecord, error: insertError } = await supabase
 		.from(strategy.primaryTable)
 		.insert(corePayload)
@@ -111,43 +99,40 @@ export const createEntity = async (type, data) => {
 		.single();
 
 	if (insertError) throw insertError;
-
 	return insertedRecord;
 };
 
 export const updateEntity = async (type, id, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
-
 	const corePayload = {};
+
+	// Refactored to loop through all defined mappings dynamically
 	if (strategy.colMapping) {
-		if (data.name) corePayload[strategy.colMapping.name] = data.name;
-		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
+			if (dbCol && data[formField] !== undefined) {
+				corePayload[dbCol] = data[formField];
+			}
+		});
 	}
 
 	const rawAttributes =
 		data.attributesList ||
-		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) :[]);
 
 	const jsonStorage = {};
-
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// --- FIX START: Sync campaign_id column on update for Campaigns ---
 	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
 		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
 	}
-	// --- FIX END ---
 
 	if (type === 'map') {
-		// Use the "key" from the form, or fallback to existing if not editable
 		if (jsonStorage.key) corePayload.key = jsonStorage.key;
-
 		const { config } = buildMapPayload(data, jsonStorage);
 		corePayload.config = config;
-		// Do NOT overwrite corePayload.data on update
 	} else {
 		corePayload[attrCol] = jsonStorage;
 	}
@@ -160,7 +145,7 @@ export const updateEntity = async (type, id, data) => {
 
 export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-	const attrCol = strategy.jsonField || 'attributes'; // 'config' for maps
+	const attrCol = strategy.jsonField || 'attributes';
 
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
@@ -172,27 +157,20 @@ export const fetchRawEntity = async (type, id) => {
 
 	const formData = { ...coreData };
 
-	// Map Core Columns (Title -> Name)
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
 			if (dbCol && coreData[dbCol] !== undefined) formData[formField] = coreData[dbCol];
 		});
 	}
 
-	const attributesList = [];
+	const attributesList =[];
 	const jsonSource = coreData[attrCol] || {};
 
-	// --- MAP SPECIFIC FLATTENING ---
 	if (type === 'map') {
-		// 1. Pull core columns into attributes
 		if (coreData.key) attributesList.push({ name: 'key', value: coreData.key });
-
-		// 2. Pull root config items
 		['path', 'parentId', 'fileExtension'].forEach((k) => {
 			if (jsonSource[k]) attributesList.push({ name: k, value: jsonSource[k] });
 		});
-
-		// 3. Pull nested sizes
 		if (jsonSource.sizes) {
 			['imageWidth', 'imageHeight', 'maxZoom'].forEach((k) => {
 				if (jsonSource.sizes[k] !== undefined) {
@@ -201,7 +179,6 @@ export const fetchRawEntity = async (type, id) => {
 			});
 		}
 	} else {
-		// Standard Entity Logic (Existing)
 		Object.entries(jsonSource).forEach(([key, value]) => {
 			attributesList.push({ name: key, value: value });
 		});

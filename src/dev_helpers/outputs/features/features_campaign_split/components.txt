@@ -90,12 +90,17 @@ SPLIT BUNDLE: FEATURES_CAMPAIGN - COMPONENTS
           services/
             atlasMapper.js
             geometryUtils.js
+        forms/
         inputs/
           AttributeValueInput.jsx
           StoragePathInput.jsx
+        lists/
+        search/
+        ui/
       config/
         adminStrategies.js
         imageManifest.json
+      hooks/
       layouts/
         AdminLayout.jsx
       pages/
@@ -105,6 +110,10 @@ SPLIT BUNDLE: FEATURES_CAMPAIGN - COMPONENTS
         MapManagerPage.jsx
         MapMigrationTool.jsx
         SplitPaneManager.jsx
+        atlas/
+          components/
+          hooks/
+      styles/
       utils/
         filterUtils.js
     atlas/

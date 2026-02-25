@@ -9,54 +9,26 @@ import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, H
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
-// Inputs
 import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
 import SmartImageInput from '@/features/admin/components/SmartImageInput';
 import AttributeValueInput from './inputs/AttributeValueInput';
 import StoragePathInput from './inputs/StoragePathInput';
 
-// Sub-Managers
 import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
 import EncounterActionManager from './EncounterManager';
+import EncounterNarrativeManager from './EncounterNarrativeManager'; // NEW
 import TacticalMapManager from './TacticalMapManager';
-
-const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
-	const { ref, ...rest } = register(path);
-	const textareaRef = useRef(null);
-
-	const adjustHeight = () => {
-		const el = textareaRef.current;
-		if (el) {
-			el.style.height = 'auto';
-			el.style.height = el.scrollHeight + 2 + 'px';
-		}
-	};
-
-	return (
-		<textarea
-			{...rest}
-			ref={(e) => {
-				ref(e);
-				textareaRef.current = e;
-			}}
-			rows={1}
-			onInput={adjustHeight}
-			placeholder={placeholder}
-			className={`${className} min-h-[42px] py-2 resize-none overflow-hidden font-mono text-sm`}
-			onFocus={adjustHeight}
-		/>
-	);
-};
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
 	const { campaignId } = useCampaign();
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
+	const[isSaving, setIsSaving] = useState(false);
 	const [mapKeys, setMapKeys] = useState([]);
+	const [encounterTab, setEncounterTab] = useState('narrative'); // NEW Toggling State
 
 	const {
 		register,
@@ -69,18 +41,18 @@ export default function AdminForm({ type, id }) {
 	} = useForm({
 		defaultValues: {
 			attributes: {},
-			customAttributes: [],
+			customAttributes:[],
+			timeline:[], // Ensure timeline has a default
 		},
 	});
 	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
 
-	// --- 1. LOADER LOGIC ---
 	useEffect(() => {
 		const loadEntity = async () => {
 			setIsLoading(true);
 			try {
 				if (!id) {
-					reset({ attributes: {}, customAttributes: [] });
+					reset({ attributes: {}, customAttributes: [], timeline:[] });
 					setIsLoading(false);
 					return;
 				}
@@ -88,37 +60,31 @@ export default function AdminForm({ type, id }) {
 
 				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
 				const standardAttrs = {};
-				const customAttrs = [];
+				const customAttrs =[];
 
-				(rawData.attributesList || []).forEach((attr) => {
+				(rawData.attributesList ||[]).forEach((attr) => {
 					const key = attr.name;
 					let value = attr.value;
 					let dataType = 'string';
 
-					// --- FIX START: Better Detection Logic ---
 					if (typeof value === 'boolean' || value === 'true' || value === 'false') {
 						dataType = 'boolean';
-						value = String(value); // Standardize to string for the form state
+						value = String(value);
 					} else if (typeof value === 'number') {
 						dataType = 'number';
 					} else if (Array.isArray(value)) {
-						// CRITICAL CHECK: Is this a simple list (strings/numbers) or complex objects?
 						const isSimpleList = value.every((item) => ['string', 'number'].includes(typeof item));
-
 						if (isSimpleList) {
 							dataType = 'list';
 							value = JSON.stringify(value);
 						} else {
-							// It contains Objects -> Force JSON mode so we can see the data
 							dataType = 'json';
 							value = JSON.stringify(value, null, 2);
 						}
 					} else if (typeof value === 'object' && value !== null) {
-						// It's an object -> Use Map
 						dataType = 'map';
 						value = JSON.stringify(value, null, 2);
 					}
-					// --- FIX END ---
 
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
@@ -127,10 +93,16 @@ export default function AdminForm({ type, id }) {
 					}
 				});
 
+				// Set default timeline mode if empty
+				if (type === 'encounter' && !standardAttrs.timeline_mode) {
+					standardAttrs.timeline_mode = 'Legacy Combat Log';
+				}
+
 				reset({
 					...rawData,
 					attributes: standardAttrs,
 					customAttributes: customAttrs,
+					timeline: rawData.timeline ||[], // Ensure timeline populates
 				});
 			} catch (err) {
 				console.error(err);
@@ -140,62 +112,49 @@ export default function AdminForm({ type, id }) {
 			}
 		};
 		loadEntity();
-	}, [type, id, reset, strategy]);
+	},[type, id, reset, strategy]);
 
 	useEffect(() => {
 		if (type === 'map' && campaignId) {
-			// Import fetchMapKeys from adminService first!
 			import('@/features/admin/api/adminService').then((mod) => {
 				mod.fetchMapKeys(campaignId).then(setMapKeys);
 			});
 		}
 	}, [type, campaignId]);
 
-	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
 			alert('No Campaign Selected!');
 			return;
 		}
 
-		const attributesList = [];
+		const attributesList =[];
 
-		// Process Standard Attributes
 		Object.entries(data.attributes).forEach(([key, value]) => {
 			if (value && String(value).trim() !== '') {
 				attributesList.push({ name: key, value });
 			}
 		});
 
-		// Process Custom Attributes with Explicit Types
 		data.customAttributes.forEach((item) => {
 			if (item.key && item.key.trim() !== '') {
 				let finalValue = item.value;
-
-				// Explicit Type Casting
 				if (item.type === 'number') {
 					finalValue = Number(item.value);
 				} else if (item.type === 'boolean') {
-					// Handle "true"/"false" string back to boolean
 					finalValue = String(item.value) === 'true';
 				} else if (item.type === 'json' || item.type === 'list' || item.type === 'map') {
-					// These are stored as stringified JSON in the form state,
-					// so we parse them back to real objects before sending to Supabase
 					try {
 						finalValue = JSON.parse(item.value);
 					} catch (e) {
 						console.warn(`Failed to parse JSON for ${item.key}, saving as string.`);
 					}
 				}
-
 				attributesList.push({ name: item.key, value: finalValue });
 			}
 		});
 
-		const payload = {
-			...data,
-			attributesList,
-		};
+		const payload = { ...data, attributesList };
 		delete payload.attributes;
 		delete payload.customAttributes;
 
@@ -207,7 +166,6 @@ export default function AdminForm({ type, id }) {
 				await createEntity(type, { ...payload, campaign_id: campaignId });
 				if (!id) reset();
 			}
-
 			queryClient.invalidateQueries();
 		} catch (error) {
 			alert(`Error: ${error.message}`);
@@ -229,9 +187,7 @@ export default function AdminForm({ type, id }) {
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
-
-	// Helper to sync Tactical Map to Custom Attrs
-	const customAttrs = watch('customAttributes') || [];
+	const customAttrs = watch('customAttributes') ||[];
 	const standardMarkers = watch('attributes.map_markers');
 	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
 	const activeMarkersValue = standardMarkers || customMarkers || '[]';
@@ -240,7 +196,7 @@ export default function AdminForm({ type, id }) {
 		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
 		if (customIdx >= 0) {
 			setValue(`customAttributes.${customIdx}.value`, jsonValue);
-			setValue(`customAttributes.${customIdx}.type`, 'json'); // Ensure it's marked as JSON
+			setValue(`customAttributes.${customIdx}.type`, 'json');
 		} else {
 			setValue('attributes.map_markers', jsonValue);
 		}
@@ -248,7 +204,6 @@ export default function AdminForm({ type, id }) {
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
-			{/* Top Bar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
 				<div className='flex items-center gap-2'>
 					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500/100' : 'bg-emerald-500/100'}`} />
@@ -274,11 +229,9 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* Core Details */}
 			<div className={ADMIN_SECTION_CLASS}>
 				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
 				<div className='grid grid-cols-1 gap-4'>
-					{/* ID Display Field */}
 					{id && (
 						<div>
 							<label className={ADMIN_LABEL_CLASS}>System ID</label>
@@ -301,7 +254,6 @@ export default function AdminForm({ type, id }) {
 							</div>
 						</div>
 					)}
-
 					<div>
 						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
 						<input
@@ -312,7 +264,6 @@ export default function AdminForm({ type, id }) {
 						/>
 						{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
 					</div>
-
 					{strategy.hasNarrative && (
 						<div>
 							<MarkdownEditor
@@ -331,7 +282,6 @@ export default function AdminForm({ type, id }) {
 				<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
 			)}
 
-			{/* Attributes */}
 			<div className={ADMIN_SECTION_CLASS}>
 				<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -360,17 +310,14 @@ export default function AdminForm({ type, id }) {
 									placeholder={attr.placeholder}
 								/>
 							) : (
-								/* STANDARD INPUT WITH OPTIONAL DATALIST */
 								<>
 									<input
 										type={attr.type === 'number' ? 'number' : 'text'}
 										{...register(`attributes.${attr.key}`)}
 										className={ADMIN_INPUT_CLASS}
 										placeholder={attr.placeholder}
-										list={attr.suggestions ? `${attr.key}-suggestions` : undefined} // Connect to datalist
+										list={attr.suggestions ? `${attr.key}-suggestions` : undefined}
 									/>
-
-									{/* Render Datalist if suggestions enabled */}
 									{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
 										<datalist id={`${attr.key}-suggestions`}>
 											{mapKeys.map((k) => (
@@ -385,7 +332,6 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* Custom Attributes */}
 			<div className={ADMIN_SECTION_CLASS}>
 				<div className={ADMIN_HEADER_CLASS}>
 					<span>Custom Attributes</span>
@@ -398,16 +344,12 @@ export default function AdminForm({ type, id }) {
 						Add New
 					</Button>
 				</div>
-
 				<div className='space-y-3'>
 					{fields.map((field, index) => {
-						// 1. Get current values specifically for this row
 						const attrType = watch(`customAttributes.${index}.type`);
 						const attrValue = watch(`customAttributes.${index}.value`);
-
 						return (
 							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
-								{/* Key Input (unchanged) */}
 								<div className='w-1/4 pt-1'>
 									<input
 										type='text'
@@ -416,8 +358,6 @@ export default function AdminForm({ type, id }) {
 										className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
 									/>
 								</div>
-
-								{/* Type Selector (UPDATED) */}
 								<div className='w-24 pt-1'>
 									<div className='relative'>
 										<select
@@ -425,25 +365,16 @@ export default function AdminForm({ type, id }) {
 											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
 											<option value='string'>Text</option>
 											<option value='number'>Number</option>
-											<option value='boolean'>Toggle</option> {/* NEW */}
-											<option value='list'>List</option> {/* NEW */}
-											<option value='map'>Map</option> {/* NEW */}
+											<option value='boolean'>Toggle</option>
+											<option value='list'>List</option>
+											<option value='map'>Map</option>
 											<option value='json'>JSON</option>
 										</select>
-										{/* Icon Decorator */}
 										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
-											{attrType === 'json' ? (
-												<Braces size={12} />
-											) : attrType === 'number' ? (
-												<Hash size={12} />
-											) : (
-												<AlignLeft size={12} />
-											)}
+											{attrType === 'json' ? <Braces size={12} /> : attrType === 'number' ? <Hash size={12} /> : <AlignLeft size={12} />}
 										</div>
 									</div>
 								</div>
-
-								{/* Value Input (REPLACED) */}
 								<div className='flex-1 relative'>
 									<AttributeValueInput
 										type={attrType}
@@ -451,8 +382,6 @@ export default function AdminForm({ type, id }) {
 										onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
 										placeholder='Value'
 									/>
-
-									{/* Keep JSON Format button just for JSON type */}
 									{attrType === 'json' && (
 										<button
 											type='button'
@@ -462,7 +391,6 @@ export default function AdminForm({ type, id }) {
 										</button>
 									)}
 								</div>
-
 								<button
 									type='button'
 									onClick={() => remove(index)}
@@ -481,8 +409,44 @@ export default function AdminForm({ type, id }) {
 			{/* Sub Managers */}
 			{id && type === 'session' && <SessionEventManager sessionId={id} />}
 			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
-			{id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
 			{id && <RelationshipManager entityId={id} />}
+
+			{/* NEW: ENCOUNTER MANAGER TABS */}
+			{id && type === 'encounter' && (
+				<div className='space-y-4 pt-4'>
+					<div className='flex bg-muted p-1 rounded-lg border border-border w-fit mx-auto shadow-inner'>
+						<button
+							type='button'
+							onClick={() => setEncounterTab('narrative')}
+							className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
+								encounterTab === 'narrative'
+									? 'bg-background shadow-sm text-foreground ring-1 ring-border'
+									: 'text-muted-foreground hover:text-foreground'
+							}`}>
+							Narrative Timeline
+						</button>
+						<button
+							type='button'
+							onClick={() => setEncounterTab('legacy')}
+							className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
+								encounterTab === 'legacy'
+									? 'bg-background shadow-sm text-foreground ring-1 ring-border'
+									: 'text-muted-foreground hover:text-foreground'
+							}`}>
+							Legacy Combat Log
+						</button>
+					</div>
+
+					{encounterTab === 'narrative' ? (
+						<EncounterNarrativeManager
+							timeline={watch('timeline') ||[]}
+							onChange={(val) => setValue('timeline', val, { shouldDirty: true })}
+						/>
+					) : (
+						<EncounterActionManager encounterId={id} />
+					)}
+				</div>
+			)}
 		</form>
 	);
 }
