@@ -90,7 +90,10 @@ export async function aiSearch(campaignId, query) {
 	const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 	const model = 'gemini-2.5-flash';
 
-	if (!apiKey) return null;
+	if (!apiKey) {
+		console.error('[AI Search] No API key found. VITE_GEMINI_API_KEY is not set.');
+		return null;
+	}
 
 	const context = await buildCampaignContext(campaignId);
 	if (!context) return null;
@@ -117,11 +120,13 @@ export async function aiSearch(campaignId, query) {
 
 	if (response.status === 429) {
 		rateLimitedUntil = Date.now() + COOLDOWN_MS;
+		console.error('[AI Search] Rate limited by Gemini API');
 		throw new Error('Rate limited');
 	}
 
 	if (!response.ok) {
 		const err = await response.text();
+		console.error('[AI Search] Gemini API error:', response.status, err);
 		throw new Error(`Gemini API error (${response.status}): ${err}`);
 	}
 
