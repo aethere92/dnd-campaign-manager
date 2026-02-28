@@ -3,19 +3,15 @@ import {
 	Trash2,
 	Link as LinkIcon,
 	ArrowRightLeft,
-	ArrowRight,
 	Save,
 	X,
 	Edit2,
-	Layers,
 	EyeOff,
 	Shield,
-	Sword,
 	MapPin,
 	Flag,
 	User,
 	Users,
-	Briefcase,
 	BookOpen,
 	Gem,
 	Calendar,
@@ -27,8 +23,9 @@ import {
 	deleteRelationship,
 	updateRelationship,
 } from '@/features/admin/api/adminService';
-import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS } from './AdminFormStyles';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 import Button from '@/shared/components/ui/Button';
+import { RELATIONSHIP_TYPES } from '@/features/admin/config/relationshipTypes';
 
 // --- CONFIGURATION ---
 
@@ -164,29 +161,8 @@ export default function RelationshipManager({ entityId }) {
 
 	if (!entityId) return null;
 
-	// Dropdown options
-	const relationshipTypes = [
-		'member_of',
-		'leadership_relation',
-		'part_of',
-		'affiliated_with',
-		'family_relation',
-		'romantic_relation',
-		'professional_relation',
-		'located_in',
-		'parent_location',
-		'residence_relation',
-		'workplace_relation',
-		'ownership_relation',
-		'quest_giver',
-		'quest_objective',
-		'quest_update',
-		'quest_participant',
-		'quest_location',
-		'hostile_to',
-		'knowledge_of',
-		'encountered',
-	];
+	// Dropdown options use shared config
+	const relationshipTypes = RELATIONSHIP_TYPES;
 
 	// Helper to get sort order including "Other" groups not in explicit list
 	const sortedGroupKeys = [...GROUP_ORDER, ...Object.keys(grouped).filter((k) => !GROUP_ORDER.includes(k))];
@@ -197,91 +173,76 @@ export default function RelationshipManager({ entityId }) {
 				<LinkIcon size={18} className='text-amber-600' /> Relationships
 			</h2>
 
-			{/* --- ADD NEW SECTION --- */}
-			<div className='bg-muted/30 p-4 rounded-lg mb-6 border border-border shadow-sm'>
-				<div className='flex items-center justify-between mb-3'>
-					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2'>
-						<Layers size={12} /> Bulk Connect
-					</h3>
-					{pendingTargets.length > 0 && (
-						<span className='text-xs text-amber-600 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-100'>
-							{pendingTargets.length} Ready
-						</span>
-					)}
-				</div>
-
-				<div className='space-y-4'>
-					<div className='w-full'>
+			{/* --- ADD BAR --- */}
+			<div className='space-y-2 mb-4'>
+				<div className='flex items-center gap-2'>
+					<div className='flex-1'>
 						<EntitySearch onSelect={handleSelectTarget} />
 					</div>
 
-					{pendingTargets.length > 0 && (
-						<div className='flex flex-wrap gap-2 p-3 bg-background border border-border rounded-md'>
-							{pendingTargets.map((t) => (
-								<div
-									key={t.id}
-									className='flex items-center gap-2 bg-amber-500/10 text-amber-900 px-2 py-1 rounded border border-amber-200 text-xs font-medium'>
-									<span className='uppercase text-[9px] text-amber-700/60 font-bold'>{t.type}</span>
-									<span>{t.name}</span>
-									<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800'>
-										✕
-									</button>
-								</div>
-							))}
-						</div>
-					)}
+					<select
+						value={type}
+						onChange={(e) => setType(e.target.value)}
+						className='h-[38px] text-[11px] rounded border border-input bg-background px-2 focus:ring-1 focus:ring-primary outline-none w-36 shrink-0'
+						title='Relationship type'>
+						{relationshipTypes.map((t) => (
+							<option key={t} value={t}>
+								{t.replaceAll('_', ' ')}
+							</option>
+						))}
+					</select>
 
-					<div className='flex flex-col md:flex-row gap-3 items-end pt-2 border-t border-border/50'>
-						<div className='flex-1 w-full grid grid-cols-2 gap-4'>
-							<div>
-								<label className='block text-[10px] uppercase font-bold text-muted-foreground mb-1'>Type</label>
-								<select value={type} onChange={(e) => setType(e.target.value)} className={ADMIN_INPUT_CLASS}>
-									{relationshipTypes.map((t) => (
-										<option key={t} value={t}>
-											{t.replace('_', ' ')}
-										</option>
-									))}
-								</select>
-							</div>
-							<div className='flex flex-col gap-2 pb-1'>
-								<label className='flex items-center gap-2 cursor-pointer select-none'>
-									<input
-										type='checkbox'
-										checked={isBidirectional}
-										onChange={(e) => setIsBidirectional(e.target.checked)}
-										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
-									/>
-									<span className='text-xs text-muted-foreground font-medium'>2-Way</span>
-								</label>
-								<label className='flex items-center gap-2 cursor-pointer select-none'>
-									<input
-										type='checkbox'
-										checked={isHidden}
-										onChange={(e) => setIsHidden(e.target.checked)}
-										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
-									/>
-									<span className='text-xs text-muted-foreground font-medium flex items-center gap-1'>
-										Hidden <EyeOff size={10} />
-									</span>
-								</label>
-							</div>
-						</div>
-						<Button
-							onClick={handleBulkAdd}
-							disabled={pendingTargets.length === 0 || isAdding}
-							size='sm'
-							variant='primary'
-							className='w-full md:w-auto min-w-[100px]'>
-							{isAdding ? 'Saving...' : `Add ${pendingTargets.length > 0 ? `(${pendingTargets.length})` : ''}`}
-						</Button>
-					</div>
+					<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Bidirectional'>
+						<input
+							type='checkbox'
+							checked={isBidirectional}
+							onChange={(e) => setIsBidirectional(e.target.checked)}
+							className='w-3.5 h-3.5 rounded'
+						/>
+						<ArrowRightLeft size={13} className='text-muted-foreground' />
+					</label>
+
+					<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Hidden'>
+						<input
+							type='checkbox'
+							checked={isHidden}
+							onChange={(e) => setIsHidden(e.target.checked)}
+							className='w-3.5 h-3.5 rounded'
+						/>
+						<EyeOff size={13} className='text-muted-foreground' />
+					</label>
+
+					<Button
+						onClick={handleBulkAdd}
+						disabled={pendingTargets.length === 0 || isAdding}
+						size='sm'
+						variant='primary'
+						className='shrink-0 h-[38px] px-3'>
+						{isAdding ? '...' : `Add${pendingTargets.length > 0 ? ` (${pendingTargets.length})` : ''}`}
+					</Button>
 				</div>
+
+				{pendingTargets.length > 0 && (
+					<div className='flex flex-wrap gap-1.5'>
+						{pendingTargets.map((t) => (
+							<div
+								key={t.id}
+								className='flex items-center gap-1.5 bg-amber-500/10 text-amber-900 px-2 py-0.5 rounded text-[11px] font-medium border border-amber-200'>
+								<span className='uppercase text-[9px] text-amber-700/60 font-bold'>{t.type}</span>
+								{t.name}
+								<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800 ml-0.5'>
+									<X size={11} />
+								</button>
+							</div>
+						))}
+					</div>
+				)}
 			</div>
 
 			{/* --- LIST SECTION (GROUPED BY ENTITY TYPE) --- */}
-			<div className='space-y-6'>
+			<div className='space-y-3'>
 				{relationships.length === 0 && (
-					<div className='p-4 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
+					<div className='p-3 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
 						No relationships connected.
 					</div>
 				)}
@@ -294,98 +255,97 @@ export default function RelationshipManager({ entityId }) {
 					const GroupIcon = groupConfig.icon;
 
 					return (
-						<div key={groupKey} className='animate-in fade-in slide-in-from-bottom-2 duration-500'>
+						<div key={groupKey}>
 							{/* Group Header */}
 							<h3
-								className={`text-[11px] font-bold uppercase tracking-widest mb-3 border-b border-border/60 pb-1 flex items-center gap-2 ${groupConfig.color} opacity-90`}>
-								<GroupIcon size={14} /> {groupConfig.label}
+								className={`text-[10px] font-bold uppercase tracking-widest mb-1 border-b border-border/40 pb-1 flex items-center gap-1.5 ${groupConfig.color} opacity-80`}>
+								<GroupIcon size={12} /> {groupConfig.label}
 								<span className='ml-auto text-[9px] bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground'>
 									{items.length}
 								</span>
 							</h3>
 
-							<div className='grid grid-cols-1 gap-2'>
+							<div className='grid grid-cols-1 gap-0 divide-y divide-border/40'>
 								{items.map((rel) => {
-									// Item Style based on Relationship Type (Ally/Enemy)
 									const style = REL_STYLES[rel.relationship_type] || REL_STYLES.Generic;
 
 									return (
-										<div
-											key={rel.id}
-											className={`group border rounded-lg transition-all bg-background hover:shadow-sm ${
-												editingId === rel.id ? 'border-amber-400 ring-1 ring-amber-400' : 'border-border'
-											}`}>
+										<div key={rel.id} className='group'>
 											{editingId === rel.id ? (
-												/* EDIT MODE */
-												<div className='grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center p-2 bg-muted/20'>
-													<div className='font-bold text-sm text-foreground truncate min-w-0'>{rel.target?.name}</div>
+												/* EDIT MODE — single line */
+												<div className='flex items-center gap-2 py-1.5 px-2 bg-amber-500/5'>
+													<span className='text-xs font-bold text-foreground truncate min-w-0 shrink-1 w-36'>
+														{rel.target?.name}
+													</span>
 
-													<div className='w-36'>
-														<select
-															className={`${ADMIN_INPUT_CLASS} py-1 h-8 text-xs`}
-															value={editForm.relationship_type}
-															onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
-															{relationshipTypes.map((t) => (
-																<option key={t} value={t}>
-																	{t.replace('_', ' ')}
-																</option>
-															))}
-														</select>
-													</div>
+													<select
+														className='h-7 text-[11px] rounded border border-input bg-background px-1.5 focus:ring-1 focus:ring-primary outline-none w-36 shrink-0'
+														value={editForm.relationship_type}
+														onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
+														{relationshipTypes.map((t) => (
+															<option key={t} value={t}>
+																{t.replaceAll('_', ' ')}
+															</option>
+														))}
+													</select>
 
-													<div className='flex flex-col gap-1 px-2'>
-														<label className='flex items-center gap-1 cursor-pointer'>
-															<input
-																type='checkbox'
-																checked={editForm.is_bidirectional}
-																onChange={(e) => setEditForm({ ...editForm, is_bidirectional: e.target.checked })}
-															/>
-															<span className='text-[10px] uppercase text-muted-foreground'>2-Way</span>
-														</label>
-														<label className='flex items-center gap-1 cursor-pointer'>
-															<input
-																type='checkbox'
-																checked={editForm.is_hidden}
-																onChange={(e) => setEditForm({ ...editForm, is_hidden: e.target.checked })}
-															/>
-															<span className='text-[10px] uppercase text-muted-foreground'>Hidden</span>
-														</label>
-													</div>
+													<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Bidirectional'>
+														<input
+															type='checkbox'
+															checked={editForm.is_bidirectional}
+															onChange={(e) => setEditForm({ ...editForm, is_bidirectional: e.target.checked })}
+															className='w-3.5 h-3.5 rounded'
+														/>
+														<ArrowRightLeft size={11} className='text-muted-foreground' />
+													</label>
 
-													<div className='flex gap-1'>
-														<Button onClick={handleUpdate} size='sm' variant='primary' icon={Save} className='h-9 px-3'>
-															Save
-														</Button>
-														<Button
+													<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Hidden'>
+														<input
+															type='checkbox'
+															checked={editForm.is_hidden}
+															onChange={(e) => setEditForm({ ...editForm, is_hidden: e.target.checked })}
+															className='w-3.5 h-3.5 rounded'
+														/>
+														<EyeOff size={11} className='text-muted-foreground' />
+													</label>
+
+													<div className='flex gap-0.5 ml-auto shrink-0'>
+														<button
+															type='button'
+															onClick={handleUpdate}
+															className='p-1 text-emerald-600 hover:bg-emerald-500/10 rounded transition-colors'
+															title='Save'>
+															<Save size={14} />
+														</button>
+														<button
+															type='button'
 															onClick={() => setEditingId(null)}
-															size='sm'
-															variant='ghost'
-															icon={X}
-															className='h-9 px-3'>
-															Cancel
-														</Button>
+															className='p-1 text-muted-foreground hover:bg-muted rounded transition-colors'
+															title='Cancel'>
+															<X size={14} />
+														</button>
 													</div>
 												</div>
 											) : (
-												/* VIEW MODE */
-												<div className={`flex items-center justify-between p-1 pl-0`}>
-													<div className='flex items-center gap-3 min-w-0 pl-3'>
-														<div className='flex items-center gap-2'>
-															<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
-															{rel.is_hidden && <EyeOff size={14} className='text-muted-foreground/70' title='Hidden' />}
-															{rel.is_bidirectional && (
-																<ArrowRightLeft size={12} className='text-muted-foreground/50' title='Bidirectional' />
-															)}
-														</div>
-														<div className='flex items-center gap-1.5 mt-0.5'>
-															{/* Relationship Type Badge */}
-															<span
-																className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
-																{rel.relationship_type.replace('_', ' ')}
-															</span>
-														</div>
-													</div>
-													<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2'>
+												/* VIEW MODE — compact row */
+												<div className='flex items-center gap-2 py-1 px-2 hover:bg-muted/30 transition-colors'>
+													<span className='text-xs font-bold text-foreground truncate min-w-0 flex-1'>
+														{rel.target?.name}
+													</span>
+
+													<span
+														className={`text-[9px] font-bold uppercase px-1.5 py-0 rounded-sm shrink-0 ${style.bg} ${style.color}`}>
+														{rel.relationship_type.replaceAll('_', ' ')}
+													</span>
+
+													{rel.is_bidirectional && (
+														<ArrowRightLeft size={11} className='text-muted-foreground/50 shrink-0' title='Bidirectional' />
+													)}
+													{rel.is_hidden && (
+														<EyeOff size={11} className='text-muted-foreground/50 shrink-0' title='Hidden' />
+													)}
+
+													<div className='flex gap-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
 														<button
 															onClick={() => {
 																setEditingId(rel.id);
@@ -395,13 +355,15 @@ export default function RelationshipManager({ entityId }) {
 																	is_hidden: rel.is_hidden,
 																});
 															}}
-															className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
-															<Edit2 size={18} />
+															className='p-1 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded transition-colors'
+															title='Edit'>
+															<Edit2 size={13} />
 														</button>
 														<button
 															onClick={() => handleDelete(rel.id)}
-															className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'>
-															<Trash2 size={18} />
+															className='p-1 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded transition-colors'
+															title='Delete'>
+															<Trash2 size={13} />
 														</button>
 													</div>
 												</div>

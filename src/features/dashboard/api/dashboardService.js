@@ -6,6 +6,7 @@ export const getDashboardData = async (campaignId) => {
 			supabase.from('campaigns').select('*').eq('id', campaignId).single(),
 			supabase.from('view_dashboard_stats').select('*').eq('campaign_id', campaignId).single(),
 			supabase.from('view_active_party').select('*').eq('campaign_id', campaignId),
+			// Use view_active_quests (has objectives) and enrich with description from quests table
 			supabase.from('view_active_quests').select('*').eq('campaign_id', campaignId),
 			supabase
 				.from('view_session_arcs')
@@ -14,12 +15,15 @@ export const getDashboardData = async (campaignId) => {
 				.order('session_number', { ascending: false }),
 		]);
 
+	// Enrich quests with descriptions (view_active_quests omits description)
+	const enrichedThreads = await enrichQuestDescriptions(activeThreads || []);
+
 	const allSessions = sessions || [];
 	const latestSession = allSessions[0];
 
 	// 1. Sort Threads (Quests)
 	// Order: Main > Personal > Side, then by Priority
-	const sortedThreads = sortThreads(activeThreads || []);
+	const sortedThreads = sortThreads(enrichedThreads);
 
 	// 2. Identify Current Arc
 	const currentArcId = latestSession?.arc_id;
@@ -91,11 +95,10 @@ function sortThreads(quests) {
 	};
 
 	return [...quests].sort((a, b) => {
-		const typeA = (a.attributes?.type || '').toLowerCase();
-		const typeB = (b.attributes?.type || '').toLowerCase();
+		const typeA = (a.attributes?.['quest type'] || a.attributes?.type || '').toLowerCase();
+		const typeB = (b.attributes?.['quest type'] || b.attributes?.type || '').toLowerCase();
 
 		// 1. Primary Sort: Type
-		// Default to 4 (bottom) if type is unknown
 		const wA = typeWeights[typeA] || 4;
 		const wB = typeWeights[typeB] || 4;
 
@@ -105,9 +108,25 @@ function sortThreads(quests) {
 		const prioA = (a.attributes?.priority || '').toLowerCase();
 		const prioB = (b.attributes?.priority || '').toLowerCase();
 
-		const pA = priorityWeights[prioA] || 4; // Default to Normal
+		const pA = priorityWeights[prioA] || 4;
 		const pB = priorityWeights[prioB] || 4;
 
 		return pA - pB;
 	});
+}
+
+// --- Helper: Enrich quests with descriptions ---
+async function enrichQuestDescriptions(quests) {
+	if (quests.length === 0) return quests;
+
+	const ids = quests.map((q) => q.id);
+	const { data: descriptions } = await supabase
+		.from('quests')
+		.select('id, description')
+		.in('id', ids);
+
+	if (!descriptions) return quests;
+
+	const descMap = new Map(descriptions.map((d) => [d.id, d.description]));
+	return quests.map((q) => ({ ...q, description: descMap.get(q.id) || null }));
 }

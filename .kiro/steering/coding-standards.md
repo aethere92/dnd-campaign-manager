@@ -151,10 +151,12 @@ try {
 ### Query Keys
 Use consistent query key patterns:
 ```javascript
-['entities', campaignId, type]           // List
-['entity', campaignId, entityId]         // Detail
-['timeline', campaignId]                 // Timeline
-['graph', campaignId, filters]           // Graph with filters
+['entityIndex', campaignId]              // Smart-text entity index
+['entities', campaignId, type]           // Entity list by type
+['entry', campaignId, entityId]          // Wiki detail page
+['timeline', campaignId]                 // Timeline data
+['graph', campaignId]                    // Relationship graph
+['globalSearch', campaignId]             // Search index
 ```
 
 ## Performance

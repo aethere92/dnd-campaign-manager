@@ -3,7 +3,7 @@ import { useEntityIndex } from './useEntityIndex';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const findEntityMatches = (text, searchTokens, entityMap) => {
+export const findEntityMatches = (text, searchTokens, entityMap) => {
 	const matches = [];
 	const processedRanges = [];
 

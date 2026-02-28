@@ -1,0 +1,262 @@
+[
+  {
+    "id": "0376c752-1bf6-4d92-8437-741c31d532ae",
+    "from_entity_id": "513d48be-935f-4076-81a5-af859fc708be",
+    "to_entity_id": "edef9ee9-02a3-4d20-9134-9797f4d47506",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:12:05.848Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "258803a2-f809-45d5-8c72-02e65ff6969f",
+    "from_entity_id": "edef9ee9-02a3-4d20-9134-9797f4d47506",
+    "to_entity_id": "513d48be-935f-4076-81a5-af859fc708be",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:12:05.848Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "5a3616b9-c5a6-49e7-acca-d558b41be5cc",
+    "from_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "to_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2026-02-24T18:17:08.327Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "90a91523-1ced-41e3-9b4c-b8d21cb9dd9c",
+    "from_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "to_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-02-24T18:17:08.327Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "9a4d83db-64de-4840-9113-cafa4300a6b3",
+    "from_entity_id": "b2f8c12f-b108-4c35-87d1-8ae0e6e98ce5",
+    "to_entity_id": "edef9ee9-02a3-4d20-9134-9797f4d47506",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:03.770Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "e6d38746-1975-44bb-8e4e-c389aaaa37b0",
+    "from_entity_id": "edef9ee9-02a3-4d20-9134-9797f4d47506",
+    "to_entity_id": "b2f8c12f-b108-4c35-87d1-8ae0e6e98ce5",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:03.770Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "cc64a6c1-b445-4843-8ba8-366afd720595",
+    "from_entity_id": "c93f88a9-d247-4bca-afc9-cd7cf263e3a3",
+    "to_entity_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:35.738Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "694a321e-e75e-4373-b5be-4aa58067f4dc",
+    "from_entity_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+    "to_entity_id": "c93f88a9-d247-4bca-afc9-cd7cf263e3a3",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:35.738Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "26a1f3ea-025b-45b5-90cc-0e4f9adbed4f",
+    "from_entity_id": "20b73069-7a8f-4cd9-aa5b-1c27f40efd79",
+    "to_entity_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:40.397Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c1d10f02-835e-4894-995a-fc622deff859",
+    "from_entity_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+    "to_entity_id": "20b73069-7a8f-4cd9-aa5b-1c27f40efd79",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:40.397Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "d5a63e0e-1752-46f0-b699-7472bb1aadec",
+    "from_entity_id": "14230e1c-07ea-4fe8-9157-335fb1554508",
+    "to_entity_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:45.626Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "24a5285e-f5c4-4aa3-86dc-55ade5aec9c7",
+    "from_entity_id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
+    "to_entity_id": "14230e1c-07ea-4fe8-9157-335fb1554508",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:16:45.626Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "06014f15-d6a3-472f-bf78-9d0b594b4844",
+    "from_entity_id": "2249578d-60be-4968-b0c3-ba14fba1ed22",
+    "to_entity_id": "72f49f1f-d782-4bc0-9f0d-6100747aea99",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:20.756Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "9810ae04-2210-463d-857c-62b2892a7328",
+    "from_entity_id": "72f49f1f-d782-4bc0-9f0d-6100747aea99",
+    "to_entity_id": "2249578d-60be-4968-b0c3-ba14fba1ed22",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:20.756Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "a35501df-e5e9-4e7c-aaeb-a8947dda906f",
+    "from_entity_id": "0583b40f-133e-4c96-a90d-8c2a8b615dfd",
+    "to_entity_id": "72f49f1f-d782-4bc0-9f0d-6100747aea99",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:26.542Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "d8f74539-01d1-4b1b-8bb0-05932079a8d6",
+    "from_entity_id": "72f49f1f-d782-4bc0-9f0d-6100747aea99",
+    "to_entity_id": "0583b40f-133e-4c96-a90d-8c2a8b615dfd",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:26.542Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "b0e02b63-069a-42d8-957d-82230296a4cc",
+    "from_entity_id": "ed49e6cd-f7aa-40f7-8723-8f4cc02d23d7",
+    "to_entity_id": "72f49f1f-d782-4bc0-9f0d-6100747aea99",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:37.735Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "50f565d9-7649-482f-ae7d-654ae81f4d7f",
+    "from_entity_id": "72f49f1f-d782-4bc0-9f0d-6100747aea99",
+    "to_entity_id": "ed49e6cd-f7aa-40f7-8723-8f4cc02d23d7",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:37.735Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "d450dd21-8f66-4d3e-8193-a88f49d2188e",
+    "from_entity_id": "a76b7458-a291-4385-b6f0-bb7d72e0657b",
+    "to_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:57.695Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "a9260c66-1d8b-4baf-b5b2-815b8b2b6a80",
+    "from_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "to_entity_id": "a76b7458-a291-4385-b6f0-bb7d72e0657b",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:17:57.695Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "2dde218d-5b1f-4711-8feb-5e47513b556e",
+    "from_entity_id": "afc5e329-552d-437e-b2da-85d32ed609b0",
+    "to_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:18:03.132Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "b78281e2-068c-4782-b4de-9f1f86bc7bb4",
+    "from_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "to_entity_id": "afc5e329-552d-437e-b2da-85d32ed609b0",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:18:03.132Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "2a72b5c8-694f-413c-ab7d-f6f5c0c1195d",
+    "from_entity_id": "c8ae0ed1-edba-4330-8853-a59cc6ea416d",
+    "to_entity_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:40:03.649Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "4b439f85-a9d8-4f32-a7ec-920f517a8842",
+    "from_entity_id": "c804ec9f-5c29-416d-9e7c-aa5d32f2a55a",
+    "to_entity_id": "c8ae0ed1-edba-4330-8853-a59cc6ea416d",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-01T08:40:03.649Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "3c2ab6c1-36c3-4f74-a333-d1df7f126808",
+    "from_entity_id": "fb1774a9-36aa-41fe-ae11-c65fdbfa942b",
+    "to_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-10T21:45:27.577Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "1a6e6d64-7059-421c-8b62-85bd24aade7a",
+    "from_entity_id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "to_entity_id": "fb1774a9-36aa-41fe-ae11-c65fdbfa942b",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2026-01-10T21:45:27.577Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  }
+]

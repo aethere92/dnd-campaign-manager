@@ -1,6 +1,6 @@
 ---
 inclusion: fileMatch
-fileMatchPattern: "**/entity/**"
+fileMatchPattern: "**/entity/**,**/wiki/**"
 ---
 
 # Entity System Guide
@@ -12,286 +12,182 @@ The entity system is the core data model for all campaign content. Every piece o
 
 ### Core Types
 ```javascript
+// src/domain/entity/config/entityTypes.js
 ENTITY_TYPES = {
-  SESSION: 'session',      // Game sessions with narrative
-  CHARACTER: 'character',  // Player characters
-  NPC: 'npc',             // Non-player characters
-  LOCATION: 'location',   // Places in the world
-  QUEST: 'quest',         // Objectives and missions
-  FACTION: 'faction',     // Organizations
-  ENCOUNTER: 'encounter', // Combat encounters
-  ITEM: 'item',          // Equipment and magic items
+  SESSION: 'session',
+  CHARACTER: 'character',
+  NPC: 'npc',
+  LOCATION: 'location',
+  QUEST: 'quest',
+  FACTION: 'faction',
+  ENCOUNTER: 'encounter',
+  ITEM: 'item',
+  DEFAULT: 'default',
 }
 ```
 
-## Entity Structure
+## Entity Configuration (Modular System)
 
-### Database Schema
-```sql
-entities (
-  id              TEXT PRIMARY KEY,
-  campaign_id     TEXT NOT NULL,
-  type            TEXT NOT NULL,
-  name            TEXT NOT NULL,
-  description     TEXT,
-  content         TEXT,
-  metadata        JSONB,
-  created_at      TIMESTAMP,
-  updated_at      TIMESTAMP
-)
+Configuration is split across focused modules in `src/domain/entity/config/`:
+
+| Module | Purpose | Key Export |
+|--------|---------|-----------|
+| `entityTypes.js` | Type constants, labels (singular + plural) | `ENTITY_TYPES`, `getEntityLabel(type, plural?)` |
+| `entityIcons.js` | Lucide icon component per type | `getEntityIcon(type)` |
+| `entityColors.js` | Hex colors + full palettes (50–900 shades) | `getEntityColor(type)`, `getEntityPalette(type)` |
+| `entityStyles.js` | Tailwind class presets | `getEntityStyles(type)`, `getEntityPreset(type)` |
+| `entityConfig.js` | Unified orchestrator | `getEntityConfig(type)` → `{ type, label, icon, color, palette, tailwind }` |
+
+### Usage
+```javascript
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+const config = getEntityConfig('npc');
+// { type: 'npc', label: 'NPC', icon: UsersIcon, color: '#d97706', palette: {...}, tailwind: {...} }
+
+// Or import specific modules directly:
+import { getEntityColor } from '@/domain/entity/config/entityColors';
+import { getEntityIcon } from '@/domain/entity/config/entityIcons';
 ```
 
-### Metadata Field
-The `metadata` JSONB field stores type-specific data:
+Legacy `ENTITY_CONFIG` map is still exported for backward compatibility but prefer `getEntityConfig()`.
 
-**Character/NPC:**
-```json
-{
-  "class": "Fighter",
-  "level": 5,
-  "race": "Human",
-  "alignment": "Lawful Good",
-  "status": "alive"
-}
+## Entity Utilities
+
+Located in `src/domain/entity/utils/`:
+
+- `entityUtils.js` - Type checking (`isSession`, `isNPC`, etc.), name/description resolution, status checks, parent ID resolution from relationships
+- `attributeParser.js` - Parse and extract values from entity attributes JSONB
+- `statusUtils.js` - Status-related display logic
+
+### Key Utility: `getParentId(entity)`
+Determines parent entity from relationships:
+1. Checks for explicit `parent_location` or `parent` relationship
+2. For NPCs/encounters: finds linked location via semantic relationship types (`located_in`, `base`, `home`, etc.)
+3. Falls back to first location relationship found
+
+## Domain Components
+
+Located in `src/domain/entity/components/`:
+- `EntityBadge.jsx` - Type badge with icon and color
+- `EntityIcon.jsx` - Standalone entity type icon
+- `EntityLink.jsx` - Navigable entity link
+- `EntityStatusIcon.jsx` - Status indicator icon
+
+## Data Fetching (Strategy Pattern)
+
+The entity service (`src/domain/entity/api/entityService.js`) uses a strategy pattern:
+
+```javascript
+const entityStrategies = {
+  session: getSessions,        // Uses view_campaign_timeline
+  quest: getCompleteEntities,  // Uses entity_complete_view
+  map: getMaps,                // Uses maps table
+  campaign: getCampaigns,      // Uses campaigns table
+  default: getCompleteEntities,
+};
 ```
 
-**Location:**
-```json
-{
-  "region": "Elsir Vale",
-  "type": "city",
-  "population": 5000,
-  "coordinates": { "lat": 45.2, "lng": -122.5 }
-}
+### Supabase Views Used
+- `view_campaign_timeline` - Pre-aggregated session data with events and tags
+- `entity_complete_view` - Full entity with relationships JSON
+- `view_entity_index` - Lightweight index for smart-text (id, name, type, icon, status, affinity, aliases)
+- `view_campaign_graph` - Graph nodes with adjacency lists
+- `view_narrative_arc_summary` - Arc metadata for session grouping
+- `view_encounter_actions_hydrated` - Encounter round/action details
+
+### Wiki Entry Fetching
+`getWikiEntry(id, type)` uses type-specific strategies:
+- **session** → `fetchSessionWikiEntry` (timeline view + direct relationships + event tag map)
+- **encounter** → `fetchEncounterWikiEntry` (entity data + hydrated actions)
+- **quest** → `fetchQuestWikiEntry` (entity data + objectives with session links)
+- **default** → entity_complete_view single row
+
+### Query Key Conventions
+```javascript
+['entityIndex', campaignId]              // Smart-text index
+['entities', campaignId, type]           // Entity list
+['entry', campaignId, entityId]          // Wiki detail
+['timeline', campaignId]                 // Timeline
+['graph', campaignId]                    // Graph data
+['globalSearch', campaignId]             // Search index
 ```
 
-**Quest:**
-```json
-{
-  "status": "active",
-  "giver": "npc_id",
-  "reward": "500 gold",
-  "difficulty": "medium"
-}
+## Wiki View System
+
+### View Strategies (Landing Pages)
+`src/features/wiki/config/viewStrategies.js` defines how entity lists are organized:
+
+```javascript
+VIEW_STRATEGIES = {
+  location:  { mode: 'geo' },       // Hierarchical swimlanes from location tree
+  encounter: { mode: 'geo' },
+  npc:       { mode: 'geo' },
+  faction:   { mode: 'category' },  // Grouped by category
+  quest:     { mode: 'category' },
+  session:   { mode: 'category' },  // Grouped by narrative arc
+  character: { mode: 'flat' },      // Alphabetical flat list
+  item:      { mode: 'flat' },
+};
 ```
 
-**Faction:**
-```json
-{
-  "alignment": "neutral",
-  "influence": "regional",
-  "leader": "npc_id"
-}
-```
+### Layout Modes (Detail Pages)
+`useEntityViewModel` determines layout mode:
+- **tabs** (session) → `SessionLayout` with tabbed events/narrative
+- **character** → `CharacterLayout` with stats display
+- **standard** → `StandardLayout` for all other types
+
+The view model provides: `{ layoutMode, header, sidebar, content, raw }`
 
 ## Entity Relationships
 
-### Relationship Types
-```javascript
-RELATIONSHIP_TYPES = {
-  ALLY: 'ally',
-  ENEMY: 'enemy',
-  NEUTRAL: 'neutral',
-  MEMBER: 'member',
-  LEADER: 'leader',
-  LOCATED_IN: 'located_in',
-  RELATED_TO: 'related_to'
-}
-```
-
-### Relationship Schema
+### Schema
 ```sql
 entity_relationships (
-  id              UUID PRIMARY KEY,
-  campaign_id     TEXT NOT NULL,
-  source_id       TEXT NOT NULL,
-  target_id       TEXT NOT NULL,
-  relationship    TEXT NOT NULL,
-  metadata        JSONB,
-  created_at      TIMESTAMP
+  id                UUID PRIMARY KEY,
+  from_entity_id    TEXT NOT NULL,
+  to_entity_id      TEXT NOT NULL,
+  relationship_type TEXT NOT NULL,
+  metadata          JSONB
 )
 ```
 
-## Entity Linking
-
-### Smart Text Syntax
-Link entities in markdown content using double brackets:
-```markdown
-The party met [[npc_gandalf]] in [[loc_rivendell]].
-They accepted [[quest_destroy_ring]] from him.
-```
-
-### Entity Index
-The entity index provides fast lookups for entity linking:
-```javascript
-const { entityIndex } = useEntityIndex(campaignId);
-
-// entityIndex structure:
-{
-  'npc_gandalf': {
-    id: 'npc_gandalf',
-    name: 'Gandalf',
-    type: 'npc',
-    description: 'A wise wizard...'
-  }
-}
-```
-
-### Tooltip Integration
-Linked entities automatically show tooltips on hover with:
-- Entity name and type
-- Short description
-- Quick actions (view details, etc.)
-
-## Working with Entities
-
-### Fetching Entities
-```javascript
-// Fetch all entities of a type
-const { data: npcs } = useQuery({
-  queryKey: ['entities', campaignId, 'npc'],
-  queryFn: () => fetchEntities(campaignId, 'npc'),
-});
-
-// Fetch single entity
-const { data: entity } = useQuery({
-  queryKey: ['entity', campaignId, entityId],
-  queryFn: () => fetchEntity(campaignId, entityId),
-});
-```
-
-### Creating Entities
-```javascript
-const createEntity = async (campaignId, entityData) => {
-  const { data, error } = await supabase
-    .from('entities')
-    .insert({
-      id: generateEntityId(entityData.type, entityData.name),
-      campaign_id: campaignId,
-      type: entityData.type,
-      name: entityData.name,
-      description: entityData.description,
-      content: entityData.content,
-      metadata: entityData.metadata,
-    })
-    .select()
-    .single();
-    
-  if (error) throw error;
-  return data;
-};
-```
-
-### Updating Entities
-```javascript
-const updateEntity = async (campaignId, entityId, updates) => {
-  const { data, error } = await supabase
-    .from('entities')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('campaign_id', campaignId)
-    .eq('id', entityId)
-    .select()
-    .single();
-    
-  if (error) throw error;
-  return data;
-};
-```
-
-## Entity ID Convention
-
-### Format
-Entity IDs follow the pattern: `{type}_{slug}`
-
-Examples:
-- `char_kaedin` - Character named Kaedin
-- `npc_soranna` - NPC named Soranna
-- `loc_brindol` - Location named Brindol
-- `quest_red_hand` - Quest named Red Hand
-
-### Generation
-```javascript
-const generateEntityId = (type, name) => {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  return `${type}_${slug}`;
-};
-```
+### Common Relationship Types
+- `parent_location`, `parent` - Hierarchical containment
+- `located_in`, `base`, `home`, `residence` - Location associations
+- `part_of` - Arc/group membership (sessions → narrative arcs)
+- `mention` - Entity mentioned in session event
+- `ally`, `enemy`, `member`, `leader` - Social relationships
 
 ## Entity Images
 
-### Image Paths
-Images are organized by campaign and type:
+### Path Convention
 ```
-public/images/{campaign_id}/{type}s/{entity_id}_{variant}.webp
+public/images/{campaign_id}/{type}/{entity_slug}_{variant}.webp
 ```
 
-Variants:
-- `icon` - Small square (64x64 to 128x128)
-- `portrait` - Medium (256x256 to 512x512)
-- `header` - Wide banner (1200x400 or similar)
+Type folders use short names: `chars/`, `npcs/`, `locs/`, `items/`, `encounters/`, `factions/`, `sessions/`
 
-Examples:
-- `public/images/c02/chars/kaedin_icon.webp`
-- `public/images/c02/npcs/soranna_portrait.webp`
-- `public/images/c02/locs/brindol_header.webp`
+Variants: `icon`, `portrait`, `header`, `map`
 
-### Image Utilities
+### Image Resolution
 ```javascript
-import { getEntityImage } from '@/shared/utils/imageUtils';
+import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
 
-const iconUrl = getEntityImage(campaignId, 'character', 'kaedin', 'icon');
-const portraitUrl = getEntityImage(campaignId, 'npc', 'soranna', 'portrait');
-```
-
-## Entity Views
-
-### Wiki Pages
-Each entity type has a wiki view at `/wiki/{type}/{entityId}`:
-- Header with image and metadata
-- Full content with smart text rendering
-- Related entities section
-- Relationship graph
-- Timeline of mentions
-
-### Entity Cards
-Reusable card components for entity lists:
-```javascript
-<EntityCard
-  entity={entity}
-  variant="compact"
-  showImage={true}
-  onClick={() => navigate(`/wiki/${entity.type}/${entity.id}`)}
-/>
+const attrs = parseAttributes(entity.attributes);
+const bgImage = resolveImageUrl(attrs, 'background');
+const iconImage = resolveImageUrl(attrs, 'icon');
 ```
 
 ## Best Practices
 
 ### Entity Creation
 - Use descriptive, unique names
-- Provide meaningful descriptions (used in tooltips)
-- Structure metadata consistently within each type
-- Add relationships to connect entities
-
-### Content Writing
-- Use entity links liberally in content
-- Link entities on first mention in each section
-- Verify entity IDs exist before linking
-- Use consistent entity naming
+- Provide meaningful descriptions (shown in tooltips and search)
+- Add aliases for alternate names (improves smart-text matching)
+- Structure attributes consistently within each type
+- Add relationships to connect entities in the graph
 
 ### Performance
-- Fetch only needed entity types
-- Use entity index for lookups instead of repeated queries
-- Cache entity data with TanStack Query
-- Lazy load entity details on demand
-
-### Data Integrity
-- Validate entity IDs before creating relationships
-- Clean up orphaned relationships when deleting entities
-- Maintain referential integrity in metadata
-- Use transactions for multi-entity operations
+- Use `view_entity_index` for lightweight lookups, `entity_complete_view` for full data
+- Entity index cached with 30min stale time
+- Lazy load entity details on demand via wiki entry strategies

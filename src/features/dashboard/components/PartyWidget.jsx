@@ -15,12 +15,12 @@ export const PartyWidget = ({ party }) => {
 
 	return (
 		<div className='w-full'>
-			<div className='flex items-center justify-between mb-4'>
+			<div className='flex items-center justify-center mb-4'>
 				<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground'>The Party</h4>
 			</div>
 
-			{/* CHANGED: xl:grid-cols-6 to fit 6 cards in a row */}
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4'>
+			{/* Flex layout to center incomplete rows */}
+			<div className='flex flex-wrap justify-center gap-4'>
 				{party.map((char) => (
 					<PartyCard key={char.id} char={char} onClick={(e) => handleCardClick(char.id, e)} />
 				))}
@@ -45,7 +45,7 @@ const PartyCard = ({ char, onClick }) => {
 	return (
 		<div
 			onClick={onClick}
-			className='group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full'>
+			className='group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)] xl:w-[240px]'>
 			{/* --- Header Banner --- */}
 			<div className='h-24 bg-muted relative overflow-hidden'>
 				{bgImage ? (

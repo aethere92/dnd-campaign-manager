@@ -1,0 +1,822 @@
+[
+  {
+    "id": "777b770f-250b-44d6-a5c9-983cee24358e",
+    "from_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "to_entity_id": "bf063127-7e5a-48c4-a7e7-49103921a3c8",
+    "relationship_type": "quest_update",
+    "description": null,
+    "created_at": "2026-02-24T19:08:15.651Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c08f4a2f-3040-4546-b248-7f4fb9887daf",
+    "from_entity_id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
+    "to_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2026-02-28T07:54:25.394Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "58524bb3-da3d-470c-9d10-68494f54dada",
+    "from_entity_id": "ffadbca2-50fa-489d-9756-ce390d274cd3",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "workplace",
+    "description": null,
+    "created_at": "2025-12-05T17:11:50.564Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "fbf90663-2321-435e-81ea-b475c026a728",
+    "from_entity_id": "83d0c077-8d4c-6521-c3d8-51077547784c",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "workplace",
+    "description": null,
+    "created_at": "2025-12-05T17:11:41.293Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "0a17638d-ac0b-4b01-8238-7d2d057f84f7",
+    "from_entity_id": "0b5848ff-04c4-a3a9-ab50-954119811280",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "workplace",
+    "description": null,
+    "created_at": "2025-12-05T17:11:56.179Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "a2debf6d-7d40-48a8-ac04-d45c279d3645",
+    "from_entity_id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+    "to_entity_id": "95322ebe-f77e-4419-8528-d3cd19834750",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2025-12-20T16:45:23.609Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "8823de88-febe-4bf6-bcff-d2a3e745a416",
+    "from_entity_id": "c71404bb-c080-6f65-671c-510775477846",
+    "to_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "relationship_type": "Leader_Of",
+    "description": "Exiled Bonnie to material plane.",
+    "created_at": "2025-11-26T06:05:48.130Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "ad976ad4-b15c-44da-8507-5f52e1ba2f86",
+    "from_entity_id": "957b14a8-c53f-4237-a540-9d5c3474bc5f",
+    "to_entity_id": "95322ebe-f77e-4419-8528-d3cd19834750",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2025-12-20T16:45:31.555Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "4c6428a1-a3cb-48df-9711-a70f8daf50cb",
+    "from_entity_id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "workplace",
+    "description": "Current workplace.",
+    "created_at": "2025-11-25T11:11:10.899Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "3557a5ce-8afc-4237-a56f-4b23b34bb7cb",
+    "from_entity_id": "99d9dfaa-835b-44c3-a840-97a8ad1fad42",
+    "to_entity_id": "e11e864f-2baa-44d3-8b4a-5b816928cd25",
+    "relationship_type": "Employee",
+    "description": "Former barmaid.",
+    "created_at": "2025-11-25T06:15:47.768Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "7aafaacf-228f-4811-bd59-57054964250c",
+    "from_entity_id": "dcdb9c63-0211-4472-8632-acc5068e862f",
+    "to_entity_id": "22de4109-6224-474a-9104-bc044c5562d2",
+    "relationship_type": "part_of",
+    "description": "Where the party met. ",
+    "created_at": "2025-11-25T06:04:57.871Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "90fba62c-436f-4415-a16e-9f1bd6de1197",
+    "from_entity_id": "6c7b2b0c-dca0-4976-a9c7-bab110b1de59",
+    "to_entity_id": "93d1d0ac-3b0d-46f5-9e2d-37e0c466e6dc",
+    "relationship_type": "part_of",
+    "description": "Brotherhood headquarters.",
+    "created_at": "2025-11-25T20:17:48.467Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "bb60ee9d-1478-49db-99c3-27eae57d1dfb",
+    "from_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "to_entity_id": "95322ebe-f77e-4419-8528-d3cd19834750",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-20T16:45:48.225Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c4b0b2fb-e859-415d-a7da-efbc8323f5c6",
+    "from_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "to_entity_id": "95322ebe-f77e-4419-8528-d3cd19834750",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-20T16:45:27.618Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "a3697b4d-7aca-4851-b116-80837af23144",
+    "from_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "to_entity_id": "43a48d9e-09c5-4d1f-aadf-8f3fe0288436",
+    "relationship_type": "Generic",
+    "description": null,
+    "created_at": "2025-12-26T19:07:48.688Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "e7330269-fa8e-497f-b942-ec5486653880",
+    "from_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "to_entity_id": "1fe14afa-01d7-40f6-aeb5-d08ac49bfe1b",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-21T13:54:58.457Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "944bb5f8-258a-4640-a819-04025be3b288",
+    "from_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "to_entity_id": "1fe14afa-01d7-40f6-aeb5-d08ac49bfe1b",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-21T13:55:43.646Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "41a665ec-4f74-45e8-bd67-3ea62f33f433",
+    "from_entity_id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+    "to_entity_id": "1fe14afa-01d7-40f6-aeb5-d08ac49bfe1b",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-21T13:55:50.426Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "d64099a8-dccb-461e-9a8b-3f3ce2c74cc2",
+    "from_entity_id": "a45d426f-7421-4d35-baba-9f1741e206fc",
+    "to_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-21T13:54:58.457Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "6f86098c-cc60-4687-b9a4-517fa6868304",
+    "from_entity_id": "f58e95d3-a609-4fb7-9d68-77c266f672e2",
+    "to_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-21T13:55:43.646Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "356a1c55-e6d0-403b-8b38-926eb6d23bcd",
+    "from_entity_id": "f58e95d3-a609-4fb7-9d68-77c266f672e2",
+    "to_entity_id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-21T13:55:50.426Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "04eabeb2-865f-414a-befa-79a23cc062d6",
+    "from_entity_id": "022408d1-93f1-4695-9be8-2806bdcbf6f0",
+    "to_entity_id": "d9db0885-cc49-4633-95b1-e714b88aee40",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2026-01-11T13:45:01.421Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "cf222cae-2a95-4e03-b5f3-b919067c6cc5",
+    "from_entity_id": "9e9e714e-7649-4f1d-aadb-14e912f90dff",
+    "to_entity_id": "22de4109-6224-474a-9104-bc044c5562d2",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2026-02-24T21:00:22.682Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c2b11cd1-dc68-455f-bd92-7a18e873522b",
+    "from_entity_id": "9e9e714e-7649-4f1d-aadb-14e912f90dff",
+    "to_entity_id": "d9db0885-cc49-4633-95b1-e714b88aee40",
+    "relationship_type": "workplace_relation",
+    "description": null,
+    "created_at": "2026-02-24T21:00:12.837Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "bdae2cac-a19a-4979-978c-60b76013c9f1",
+    "from_entity_id": "957b14a8-c53f-4237-a540-9d5c3474bc5f",
+    "to_entity_id": "afc5e329-552d-437e-b2da-85d32ed609b0",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-24T07:52:06.737Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "df98dd9b-b2b7-4a15-a4f7-2d5052d982c8",
+    "from_entity_id": "003af3ae-ce27-4139-8214-96eb96d5181d",
+    "to_entity_id": "e93626dd-e2a2-2187-293e-176331033402",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-24T13:22:32.365Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "2acbed44-b8e6-4500-ad16-92908e85b794",
+    "from_entity_id": "9008196f-350a-455f-a339-1adef7f7de70",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "part_of",
+    "description": "Source of raids and danger.",
+    "created_at": "2025-11-26T06:10:52.583Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "d908195d-2710-40ee-b8d4-7c6d18f64d16",
+    "from_entity_id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+    "to_entity_id": "95322ebe-f77e-4419-8528-d3cd19834750",
+    "relationship_type": "part_of",
+    "description": null,
+    "created_at": "2025-12-20T16:45:42.457Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "255d9cf7-55c5-4b62-8519-051f343c7d2e",
+    "from_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "to_entity_id": "94e1d188-9d5d-3c32-34e9-287442144513",
+    "relationship_type": "affiliated_with",
+    "description": "Delivered package to captain.",
+    "created_at": "2025-11-24T19:35:41.855Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "ec48dbd9-a6b5-4755-9e5e-a3f54baf78f3",
+    "from_entity_id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+    "to_entity_id": "afc5e329-552d-437e-b2da-85d32ed609b0",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2025-12-24T07:52:06.739Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "9309cb41-3396-4360-b470-542c49af0ace",
+    "from_entity_id": "29de2f8f-40de-4813-9672-ee982e8372e8",
+    "to_entity_id": "429c2b28-8a8b-46ec-866d-97259d8de00e",
+    "relationship_type": "leadership_relation",
+    "description": "Exiled queen.",
+    "created_at": "2025-11-25T20:53:00.797Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c2bba6fc-5583-46fc-8d6f-f740c64c31e0",
+    "from_entity_id": "4d0e9b2b-5ab8-48da-b9ba-01ab902a5f4e",
+    "to_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "relationship_type": "ownership_relation",
+    "description": null,
+    "created_at": "2026-02-24T18:45:47.384Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "d5fdddf7-231e-42b8-8ca7-c86c2ae8fb5f",
+    "from_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "to_entity_id": "812a2b4c-3c16-4270-8a98-9e230331f2dd",
+    "relationship_type": "quest_update",
+    "description": null,
+    "created_at": "2026-02-24T18:47:02.970Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "f305f9ba-9982-4eea-ba1d-cde17e699fee",
+    "from_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "to_entity_id": "94e1d188-9d5d-3c32-34e9-287442144513",
+    "relationship_type": "leadership_relation",
+    "description": "Town guad captain. ",
+    "created_at": "2025-11-25T06:10:00.631Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "1311f18a-5ecd-429b-9a34-8ea7f374f243",
+    "from_entity_id": "d82515cc-d191-7076-782d-621886588957",
+    "to_entity_id": "22de4109-6224-474a-9104-bc044c5562d2",
+    "relationship_type": "affiliated_with",
+    "description": "Temporary allies on missions.",
+    "created_at": "2025-11-26T06:08:56.821Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "b236d5da-046b-4f4d-8bf3-dc5efa9db2e7",
+    "from_entity_id": "e51106e6-12ac-4520-bf34-2b306cd5b9a9",
+    "to_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "relationship_type": "affiliated_with",
+    "description": "Temporary ally in the Battle of the Strategic Bridge.",
+    "created_at": "2025-11-30T14:10:55.411Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "9219ea37-0fc8-4acb-baba-61196d3e0b7e",
+    "from_entity_id": "e51106e6-12ac-4520-bf34-2b306cd5b9a9",
+    "to_entity_id": "957b14a8-c53f-4237-a540-9d5c3474bc5f",
+    "relationship_type": "affiliated_with",
+    "description": "Temporary ally in the Battle of the Strategic Bridge.",
+    "created_at": "2025-11-30T14:11:01.024Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "5e0975c7-988e-4b12-88f3-6b6ec82a6f5b",
+    "from_entity_id": "e51106e6-12ac-4520-bf34-2b306cd5b9a9",
+    "to_entity_id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+    "relationship_type": "affiliated_with",
+    "description": "Temporary ally in the Battle of the Strategic Bridge.",
+    "created_at": "2025-11-30T14:11:06.444Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "32001640-6eae-433e-bac4-0a9cb137485b",
+    "from_entity_id": "e51106e6-12ac-4520-bf34-2b306cd5b9a9",
+    "to_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "relationship_type": "affiliated_with",
+    "description": "Temporary ally in the Battle of the Strategic Bridge.",
+    "created_at": "2025-11-30T14:11:13.114Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "1fad3657-15cf-4931-8416-91af0349ed73",
+    "from_entity_id": "e51106e6-12ac-4520-bf34-2b306cd5b9a9",
+    "to_entity_id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+    "relationship_type": "affiliated_with",
+    "description": "Temporary ally in the Battle of the Strategic Bridge.",
+    "created_at": "2025-11-30T14:11:19.654Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "ad58beaf-8e32-4dab-a1ea-67f027d678e9",
+    "from_entity_id": "0570c3f6-9a26-45c2-96cc-bbe3ab5b25ee",
+    "to_entity_id": "e11e864f-2baa-44d3-8b4a-5b816928cd25",
+    "relationship_type": "affiliated_with",
+    "description": "Phoenix that healed her with tears.",
+    "created_at": "2025-11-25T20:16:20.171Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "7ba5e9da-8811-43e3-acbd-8d5250566e77",
+    "from_entity_id": "72e9b966-7c3b-5410-b2c7-40966436673b",
+    "to_entity_id": "c050158d-cc46-4266-8370-b8d2f78c20e7",
+    "relationship_type": "affiliated_with",
+    "description": null,
+    "created_at": "2025-12-20T16:50:23.573Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "23c11995-03e4-4b46-b83d-e38f24829332",
+    "from_entity_id": "646f15d5-34d1-49d0-81f4-df92669e22b6",
+    "to_entity_id": "c050158d-cc46-4266-8370-b8d2f78c20e7",
+    "relationship_type": "affiliated_with",
+    "description": null,
+    "created_at": "2025-12-20T16:51:00.423Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "f4e15665-6dd7-4335-a40a-212ca06cb69a",
+    "from_entity_id": "61beae55-6a2a-090f-01b6-954119811280",
+    "to_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "relationship_type": "professional_relation",
+    "description": "Sent Bonnie to deliver package to Soranna.",
+    "created_at": "2025-11-25T20:55:28.390Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "33a97512-9c34-4267-9c4a-ea7f7d15d22e",
+    "from_entity_id": "94e1d188-9d5d-3c32-34e9-287442144513",
+    "to_entity_id": "22de4109-6224-474a-9104-bc044c5562d2",
+    "relationship_type": "professional_relation",
+    "description": "Hired party to investigate raiders.",
+    "created_at": "2025-11-26T06:00:38.936Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "64cc64c9-b6ef-4b77-a401-b98ae3b52f0d",
+    "from_entity_id": "9977cad2-0e29-4283-8c57-b802db493c82",
+    "to_entity_id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "relationship_type": "professional_relation",
+    "description": "Smith on the ship.",
+    "created_at": "2025-11-23T20:04:07.586Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "a84607eb-f1af-4590-bc2c-952712b67002",
+    "from_entity_id": "1c695900-15d5-b4ba-bc61-065220922391",
+    "to_entity_id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "relationship_type": "professional_relation",
+    "description": "Matron who sent Jareth 20 years ago.",
+    "created_at": "2025-11-26T06:13:49.982Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "e27c6c69-b1d8-42df-bfb3-99974a5e45cc",
+    "from_entity_id": "964c0ea9-838b-46b0-a606-8d109749624f",
+    "to_entity_id": "ea565b92-b8c1-4e8f-9a05-41d88225a0ff",
+    "relationship_type": "professional_relation",
+    "description": "Quartermaster and advisor, blood loyalty.",
+    "created_at": "2025-11-25T06:14:44.908Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "8f83d8bc-cbfa-41d6-b917-7ba07d21edb5",
+    "from_entity_id": "e93626dd-e2a2-2187-293e-176331033402",
+    "to_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "relationship_type": "professional_relation",
+    "description": "Taught creature knowledge harshly.",
+    "created_at": "2025-11-25T17:26:11.032Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c20b7bd7-fe1f-45b2-a65b-daf62d37668c",
+    "from_entity_id": "e93626dd-e2a2-8187-893e-732997699068",
+    "to_entity_id": "27049f9b-5f8f-4994-9b4b-ad6ade1c6d0f",
+    "relationship_type": "professional_relation",
+    "description": null,
+    "created_at": "2025-12-20T16:49:48.057Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "8f27a456-1eea-4812-bd36-4ea6a5e0f86f",
+    "from_entity_id": "3e8b7b22-37f7-76dc-7e83-621886588957",
+    "to_entity_id": "dcb5c4cb-c74a-404f-a418-a39016a105fb",
+    "relationship_type": "located_in",
+    "description": "Never returned from fortress.",
+    "created_at": "2025-11-25T20:27:06.899Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c67d23e6-60ae-4dd5-adf6-efd92836414d",
+    "from_entity_id": "792d39d3-16b3-42f9-9602-15d3ed43b7f3",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "located_in",
+    "description": "Location where he serves.",
+    "created_at": "2025-11-25T20:56:59.718Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "4d634438-09c8-48f2-8516-d5539071f151",
+    "from_entity_id": "646f15d5-34d1-49d0-81f4-df92669e22b6",
+    "to_entity_id": "dcdb9c63-0211-4472-8632-acc5068e862f",
+    "relationship_type": "located_in",
+    "description": "One of the location of the Thieves' Guild. ",
+    "created_at": "2025-11-26T06:05:21.929Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "83fe42d4-9920-4b73-a5c2-da8ece675b83",
+    "from_entity_id": "6c7b2b0c-dca0-4976-a9c7-bab110b1de59",
+    "to_entity_id": "957b14a8-c53f-4237-a540-9d5c3474bc5f",
+    "relationship_type": "located_in",
+    "description": "Sent here by Zella.",
+    "created_at": "2025-11-25T20:17:23.185Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "5a9c9d65-6b44-48f1-be0e-a8f38dbce111",
+    "from_entity_id": "6c7b2b0c-dca0-4976-a9c7-bab110b1de59",
+    "to_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "relationship_type": "located_in",
+    "description": "Crossed from Feywild here.",
+    "created_at": "2025-11-25T20:17:34.710Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "bc37909e-738b-4fb4-9b48-823169022708",
+    "from_entity_id": "4235b763-4e7f-4645-8710-37610a7e32d2",
+    "to_entity_id": "83f32cbe-003d-44ca-b43f-7cd4ea2f3e78",
+    "relationship_type": "located_in",
+    "description": "Born in Feywild.",
+    "created_at": "2025-11-25T06:11:47.810Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "77150968-8d4e-412d-8182-7f26f5c37739",
+    "from_entity_id": "f1a30dd3-aebf-4bab-8b62-67ca4b68cd87",
+    "to_entity_id": "df8bdb1b-8227-49a9-aef1-bb2c4ce902a6",
+    "relationship_type": "located_in",
+    "description": null,
+    "created_at": "2025-12-24T13:35:30.104Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "3a472137-383a-49f0-a3fd-9421bee69a90",
+    "from_entity_id": "77c2cdf3-1109-4628-aa52-0a6523ec0b03",
+    "to_entity_id": "4f9c8c33-4808-87ed-8f94-732997699068",
+    "relationship_type": "located_in",
+    "description": null,
+    "created_at": "2025-12-24T14:31:46.185Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "1104d00f-4451-4684-a467-28dd188b65fe",
+    "from_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "to_entity_id": "9209a883-2682-4f35-bff4-dd1137a2b081",
+    "relationship_type": "quest_update",
+    "description": null,
+    "created_at": "2026-02-24T18:47:02.963Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "ff94a315-495c-4f58-b7bf-620cf29df5a0",
+    "from_entity_id": "0570c3f6-9a26-45c2-96cc-bbe3ab5b25ee",
+    "to_entity_id": "77c2cdf3-1109-4628-aa52-0a6523ec0b03",
+    "relationship_type": "residence_relation",
+    "description": "Resides in the grove.",
+    "created_at": "2025-11-25T20:16:53.954Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "3a6b6c2e-acd6-4b13-a317-9d1dd7701ea2",
+    "from_entity_id": "61f8a855-6b2a-4309-a1b6-39855325562a",
+    "to_entity_id": "77c2cdf3-1109-4628-aa52-0a6523ec0b03",
+    "relationship_type": "residence_relation",
+    "description": "HIs residence.",
+    "created_at": "2025-11-23T20:01:56.105Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "60906e29-b549-4b33-ab07-7dda51b5c1ed",
+    "from_entity_id": "9977cad2-0e29-4283-8c57-b802db493c82",
+    "to_entity_id": "ca9a1d7f-9a35-4a66-b14d-3237c267a948",
+    "relationship_type": "workplace_relation",
+    "description": "Ship Bardin works on. ",
+    "created_at": "2025-11-24T06:04:16.386Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "6687bd35-fe8e-4b0d-88af-43f1a5b35c41",
+    "from_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "to_entity_id": "47b78b76-d550-4e08-9b74-300195376010",
+    "relationship_type": "quest_update",
+    "description": null,
+    "created_at": "2026-02-24T18:47:02.961Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "9644ebf8-0b1d-4e30-aeb0-2eb24afe084c",
+    "from_entity_id": "3ba41633-a07c-48ce-9d62-328d65c1f8d1",
+    "to_entity_id": "bf063127-7e5a-48c4-a7e7-49103921a3c8",
+    "relationship_type": "quest_update",
+    "description": null,
+    "created_at": "2025-12-22T06:22:06.613Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "9299b92f-dd66-402c-882e-1a0b888d71af",
+    "from_entity_id": "9853ce61-e637-44ce-88c3-ec8d2c0c9356",
+    "to_entity_id": "f8a98301-deef-4224-8c8e-f5dcb5343560",
+    "relationship_type": "quest_update",
+    "description": null,
+    "created_at": "2025-12-22T06:22:06.613Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "9424568f-2e67-4b9b-976c-5abc7143470f",
+    "from_entity_id": "57a12795-f01a-4e5f-8f93-9df0a156dd88",
+    "to_entity_id": "1fe14afa-01d7-40f6-aeb5-d08ac49bfe1b",
+    "relationship_type": "quest_location",
+    "description": null,
+    "created_at": "2025-12-21T13:55:22.845Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "629f0296-0452-4453-8a51-887fca7a1bba",
+    "from_entity_id": "9008196f-350a-455f-a339-1adef7f7de70",
+    "to_entity_id": "1fe14afa-01d7-40f6-aeb5-d08ac49bfe1b",
+    "relationship_type": "quest_location",
+    "description": null,
+    "created_at": "2025-12-21T13:54:42.954Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "408d1068-42b3-445e-999b-3e61b4c0ffe1",
+    "from_entity_id": "a45d426f-7421-4d35-baba-9f1741e206fc",
+    "to_entity_id": "9008196f-350a-455f-a339-1adef7f7de70",
+    "relationship_type": "quest_location",
+    "description": null,
+    "created_at": "2025-12-21T13:54:42.954Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "0e4b6849-44ad-420b-aae4-0e576d7e273c",
+    "from_entity_id": "f58e95d3-a609-4fb7-9d68-77c266f672e2",
+    "to_entity_id": "57a12795-f01a-4e5f-8f93-9df0a156dd88",
+    "relationship_type": "quest_location",
+    "description": null,
+    "created_at": "2025-12-21T13:55:22.845Z",
+    "is_bidirectional": true,
+    "is_hidden": true
+  },
+  {
+    "id": "2369018b-dbbb-4cfb-b668-9fd60aa86b75",
+    "from_entity_id": "c555bcd2-a3bc-49be-8240-a8df5360d476",
+    "to_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "relationship_type": "hostile_to",
+    "description": null,
+    "created_at": "2025-11-23T16:46:28.250Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "3c205217-371c-4560-82a1-a1bd6d2062fa",
+    "from_entity_id": "a7709e0f-0383-4a82-a87e-46986766d36e",
+    "to_entity_id": "3de9f4e4-9d25-4039-bda6-853c6f4c34ca",
+    "relationship_type": "hostile_to",
+    "description": "Target of coordinated attacks.",
+    "created_at": "2025-11-25T06:11:06.643Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "ccab6fdb-2fab-4046-a373-1f5abb0a8353",
+    "from_entity_id": "47b78b76-d550-4e08-9b74-300195376010",
+    "to_entity_id": "9d803c55-9584-4364-ba1f-c1019cf9b22b",
+    "relationship_type": "hostile_to",
+    "description": null,
+    "created_at": "2025-12-21T21:51:19.183Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "368c5da7-d142-4e4d-82ea-599cd8c9d6f5",
+    "from_entity_id": "7fe32d8b-92d2-47c9-957d-da8fff744933",
+    "to_entity_id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+    "relationship_type": "knowledge_of",
+    "description": "Involved in the disappearance of Thalos.",
+    "created_at": "2025-11-25T17:31:04.258Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "58c2898c-23f3-4870-a56d-b5ca45170040",
+    "from_entity_id": "caaa5274-9764-4922-ac11-106da710fc2c",
+    "to_entity_id": "812a2b4c-3c16-4270-8a98-9e230331f2dd",
+    "relationship_type": "knowledge_of",
+    "description": null,
+    "created_at": "2025-12-22T06:46:04.677Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "a4b48f4c-e61f-4878-9dba-341a8a15d851",
+    "from_entity_id": "af13371c-eea3-432b-a188-714861e5591b",
+    "to_entity_id": "d9db0885-cc49-4633-95b1-e714b88aee40",
+    "relationship_type": "located_in",
+    "description": null,
+    "created_at": "2026-01-11T14:55:25.538Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "e210fbac-0eaa-4207-b8d7-e7383776087e",
+    "from_entity_id": "c3528db1-b1e2-447b-84a7-2fbeff5a9573",
+    "to_entity_id": "4f9c8c33-4808-87ed-8f94-732997699068",
+    "relationship_type": "encountered",
+    "description": null,
+    "created_at": "2026-02-24T19:08:23.014Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "6d35696d-4a77-4277-a62b-8c940591a937",
+    "from_entity_id": "fd992811-d20d-4231-9a71-7dadedc7b82c",
+    "to_entity_id": "c988d268-4136-4ebe-b59b-42527cd21c8d",
+    "relationship_type": "quest_participant",
+    "description": null,
+    "created_at": "2025-12-20T16:48:54.908Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "c3b77286-e83d-493a-a550-b82ae939e222",
+    "from_entity_id": "8427e65e-de6e-4419-b404-73b9704d9543",
+    "to_entity_id": "c050158d-cc46-4266-8370-b8d2f78c20e7",
+    "relationship_type": "quest_participant",
+    "description": null,
+    "created_at": "2025-12-20T16:50:03.755Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "954713dd-407b-4173-b956-d7ba40731dd3",
+    "from_entity_id": "78700f6d-11a7-4ae0-ab50-a1a1b498c1d7",
+    "to_entity_id": "27049f9b-5f8f-4994-9b4b-ad6ade1c6d0f",
+    "relationship_type": "quest_participant",
+    "description": null,
+    "created_at": "2025-12-20T16:49:21.460Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "073d8f44-5bf2-4904-b00a-966faf5fa4c2",
+    "from_entity_id": "dcdb9c63-0211-4472-8632-acc5068e862f",
+    "to_entity_id": "812a2b4c-3c16-4270-8a98-9e230331f2dd",
+    "relationship_type": "parent_location",
+    "description": null,
+    "created_at": "2025-12-20T16:48:12.718Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "57eb341c-85c5-45f5-b91e-08ad3b58bc62",
+    "from_entity_id": "c71404bb-c080-6f65-671c-510775477846",
+    "to_entity_id": "c050158d-cc46-4266-8370-b8d2f78c20e7",
+    "relationship_type": "quest_giver",
+    "description": null,
+    "created_at": "2025-12-20T16:50:44.865Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  },
+  {
+    "id": "4f2fd07b-8713-4ac6-bb0a-16b6c0170b4c",
+    "from_entity_id": "a5f2e299-ae6e-4d43-45fa-398553255624",
+    "to_entity_id": "27049f9b-5f8f-4994-9b4b-ad6ade1c6d0f",
+    "relationship_type": "quest_objective",
+    "description": null,
+    "created_at": "2025-12-20T16:49:36.295Z",
+    "is_bidirectional": true,
+    "is_hidden": false
+  }
+]

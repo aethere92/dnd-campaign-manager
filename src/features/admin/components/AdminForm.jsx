@@ -1,14 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
+import { getTabsForType } from '@/features/admin/config/adminTabs';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
+import AdminTabBar from './AdminTabBar';
 import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
 import SmartImageInput from '@/features/admin/components/SmartImageInput';
 import AttributeValueInput from './inputs/AttributeValueInput';
@@ -18,17 +20,20 @@ import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
 import EncounterActionManager from './EncounterManager';
-import EncounterNarrativeManager from './EncounterNarrativeManager'; // NEW
+import EncounterNarrativeManager from './EncounterNarrativeManager';
 import TacticalMapManager from './TacticalMapManager';
+import NarrativeSuggestionPanel from './NarrativeSuggestionPanel';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
 	const { campaignId } = useCampaign();
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(false);
-	const[isSaving, setIsSaving] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
 	const [mapKeys, setMapKeys] = useState([]);
-	const [encounterTab, setEncounterTab] = useState('narrative'); // NEW Toggling State
+	const [activeTab, setActiveTab] = useState('details');
+
+	const tabs = getTabsForType(type, id);
 
 	const {
 		register,
@@ -37,22 +42,27 @@ export default function AdminForm({ type, id }) {
 		reset,
 		watch,
 		setValue,
-		formState: { errors },
+		formState: { errors, isDirty },
 	} = useForm({
 		defaultValues: {
 			attributes: {},
-			customAttributes:[],
-			timeline:[], // Ensure timeline has a default
+			customAttributes: [],
+			timeline: [],
 		},
 	});
 	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
+
+	// Reset to details tab when entity changes
+	useEffect(() => {
+		setActiveTab('details');
+	}, [type, id]);
 
 	useEffect(() => {
 		const loadEntity = async () => {
 			setIsLoading(true);
 			try {
 				if (!id) {
-					reset({ attributes: {}, customAttributes: [], timeline:[] });
+					reset({ attributes: {}, customAttributes: [], timeline: [] });
 					setIsLoading(false);
 					return;
 				}
@@ -60,9 +70,9 @@ export default function AdminForm({ type, id }) {
 
 				const definedKeys = strategy.defaultAttributes.map((a) => a.key);
 				const standardAttrs = {};
-				const customAttrs =[];
+				const customAttrs = [];
 
-				(rawData.attributesList ||[]).forEach((attr) => {
+				(rawData.attributesList || []).forEach((attr) => {
 					const key = attr.name;
 					let value = attr.value;
 					let dataType = 'string';
@@ -93,7 +103,6 @@ export default function AdminForm({ type, id }) {
 					}
 				});
 
-				// Set default timeline mode if empty
 				if (type === 'encounter' && !standardAttrs.timeline_mode) {
 					standardAttrs.timeline_mode = 'Legacy Combat Log';
 				}
@@ -102,7 +111,7 @@ export default function AdminForm({ type, id }) {
 					...rawData,
 					attributes: standardAttrs,
 					customAttributes: customAttrs,
-					timeline: rawData.timeline ||[], // Ensure timeline populates
+					timeline: rawData.timeline || [],
 				});
 			} catch (err) {
 				console.error(err);
@@ -112,7 +121,7 @@ export default function AdminForm({ type, id }) {
 			}
 		};
 		loadEntity();
-	},[type, id, reset, strategy]);
+	}, [type, id, reset, strategy]);
 
 	useEffect(() => {
 		if (type === 'map' && campaignId) {
@@ -128,7 +137,7 @@ export default function AdminForm({ type, id }) {
 			return;
 		}
 
-		const attributesList =[];
+		const attributesList = [];
 
 		Object.entries(data.attributes).forEach(([key, value]) => {
 			if (value && String(value).trim() !== '') {
@@ -187,7 +196,7 @@ export default function AdminForm({ type, id }) {
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
-	const customAttrs = watch('customAttributes') ||[];
+	const customAttrs = watch('customAttributes') || [];
 	const standardMarkers = watch('attributes.map_markers');
 	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
 	const activeMarkersValue = standardMarkers || customMarkers || '[]';
@@ -204,12 +213,30 @@ export default function AdminForm({ type, id }) {
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
+			{/* Sticky Toolbar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
-				<div className='flex items-center gap-2'>
-					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500/100' : 'bg-emerald-500/100'}`} />
-					<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
-						{id ? 'Edit Mode' : 'Create Mode'}
-					</span>
+				<div className='flex items-center gap-3'>
+					<div className='flex items-center gap-2'>
+						<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+						<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
+							{id ? 'Edit Mode' : 'Create Mode'}
+						</span>
+					</div>
+					{isDirty && (
+						<span className='text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200'>
+							Unsaved
+						</span>
+					)}
+					{id && (
+						<button
+							type='button'
+							onClick={() => navigator.clipboard.writeText(id)}
+							className='flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 hover:text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border transition-colors'
+							title='Copy ID'>
+							<Copy size={10} />
+							{id.substring(0, 8)}…
+						</button>
+					)}
 				</div>
 				<div className='flex gap-2'>
 					{id && (
@@ -229,224 +256,207 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			<div className={ADMIN_SECTION_CLASS}>
-				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
-				<div className='grid grid-cols-1 gap-4'>
-					{id && (
-						<div>
-							<label className={ADMIN_LABEL_CLASS}>System ID</label>
-							<div className='flex gap-2 items-center'>
+			{/* Tab Bar */}
+			{tabs.length > 1 && (
+				<div className='flex justify-center'>
+					<AdminTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+				</div>
+			)}
+
+			{/* Tab Content */}
+			{activeTab === 'details' && (
+				<div className='space-y-5'>
+					{/* Core Details */}
+					<div className={ADMIN_SECTION_CLASS}>
+						<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
+						<div className='grid grid-cols-1 gap-4'>
+							<div>
+								<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
 								<input
 									type='text'
-									value={id}
-									readOnly
-									className={`${ADMIN_INPUT_CLASS} font-mono text-xs text-muted-foreground bg-muted/50 select-all cursor-text`}
-									onClick={(e) => e.target.select()}
+									{...register('name', { required: true })}
+									className={ADMIN_INPUT_CLASS}
+									placeholder='Entity Name...'
 								/>
-								<Button
-									type='button'
-									variant='ghost'
-									size='sm'
-									icon={Copy}
-									onClick={() => navigator.clipboard.writeText(id)}
-									title='Copy ID'
-								/>
+								{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
 							</div>
-						</div>
-					)}
-					<div>
-						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
-						<input
-							type='text'
-							{...register('name', { required: true })}
-							className={ADMIN_INPUT_CLASS}
-							placeholder='Entity Name...'
-						/>
-						{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
-					</div>
-					{strategy.hasNarrative && (
-						<div>
-							<MarkdownEditor
-								label='Description / Narrative'
-								rows={8}
-								value={watch('description') || ''}
-								onChange={(e) => setValue('description', e.target.value)}
-								placeholder='Write description using Markdown...'
-							/>
-						</div>
-					)}
-				</div>
-			</div>
-
-			{mapImageUrl && (
-				<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
-			)}
-
-			<div className={ADMIN_SECTION_CLASS}>
-				<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
-				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-					{strategy.defaultAttributes.map((attr) => (
-						<div key={attr.key}>
-							<label className={ADMIN_LABEL_CLASS}>{attr.label}</label>
-							{attr.type === 'image' ? (
-								<SmartImageInput
-									value={watch(`attributes.${attr.key}`)}
-									onChange={(e) => setValue(`attributes.${attr.key}`, e.target.value)}
-									placeholder='images/...'
-								/>
-							) : attr.type === 'select' ? (
-								<select {...register(`attributes.${attr.key}`)} className={ADMIN_INPUT_CLASS}>
-									<option value=''>Select...</option>
-									{attr.options.map((opt) => (
-										<option key={opt} value={opt}>
-											{opt}
-										</option>
-									))}
-								</select>
-							) : attr.type === 'storage_path' ? (
-								<StoragePathInput
-									value={watch(`attributes.${attr.key}`)}
-									onChange={(val) => setValue(`attributes.${attr.key}`, val)}
-									placeholder={attr.placeholder}
-								/>
-							) : (
-								<>
-									<input
-										type={attr.type === 'number' ? 'number' : 'text'}
-										{...register(`attributes.${attr.key}`)}
-										className={ADMIN_INPUT_CLASS}
-										placeholder={attr.placeholder}
-										list={attr.suggestions ? `${attr.key}-suggestions` : undefined}
+							{strategy.hasNarrative && (
+								<div>
+									<MarkdownEditor
+										label='Description / Narrative'
+										rows={8}
+										value={watch('description') || ''}
+										onChange={(e) => setValue('description', e.target.value)}
+										placeholder='Write description using Markdown...'
 									/>
-									{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
-										<datalist id={`${attr.key}-suggestions`}>
-											{mapKeys.map((k) => (
-												<option key={k} value={k} />
-											))}
-										</datalist>
-									)}
-								</>
+								</div>
 							)}
 						</div>
-					))}
-				</div>
-			</div>
-
-			<div className={ADMIN_SECTION_CLASS}>
-				<div className={ADMIN_HEADER_CLASS}>
-					<span>Custom Attributes</span>
-					<Button
-						type='button'
-						onClick={() => append({ key: '', value: '', type: 'string' })}
-						size='sm'
-						variant='secondary'
-						icon={Plus}>
-						Add New
-					</Button>
-				</div>
-				<div className='space-y-3'>
-					{fields.map((field, index) => {
-						const attrType = watch(`customAttributes.${index}.type`);
-						const attrValue = watch(`customAttributes.${index}.value`);
-						return (
-							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
-								<div className='w-1/4 pt-1'>
-									<input
-										type='text'
-										{...register(`customAttributes.${index}.key`)}
-										placeholder='Key'
-										className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
-									/>
-								</div>
-								<div className='w-24 pt-1'>
-									<div className='relative'>
-										<select
-											{...register(`customAttributes.${index}.type`)}
-											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
-											<option value='string'>Text</option>
-											<option value='number'>Number</option>
-											<option value='boolean'>Toggle</option>
-											<option value='list'>List</option>
-											<option value='map'>Map</option>
-											<option value='json'>JSON</option>
-										</select>
-										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
-											{attrType === 'json' ? <Braces size={12} /> : attrType === 'number' ? <Hash size={12} /> : <AlignLeft size={12} />}
-										</div>
-									</div>
-								</div>
-								<div className='flex-1 relative'>
-									<AttributeValueInput
-										type={attrType}
-										value={attrValue}
-										onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
-										placeholder='Value'
-									/>
-									{attrType === 'json' && (
-										<button
-											type='button'
-											onClick={() => handleFormatJSON(index)}
-											className='absolute right-2 top-2 text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border hover:border-primary transition-colors'>
-											Format
-										</button>
-									)}
-								</div>
-								<button
-									type='button'
-									onClick={() => remove(index)}
-									className='mt-2 p-1.5 text-muted-foreground/40 hover:text-primary hover:bg-red-500/10 rounded transition-colors'>
-									<Trash2 size={16} />
-								</button>
-							</div>
-						);
-					})}
-					{fields.length === 0 && (
-						<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
-					)}
-				</div>
-			</div>
-
-			{/* Sub Managers */}
-			{id && type === 'session' && <SessionEventManager sessionId={id} />}
-			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
-			{id && <RelationshipManager entityId={id} />}
-
-			{/* NEW: ENCOUNTER MANAGER TABS */}
-			{id && type === 'encounter' && (
-				<div className='space-y-4 pt-4'>
-					<div className='flex bg-muted p-1 rounded-lg border border-border w-fit mx-auto shadow-inner'>
-						<button
-							type='button'
-							onClick={() => setEncounterTab('narrative')}
-							className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
-								encounterTab === 'narrative'
-									? 'bg-background shadow-sm text-foreground ring-1 ring-border'
-									: 'text-muted-foreground hover:text-foreground'
-							}`}>
-							Narrative Timeline
-						</button>
-						<button
-							type='button'
-							onClick={() => setEncounterTab('legacy')}
-							className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
-								encounterTab === 'legacy'
-									? 'bg-background shadow-sm text-foreground ring-1 ring-border'
-									: 'text-muted-foreground hover:text-foreground'
-							}`}>
-							Legacy Combat Log
-						</button>
 					</div>
 
-					{encounterTab === 'narrative' ? (
-						<EncounterNarrativeManager
-							timeline={watch('timeline') ||[]}
-							onChange={(val) => setValue('timeline', val, { shouldDirty: true })}
-						/>
-					) : (
-						<EncounterActionManager encounterId={id} />
+					{/* Tactical Map (shown when map_image is set) */}
+					{mapImageUrl && (
+						<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
 					)}
+
+					{/* Strategy Attributes */}
+					<div className={ADMIN_SECTION_CLASS}>
+						<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
+						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+							{strategy.defaultAttributes.map((attr) => (
+								<div key={attr.key}>
+									<label className={ADMIN_LABEL_CLASS}>{attr.label}</label>
+									{attr.type === 'image' ? (
+										<SmartImageInput
+											value={watch(`attributes.${attr.key}`)}
+											onChange={(e) => setValue(`attributes.${attr.key}`, e.target.value)}
+											placeholder='images/...'
+										/>
+									) : attr.type === 'select' ? (
+										<select {...register(`attributes.${attr.key}`)} className={ADMIN_INPUT_CLASS}>
+											<option value=''>Select...</option>
+											{attr.options.map((opt) => (
+												<option key={opt} value={opt}>
+													{opt}
+												</option>
+											))}
+										</select>
+									) : attr.type === 'storage_path' ? (
+										<StoragePathInput
+											value={watch(`attributes.${attr.key}`)}
+											onChange={(val) => setValue(`attributes.${attr.key}`, val)}
+											placeholder={attr.placeholder}
+										/>
+									) : (
+										<>
+											<input
+												type={attr.type === 'number' ? 'number' : 'text'}
+												{...register(`attributes.${attr.key}`)}
+												className={ADMIN_INPUT_CLASS}
+												placeholder={attr.placeholder}
+												list={attr.suggestions ? `${attr.key}-suggestions` : undefined}
+											/>
+											{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
+												<datalist id={`${attr.key}-suggestions`}>
+													{mapKeys.map((k) => (
+														<option key={k} value={k} />
+													))}
+												</datalist>
+											)}
+										</>
+									)}
+								</div>
+							))}
+						</div>
+					</div>
+
+					{/* Custom Attributes */}
+					<div className={ADMIN_SECTION_CLASS}>
+						<div className={ADMIN_HEADER_CLASS}>
+							<span>Custom Attributes</span>
+							<Button
+								type='button'
+								onClick={() => append({ key: '', value: '', type: 'string' })}
+								size='sm'
+								variant='secondary'
+								icon={Plus}>
+								Add New
+							</Button>
+						</div>
+						<div className='space-y-3'>
+							{fields.map((field, index) => {
+								const attrType = watch(`customAttributes.${index}.type`);
+								const attrValue = watch(`customAttributes.${index}.value`);
+								return (
+									<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
+										<div className='w-1/4 pt-1'>
+											<input
+												type='text'
+												{...register(`customAttributes.${index}.key`)}
+												placeholder='Key'
+												className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
+											/>
+										</div>
+										<div className='w-24 pt-1'>
+											<div className='relative'>
+												<select
+													{...register(`customAttributes.${index}.type`)}
+													className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
+													<option value='string'>Text</option>
+													<option value='number'>Number</option>
+													<option value='boolean'>Toggle</option>
+													<option value='list'>List</option>
+													<option value='map'>Map</option>
+													<option value='json'>JSON</option>
+												</select>
+												<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
+													{attrType === 'json' ? (
+														<Braces size={12} />
+													) : attrType === 'number' ? (
+														<Hash size={12} />
+													) : (
+														<AlignLeft size={12} />
+													)}
+												</div>
+											</div>
+										</div>
+										<div className='flex-1 relative'>
+											<AttributeValueInput
+												type={attrType}
+												value={attrValue}
+												onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
+												placeholder='Value'
+											/>
+											{attrType === 'json' && (
+												<button
+													type='button'
+													onClick={() => handleFormatJSON(index)}
+													className='absolute right-2 top-2 text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border hover:border-primary transition-colors'>
+													Format
+												</button>
+											)}
+										</div>
+										<button
+											type='button'
+											onClick={() => remove(index)}
+											className='mt-2 p-1.5 text-muted-foreground/40 hover:text-primary hover:bg-red-500/10 rounded transition-colors'>
+											<Trash2 size={16} />
+										</button>
+									</div>
+								);
+							})}
+							{fields.length === 0 && (
+								<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
+							)}
+						</div>
+					</div>
 				</div>
 			)}
+
+			{/* Session Events Tab */}
+			{activeTab === 'events' && id && type === 'session' && <SessionEventManager sessionId={id} />}
+
+			{/* Quest Objectives Tab */}
+			{activeTab === 'objectives' && id && type === 'quest' && <QuestObjectiveManager questId={id} />}
+
+			{/* Encounter Narrative Tab */}
+			{activeTab === 'narrative' && id && type === 'encounter' && (
+				<EncounterNarrativeManager
+					timeline={watch('timeline') || []}
+					onChange={(val) => setValue('timeline', val, { shouldDirty: true })}
+				/>
+			)}
+
+			{/* Encounter Combat Log Tab */}
+			{activeTab === 'combat' && id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
+
+			{/* Scanner Tab */}
+			{activeTab === 'scanner' && id && type === 'session' && (
+				<NarrativeSuggestionPanel sessionId={id} narrative={watch('description') || ''} />
+			)}
+
+			{/* Relationships Tab */}
+			{activeTab === 'relationships' && id && <RelationshipManager entityId={id} />}
 		</form>
 	);
 }

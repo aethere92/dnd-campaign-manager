@@ -31,7 +31,15 @@ export default function EntitySearch({ onSelect }) {
 			setIsLoading(true);
 			try {
 				// <--- USE NEW SERVICE HERE
-				const flat = await searchEntitiesByName(campaignId, query);
+				const raw = await searchEntitiesByName(campaignId, query);
+
+				// Deduplicate by entity id (sessions appear in both entities + sessions tables)
+				const seen = new Set();
+				const flat = raw.filter((item) => {
+					if (seen.has(item.id)) return false;
+					seen.add(item.id);
+					return true;
+				});
 
 				// Client-side Sorting: Exact Match > Starts With > Includes
 				flat.sort((a, b) => {

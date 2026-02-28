@@ -1,12 +1,34 @@
 ---
 inclusion: fileMatch
-fileMatchPattern: "**/smart-text/**"
+fileMatchPattern: "**/smart-text/**,**/smart-tooltip/**"
 ---
 
 # Smart Text System Guide
 
 ## Overview
-The smart text system enables entity linking within markdown content. When entities are referenced using `[[entity_id]]` syntax, they become interactive links with hover tooltips.
+The smart text system provides automatic entity linking within markdown content. Rather than requiring explicit `[[entity_id]]` syntax, it detects entity names and aliases in plain text using word boundary matching and converts them to interactive links with hover tooltips.
+
+## How It Works
+
+### Processing Pipeline
+1. `useSmartText(text)` receives raw markdown text
+2. Existing markdown links are protected from re-processing via regex split
+3. Entity names and aliases are matched using `\b` word boundaries (case-insensitive)
+4. Matches are sorted longest-first to prevent partial matches (e.g., "Captain Soranna" before "Soranna")
+5. Matched text is replaced with markdown links: `[matched text](#entity/id/type)`
+6. `SmartMarkdown` renders the processed text via `react-markdown`
+7. Custom `a` component intercepts `#entity/` links and renders `SmartEntityLink` or plain `Link`
+
+### Key Files
+```
+src/features/smart-text/
+├── SmartMarkdown.jsx      # ReactMarkdown wrapper with custom link renderer
+├── useSmartText.js        # Text processing hook (matching + replacement)
+├── useEntityIndex.js      # Entity index builder (list, map, searchTokens)
+└── components/
+    ├── SmartEntityLink.jsx  # Interactive link with tooltip trigger
+    └── EntityEmbed.jsx      # Embedded entity card (::label:: syntax)
+```
 
 ## Core Components
 
@@ -15,243 +37,124 @@ Main component for rendering markdown with entity links:
 ```javascript
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
-<SmartMarkdown content={entity.content} campaignId={campaignId} />
+// Standard usage
+<SmartMarkdown>{entity.description}</SmartMarkdown>
+
+// Inline mode (strips <p> tags)
+<SmartMarkdown inline={true}>{text}</SmartMarkdown>
+
+// Disable tooltips (used inside tooltips to prevent recursion)
+<SmartMarkdown inline={true} disableTooltips={true}>{text}</SmartMarkdown>
 ```
+
+Features:
+- Auto-generates heading IDs for table-of-contents integration
+- Handles `#entity/` links → `SmartEntityLink` (with tooltips) or plain `Link` (when tooltips disabled)
+- Supports entity embeds via `::label::` display text syntax
+- External links open in new tab with `rel="noopener noreferrer"`
 
 ### Entity Index Hook
-Provides fast entity lookups:
+Builds and caches the entity lookup index:
 ```javascript
-const { entityIndex, isLoading } = useEntityIndex(campaignId);
+const { list, map, searchTokens } = useEntityIndex();
 
-// entityIndex structure:
-{
-  'npc_gandalf': {
-    id: 'npc_gandalf',
-    name: 'Gandalf',
-    type: 'npc',
-    description: 'A wise wizard...'
-  }
-}
+// list: Array of lightweight entity objects with iconUrl, parentId
+// map: Map<entityId, entity> for O(1) lookups
+// searchTokens: Array of { term, entityId, type } sorted by term length DESC
 ```
 
-## Entity Linking Syntax
+The index is fetched from `view_entity_index` (lightweight Supabase view) and includes:
+- Primary entity names
+- Aliases (from `attributes.aliases` — array or comma-separated string)
+- Only terms longer than 2 characters
 
-### Basic Linking
-```markdown
-The party met [[npc_gandalf]] in [[loc_rivendell]].
-```
+Cache: `queryKey: ['entityIndex', campaignId]`, staleTime: 30 minutes
 
-### Display Text Override
-```markdown
-They spoke with [[npc_gandalf|the wizard]].
-```
-
-### Multiple References
-```markdown
-[[char_frodo]] and [[char_sam]] traveled to [[loc_mordor]] 
-to complete [[quest_destroy_ring]].
-```
-
-## Smart Text Parser
-
-### Parsing Process
-1. Detect `[[entity_id]]` or `[[entity_id|display]]` patterns
-2. Look up entity in entity index
-3. Replace with interactive link component
-4. Attach tooltip handlers
-
-
-### Custom Components
+### useSmartText Hook
+Processes text and returns entity-linked markdown:
 ```javascript
-const components = {
-  entityLink: ({ entityId, displayText, entity }) => (
-    <EntityLink
-      entityId={entityId}
-      displayText={displayText}
-      entity={entity}
-    />
-  ),
-};
+const processedText = useSmartText(rawText);
+// Returns markdown string with entity references converted to links
 ```
+
+Matching algorithm:
+- Iterates searchTokens (longest first)
+- Uses `\b` word boundaries for precise matching
+- Tracks processed ranges to prevent overlapping matches
+- Preserves original text casing in the link display
 
 ## Tooltip System
 
+### Architecture
+```
+src/features/smart-tooltip/
+├── TooltipContext.jsx      # Provider with openTooltip/closeTooltip/cancelClose
+├── TooltipContainer.jsx    # Portal-rendered overlay layer
+├── useTooltipState.js      # State management with delayed close
+├── useSmartPosition.js     # Viewport-aware positioning
+├── config/
+│   └── tooltipProfiles.js  # Per-entity-type field configuration
+└── components/
+    └── TooltipCard.jsx     # Rich tooltip card with entity data
+```
+
 ### TooltipContext
-Global context for managing tooltip state:
 ```javascript
-const { showTooltip, hideTooltip, tooltipData } = useTooltip();
-
-// Show tooltip
-showTooltip({
-  entityId: 'npc_gandalf',
-  entity: entityData,
-  position: { x: 100, y: 200 },
-});
-
-// Hide tooltip
-hideTooltip();
+const { openTooltip, closeTooltip, cancelClose } = useTooltip();
 ```
 
-### Tooltip Positioning
-Smart positioning algorithm:
-- Detects viewport boundaries
-- Adjusts position to stay visible
+Graceful degradation: if used outside `TooltipProvider`, returns dummy no-op functions instead of throwing.
+
+### Tooltip Profiles
+Each entity type has a profile defining which fields to display:
+```javascript
+// Example: NPC profile
+npc: {
+  subtitle: ['gender', 'race', 'role'],
+  tags: ['status', 'affinity'],
+  features: { showPersonality: true },
+}
+
+// Example: Character profile
+character: {
+  subtitle: ['level_prefix', 'race', 'class'],
+  tags: ['status'],
+  features: { showHP: true, showArmorClass: true, showMovement: true },
+}
+```
+
+### TooltipCard Content
+Renders entity-specific rich content:
+- Header image (from `background` attribute) or fallback gradient with entity icon
+- Entity type badge with color from entity palette
+- Name, subtitle line (joined with •)
+- Stat badges: HP (heart), AC (shield), Movement (wind)
+- Status dot (alive/dead/active/completed)
+- Affinity tag (ally/enemy with color coding)
+- Personality quote (italic, bordered)
+- Description with SmartMarkdown (tooltips disabled to prevent recursion)
+- Footer with ruler info and "Open Wiki" link
+
+### Smart Positioning
+`useSmartPosition` handles viewport boundary detection:
+- Adjusts tooltip position to stay within viewport
 - Handles scroll events
-- Repositions on window resize
-
-### Tooltip Content
-Displays:
-- Entity name and type badge
-- Short description (truncated)
-- Quick action buttons (view, edit)
-- Related entity count
-
-## Implementation Details
-
-### Entity Link Component
-```javascript
-export default function EntityLink({ entityId, displayText, entity }) {
-  const { showTooltip, hideTooltip } = useTooltip();
-  const linkRef = useRef(null);
-
-  const handleMouseEnter = () => {
-    const rect = linkRef.current.getBoundingClientRect();
-    showTooltip({
-      entityId,
-      entity,
-      position: { x: rect.left, y: rect.bottom },
-    });
-  };
-
-  return (
-    <span
-      ref={linkRef}
-      className="entity-link"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={hideTooltip}
-    >
-      {displayText || entity?.name || entityId}
-    </span>
-  );
-}
-```
-
-### Markdown Processing
-```javascript
-const processMarkdown = (content, entityIndex) => {
-  const entityLinkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
-  
-  return content.replace(entityLinkRegex, (match, entityId, displayText) => {
-    const entity = entityIndex[entityId];
-    if (!entity) return match; // Keep original if not found
-    
-    return renderEntityLink(entityId, displayText, entity);
-  });
-};
-```
-
-## Entity Index Building
-
-### Index Structure
-```javascript
-{
-  [entityId]: {
-    id: string,
-    name: string,
-    type: string,
-    description: string,
-    metadata: object,
-  }
-}
-```
-
-### Index Generation
-```javascript
-const buildEntityIndex = (entities) => {
-  return entities.reduce((index, entity) => {
-    index[entity.id] = {
-      id: entity.id,
-      name: entity.name,
-      type: entity.type,
-      description: entity.description,
-      metadata: entity.metadata,
-    };
-    return index;
-  }, {});
-};
-```
-
-### Caching Strategy
-- Entity index cached with TanStack Query
-- Cache key: `['entityIndex', campaignId]`
-- Stale time: 1 hour
-- Invalidated on campaign change
+- Returns `{ style, tooltipRef }` for the tooltip container
 
 ## Best Practices
 
 ### Content Writing
-- Link entities on first mention in each section
-- Use display text for better readability
-- Verify entity IDs exist before linking
-- Keep entity names consistent
+- Entity names are automatically linked — no special syntax needed for plain text
+- Use aliases in entity attributes to catch alternate names
+- Longer, more specific names take priority over shorter ones
 
 ### Performance
-- Entity index loaded once per campaign
-- Tooltips rendered in portal (outside DOM hierarchy)
-- Debounce tooltip show/hide events
-- Lazy load tooltip content
+- Entity index loaded once per campaign and cached
+- Tooltips rendered in portal outside DOM hierarchy
+- Delayed close prevents flickering when moving between link and tooltip
+- `disableTooltips` prop prevents recursive tooltip rendering
 
 ### Error Handling
-- Gracefully handle missing entities
-- Show original text if entity not found
-- Log warnings for broken links
-- Provide admin tools to find broken links
-
-### Accessibility
-- Entity links are keyboard navigable
-- Tooltips have ARIA labels
-- Screen reader friendly descriptions
-- Focus management for tooltip interactions
-
-## Advanced Features
-
-### Entity Mention Tracking
-Track where entities are mentioned:
-```javascript
-const mentions = findEntityMentions(content, entityId);
-// Returns array of { sessionId, context }
-```
-
-### Bulk Link Validation
-Check for broken entity links:
-```javascript
-const brokenLinks = validateEntityLinks(content, entityIndex);
-// Returns array of missing entity IDs
-```
-
-### Link Suggestions
-Suggest entity links based on text:
-```javascript
-const suggestions = suggestEntityLinks(content, entityIndex);
-// Returns array of { text, entityId, confidence }
-```
-
-## Troubleshooting
-
-### Links Not Working
-- Verify entity ID format: `{type}_{slug}`
-- Check entity exists in database
-- Ensure entity index is loaded
-- Check for typos in entity ID
-
-### Tooltips Not Showing
-- Verify TooltipProvider wraps app
-- Check tooltip positioning logic
-- Ensure entity data is available
-- Check z-index conflicts
-
-### Performance Issues
-- Reduce entity index size (fetch only needed fields)
-- Implement virtual scrolling for long content
-- Debounce tooltip events
-- Use React.memo for entity links
+- Missing entities in index are silently skipped (no broken links)
+- SmartMarkdown catches processing errors and falls back to raw text
+- TooltipContext returns no-op functions when used outside provider

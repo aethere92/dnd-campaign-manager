@@ -8,9 +8,8 @@ import { CampaignHeader } from './components/CampaignHeader';
 import { CurrentArcMetadata } from './components/CurrentArcMetadata';
 import { CurrentStoryStack } from './components/CurrentStoryStack';
 import { ArchiveTree } from './components/ArchiveTree';
-import { InsightsGrid } from './components/InsightsGrid';
+import { QuestJournal } from './components/QuestJournal';
 import { PartyWidget } from './components/PartyWidget';
-import { ActiveThreads } from './components/ActiveThreads';
 
 export default function DashboardView() {
 	const { campaignId } = useCampaign();
@@ -24,7 +23,7 @@ export default function DashboardView() {
 
 	if (isLoading) return <LoadingSpinner className={`h-full min-h-[50vh]`} text='Opening chronicle...' fullScreen />;
 
-	const { campaign, counts, currentArc, otherArcs, activeParty, activeThreads, stats } = data || {};
+	const { campaign, counts, currentArc, otherArcs, activeParty, activeThreads } = data || {};
 
 	const currentSessions = currentArc?.sessions || [];
 	const latestSession = currentArc?.latestSession;
@@ -62,27 +61,14 @@ export default function DashboardView() {
 					{/* ROW 3: Active Party */}
 					<PartyWidget party={activeParty} />
 
-					<SectionDivider className='my-6 mb-12' />
+					<SectionDivider className='my-6' />
 
-					{/* ROW 4: Status Panel (Insights & Threads) */}
-					<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden min-h-[400px]'>
-						<div
-							className='absolute inset-0 opacity-[0.03] pointer-events-none'
-							style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-						/>
-
-						<div className='grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10 h-full'>
-							{/* Insights - Expanded to 8 columns */}
-							<div className='lg:col-span-8 h-full'>
-								<InsightsGrid stats={stats} counts={counts} />
-							</div>
-
-							{/* Threads - 4 columns */}
-							<div className='lg:col-span-4 h-full sm:border-l sm:border-border/50 sm:pl-8'>
-								<ActiveThreads quests={activeThreads} />
-							</div>
+					{/* ROW 4: Quest Journal */}
+					{activeThreads?.length > 0 && (
+						<div className='bg-card/30 border border-border rounded-xl p-8 relative overflow-hidden'>
+							<QuestJournal quests={activeThreads} />
 						</div>
-					</div>
+					)}
 				</div>
 			</div>
 		</div>

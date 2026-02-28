@@ -6,301 +6,143 @@ fileMatchPattern: "**/admin/**"
 # Admin Console Guide
 
 ## Overview
-The admin console (`/dm/*` routes) provides a comprehensive interface for managing campaign content. It's only available in development mode (`import.meta.env.DEV`).
+The admin console (`/dm/*` routes) provides a comprehensive interface for managing campaign content. Only available in development mode (`import.meta.env.DEV`).
 
-## Access
-Navigate to `/dm` in development mode to access the admin console.
-
-## Features
-
-### 1. Entity Management (`/dm/manage/:type/:id?`)
-
-#### Split Pane Interface
-The main management interface uses a split-pane layout:
-- **Left Pane**: List of entities with search and filters
-- **Right Pane**: Entity editor form
-
-#### Supported Entity Types
-- campaign
-- session
-- character
-- npc
-- location
-- quest
-- faction
-- encounter
-- item
-
-#### Entity Editor
-The editor provides:
-- **Basic Fields**: Name, description, type
-- **Content Editor**: Rich text editor with markdown support
-- **Metadata Editor**: JSON editor for type-specific data
-- **Image Management**: Upload and assign images
-- **Relationship Manager**: Create and manage entity relationships
-- **Preview**: Live preview of entity rendering
-
-#### Relationship Manager
-Create relationships between entities:
-```javascript
-<RelationshipManager
-  campaignId={campaignId}
-  entityId={entityId}
-  onUpdate={handleRelationshipsUpdate}
-/>
+## Structure
+```
+src/features/admin/
+├── api/
+│   └── adminService.js    # Full CRUD operations
+├── components/            # Reusable admin UI components
+├── config/                # Admin configuration
+├── layouts/
+│   └── AdminLayout.jsx    # Sidebar + outlet layout
+├── pages/
+│   ├── SplitPaneManager.jsx  # Entity CRUD split-pane
+│   ├── BulkReplaceTool.jsx   # Find & replace
+│   ├── MapMigrationTool.jsx  # Map data migration
+│   └── MapManagerPage.jsx    # Visual map manager
+└── utils/                 # Admin utilities
 ```
 
-Features:
-- Search and select target entities
-- Choose relationship type (ally, enemy, member, etc.)
-- Add relationship metadata
-- View and delete existing relationships
-- Bidirectional relationship support
+## Routes
+- `/dm` → Redirects to `/dm/manage/campaign`
+- `/dm/manage/:type/:id?` → Entity CRUD (split-pane editor)
+- `/dm/tools/replace` → Bulk text find & replace
+- `/dm/tools/migration` → Map data migration
+- `/dm/tools/atlas` → Visual map manager
 
-### 2. Bulk Replace Tool (`/dm/tools/replace`)
+## Sidebar Navigation
+The admin sidebar organizes management into sections:
 
-#### Purpose
-Find and replace text across all entities in a campaign.
+**System**: Campaigns, Find & Replace
+**Atlas**: Map Migration, Atlas Manager, Maps (DB)
+**Entities**: Characters, NPCs, Locations, Factions, Items, Encounters
+**Campaign**: Chronicles (sessions), Narrative Arcs, Quests
 
-#### Use Cases
-- Fix typos across multiple entities
-- Update entity references after renaming
-- Standardize terminology
-- Update formatting patterns
+Footer: "Enter Campaign" link (returns to public app), "Campaign Select" button
 
-#### Features
-- **Campaign Selection**: Choose target campaign
-- **Entity Type Filter**: Limit to specific entity types
-- **Field Selection**: Search in name, description, content, or metadata
-- **Preview**: See matches before applying changes
-- **Dry Run**: Test replacements without committing
-- **Regex Support**: Use regular expressions for complex patterns
+Includes theme toggle (Dark/D&D/Light cycle).
 
-#### Safety Features
-- Confirmation dialog before applying changes
-- Backup recommendation before bulk operations
-- Transaction support for atomic updates
-- Rollback capability
+## Entity Management (`/dm/manage/:type/:id?`)
 
-### 3. Map Migration Tool (`/dm/tools/migration`)
+### Supported Types
+campaign, session, character, npc, location, quest, faction, encounter, item, map, narrative_arc
 
-#### Purpose
-Migrate map data between campaigns or update map structures.
+### Split Pane Interface
+- Left: Entity list with search
+- Right: Entity editor form
 
-#### Features
-- **Schema Updates**: Update map data structure
-- **Campaign Migration**: Copy maps between campaigns
-- **Coordinate Conversion**: Convert between coordinate systems
-- **Marker Migration**: Update marker data format
-- **Validation**: Check map data integrity
-
-### 4. Map Manager (`/dm/tools/atlas`)
-
-#### Purpose
-Visual interface for managing campaign maps.
-
-#### Features
-- **Map Upload**: Upload new map images
-- **Marker Editor**: Add/edit/delete map markers
-- **Layer Management**: Manage map layers and overlays
-- **Coordinate Tools**: Get coordinates by clicking
-- **Preview**: Live preview of map changes
-
-## Development Scripts
-
-### Schema Fetching
-Dump the complete database schema:
-```bash
-node src/dev_helpers/fetch-schema.js
-```
-
-Output: `src/dev_helpers/outputs/schema_dump.txt`
-
-Includes:
-- Table structures with columns and types
-- Sample data (truncated to 100 words)
-- Indexes and performance info
-- RLS policies
-- Views and functions
-- Triggers
-
-### Encounter Narrative Generation
-Generate AI narratives for encounters:
-```bash
-node src/dev_helpers/generate-all-encounter-narratives.js
-```
-
-Features:
-- Fetches encounter data from database
-- Generates narrative descriptions using AI
-- Updates encounter content field
-- Batch processing with rate limiting
-
-### Schema API Fetching
-Fetch schema via Supabase API:
-```bash
-node src/dev_helpers/fetch-schema-api.js
-```
-
-Alternative to direct database connection using Supabase REST API.
-
-## Admin Components
-
-### EntityForm
-Main form component for entity editing:
-```javascript
-<EntityForm
-  entity={entity}
-  campaignId={campaignId}
-  onSave={handleSave}
-  onCancel={handleCancel}
-/>
-```
-
-### EntityList
-Filterable list of entities:
-```javascript
-<EntityList
-  entities={entities}
-  selectedId={selectedId}
-  onSelect={handleSelect}
-  onDelete={handleDelete}
-/>
-```
-
-### MetadataEditor
-JSON editor for entity metadata:
-```javascript
-<MetadataEditor
-  metadata={entity.metadata}
-  onChange={handleMetadataChange}
-  schema={metadataSchema}
-/>
-```
-
-### ImageUploader
-Image upload and management:
-```javascript
-<ImageUploader
-  campaignId={campaignId}
-  entityId={entityId}
-  entityType={entityType}
-  variant="portrait"
-  onUpload={handleImageUpload}
-/>
-```
-
-## API Functions
+## Admin Service API
 
 ### Entity CRUD
 ```javascript
-// Create
-await createEntity(campaignId, entityData);
+import { createEntity, updateEntity, deleteEntity, fetchRawEntity } from '@/features/admin/api/adminService';
 
-// Read
-const entity = await fetchEntity(campaignId, entityId);
-const entities = await fetchEntities(campaignId, type);
+// Create - handles type-specific table routing
+await createEntity(type, data);
 
-// Update
-await updateEntity(campaignId, entityId, updates);
+// Update - routes to correct table based on type
+await updateEntity(type, id, data);
 
 // Delete
-await deleteEntity(campaignId, entityId);
+await deleteEntity(type, id);
+
+// Fetch raw (bypasses views, gets direct table data)
+await fetchRawEntity(type, id);
 ```
 
 ### Relationship Management
 ```javascript
-// Create relationship
-await createRelationship(campaignId, {
-  source_id: entityId,
-  target_id: targetId,
-  relationship: 'ally',
-  metadata: {}
-});
+import { addRelationship, deleteRelationship, updateRelationship, fetchRelationships } from '@/features/admin/api/adminService';
 
-// Fetch relationships
-const relationships = await fetchRelationships(campaignId, entityId);
-
-// Delete relationship
-await deleteRelationship(relationshipId);
+await addRelationship({ from_entity_id, to_entity_id, relationship_type, campaign_id });
+await fetchRelationships(entityId);
+await updateRelationship(relId, updates);
+await deleteRelationship(relId);
 ```
 
-### Bulk Operations
+### Child Row Operations
 ```javascript
-// Bulk replace
-await bulkReplace(campaignId, {
-  entityTypes: ['npc', 'location'],
-  fields: ['content'],
-  find: 'old text',
-  replace: 'new text',
-  useRegex: false
-});
+import { upsertSessionEvent, upsertQuestObjective, upsertEncounterAction, fetchChildRows, deleteRow } from '@/features/admin/api/adminService';
 
-// Bulk update
-await bulkUpdate(campaignId, entityIds, updates);
+// Session events
+await upsertSessionEvent(eventData);
+
+// Quest objectives
+await upsertQuestObjective(objectiveData);
+
+// Encounter actions
+await upsertEncounterAction(actionData);
+
+// Generic child row fetch
+await fetchChildRows(table, foreignKeyCol, parentId, orderBy);
+
+// Generic row delete
+await deleteRow(table, id);
 ```
+
+### Bulk Replace
+```javascript
+import { getBulkReplacePreview, executeBulkReplace } from '@/features/admin/api/adminService';
+
+// Preview matches
+const preview = await getBulkReplacePreview(campaignId, findTerm, replaceTerm);
+
+// Execute replacements
+await executeBulkReplace(changeList);
+```
+
+### Search
+```javascript
+import { searchEntitiesByName } from '@/features/admin/api/adminService';
+
+const results = await searchEntitiesByName(campaignId, query);
+```
+
+## Development Scripts
+
+### Schema Fetching
+```bash
+node src/dev_helpers/fetch-schema.js
+```
+Dumps complete DB schema to `src/dev_helpers/outputs/schema_dump.txt`.
+
+### Encounter Narrative Generation
+```bash
+node src/dev_helpers/generate-all-encounter-narratives.js
+```
+Generates AI narratives for encounters with batch processing.
 
 ## Best Practices
 
 ### Data Safety
-- Always backup before bulk operations
 - Test changes on a single entity first
-- Use dry run mode when available
-- Verify changes in the UI before committing
-
-### Performance
-- Limit bulk operations to necessary entity types
-- Use specific field filters to reduce processing
-- Process large batches in chunks
-- Monitor database performance during operations
-
-### Workflow
-1. **Plan**: Identify what needs to change
-2. **Test**: Try on a single entity or use dry run
-3. **Backup**: Export or backup affected data
-4. **Execute**: Run the operation
-5. **Verify**: Check results in the UI
-6. **Rollback**: Revert if issues found
-
-### Entity Relationships
-- Create relationships from both directions when needed
-- Use appropriate relationship types
-- Add metadata to provide context
-- Clean up orphaned relationships
+- Use bulk replace preview before executing
+- Verify changes in the public app after editing
 
 ### Content Editing
 - Use markdown for rich formatting
-- Link entities with `[[entity_id]]` syntax
+- Entity names are auto-linked by the smart-text system
 - Preview content before saving
-- Validate entity links exist
-
-## Troubleshooting
-
-### Common Issues
-
-**Entity not appearing in list:**
-- Check campaign_id matches current campaign
-- Verify entity type is correct
-- Check for database errors in console
-
-**Relationship not showing:**
-- Verify both entities exist
-- Check relationship direction
-- Ensure campaign_id is set correctly
-
-**Bulk replace not working:**
-- Check regex syntax if using regex mode
-- Verify field selection includes target content
-- Check for special characters that need escaping
-
-**Image upload failing:**
-- Check file size (max 5MB recommended)
-- Verify file format (WebP preferred)
-- Check storage permissions
-- Ensure correct naming convention
-
-### Debug Tools
-- Browser DevTools console for errors
-- Network tab for API calls
-- React DevTools for component state
-- Supabase dashboard for database queries
+- Add aliases in attributes for alternate name matching

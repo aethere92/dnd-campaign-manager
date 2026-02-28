@@ -1,6 +1,6 @@
-import { Search, Clock, Calendar, Database } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Search, Clock, Calendar, Database, Sparkles, AlertTriangle } from 'lucide-react';
 import { SearchResultItem } from './SearchResultItem';
+import { AiAnswer } from './AiAnswer';
 
 const GroupHeader = ({ label, icon: Icon }) => (
 	<div className='px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 bg-muted/50 border-y border-border/50 sticky top-0 z-10 backdrop-blur-sm'>
@@ -10,9 +10,10 @@ const GroupHeader = ({ label, icon: Icon }) => (
 );
 
 export const SearchResults = ({ vm }) => {
-	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent } = vm;
+	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent,
+		aiMode, aiAnswer, aiLoading, aiError, showAiAnswer, showKeywordResults } = vm;
 
-	// GROUPING LOGIC
+	// Grouping logic for keyword results
 	const groupedResults = results.reduce(
 		(acc, item) => {
 			const group = item.type === 'session' ? 'sessions' : 'entities';
@@ -53,58 +54,100 @@ export const SearchResults = ({ vm }) => {
 					) : (
 						<div className='text-center py-12 opacity-60'>
 							<Search size={40} className='mx-auto text-gray-300 mb-3' />
-							<p className='text-sm font-medium text-foreground mb-1'>Global Search</p>
-							<p className='text-xs text-muted-foreground'>Find anything in your campaign</p>
-						</div>
-					)}
-				</div>
-			) : results.length > 0 ? (
-				// Grouped Search Results
-				<div>
-					{groupedResults.sessions.length > 0 && (
-						<div className='mb-2'>
-							<GroupHeader label='Sessions' icon={Calendar} />
-							{groupedResults.sessions.map((item) => {
-								const idx = results.indexOf(item);
-								return (
-									<SearchResultItem
-										key={item.id}
-										item={item}
-										isSelected={idx === selectedIndex}
-										onSelect={() => handleSelect(item)}
-										onHover={() => setSelectedIndex(idx)}
-									/>
-								);
-							})}
-						</div>
-					)}
-
-					{groupedResults.entities.length > 0 && (
-						<div>
-							<GroupHeader label='Entities' icon={Database} />
-							{groupedResults.entities.map((item) => {
-								const idx = results.indexOf(item);
-								return (
-									<SearchResultItem
-										key={item.id}
-										item={item}
-										isSelected={idx === selectedIndex}
-										onSelect={() => handleSelect(item)}
-										onHover={() => setSelectedIndex(idx)}
-									/>
-								);
-							})}
+							<p className='text-sm font-medium text-foreground mb-1'>
+								{aiMode ? 'AI Campaign Search' : 'Global Search'}
+							</p>
+							<p className='text-xs text-muted-foreground'>
+								{aiMode ? 'Ask anything about your campaign' : 'Find anything in your campaign'}
+							</p>
 						</div>
 					)}
 				</div>
 			) : (
-				// No Results
-				!isLoading && (
-					<div className='text-center py-12 px-4'>
-						<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
-						<p className='text-xs text-muted-foreground'>Try checking your spelling</p>
-					</div>
-				)
+				<>
+					{/* AI Error Notice */}
+					{aiError && (
+						<div className='mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs'>
+							<AlertTriangle size={13} className='shrink-0' />
+							{aiError}
+						</div>
+					)}
+
+					{/* AI Answer */}
+					{showAiAnswer && aiAnswer && (
+						<AiAnswer answer={aiAnswer.answer} />
+					)}
+
+					{/* AI Loading */}
+					{aiMode && aiLoading && !showAiAnswer && (
+						<div className='p-6 text-center'>
+							<Sparkles size={24} className='mx-auto text-purple-400 animate-pulse mb-2' />
+							<p className='text-xs text-muted-foreground'>Searching campaign with AI...</p>
+						</div>
+					)}
+
+					{/* Keyword Results (primary or fallback) */}
+					{showKeywordResults && results.length > 0 && (
+						<div>
+							{aiMode && aiError && (
+								<GroupHeader label='Keyword Results' icon={Search} />
+							)}
+							{groupedResults.sessions.length > 0 && (
+								<div className='mb-2'>
+									{!aiMode || !aiError ? <GroupHeader label='Sessions' icon={Calendar} /> : null}
+									{groupedResults.sessions.map((item) => {
+										const idx = results.indexOf(item);
+										return (
+											<SearchResultItem
+												key={item.id}
+												item={item}
+												isSelected={idx === selectedIndex}
+												onSelect={() => handleSelect(item)}
+												onHover={() => setSelectedIndex(idx)}
+											/>
+										);
+									})}
+								</div>
+							)}
+
+							{groupedResults.entities.length > 0 && (
+								<div>
+									{!aiMode || !aiError ? <GroupHeader label='Entities' icon={Database} /> : null}
+									{groupedResults.entities.map((item) => {
+										const idx = results.indexOf(item);
+										return (
+											<SearchResultItem
+												key={item.id}
+												item={item}
+												isSelected={idx === selectedIndex}
+												onSelect={() => handleSelect(item)}
+												onHover={() => setSelectedIndex(idx)}
+											/>
+										);
+									})}
+								</div>
+							)}
+						</div>
+					)}
+
+					{/* No Results at all */}
+					{!isLoading && !aiLoading && !showAiAnswer && results.length === 0 && (
+						<div className='text-center py-12 px-4'>
+							{aiMode && !aiAnswer ? (
+								<>
+									<Sparkles size={28} className='mx-auto text-purple-400/50 mb-3' />
+									<p className='text-sm font-medium text-foreground mb-1'>Press Enter or click Ask</p>
+									<p className='text-xs text-muted-foreground'>to search with AI</p>
+								</>
+							) : (
+								<>
+									<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
+									<p className='text-xs text-muted-foreground'>Try checking your spelling</p>
+								</>
+							)}
+						</div>
+					)}
+				</>
 			)}
 		</div>
 	);
