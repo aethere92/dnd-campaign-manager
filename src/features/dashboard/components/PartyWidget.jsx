@@ -34,9 +34,6 @@ const PartyCard = ({ char, onClick }) => {
 
 	const hp = attributes?.['hit points'] || '—';
 	const ac = attributes?.['armor class'] || '—';
-
-	// CHANGED: Extract Speed instead of Passive Perception
-	// Usually stored as "30ft." or just "30"
 	const speed = attributes?.speed || '—';
 
 	const charClass = char.class || attributes?.class || 'Unknown Class';
@@ -45,9 +42,14 @@ const PartyCard = ({ char, onClick }) => {
 	return (
 		<div
 			onClick={onClick}
-			className='group relative bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)] xl:w-[240px]'>
+			className={clsx(
+				'group relative bg-card border border-border rounded-xl overflow-hidden',
+				'hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer flex flex-col h-full',
+				// Mobile: 100%, Tablet: 50%, Desktop: auto-resize to fill, max 6 per row
+				'w-full sm:w-[calc(50%-0.5rem)] md:w-auto md:flex-1 md:min-w-[calc(100%/6_-_1rem)] max-w-[360px]'
+			)}>
 			{/* --- Header Banner --- */}
-			<div className='h-24 bg-muted relative overflow-hidden'>
+			<div className='h-24 bg-muted relative overflow-hidden shrink-0'>
 				{bgImage ? (
 					<img
 						src={bgImage}
@@ -91,13 +93,11 @@ const PartyCard = ({ char, onClick }) => {
 				</div>
 
 				{/* Description (Trimmed) */}
-				{/* CHANGED: Increased height (h-20) and line-clamp (4) for taller cards */}
 				<div className='text-xs text-muted-foreground line-clamp-4 mb-4 h-20 leading-relaxed'>
 					<SmartMarkdown components={{ p: 'span' }}>{description || 'No description available.'}</SmartMarkdown>
 				</div>
 
 				{/* Combat Strip */}
-				{/* CHANGED: Swapped Eye (PP) for Footprints (Speed) */}
 				<div className='mt-auto pt-3 border-t border-border/50 grid grid-cols-3 gap-2'>
 					<StatItem icon={Heart} label='HP' value={hp} color='text-red-500' />
 					<StatItem icon={Shield} label='AC' value={ac} color='text-amber-500' />
