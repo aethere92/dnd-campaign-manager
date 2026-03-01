@@ -37,16 +37,20 @@ PARTIAL BUNDLE: FEATURES ADMIN
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ PARTIAL BUNDLE: FEATURES ADMIN
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ PARTIAL BUNDLE: FEATURES ADMIN
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ PARTIAL BUNDLE: FEATURES ADMIN
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx
@@ -400,58 +411,46 @@ const buildMapPayload = (data, jsonStorage) => {
 export const createEntity = async (type, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
-
-	// 1. Prepare Core Payload
 	const corePayload = {};
 
-	// Standard campaign_id link for non-campaign entities
 	if (type !== 'campaign' && data.campaign_id) {
 		corePayload.campaign_id = data.campaign_id;
 	}
 
-	// Map generic name/description to specific table columns
+	// Refactored to loop through all defined mappings dynamically (picks up timeline)
 	if (strategy.colMapping) {
-		if (data.name) corePayload[strategy.colMapping.name] = data.name;
-		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
+			if (dbCol && data[formField] !== undefined) {
+				corePayload[dbCol] = data[formField];
+			}
+		});
 	}
 
 	if (strategy.primaryTable === 'entities') corePayload.type = type;
 
-	// 2. Process Attributes -> JSONB
 	const rawAttributes =
 		data.attributesList ||
-		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) :[]);
 
 	const jsonStorage = {};
-
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// --- FIX START: Extract campaign_id from attributes for the Campaign table itself ---
 	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
-		// The 'campaigns' table requires an integer 'campaign_id' column
 		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
 	}
-	// --- FIX END ---
 
 	if (type === 'map') {
-		// Handle Map Specifics
 		corePayload.key = jsonStorage.key || (data.name || '').toLowerCase().replace(/\s+/g, '_');
-
 		const { config, initialData } = buildMapPayload(data, jsonStorage);
 		corePayload.config = config;
-		corePayload.data = initialData; // Safe default skeleton
-
-		// Remove flattened keys so they don't try to save as non-existent columns
+		corePayload.data = initialData;
 		delete corePayload.attributes;
 	} else {
 		corePayload[attrCol] = jsonStorage;
 	}
 
-	corePayload[attrCol] = jsonStorage;
-
-	// 3. Insert Single Row
 	const { data: insertedRecord, error: insertError } = await supabase
 		.from(strategy.primaryTable)
 		.insert(corePayload)
@@ -459,43 +458,40 @@ export const createEntity = async (type, data) => {
 		.single();
 
 	if (insertError) throw insertError;
-
 	return insertedRecord;
 };
 
 export const updateEntity = async (type, id, data) => {
 	const strategy = getStrategy(type);
 	const attrCol = getAttrColumn(type);
-
 	const corePayload = {};
+
+	// Refactored to loop through all defined mappings dynamically
 	if (strategy.colMapping) {
-		if (data.name) corePayload[strategy.colMapping.name] = data.name;
-		if (data.description) corePayload[strategy.colMapping.description] = data.description;
+		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
+			if (dbCol && data[formField] !== undefined) {
+				corePayload[dbCol] = data[formField];
+			}
+		});
 	}
 
 	const rawAttributes =
 		data.attributesList ||
-		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) :[]);
 
 	const jsonStorage = {};
-
 	rawAttributes.forEach((attr) => {
 		jsonStorage[attr.name] = attr.value;
 	});
 
-	// --- FIX START: Sync campaign_id column on update for Campaigns ---
 	if (type === 'campaign' && jsonStorage.campaign_id !== undefined) {
 		corePayload.campaign_id = parseInt(jsonStorage.campaign_id, 10);
 	}
-	// --- FIX END ---
 
 	if (type === 'map') {
-		// Use the "key" from the form, or fallback to existing if not editable
 		if (jsonStorage.key) corePayload.key = jsonStorage.key;
-
 		const { config } = buildMapPayload(data, jsonStorage);
 		corePayload.config = config;
-		// Do NOT overwrite corePayload.data on update
 	} else {
 		corePayload[attrCol] = jsonStorage;
 	}
@@ -508,7 +504,7 @@ export const updateEntity = async (type, id, data) => {
 
 export const fetchRawEntity = async (type, id) => {
 	const strategy = getStrategy(type);
-	const attrCol = strategy.jsonField || 'attributes'; // 'config' for maps
+	const attrCol = strategy.jsonField || 'attributes';
 
 	const { data: coreData, error: coreError } = await supabase
 		.from(strategy.primaryTable)
@@ -520,27 +516,20 @@ export const fetchRawEntity = async (type, id) => {
 
 	const formData = { ...coreData };
 
-	// Map Core Columns (Title -> Name)
 	if (strategy.colMapping) {
 		Object.entries(strategy.colMapping).forEach(([formField, dbCol]) => {
 			if (dbCol && coreData[dbCol] !== undefined) formData[formField] = coreData[dbCol];
 		});
 	}
 
-	const attributesList = [];
+	const attributesList =[];
 	const jsonSource = coreData[attrCol] || {};
 
-	// --- MAP SPECIFIC FLATTENING ---
 	if (type === 'map') {
-		// 1. Pull core columns into attributes
 		if (coreData.key) attributesList.push({ name: 'key', value: coreData.key });
-
-		// 2. Pull root config items
 		['path', 'parentId', 'fileExtension'].forEach((k) => {
 			if (jsonSource[k]) attributesList.push({ name: k, value: jsonSource[k] });
 		});
-
-		// 3. Pull nested sizes
 		if (jsonSource.sizes) {
 			['imageWidth', 'imageHeight', 'maxZoom'].forEach((k) => {
 				if (jsonSource.sizes[k] !== undefined) {
@@ -549,7 +538,6 @@ export const fetchRawEntity = async (type, id) => {
 			});
 		}
 	} else {
-		// Standard Entity Logic (Existing)
 		Object.entries(jsonSource).forEach(([key, value]) => {
 			attributesList.push({ name: key, value: value });
 		});
@@ -779,58 +767,171 @@ export const fetchMapKeys = async (campaignId) => {
 
 --- END OF features\admin\api\adminService.js ---
 
+--- FILE: features\admin\api\llmService.js ---
+/**
+ * Client-side LLM service for narrative analysis.
+ * Calls Google Gemini API (AI Studio) directly from the browser.
+ */
+
+const SYSTEM_PROMPT = `You are a D&D campaign analyst. Given a session narrative and a list of entities that appear in it, infer meaningful relationships BETWEEN the entities (not between entities and the session).
+
+Rules:
+- Only suggest relationships clearly supported by the narrative text.
+- Use ONLY relationship types from the provided list.
+- Each suggestion needs: fromEntityId, toEntityId, relationshipType, isBidirectional, reason (one short sentence).
+- Do NOT suggest relationships that are purely spatial co-occurrence (e.g., two characters being in the same room doesn't mean they have a relationship unless they interact).
+- Focus on interactions: conversations, combat, alliances, betrayals, trades, discoveries.
+- Return valid JSON array. If no relationships are found, return [].`;
+
+/**
+ * Build the user prompt with narrative + entity context.
+ */
+function buildPrompt(narrative, entities, relationshipTypes) {
+	const entityList = entities
+		.map((e) => `- ${e.entityName} (${e.entityType}, id: ${e.entityId})`)
+		.join('\n');
+
+	return `## Session Narrative
+${narrative}
+
+## Entities Found in Narrative
+${entityList}
+
+## Allowed Relationship Types
+${relationshipTypes.join(', ')}
+
+## Task
+Analyze the narrative and suggest entity-to-entity relationships. Return a JSON array:
+[{ "fromEntityId": "...", "toEntityId": "...", "relationshipType": "...", "isBidirectional": true/false, "reason": "..." }]`;
+}
+
+/**
+ * Call the Gemini API and parse relationship suggestions.
+ * @param {string} narrative - Session narrative text
+ * @param {Array} entities - Detected entities [{ entityId, entityName, entityType }]
+ * @param {Array} relationshipTypes - Allowed relationship type strings
+ * @returns {Promise<Array>} Parsed suggestions
+ */
+export async function inferRelationships(narrative, entities, relationshipTypes) {
+	const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+	const model = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.5-flash';
+
+	if (!apiKey) {
+		throw new Error('Gemini API key not configured. Set VITE_GEMINI_API_KEY in .env');
+	}
+
+	if (entities.length < 2) {
+		throw new Error(`Need at least 2 entities for relationship inference, found ${entities.length}`);
+	}
+
+	const userPrompt = buildPrompt(narrative, entities, relationshipTypes);
+	const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+	console.log(`[LLM] Calling Gemini (${model}) with ${entities.length} entities...`);
+
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({
+			systemInstruction: {
+				parts: [{ text: SYSTEM_PROMPT }],
+			},
+			contents: [
+				{
+					role: 'user',
+					parts: [{ text: userPrompt }],
+				},
+			],
+			generationConfig: {
+				temperature: 0.3,
+				maxOutputTokens: 8192,
+				responseMimeType: 'application/json',
+				thinkingConfig: {
+					thinkingBudget: 0,
+				},
+			},
+		}),
+	});
+
+	if (!response.ok) {
+		const err = await response.text();
+		throw new Error(`Gemini API error (${response.status}): ${err}`);
+	}
+
+	const data = await response.json();
+	console.log('[LLM] Gemini raw response:', JSON.stringify(data).slice(0, 500));
+
+	// Check for blocked content or empty candidates
+	if (!data.candidates || data.candidates.length === 0) {
+		const reason = data.promptFeedback?.blockReason || 'unknown';
+		throw new Error(`Gemini returned no candidates (blockReason: ${reason})`);
+	}
+
+	const candidate = data.candidates[0];
+	if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+		throw new Error(`Gemini finished with reason: ${candidate.finishReason}`);
+	}
+
+	const content = candidate.content?.parts?.[0]?.text || '[]';
+	console.log('[LLM] Gemini content text:', content.slice(0, 300));
+
+	// Parse JSON — with responseMimeType set, content should be clean JSON
+	let parsed;
+	try {
+		parsed = JSON.parse(content);
+	} catch {
+		// Fallback: try to extract JSON array from text
+		const jsonMatch = content.match(/\[[\s\S]*\]/);
+		if (!jsonMatch) {
+			throw new Error('Could not parse Gemini response as JSON');
+		}
+		parsed = JSON.parse(jsonMatch[0]);
+	}
+
+	// Handle both array and object-with-array responses
+	const suggestions = Array.isArray(parsed) ? parsed : (parsed.relationships || parsed.suggestions || []);
+
+	const valid = suggestions.filter(
+		(s) =>
+			s.fromEntityId &&
+			s.toEntityId &&
+			s.relationshipType &&
+			typeof s.isBidirectional === 'boolean' &&
+			s.reason
+	);
+
+	console.log(`[LLM] Parsed ${valid.length} valid suggestions from ${suggestions.length} raw`);
+	return valid;
+}
+
+--- END OF features\admin\api\llmService.js ---
+
 --- FILE: features\admin\components\AdminForm.jsx ---
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
+import { getTabsForType } from '@/features/admin/config/adminTabs';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Code, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
-// Inputs
+import AdminTabBar from './AdminTabBar';
 import MarkdownEditor from '@/features/admin/components/MarkdownEditor';
 import SmartImageInput from '@/features/admin/components/SmartImageInput';
 import AttributeValueInput from './inputs/AttributeValueInput';
 import StoragePathInput from './inputs/StoragePathInput';
 
-// Sub-Managers
 import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
 import EncounterActionManager from './EncounterManager';
+import EncounterNarrativeManager from './EncounterNarrativeManager';
 import TacticalMapManager from './TacticalMapManager';
-
-const AutoSizeTextarea = ({ register, path, placeholder, className }) => {
-	const { ref, ...rest } = register(path);
-	const textareaRef = useRef(null);
-
-	const adjustHeight = () => {
-		const el = textareaRef.current;
-		if (el) {
-			el.style.height = 'auto';
-			el.style.height = el.scrollHeight + 2 + 'px';
-		}
-	};
-
-	return (
-		<textarea
-			{...rest}
-			ref={(e) => {
-				ref(e);
-				textareaRef.current = e;
-			}}
-			rows={1}
-			onInput={adjustHeight}
-			placeholder={placeholder}
-			className={`${className} min-h-[42px] py-2 resize-none overflow-hidden font-mono text-sm`}
-			onFocus={adjustHeight}
-		/>
-	);
-};
+import NarrativeSuggestionPanel from './NarrativeSuggestionPanel';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
@@ -839,6 +940,9 @@ export default function AdminForm({ type, id }) {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [mapKeys, setMapKeys] = useState([]);
+	const [activeTab, setActiveTab] = useState('details');
+
+	const tabs = getTabsForType(type, id);
 
 	const {
 		register,
@@ -847,22 +951,27 @@ export default function AdminForm({ type, id }) {
 		reset,
 		watch,
 		setValue,
-		formState: { errors },
+		formState: { errors, isDirty },
 	} = useForm({
 		defaultValues: {
 			attributes: {},
 			customAttributes: [],
+			timeline: [],
 		},
 	});
 	const { fields, append, remove } = useFieldArray({ control, name: 'customAttributes' });
 
-	// --- 1. LOADER LOGIC ---
+	// Reset to details tab when entity changes
+	useEffect(() => {
+		setActiveTab('details');
+	}, [type, id]);
+
 	useEffect(() => {
 		const loadEntity = async () => {
 			setIsLoading(true);
 			try {
 				if (!id) {
-					reset({ attributes: {}, customAttributes: [] });
+					reset({ attributes: {}, customAttributes: [], timeline: [] });
 					setIsLoading(false);
 					return;
 				}
@@ -877,30 +986,24 @@ export default function AdminForm({ type, id }) {
 					let value = attr.value;
 					let dataType = 'string';
 
-					// --- FIX START: Better Detection Logic ---
 					if (typeof value === 'boolean' || value === 'true' || value === 'false') {
 						dataType = 'boolean';
-						value = String(value); // Standardize to string for the form state
+						value = String(value);
 					} else if (typeof value === 'number') {
 						dataType = 'number';
 					} else if (Array.isArray(value)) {
-						// CRITICAL CHECK: Is this a simple list (strings/numbers) or complex objects?
 						const isSimpleList = value.every((item) => ['string', 'number'].includes(typeof item));
-
 						if (isSimpleList) {
 							dataType = 'list';
 							value = JSON.stringify(value);
 						} else {
-							// It contains Objects -> Force JSON mode so we can see the data
 							dataType = 'json';
 							value = JSON.stringify(value, null, 2);
 						}
 					} else if (typeof value === 'object' && value !== null) {
-						// It's an object -> Use Map
 						dataType = 'map';
 						value = JSON.stringify(value, null, 2);
 					}
-					// --- FIX END ---
 
 					if (definedKeys.includes(key)) {
 						if (!standardAttrs[key]) standardAttrs[key] = value;
@@ -909,10 +1012,15 @@ export default function AdminForm({ type, id }) {
 					}
 				});
 
+				if (type === 'encounter' && !standardAttrs.timeline_mode) {
+					standardAttrs.timeline_mode = 'Legacy Combat Log';
+				}
+
 				reset({
 					...rawData,
 					attributes: standardAttrs,
 					customAttributes: customAttrs,
+					timeline: rawData.timeline || [],
 				});
 			} catch (err) {
 				console.error(err);
@@ -926,14 +1034,12 @@ export default function AdminForm({ type, id }) {
 
 	useEffect(() => {
 		if (type === 'map' && campaignId) {
-			// Import fetchMapKeys from adminService first!
 			import('@/features/admin/api/adminService').then((mod) => {
 				mod.fetchMapKeys(campaignId).then(setMapKeys);
 			});
 		}
 	}, [type, campaignId]);
 
-	// --- 2. SAVER LOGIC ---
 	const onSubmit = async (data) => {
 		if (!campaignId && type !== 'campaign') {
 			alert('No Campaign Selected!');
@@ -942,42 +1048,31 @@ export default function AdminForm({ type, id }) {
 
 		const attributesList = [];
 
-		// Process Standard Attributes
 		Object.entries(data.attributes).forEach(([key, value]) => {
 			if (value && String(value).trim() !== '') {
 				attributesList.push({ name: key, value });
 			}
 		});
 
-		// Process Custom Attributes with Explicit Types
 		data.customAttributes.forEach((item) => {
 			if (item.key && item.key.trim() !== '') {
 				let finalValue = item.value;
-
-				// Explicit Type Casting
 				if (item.type === 'number') {
 					finalValue = Number(item.value);
 				} else if (item.type === 'boolean') {
-					// Handle "true"/"false" string back to boolean
 					finalValue = String(item.value) === 'true';
 				} else if (item.type === 'json' || item.type === 'list' || item.type === 'map') {
-					// These are stored as stringified JSON in the form state,
-					// so we parse them back to real objects before sending to Supabase
 					try {
 						finalValue = JSON.parse(item.value);
 					} catch (e) {
 						console.warn(`Failed to parse JSON for ${item.key}, saving as string.`);
 					}
 				}
-
 				attributesList.push({ name: item.key, value: finalValue });
 			}
 		});
 
-		const payload = {
-			...data,
-			attributesList,
-		};
+		const payload = { ...data, attributesList };
 		delete payload.attributes;
 		delete payload.customAttributes;
 
@@ -989,7 +1084,6 @@ export default function AdminForm({ type, id }) {
 				await createEntity(type, { ...payload, campaign_id: campaignId });
 				if (!id) reset();
 			}
-
 			queryClient.invalidateQueries();
 		} catch (error) {
 			alert(`Error: ${error.message}`);
@@ -1011,8 +1105,6 @@ export default function AdminForm({ type, id }) {
 	if (isLoading) return <div className='p-8 text-center text-muted-foreground text-sm'>Loading editor...</div>;
 
 	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
-
-	// Helper to sync Tactical Map to Custom Attrs
 	const customAttrs = watch('customAttributes') || [];
 	const standardMarkers = watch('attributes.map_markers');
 	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
@@ -1022,7 +1114,7 @@ export default function AdminForm({ type, id }) {
 		const customIdx = customAttrs.findIndex((a) => a.key === 'map_markers');
 		if (customIdx >= 0) {
 			setValue(`customAttributes.${customIdx}.value`, jsonValue);
-			setValue(`customAttributes.${customIdx}.type`, 'json'); // Ensure it's marked as JSON
+			setValue(`customAttributes.${customIdx}.type`, 'json');
 		} else {
 			setValue('attributes.map_markers', jsonValue);
 		}
@@ -1030,13 +1122,30 @@ export default function AdminForm({ type, id }) {
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} className='space-y-5 animate-in slide-in-from-bottom-2 duration-300 pb-20'>
-			{/* Top Bar */}
+			{/* Sticky Toolbar */}
 			<div className='flex items-center justify-between bg-background border border-border p-3 rounded-lg shadow-sm sticky top-0 z-20 backdrop-blur-md bg-background/80'>
-				<div className='flex items-center gap-2'>
-					<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500/100' : 'bg-emerald-500/100'}`} />
-					<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
-						{id ? 'Edit Mode' : 'Create Mode'}
-					</span>
+				<div className='flex items-center gap-3'>
+					<div className='flex items-center gap-2'>
+						<span className={`w-2 h-2 rounded-full ${id ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+						<span className='text-xs font-bold uppercase tracking-wider text-muted-foreground'>
+							{id ? 'Edit Mode' : 'Create Mode'}
+						</span>
+					</div>
+					{isDirty && (
+						<span className='text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200'>
+							Unsaved
+						</span>
+					)}
+					{id && (
+						<button
+							type='button'
+							onClick={() => navigator.clipboard.writeText(id)}
+							className='flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 hover:text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border transition-colors'
+							title='Copy ID'>
+							<Copy size={10} />
+							{id.substring(0, 8)}…
+						</button>
+					)}
 				</div>
 				<div className='flex gap-2'>
 					{id && (
@@ -1056,215 +1165,207 @@ export default function AdminForm({ type, id }) {
 				</div>
 			</div>
 
-			{/* Core Details */}
-			<div className={ADMIN_SECTION_CLASS}>
-				<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
-				<div className='grid grid-cols-1 gap-4'>
-					{/* ID Display Field */}
-					{id && (
-						<div>
-							<label className={ADMIN_LABEL_CLASS}>System ID</label>
-							<div className='flex gap-2 items-center'>
-								<input
-									type='text'
-									value={id}
-									readOnly
-									className={`${ADMIN_INPUT_CLASS} font-mono text-xs text-muted-foreground bg-muted/50 select-all cursor-text`}
-									onClick={(e) => e.target.select()}
-								/>
-								<Button
-									type='button'
-									variant='ghost'
-									size='sm'
-									icon={Copy}
-									onClick={() => navigator.clipboard.writeText(id)}
-									title='Copy ID'
-								/>
-							</div>
-						</div>
-					)}
-
-					<div>
-						<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
-						<input
-							type='text'
-							{...register('name', { required: true })}
-							className={ADMIN_INPUT_CLASS}
-							placeholder='Entity Name...'
-						/>
-						{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
-					</div>
-
-					{strategy.hasNarrative && (
-						<div>
-							<MarkdownEditor
-								label='Description / Narrative'
-								rows={8}
-								value={watch('description') || ''}
-								onChange={(e) => setValue('description', e.target.value)}
-								placeholder='Write description using Markdown...'
-							/>
-						</div>
-					)}
+			{/* Tab Bar */}
+			{tabs.length > 1 && (
+				<div className='flex justify-center'>
+					<AdminTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 				</div>
-			</div>
-
-			{mapImageUrl && (
-				<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
 			)}
 
-			{/* Attributes */}
-			<div className={ADMIN_SECTION_CLASS}>
-				<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
-				<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-					{strategy.defaultAttributes.map((attr) => (
-						<div key={attr.key}>
-							<label className={ADMIN_LABEL_CLASS}>{attr.label}</label>
-							{attr.type === 'image' ? (
-								<SmartImageInput
-									value={watch(`attributes.${attr.key}`)}
-									onChange={(e) => setValue(`attributes.${attr.key}`, e.target.value)}
-									placeholder='images/...'
+			{/* Tab Content */}
+			{activeTab === 'details' && (
+				<div className='space-y-5'>
+					{/* Core Details */}
+					<div className={ADMIN_SECTION_CLASS}>
+						<h2 className={ADMIN_HEADER_CLASS}>Core Details</h2>
+						<div className='grid grid-cols-1 gap-4'>
+							<div>
+								<label className={ADMIN_LABEL_CLASS}>Name / Title</label>
+								<input
+									type='text'
+									{...register('name', { required: true })}
+									className={ADMIN_INPUT_CLASS}
+									placeholder='Entity Name...'
 								/>
-							) : attr.type === 'select' ? (
-								<select {...register(`attributes.${attr.key}`)} className={ADMIN_INPUT_CLASS}>
-									<option value=''>Select...</option>
-									{attr.options.map((opt) => (
-										<option key={opt} value={opt}>
-											{opt}
-										</option>
-									))}
-								</select>
-							) : attr.type === 'storage_path' ? (
-								<StoragePathInput
-									value={watch(`attributes.${attr.key}`)}
-									onChange={(val) => setValue(`attributes.${attr.key}`, val)}
-									placeholder={attr.placeholder}
-								/>
-							) : (
-								/* STANDARD INPUT WITH OPTIONAL DATALIST */
-								<>
-									<input
-										type={attr.type === 'number' ? 'number' : 'text'}
-										{...register(`attributes.${attr.key}`)}
-										className={ADMIN_INPUT_CLASS}
-										placeholder={attr.placeholder}
-										list={attr.suggestions ? `${attr.key}-suggestions` : undefined} // Connect to datalist
+								{errors.name && <span className='text-xs text-red-500 mt-1'>Required</span>}
+							</div>
+							{strategy.hasNarrative && (
+								<div>
+									<MarkdownEditor
+										label='Description / Narrative'
+										rows={8}
+										value={watch('description') || ''}
+										onChange={(e) => setValue('description', e.target.value)}
+										placeholder='Write description using Markdown...'
 									/>
-
-									{/* Render Datalist if suggestions enabled */}
-									{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
-										<datalist id={`${attr.key}-suggestions`}>
-											{mapKeys.map((k) => (
-												<option key={k} value={k} />
-											))}
-										</datalist>
-									)}
-								</>
+								</div>
 							)}
 						</div>
-					))}
-				</div>
-			</div>
+					</div>
 
-			{/* Custom Attributes */}
-			<div className={ADMIN_SECTION_CLASS}>
-				<div className={ADMIN_HEADER_CLASS}>
-					<span>Custom Attributes</span>
-					<Button
-						type='button'
-						onClick={() => append({ key: '', value: '', type: 'string' })}
-						size='sm'
-						variant='secondary'
-						icon={Plus}>
-						Add New
-					</Button>
-				</div>
+					{/* Tactical Map (shown when map_image is set) */}
+					{mapImageUrl && (
+						<TacticalMapManager imageUrl={mapImageUrl} value={activeMarkersValue} onChange={handleMarkersChange} />
+					)}
 
-				<div className='space-y-3'>
-					{fields.map((field, index) => {
-						// 1. Get current values specifically for this row
-						const attrType = watch(`customAttributes.${index}.type`);
-						const attrValue = watch(`customAttributes.${index}.value`);
-
-						return (
-							<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
-								{/* Key Input (unchanged) */}
-								<div className='w-1/4 pt-1'>
-									<input
-										type='text'
-										{...register(`customAttributes.${index}.key`)}
-										placeholder='Key'
-										className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
-									/>
-								</div>
-
-								{/* Type Selector (UPDATED) */}
-								<div className='w-24 pt-1'>
-									<div className='relative'>
-										<select
-											{...register(`customAttributes.${index}.type`)}
-											className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
-											<option value='string'>Text</option>
-											<option value='number'>Number</option>
-											<option value='boolean'>Toggle</option> {/* NEW */}
-											<option value='list'>List</option> {/* NEW */}
-											<option value='map'>Map</option> {/* NEW */}
-											<option value='json'>JSON</option>
+					{/* Strategy Attributes */}
+					<div className={ADMIN_SECTION_CLASS}>
+						<h2 className={ADMIN_HEADER_CLASS}>{strategy.label} Attributes</h2>
+						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+							{strategy.defaultAttributes.map((attr) => (
+								<div key={attr.key}>
+									<label className={ADMIN_LABEL_CLASS}>{attr.label}</label>
+									{attr.type === 'image' ? (
+										<SmartImageInput
+											value={watch(`attributes.${attr.key}`)}
+											onChange={(e) => setValue(`attributes.${attr.key}`, e.target.value)}
+											placeholder='images/...'
+										/>
+									) : attr.type === 'select' ? (
+										<select {...register(`attributes.${attr.key}`)} className={ADMIN_INPUT_CLASS}>
+											<option value=''>Select...</option>
+											{attr.options.map((opt) => (
+												<option key={opt} value={opt}>
+													{opt}
+												</option>
+											))}
 										</select>
-										{/* Icon Decorator */}
-										<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
-											{attrType === 'json' ? (
-												<Braces size={12} />
-											) : attrType === 'number' ? (
-												<Hash size={12} />
-											) : (
-												<AlignLeft size={12} />
+									) : attr.type === 'storage_path' ? (
+										<StoragePathInput
+											value={watch(`attributes.${attr.key}`)}
+											onChange={(val) => setValue(`attributes.${attr.key}`, val)}
+											placeholder={attr.placeholder}
+										/>
+									) : (
+										<>
+											<input
+												type={attr.type === 'number' ? 'number' : 'text'}
+												{...register(`attributes.${attr.key}`)}
+												className={ADMIN_INPUT_CLASS}
+												placeholder={attr.placeholder}
+												list={attr.suggestions ? `${attr.key}-suggestions` : undefined}
+											/>
+											{attr.suggestions === 'map_keys' && mapKeys.length > 0 && (
+												<datalist id={`${attr.key}-suggestions`}>
+													{mapKeys.map((k) => (
+														<option key={k} value={k} />
+													))}
+												</datalist>
 											)}
-										</div>
-									</div>
-								</div>
-
-								{/* Value Input (REPLACED) */}
-								<div className='flex-1 relative'>
-									<AttributeValueInput
-										type={attrType}
-										value={attrValue}
-										onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
-										placeholder='Value'
-									/>
-
-									{/* Keep JSON Format button just for JSON type */}
-									{attrType === 'json' && (
-										<button
-											type='button'
-											onClick={() => handleFormatJSON(index)}
-											className='absolute right-2 top-2 text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border hover:border-primary transition-colors'>
-											Format
-										</button>
+										</>
 									)}
 								</div>
+							))}
+						</div>
+					</div>
 
-								<button
-									type='button'
-									onClick={() => remove(index)}
-									className='mt-2 p-1.5 text-muted-foreground/40 hover:text-primary hover:bg-red-500/10 rounded transition-colors'>
-									<Trash2 size={16} />
-								</button>
-							</div>
-						);
-					})}
-					{fields.length === 0 && (
-						<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
-					)}
+					{/* Custom Attributes */}
+					<div className={ADMIN_SECTION_CLASS}>
+						<div className={ADMIN_HEADER_CLASS}>
+							<span>Custom Attributes</span>
+							<Button
+								type='button'
+								onClick={() => append({ key: '', value: '', type: 'string' })}
+								size='sm'
+								variant='secondary'
+								icon={Plus}>
+								Add New
+							</Button>
+						</div>
+						<div className='space-y-3'>
+							{fields.map((field, index) => {
+								const attrType = watch(`customAttributes.${index}.type`);
+								const attrValue = watch(`customAttributes.${index}.value`);
+								return (
+									<div key={field.id} className='flex gap-2 items-start animate-in fade-in group'>
+										<div className='w-1/4 pt-1'>
+											<input
+												type='text'
+												{...register(`customAttributes.${index}.key`)}
+												placeholder='Key'
+												className={`${ADMIN_INPUT_CLASS} font-bold text-muted-foreground border-transparent bg-transparent hover:bg-accent/50 focus:bg-background focus:border-input transition-all`}
+											/>
+										</div>
+										<div className='w-24 pt-1'>
+											<div className='relative'>
+												<select
+													{...register(`customAttributes.${index}.type`)}
+													className={`${ADMIN_INPUT_CLASS} pr-8 appearance-none text-xs`}>
+													<option value='string'>Text</option>
+													<option value='number'>Number</option>
+													<option value='boolean'>Toggle</option>
+													<option value='list'>List</option>
+													<option value='map'>Map</option>
+													<option value='json'>JSON</option>
+												</select>
+												<div className='absolute right-2 top-2.5 pointer-events-none text-muted-foreground'>
+													{attrType === 'json' ? (
+														<Braces size={12} />
+													) : attrType === 'number' ? (
+														<Hash size={12} />
+													) : (
+														<AlignLeft size={12} />
+													)}
+												</div>
+											</div>
+										</div>
+										<div className='flex-1 relative'>
+											<AttributeValueInput
+												type={attrType}
+												value={attrValue}
+												onChange={(val) => setValue(`customAttributes.${index}.value`, val)}
+												placeholder='Value'
+											/>
+											{attrType === 'json' && (
+												<button
+													type='button'
+													onClick={() => handleFormatJSON(index)}
+													className='absolute right-2 top-2 text-[10px] bg-card text-primary px-1.5 py-0.5 rounded border border-border hover:border-primary transition-colors'>
+													Format
+												</button>
+											)}
+										</div>
+										<button
+											type='button'
+											onClick={() => remove(index)}
+											className='mt-2 p-1.5 text-muted-foreground/40 hover:text-primary hover:bg-red-500/10 rounded transition-colors'>
+											<Trash2 size={16} />
+										</button>
+									</div>
+								);
+							})}
+							{fields.length === 0 && (
+								<div className='text-sm text-muted-foreground italic py-2'>No custom attributes defined.</div>
+							)}
+						</div>
+					</div>
 				</div>
-			</div>
+			)}
 
-			{/* Sub Managers */}
-			{id && type === 'session' && <SessionEventManager sessionId={id} />}
-			{id && type === 'quest' && <QuestObjectiveManager questId={id} />}
-			{id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
-			{id && <RelationshipManager entityId={id} />}
+			{/* Session Events Tab */}
+			{activeTab === 'events' && id && type === 'session' && <SessionEventManager sessionId={id} />}
+
+			{/* Quest Objectives Tab */}
+			{activeTab === 'objectives' && id && type === 'quest' && <QuestObjectiveManager questId={id} />}
+
+			{/* Encounter Narrative Tab */}
+			{activeTab === 'narrative' && id && type === 'encounter' && (
+				<EncounterNarrativeManager
+					timeline={watch('timeline') || []}
+					onChange={(val) => setValue('timeline', val, { shouldDirty: true })}
+				/>
+			)}
+
+			{/* Encounter Combat Log Tab */}
+			{activeTab === 'combat' && id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
+
+			{/* Scanner Tab */}
+			{activeTab === 'scanner' && id && type === 'session' && (
+				<NarrativeSuggestionPanel sessionId={id} narrative={watch('description') || ''} />
+			)}
+
+			{/* Relationships Tab */}
+			{activeTab === 'relationships' && id && <RelationshipManager entityId={id} />}
 		</form>
 	);
 }
@@ -1284,6 +1385,34 @@ export const ADMIN_HEADER_CLASS =
 	'text-base font-serif font-bold text-foreground border-b border-border/60 pb-2 mb-4 flex items-center justify-between tracking-tight';
 
 --- END OF features\admin\components\AdminFormStyles.js ---
+
+--- FILE: features\admin\components\AdminTabBar.jsx ---
+import React from 'react';
+import clsx from 'clsx';
+
+export default function AdminTabBar({ tabs, activeTab, onChange }) {
+	return (
+		<div className='flex bg-muted p-1 rounded-lg border border-border shadow-inner gap-0.5'>
+			{tabs.map((tab) => (
+				<button
+					key={tab.id}
+					type='button'
+					onClick={() => onChange(tab.id)}
+					className={clsx(
+						'flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all',
+						activeTab === tab.id
+							? 'bg-background shadow-sm text-foreground ring-1 ring-border'
+							: 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+					)}>
+					{tab.icon && <tab.icon size={13} />}
+					{tab.label}
+				</button>
+			))}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\AdminTabBar.jsx ---
 
 --- FILE: features\admin\components\AdvancedFilter.jsx ---
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -1822,6 +1951,160 @@ export default function EncounterActionManager({ encounterId }) {
 
 --- END OF features\admin\components\EncounterManager.jsx ---
 
+--- FILE: features\admin\components\EncounterNarrativeManager.jsx ---
+import React, { useState } from 'react';
+import { Plus, Trash2, Edit2, Save, X, BookOpen } from 'lucide-react';
+import Button from '@/shared/components/ui/Button';
+import MarkdownEditor from './MarkdownEditor';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+
+export default function EncounterNarrativeManager({ timeline =[], onChange }) {
+	const [editingIndex, setEditingIndex] = useState(null);
+	const [formData, setFormData] = useState({});
+
+	const handleAddNew = () => {
+		const lastEvent = timeline[timeline.length - 1];
+		const nextRound = lastEvent ? lastEvent.round : 1;
+		const nextOrder = lastEvent ? lastEvent.order + 1 : 1;
+
+		const newEvent = { round: nextRound, order: nextOrder, description: '' };
+		const newList = [...timeline, newEvent];
+		onChange(newList);
+		setEditingIndex(newList.length - 1);
+		setFormData(newEvent);
+	};
+
+	const handleEdit = (idx) => {
+		setEditingIndex(idx);
+		setFormData({ ...timeline[idx] });
+	};
+
+	const handleSave = () => {
+		const newList = [...timeline];
+		newList[editingIndex] = formData;
+		// Ensure items remain correctly ordered when saved
+		newList.sort((a, b) => {
+			if (a.round !== b.round) return a.round - b.round;
+			return a.order - b.order;
+		});
+		onChange(newList);
+		setEditingIndex(null);
+	};
+
+	const handleDelete = (idx) => {
+		if (!confirm('Delete this event?')) return;
+		const newList = timeline.filter((_, i) => i !== idx);
+		onChange(newList);
+	};
+
+	// Group by round strictly for the UI rendering
+	const grouped = timeline.reduce((acc, curr, idx) => {
+		if (!acc[curr.round]) acc[curr.round] = [];
+		acc[curr.round].push({ ...curr, originalIndex: idx });
+		return acc;
+	}, {});
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<div className={`${ADMIN_HEADER_CLASS} flex justify-between`}>
+				<span className='flex items-center gap-2'>
+					<BookOpen size={18} className='text-primary' /> Narrative Timeline
+				</span>
+				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+					Add Event
+				</Button>
+			</div>
+
+			<div className='space-y-6'>
+				{Object.keys(grouped).length === 0 && (
+					<div className='text-center py-6 text-muted-foreground text-sm italic'>
+						No narrative events recorded yet.
+					</div>
+				)}
+
+				{Object.entries(grouped).map(([roundNum, events]) => (
+					<div key={roundNum} className='space-y-3'>
+						<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-1'>
+							Round {roundNum}
+						</h4>
+						
+						{events.map((evt) => (
+							<div key={evt.originalIndex} className='group'>
+								{editingIndex === evt.originalIndex ? (
+									<div className='bg-muted/30 border border-primary/30 rounded-lg p-4 space-y-4 animate-in fade-in shadow-sm'>
+										<div className='flex gap-4'>
+											<div className='w-20'>
+												<label className={ADMIN_LABEL_CLASS}>Round</label>
+												<input
+													type='number'
+													className={ADMIN_INPUT_CLASS}
+													value={formData.round || ''}
+													onChange={(e) => setFormData({ ...formData, round: parseInt(e.target.value) || 1 })}
+												/>
+											</div>
+											<div className='w-20'>
+												<label className={ADMIN_LABEL_CLASS}>Order</label>
+												<input
+													type='number'
+													className={ADMIN_INPUT_CLASS}
+													value={formData.order || ''}
+													onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
+												/>
+											</div>
+										</div>
+										<div>
+											<MarkdownEditor
+												label='Event Description'
+												value={formData.description || ''}
+												onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+												placeholder='Use [[entity_id]] to link entities...'
+											/>
+										</div>
+										<div className='flex justify-end gap-2 pt-2'>
+											<Button onClick={() => setEditingIndex(null)} variant='ghost' size='sm' icon={X}>
+												Cancel
+											</Button>
+											<Button onClick={handleSave} variant='primary' size='sm' icon={Save}>
+												Save Event
+											</Button>
+										</div>
+									</div>
+								) : (
+									<div className='flex items-start gap-3 p-3 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors shadow-sm'>
+										<div className='shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground border border-border mt-0.5 shadow-inner'>
+											{evt.order}
+										</div>
+										<div className='flex-1 min-w-0 pt-1'>
+											<p className='text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap font-serif'>
+												{evt.description}
+											</p>
+										</div>
+										<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
+											<button
+												onClick={() => handleEdit(evt.originalIndex)}
+												className='p-1.5 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'
+											>
+												<Edit2 size={16} />
+											</button>
+											<button
+												onClick={() => handleDelete(evt.originalIndex)}
+												className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
+											>
+												<Trash2 size={16} />
+											</button>
+										</div>
+									</div>
+								)}
+							</div>
+						))}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
+--- END OF features\admin\components\EncounterNarrativeManager.jsx ---
+
 --- FILE: features\admin\components\EntitySearch.jsx ---
 import React, { useState, useEffect, useRef } from 'react';
 import { searchEntitiesByName } from '@/features/admin/api/adminService'; // <--- NEW IMPORT
@@ -1856,7 +2139,15 @@ export default function EntitySearch({ onSelect }) {
 			setIsLoading(true);
 			try {
 				// <--- USE NEW SERVICE HERE
-				const flat = await searchEntitiesByName(campaignId, query);
+				const raw = await searchEntitiesByName(campaignId, query);
+
+				// Deduplicate by entity id (sessions appear in both entities + sessions tables)
+				const seen = new Set();
+				const flat = raw.filter((item) => {
+					if (seen.has(item.id)) return false;
+					seen.add(item.id);
+					return true;
+				});
 
 				// Client-side Sorting: Exact Match > Starts With > Includes
 				flat.sort((a, b) => {
@@ -2536,6 +2827,569 @@ export default function MarkdownEditorImpl({ label, value, onChange, placeholder
 
 --- END OF features\admin\components\MarkdownEditorImpl.jsx ---
 
+--- FILE: features\admin\components\NarrativeSuggestionPanel.jsx ---
+import { useState, useMemo, useCallback } from 'react';
+import {
+	Scan,
+	Sparkles,
+	Check,
+	X,
+	ArrowRightLeft,
+	Loader2,
+	CheckCheck,
+	AlertCircle,
+} from 'lucide-react';
+import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { scanSession } from '@/features/admin/utils/narrativeScanner';
+import { inferRelationships } from '@/features/admin/api/llmService';
+import { RELATIONSHIP_TYPES } from '@/features/admin/config/relationshipTypes';
+import {
+	fetchRelationships,
+	addRelationship,
+	fetchSessionEventsWithRelationships,
+} from '@/features/admin/api/adminService';
+import { getEntityConfig } from '@/domain/entity/config/entityConfig';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
+import Button from '@/shared/components/ui/Button';
+
+
+function EntityBadge({ name, type }) {
+	const config = getEntityConfig(type);
+	const Icon = config.icon;
+	return (
+		<span className='inline-flex items-center gap-1.5 text-xs'>
+			<Icon size={12} style={{ color: config.color }} />
+			<span className='font-semibold text-foreground'>{name}</span>
+			<span className='text-[9px] uppercase text-muted-foreground'>{type}</span>
+		</span>
+	);
+}
+
+function MentionRow({ mention, checked, onToggle, mentionKey }) {
+	return (
+		<label className='flex items-center gap-3 py-1.5 px-2 hover:bg-muted/30 rounded cursor-pointer transition-colors'>
+			<input
+				type='checkbox'
+				checked={checked}
+				onChange={() => onToggle(mentionKey)}
+				className='w-3.5 h-3.5 rounded accent-amber-600'
+			/>
+			<EntityBadge name={mention.entityName} type={mention.entityType} />
+			<span className='text-[10px] text-muted-foreground truncate ml-auto max-w-[40%] italic'>
+				{mention.snippet}
+			</span>
+		</label>
+	);
+}
+
+function RelationshipRow({ suggestion, entityMap, checked, onToggle, onUpdate }) {
+	const fromEntity = entityMap.get(suggestion.fromEntityId);
+	const toEntity = entityMap.get(suggestion.toEntityId);
+	if (!fromEntity || !toEntity) return null;
+
+	return (
+		<div className='flex items-center gap-2 py-1.5 px-2 hover:bg-muted/30 rounded transition-colors'>
+			<input
+				type='checkbox'
+				checked={checked}
+				onChange={() => onToggle(suggestion._key)}
+				className='w-3.5 h-3.5 rounded accent-amber-600 shrink-0'
+			/>
+			<EntityBadge name={fromEntity.name} type={fromEntity.type} />
+			<span className='text-muted-foreground text-xs'>→</span>
+			<EntityBadge name={toEntity.name} type={toEntity.type} />
+
+			<select
+				value={suggestion.relationshipType}
+				onChange={(e) => onUpdate(suggestion._key, 'relationshipType', e.target.value)}
+				className='h-6 text-[10px] rounded border border-input bg-background px-1 ml-auto shrink-0 w-32'>
+				{RELATIONSHIP_TYPES.map((t) => (
+					<option key={t} value={t}>{t.replaceAll('_', ' ')}</option>
+				))}
+			</select>
+
+			<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Bidirectional'>
+				<input
+					type='checkbox'
+					checked={suggestion.isBidirectional}
+					onChange={(e) => onUpdate(suggestion._key, 'isBidirectional', e.target.checked)}
+					className='w-3 h-3 rounded'
+				/>
+				<ArrowRightLeft size={11} className='text-muted-foreground' />
+			</label>
+
+			<span className='text-[9px] text-muted-foreground italic max-w-[25%] truncate' title={suggestion.reason}>
+				{suggestion.reason}
+			</span>
+		</div>
+	);
+}
+
+
+function SectionToggle({ label, icon: Icon, checkedCount, totalCount, onSelectAll, onDeselectAll }) {
+	const allChecked = checkedCount === totalCount;
+	const noneChecked = checkedCount === 0;
+	return (
+		<h3 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 flex items-center justify-between'>
+			<span className='flex items-center gap-1'>
+				{Icon && <Icon size={11} />} {label}
+			</span>
+			<span className='flex items-center gap-1.5'>
+				<button
+					type='button'
+					onClick={onSelectAll}
+					disabled={allChecked}
+					className='text-[9px] text-primary hover:underline disabled:opacity-30 disabled:no-underline'>
+					all
+				</button>
+				<span className='text-[9px] text-muted-foreground/40'>|</span>
+				<button
+					type='button'
+					onClick={onDeselectAll}
+					disabled={noneChecked}
+					className='text-[9px] text-primary hover:underline disabled:opacity-30 disabled:no-underline'>
+					none
+				</button>
+				<span className='text-[9px] bg-muted/50 px-1.5 py-0.5 rounded-full ml-1'>
+					{checkedCount}/{totalCount}
+				</span>
+			</span>
+		</h3>
+	);
+}
+
+export default function NarrativeSuggestionPanel({ sessionId, narrative }) {
+	const { searchTokens, map: entityMap } = useEntityIndex();
+
+	// Phase states
+	const [scanning, setScanning] = useState(false);
+	const [analyzing, setAnalyzing] = useState(false);
+	const [applying, setApplying] = useState(false);
+	const [error, setError] = useState(null);
+
+	// Results
+	const [sessionMentions, setSessionMentions] = useState([]);
+	const [eventMentions, setEventMentions] = useState([]);
+	const [relSuggestions, setRelSuggestions] = useState([]);
+
+	// Selection state
+	const [checkedMentions, setCheckedMentions] = useState(new Set());
+	const [checkedRels, setCheckedRels] = useState(new Set());
+
+	// Applied tracking
+	const [applied, setApplied] = useState(false);
+
+	const hasLlmKey = !!import.meta.env.VITE_GEMINI_API_KEY;
+
+	// --- Phase 1: Scan narrative for entity mentions ---
+	const handleScan = useCallback(async () => {
+		setScanning(true);
+		setError(null);
+		setApplied(false);
+		setRelSuggestions([]);
+		setCheckedRels(new Set());
+		try {
+			const [existingRels, events] = await Promise.all([
+				fetchRelationships(sessionId),
+				fetchSessionEventsWithRelationships(sessionId),
+			]);
+
+			const { sessionMentions: sMentions, eventMentions: eMentions } = scanSession(
+				narrative,
+				events,
+				searchTokens,
+				entityMap,
+				existingRels
+			);
+
+			setSessionMentions(sMentions);
+			setEventMentions(eMentions);
+			// Default: all mentions checked — use composite keys (source:entityId)
+			const allKeys = new Set(sMentions.map((m) => `narrative:${m.entityId}`));
+			eMentions.forEach((eg) => eg.mentions.forEach((m) => allKeys.add(`${eg.eventId}:${m.entityId}`)));
+			setCheckedMentions(allKeys);
+		} catch (e) {
+			setError('Scan failed: ' + e.message);
+		} finally {
+			setScanning(false);
+		}
+	}, [sessionId, narrative, searchTokens, entityMap]);
+
+	// --- Phase 2: LLM relationship inference ---
+	const handleAnalyze = useCallback(async () => {
+		setAnalyzing(true);
+		setError(null);
+		try {
+			// Combine all detected entities for the LLM
+			const allMentions = [
+				...sessionMentions,
+				...eventMentions.flatMap((eg) => eg.mentions),
+			];
+			// Deduplicate
+			const seen = new Set();
+			const uniqueEntities = allMentions.filter((m) => {
+				if (seen.has(m.entityId)) return false;
+				seen.add(m.entityId);
+				return true;
+			});
+
+			const raw = await inferRelationships(narrative, uniqueEntities, RELATIONSHIP_TYPES);
+
+			// Diff against existing entity-to-entity relationships
+			// Filter by entity PAIR (regardless of relationship type) — if any
+			// relationship exists between two entities, don't suggest another
+			const existingPairs = new Set();
+			for (const entity of uniqueEntities) {
+				try {
+					const rels = await fetchRelationships(entity.entityId);
+					rels.forEach((r) => {
+						const targetId = r.target?.id;
+						if (targetId) {
+							existingPairs.add(`${entity.entityId}:${targetId}`);
+							existingPairs.add(`${targetId}:${entity.entityId}`);
+						}
+					});
+				} catch {
+					// Entity might not have relationships, that's fine
+				}
+			}
+
+			// Also deduplicate LLM suggestions by entity pair (keep first only)
+			const seenPairs = new Set();
+			const suggestions = raw
+				.filter((s) => {
+					const pairKey = [s.fromEntityId, s.toEntityId].sort().join(':');
+					if (existingPairs.has(`${s.fromEntityId}:${s.toEntityId}`)) return false;
+					if (seenPairs.has(pairKey)) return false;
+					seenPairs.add(pairKey);
+					return true;
+				})
+				.map((s, i) => ({ ...s, _key: `rel-${i}` }));
+
+			setRelSuggestions(suggestions);
+			// Default: none checked (user decides)
+			setCheckedRels(new Set());
+		} catch (e) {
+			setError('Analysis failed: ' + e.message);
+		} finally {
+			setAnalyzing(false);
+		}
+	}, [narrative, sessionMentions, eventMentions]);
+
+	// --- Phase 3: Apply selected suggestions ---
+	const handleApply = useCallback(async () => {
+		setApplying(true);
+		setError(null);
+		try {
+			const ops = [];
+
+			// Session-level mention relationships
+			sessionMentions
+				.filter((m) => checkedMentions.has(`narrative:${m.entityId}`))
+				.forEach((m) => {
+					ops.push(
+						addRelationship({
+							from_entity_id: sessionId,
+							to_entity_id: m.entityId,
+							relationship_type: 'mention',
+							is_bidirectional: false,
+						})
+					);
+				});
+
+			// Event-level mention tags
+			eventMentions.forEach((eg) => {
+				eg.mentions
+					.filter((m) => checkedMentions.has(`${eg.eventId}:${m.entityId}`))
+					.forEach((m) => {
+						ops.push(
+							addRelationship({
+								from_entity_id: eg.eventId,
+								to_entity_id: m.entityId,
+								relationship_type: 'mention',
+								is_bidirectional: false,
+							})
+						);
+					});
+			});
+
+			// Entity-to-entity relationships from LLM
+			relSuggestions
+				.filter((s) => checkedRels.has(s._key))
+				.forEach((s) => {
+					ops.push(
+						addRelationship({
+							from_entity_id: s.fromEntityId,
+							to_entity_id: s.toEntityId,
+							relationship_type: s.relationshipType,
+							is_bidirectional: s.isBidirectional,
+						})
+					);
+				});
+
+			await Promise.all(ops);
+			setApplied(true);
+		} catch (e) {
+			setError('Apply failed: ' + e.message);
+		} finally {
+			setApplying(false);
+		}
+	}, [sessionId, sessionMentions, eventMentions, checkedMentions, relSuggestions, checkedRels]);
+
+	// --- Selection helpers (composite keys: "source:entityId") ---
+	const toggleMention = (key) => {
+		setCheckedMentions((prev) => {
+			const next = new Set(prev);
+			next.has(key) ? next.delete(key) : next.add(key);
+			return next;
+		});
+	};
+
+	const toggleRel = (key) => {
+		setCheckedRels((prev) => {
+			const next = new Set(prev);
+			next.has(key) ? next.delete(key) : next.add(key);
+			return next;
+		});
+	};
+
+	// --- Batch selection helpers ---
+	const allMentionKeys = useMemo(() => {
+		const keys = sessionMentions.map((m) => `narrative:${m.entityId}`);
+		eventMentions.forEach((eg) => eg.mentions.forEach((m) => keys.push(`${eg.eventId}:${m.entityId}`)));
+		return keys;
+	}, [sessionMentions, eventMentions]);
+
+	const selectAllMentions = () => setCheckedMentions(new Set(allMentionKeys));
+	const deselectAllMentions = () => setCheckedMentions(new Set());
+
+	const sessionMentionKeys = useMemo(
+		() => sessionMentions.map((m) => `narrative:${m.entityId}`),
+		[sessionMentions]
+	);
+	const selectSessionMentions = () => {
+		setCheckedMentions((prev) => {
+			const next = new Set(prev);
+			sessionMentionKeys.forEach((k) => next.add(k));
+			return next;
+		});
+	};
+	const deselectSessionMentions = () => {
+		setCheckedMentions((prev) => {
+			const next = new Set(prev);
+			sessionMentionKeys.forEach((k) => next.delete(k));
+			return next;
+		});
+	};
+
+	const selectEventMentions = (eventId) => {
+		const eg = eventMentions.find((e) => e.eventId === eventId);
+		if (!eg) return;
+		setCheckedMentions((prev) => {
+			const next = new Set(prev);
+			eg.mentions.forEach((m) => next.add(`${eventId}:${m.entityId}`));
+			return next;
+		});
+	};
+	const deselectEventMentions = (eventId) => {
+		const eg = eventMentions.find((e) => e.eventId === eventId);
+		if (!eg) return;
+		setCheckedMentions((prev) => {
+			const next = new Set(prev);
+			eg.mentions.forEach((m) => next.delete(`${eventId}:${m.entityId}`));
+			return next;
+		});
+	};
+
+	const selectAllRels = () => setCheckedRels(new Set(relSuggestions.map((s) => s._key)));
+	const deselectAllRels = () => setCheckedRels(new Set());
+
+	const updateRelSuggestion = (key, field, value) => {
+		setRelSuggestions((prev) =>
+			prev.map((s) => (s._key === key ? { ...s, [field]: value } : s))
+		);
+	};
+
+	const totalMentions = sessionMentions.length + eventMentions.reduce((sum, eg) => sum + eg.mentions.length, 0);
+	const selectedMentionCount = checkedMentions.size;
+	const selectedRelCount = checkedRels.size;
+	const hasResults = totalMentions > 0 || relSuggestions.length > 0;
+
+	return (
+		<div className={ADMIN_SECTION_CLASS}>
+			<h2 className={ADMIN_HEADER_CLASS}>
+				<span className='flex items-center gap-2'>
+					<Scan size={18} className='text-amber-600' /> Narrative Scanner
+				</span>
+			</h2>
+
+			{/* Action Buttons */}
+			<div className='flex items-center gap-2 flex-wrap'>
+				<Button
+					onClick={handleScan}
+					disabled={scanning || !narrative}
+					variant='secondary'
+					size='sm'
+					icon={scanning ? Loader2 : Scan}>
+					{scanning ? 'Scanning...' : 'Scan Narrative'}
+				</Button>
+
+				{totalMentions > 0 && hasLlmKey && (
+					<Button
+						onClick={handleAnalyze}
+						disabled={analyzing}
+						variant='secondary'
+						size='sm'
+						icon={analyzing ? Loader2 : Sparkles}>
+						{analyzing ? 'Analyzing...' : 'Infer Relationships'}
+					</Button>
+				)}
+
+				{hasResults && !applied && (
+				<>
+					<Button
+						onClick={handleApply}
+						disabled={applying || (selectedMentionCount === 0 && selectedRelCount === 0)}
+						variant='primary'
+						size='sm'
+						icon={applying ? Loader2 : Check}>
+						{applying
+							? 'Applying...'
+							: `Apply (${selectedMentionCount + selectedRelCount} selected)`}
+					</Button>
+					<span className='text-[9px] text-muted-foreground flex items-center gap-1 ml-1'>
+						<button
+							type='button'
+							onClick={() => { selectAllMentions(); selectAllRels(); }}
+							className='text-primary hover:underline'>
+							select all
+						</button>
+						<span className='text-muted-foreground/40'>|</span>
+						<button
+							type='button'
+							onClick={() => { deselectAllMentions(); deselectAllRels(); }}
+							className='text-primary hover:underline'>
+							deselect all
+						</button>
+					</span>
+				</>
+			)}
+
+				{applied && (
+					<span className='flex items-center gap-1 text-xs text-emerald-600 font-medium'>
+						<CheckCheck size={14} /> Applied
+					</span>
+				)}
+			</div>
+
+			{!hasLlmKey && totalMentions > 0 && (
+				<p className='text-[10px] text-muted-foreground italic'>
+					Set VITE_GEMINI_API_KEY in .env to enable AI relationship inference.
+				</p>
+			)}
+
+			{error && (
+				<div className='flex items-center gap-2 text-xs text-red-600 bg-red-500/10 px-3 py-2 rounded border border-red-200'>
+					<AlertCircle size={14} /> {error}
+				</div>
+			)}
+
+			{/* Section A: Session Mentions */}
+			{sessionMentions.length > 0 && (
+				<div>
+					<SectionToggle
+						label='Narrative Mentions'
+						checkedCount={sessionMentions.filter((m) => checkedMentions.has(`narrative:${m.entityId}`)).length}
+						totalCount={sessionMentions.length}
+						onSelectAll={selectSessionMentions}
+						onDeselectAll={deselectSessionMentions}
+					/>
+					<div className='divide-y divide-border/30'>
+						{sessionMentions.map((m) => (
+							<MentionRow
+								key={`narrative:${m.entityId}`}
+								mention={m}
+								mentionKey={`narrative:${m.entityId}`}
+								checked={checkedMentions.has(`narrative:${m.entityId}`)}
+								onToggle={toggleMention}
+							/>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* Event-level mentions */}
+			{eventMentions.length > 0 && (
+				<div>
+					<h3 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2'>
+						Event Tags
+					</h3>
+					{eventMentions.map((eg) => {
+						const egChecked = eg.mentions.filter((m) => checkedMentions.has(`${eg.eventId}:${m.entityId}`)).length;
+						return (
+							<div key={eg.eventId} className='mb-2'>
+								<SectionToggle
+									label={eg.eventTitle}
+									checkedCount={egChecked}
+									totalCount={eg.mentions.length}
+									onSelectAll={() => selectEventMentions(eg.eventId)}
+									onDeselectAll={() => deselectEventMentions(eg.eventId)}
+								/>
+								<div className='divide-y divide-border/30'>
+									{eg.mentions.map((m) => (
+										<MentionRow
+											key={`${eg.eventId}:${m.entityId}`}
+											mention={m}
+											mentionKey={`${eg.eventId}:${m.entityId}`}
+											checked={checkedMentions.has(`${eg.eventId}:${m.entityId}`)}
+											onToggle={toggleMention}
+										/>
+									))}
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+
+			{/* Section B: Inferred Relationships */}
+			{relSuggestions.length > 0 && (
+				<div>
+					<SectionToggle
+						label='Suggested Relationships'
+						icon={Sparkles}
+						checkedCount={selectedRelCount}
+						totalCount={relSuggestions.length}
+						onSelectAll={selectAllRels}
+						onDeselectAll={deselectAllRels}
+					/>
+					<div className='divide-y divide-border/30'>
+						{relSuggestions.map((s) => (
+							<RelationshipRow
+								key={s._key}
+								suggestion={s}
+								entityMap={entityMap}
+								checked={checkedRels.has(s._key)}
+								onToggle={toggleRel}
+								onUpdate={updateRelSuggestion}
+							/>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* Empty state */}
+			{!scanning && !analyzing && totalMentions === 0 && relSuggestions.length === 0 && (
+				<p className='text-xs text-muted-foreground italic text-center py-4'>
+					Click "Scan Narrative" to detect entity mentions and suggest relationships.
+				</p>
+			)}
+		</div>
+	);
+}
+
+--- END OF features\admin\components\NarrativeSuggestionPanel.jsx ---
+
 --- FILE: features\admin\components\QuestObjectiveManager.jsx ---
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Target, CheckCircle2, Circle, Calendar } from 'lucide-react';
@@ -2814,19 +3668,15 @@ import {
 	Trash2,
 	Link as LinkIcon,
 	ArrowRightLeft,
-	ArrowRight,
 	Save,
 	X,
 	Edit2,
-	Layers,
 	EyeOff,
 	Shield,
-	Sword,
 	MapPin,
 	Flag,
 	User,
 	Users,
-	Briefcase,
 	BookOpen,
 	Gem,
 	Calendar,
@@ -2838,8 +3688,9 @@ import {
 	deleteRelationship,
 	updateRelationship,
 } from '@/features/admin/api/adminService';
-import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS } from './AdminFormStyles';
+import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 import Button from '@/shared/components/ui/Button';
+import { RELATIONSHIP_TYPES } from '@/features/admin/config/relationshipTypes';
 
 // --- CONFIGURATION ---
 
@@ -2975,29 +3826,8 @@ export default function RelationshipManager({ entityId }) {
 
 	if (!entityId) return null;
 
-	// Dropdown options
-	const relationshipTypes = [
-		'member_of',
-		'leadership_relation',
-		'part_of',
-		'affiliated_with',
-		'family_relation',
-		'romantic_relation',
-		'professional_relation',
-		'located_in',
-		'parent_location',
-		'residence_relation',
-		'workplace_relation',
-		'ownership_relation',
-		'quest_giver',
-		'quest_objective',
-		'quest_update',
-		'quest_participant',
-		'quest_location',
-		'hostile_to',
-		'knowledge_of',
-		'encountered',
-	];
+	// Dropdown options use shared config
+	const relationshipTypes = RELATIONSHIP_TYPES;
 
 	// Helper to get sort order including "Other" groups not in explicit list
 	const sortedGroupKeys = [...GROUP_ORDER, ...Object.keys(grouped).filter((k) => !GROUP_ORDER.includes(k))];
@@ -3008,91 +3838,76 @@ export default function RelationshipManager({ entityId }) {
 				<LinkIcon size={18} className='text-amber-600' /> Relationships
 			</h2>
 
-			{/* --- ADD NEW SECTION --- */}
-			<div className='bg-muted/30 p-4 rounded-lg mb-6 border border-border shadow-sm'>
-				<div className='flex items-center justify-between mb-3'>
-					<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2'>
-						<Layers size={12} /> Bulk Connect
-					</h3>
-					{pendingTargets.length > 0 && (
-						<span className='text-xs text-amber-600 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-100'>
-							{pendingTargets.length} Ready
-						</span>
-					)}
-				</div>
-
-				<div className='space-y-4'>
-					<div className='w-full'>
+			{/* --- ADD BAR --- */}
+			<div className='space-y-2 mb-4'>
+				<div className='flex items-center gap-2'>
+					<div className='flex-1'>
 						<EntitySearch onSelect={handleSelectTarget} />
 					</div>
 
-					{pendingTargets.length > 0 && (
-						<div className='flex flex-wrap gap-2 p-3 bg-background border border-border rounded-md'>
-							{pendingTargets.map((t) => (
-								<div
-									key={t.id}
-									className='flex items-center gap-2 bg-amber-500/10 text-amber-900 px-2 py-1 rounded border border-amber-200 text-xs font-medium'>
-									<span className='uppercase text-[9px] text-amber-700/60 font-bold'>{t.type}</span>
-									<span>{t.name}</span>
-									<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800'>
-										✕
-									</button>
-								</div>
-							))}
-						</div>
-					)}
+					<select
+						value={type}
+						onChange={(e) => setType(e.target.value)}
+						className='h-[38px] text-[11px] rounded border border-input bg-background px-2 focus:ring-1 focus:ring-primary outline-none w-36 shrink-0'
+						title='Relationship type'>
+						{relationshipTypes.map((t) => (
+							<option key={t} value={t}>
+								{t.replaceAll('_', ' ')}
+							</option>
+						))}
+					</select>
 
-					<div className='flex flex-col md:flex-row gap-3 items-end pt-2 border-t border-border/50'>
-						<div className='flex-1 w-full grid grid-cols-2 gap-4'>
-							<div>
-								<label className='block text-[10px] uppercase font-bold text-muted-foreground mb-1'>Type</label>
-								<select value={type} onChange={(e) => setType(e.target.value)} className={ADMIN_INPUT_CLASS}>
-									{relationshipTypes.map((t) => (
-										<option key={t} value={t}>
-											{t.replace('_', ' ')}
-										</option>
-									))}
-								</select>
-							</div>
-							<div className='flex flex-col gap-2 pb-1'>
-								<label className='flex items-center gap-2 cursor-pointer select-none'>
-									<input
-										type='checkbox'
-										checked={isBidirectional}
-										onChange={(e) => setIsBidirectional(e.target.checked)}
-										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
-									/>
-									<span className='text-xs text-muted-foreground font-medium'>2-Way</span>
-								</label>
-								<label className='flex items-center gap-2 cursor-pointer select-none'>
-									<input
-										type='checkbox'
-										checked={isHidden}
-										onChange={(e) => setIsHidden(e.target.checked)}
-										className='w-4 h-4 text-amber-600 rounded focus:ring-amber-500'
-									/>
-									<span className='text-xs text-muted-foreground font-medium flex items-center gap-1'>
-										Hidden <EyeOff size={10} />
-									</span>
-								</label>
-							</div>
-						</div>
-						<Button
-							onClick={handleBulkAdd}
-							disabled={pendingTargets.length === 0 || isAdding}
-							size='sm'
-							variant='primary'
-							className='w-full md:w-auto min-w-[100px]'>
-							{isAdding ? 'Saving...' : `Add ${pendingTargets.length > 0 ? `(${pendingTargets.length})` : ''}`}
-						</Button>
-					</div>
+					<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Bidirectional'>
+						<input
+							type='checkbox'
+							checked={isBidirectional}
+							onChange={(e) => setIsBidirectional(e.target.checked)}
+							className='w-3.5 h-3.5 rounded'
+						/>
+						<ArrowRightLeft size={13} className='text-muted-foreground' />
+					</label>
+
+					<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Hidden'>
+						<input
+							type='checkbox'
+							checked={isHidden}
+							onChange={(e) => setIsHidden(e.target.checked)}
+							className='w-3.5 h-3.5 rounded'
+						/>
+						<EyeOff size={13} className='text-muted-foreground' />
+					</label>
+
+					<Button
+						onClick={handleBulkAdd}
+						disabled={pendingTargets.length === 0 || isAdding}
+						size='sm'
+						variant='primary'
+						className='shrink-0 h-[38px] px-3'>
+						{isAdding ? '...' : `Add${pendingTargets.length > 0 ? ` (${pendingTargets.length})` : ''}`}
+					</Button>
 				</div>
+
+				{pendingTargets.length > 0 && (
+					<div className='flex flex-wrap gap-1.5'>
+						{pendingTargets.map((t) => (
+							<div
+								key={t.id}
+								className='flex items-center gap-1.5 bg-amber-500/10 text-amber-900 px-2 py-0.5 rounded text-[11px] font-medium border border-amber-200'>
+								<span className='uppercase text-[9px] text-amber-700/60 font-bold'>{t.type}</span>
+								{t.name}
+								<button onClick={() => removePending(t.id)} className='text-amber-500 hover:text-amber-800 ml-0.5'>
+									<X size={11} />
+								</button>
+							</div>
+						))}
+					</div>
+				)}
 			</div>
 
 			{/* --- LIST SECTION (GROUPED BY ENTITY TYPE) --- */}
-			<div className='space-y-6'>
+			<div className='space-y-3'>
 				{relationships.length === 0 && (
-					<div className='p-4 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
+					<div className='p-3 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
 						No relationships connected.
 					</div>
 				)}
@@ -3105,98 +3920,97 @@ export default function RelationshipManager({ entityId }) {
 					const GroupIcon = groupConfig.icon;
 
 					return (
-						<div key={groupKey} className='animate-in fade-in slide-in-from-bottom-2 duration-500'>
+						<div key={groupKey}>
 							{/* Group Header */}
 							<h3
-								className={`text-[11px] font-bold uppercase tracking-widest mb-3 border-b border-border/60 pb-1 flex items-center gap-2 ${groupConfig.color} opacity-90`}>
-								<GroupIcon size={14} /> {groupConfig.label}
+								className={`text-[10px] font-bold uppercase tracking-widest mb-1 border-b border-border/40 pb-1 flex items-center gap-1.5 ${groupConfig.color} opacity-80`}>
+								<GroupIcon size={12} /> {groupConfig.label}
 								<span className='ml-auto text-[9px] bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground'>
 									{items.length}
 								</span>
 							</h3>
 
-							<div className='grid grid-cols-1 gap-2'>
+							<div className='grid grid-cols-1 gap-0 divide-y divide-border/40'>
 								{items.map((rel) => {
-									// Item Style based on Relationship Type (Ally/Enemy)
 									const style = REL_STYLES[rel.relationship_type] || REL_STYLES.Generic;
 
 									return (
-										<div
-											key={rel.id}
-											className={`group border rounded-lg transition-all bg-background hover:shadow-sm ${
-												editingId === rel.id ? 'border-amber-400 ring-1 ring-amber-400' : 'border-border'
-											}`}>
+										<div key={rel.id} className='group'>
 											{editingId === rel.id ? (
-												/* EDIT MODE */
-												<div className='grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center p-2 bg-muted/20'>
-													<div className='font-bold text-sm text-foreground truncate min-w-0'>{rel.target?.name}</div>
+												/* EDIT MODE — single line */
+												<div className='flex items-center gap-2 py-1.5 px-2 bg-amber-500/5'>
+													<span className='text-xs font-bold text-foreground truncate min-w-0 shrink-1 w-36'>
+														{rel.target?.name}
+													</span>
 
-													<div className='w-36'>
-														<select
-															className={`${ADMIN_INPUT_CLASS} py-1 h-8 text-xs`}
-															value={editForm.relationship_type}
-															onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
-															{relationshipTypes.map((t) => (
-																<option key={t} value={t}>
-																	{t.replace('_', ' ')}
-																</option>
-															))}
-														</select>
-													</div>
+													<select
+														className='h-7 text-[11px] rounded border border-input bg-background px-1.5 focus:ring-1 focus:ring-primary outline-none w-36 shrink-0'
+														value={editForm.relationship_type}
+														onChange={(e) => setEditForm({ ...editForm, relationship_type: e.target.value })}>
+														{relationshipTypes.map((t) => (
+															<option key={t} value={t}>
+																{t.replaceAll('_', ' ')}
+															</option>
+														))}
+													</select>
 
-													<div className='flex flex-col gap-1 px-2'>
-														<label className='flex items-center gap-1 cursor-pointer'>
-															<input
-																type='checkbox'
-																checked={editForm.is_bidirectional}
-																onChange={(e) => setEditForm({ ...editForm, is_bidirectional: e.target.checked })}
-															/>
-															<span className='text-[10px] uppercase text-muted-foreground'>2-Way</span>
-														</label>
-														<label className='flex items-center gap-1 cursor-pointer'>
-															<input
-																type='checkbox'
-																checked={editForm.is_hidden}
-																onChange={(e) => setEditForm({ ...editForm, is_hidden: e.target.checked })}
-															/>
-															<span className='text-[10px] uppercase text-muted-foreground'>Hidden</span>
-														</label>
-													</div>
+													<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Bidirectional'>
+														<input
+															type='checkbox'
+															checked={editForm.is_bidirectional}
+															onChange={(e) => setEditForm({ ...editForm, is_bidirectional: e.target.checked })}
+															className='w-3.5 h-3.5 rounded'
+														/>
+														<ArrowRightLeft size={11} className='text-muted-foreground' />
+													</label>
 
-													<div className='flex gap-1'>
-														<Button onClick={handleUpdate} size='sm' variant='primary' icon={Save} className='h-9 px-3'>
-															Save
-														</Button>
-														<Button
+													<label className='flex items-center gap-1 cursor-pointer shrink-0' title='Hidden'>
+														<input
+															type='checkbox'
+															checked={editForm.is_hidden}
+															onChange={(e) => setEditForm({ ...editForm, is_hidden: e.target.checked })}
+															className='w-3.5 h-3.5 rounded'
+														/>
+														<EyeOff size={11} className='text-muted-foreground' />
+													</label>
+
+													<div className='flex gap-0.5 ml-auto shrink-0'>
+														<button
+															type='button'
+															onClick={handleUpdate}
+															className='p-1 text-emerald-600 hover:bg-emerald-500/10 rounded transition-colors'
+															title='Save'>
+															<Save size={14} />
+														</button>
+														<button
+															type='button'
 															onClick={() => setEditingId(null)}
-															size='sm'
-															variant='ghost'
-															icon={X}
-															className='h-9 px-3'>
-															Cancel
-														</Button>
+															className='p-1 text-muted-foreground hover:bg-muted rounded transition-colors'
+															title='Cancel'>
+															<X size={14} />
+														</button>
 													</div>
 												</div>
 											) : (
-												/* VIEW MODE */
-												<div className={`flex items-center justify-between p-1 pl-0`}>
-													<div className='flex items-center gap-3 min-w-0 pl-3'>
-														<div className='flex items-center gap-2'>
-															<span className='text-sm font-bold text-foreground truncate'>{rel.target?.name}</span>
-															{rel.is_hidden && <EyeOff size={14} className='text-muted-foreground/70' title='Hidden' />}
-															{rel.is_bidirectional && (
-																<ArrowRightLeft size={12} className='text-muted-foreground/50' title='Bidirectional' />
-															)}
-														</div>
-														<div className='flex items-center gap-1.5 mt-0.5'>
-															{/* Relationship Type Badge */}
-															<span
-																className={`text-[10px] font-bold uppercase px-1.5 py-0 rounded-sm ${style.bg} ${style.color} border border-transparent`}>
-																{rel.relationship_type.replace('_', ' ')}
-															</span>
-														</div>
-													</div>
-													<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2'>
+												/* VIEW MODE — compact row */
+												<div className='flex items-center gap-2 py-1 px-2 hover:bg-muted/30 transition-colors'>
+													<span className='text-xs font-bold text-foreground truncate min-w-0 flex-1'>
+														{rel.target?.name}
+													</span>
+
+													<span
+														className={`text-[9px] font-bold uppercase px-1.5 py-0 rounded-sm shrink-0 ${style.bg} ${style.color}`}>
+														{rel.relationship_type.replaceAll('_', ' ')}
+													</span>
+
+													{rel.is_bidirectional && (
+														<ArrowRightLeft size={11} className='text-muted-foreground/50 shrink-0' title='Bidirectional' />
+													)}
+													{rel.is_hidden && (
+														<EyeOff size={11} className='text-muted-foreground/50 shrink-0' title='Hidden' />
+													)}
+
+													<div className='flex gap-0 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
 														<button
 															onClick={() => {
 																setEditingId(rel.id);
@@ -3206,13 +4020,15 @@ export default function RelationshipManager({ entityId }) {
 																	is_hidden: rel.is_hidden,
 																});
 															}}
-															className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
-															<Edit2 size={18} />
+															className='p-1 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded transition-colors'
+															title='Edit'>
+															<Edit2 size={13} />
 														</button>
 														<button
 															onClick={() => handleDelete(rel.id)}
-															className='p-2 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'>
-															<Trash2 size={18} />
+															className='p-1 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded transition-colors'
+															title='Delete'>
+															<Trash2 size={13} />
 														</button>
 													</div>
 												</div>
@@ -9301,9 +10117,15 @@ export const ADMIN_STRATEGIES = {
 		label: 'Encounter',
 		type: 'encounter',
 		primaryTable: 'encounters',
-		colMapping: { name: 'name', description: 'description' },
+		colMapping: { name: 'name', description: 'description', timeline: 'timeline' },
 		hasNarrative: true,
 		defaultAttributes: [
+			{
+				key: 'timeline_mode',
+				label: 'Public Display Mode',
+				type: 'select',
+				options: ['Legacy Combat Log', 'Narrative Timeline'],
+			},
 			{
 				key: 'status',
 				label: 'Status',
@@ -9371,6 +10193,54 @@ export const getStrategy = (type) => {
 };
 
 --- END OF features\admin\config\adminStrategies.js ---
+
+--- FILE: features\admin\config\adminTabs.js ---
+import { FileText, Calendar, Target, BookOpen, Swords, LinkIcon, Map, Scan } from 'lucide-react';
+
+/**
+ * Defines which tabs are available per entity type.
+ * Every type gets 'details'. Additional tabs are type-specific.
+ * Tabs with `requiresId: true` only show when editing an existing entity.
+ */
+
+const DETAILS_TAB = { id: 'details', label: 'Details', icon: FileText };
+const RELATIONSHIPS_TAB = { id: 'relationships', label: 'Links', icon: LinkIcon, requiresId: true };
+
+const TYPE_TABS = {
+	session: [
+		DETAILS_TAB,
+		{ id: 'events', label: 'Events', icon: Calendar, requiresId: true },
+		{ id: 'scanner', label: 'Scanner', icon: Scan, requiresId: true },
+		RELATIONSHIPS_TAB,
+	],
+	quest: [
+		DETAILS_TAB,
+		{ id: 'objectives', label: 'Objectives', icon: Target, requiresId: true },
+		RELATIONSHIPS_TAB,
+	],
+	encounter: [
+		DETAILS_TAB,
+		{ id: 'narrative', label: 'Narrative', icon: BookOpen, requiresId: true },
+		{ id: 'combat', label: 'Combat Log', icon: Swords, requiresId: true },
+		RELATIONSHIPS_TAB,
+	],
+};
+
+// Default tabs for any type not explicitly configured
+const DEFAULT_TABS = [DETAILS_TAB, RELATIONSHIPS_TAB];
+
+/**
+ * Returns the tab definitions for a given entity type, filtered by context.
+ * @param {string} type - Entity type
+ * @param {string|null} id - Entity ID (null for create mode)
+ * @returns {Array} Filtered tab definitions
+ */
+export function getTabsForType(type, id) {
+	const tabs = TYPE_TABS[type] || DEFAULT_TABS;
+	return tabs.filter((tab) => !tab.requiresId || !!id);
+}
+
+--- END OF features\admin\config\adminTabs.js ---
 
 --- FILE: features\admin\config\imageManifest.json ---
 [
@@ -9575,6 +10445,36 @@ export const getStrategy = (type) => {
   }
 ]
 --- END OF features\admin\config\imageManifest.json ---
+
+--- FILE: features\admin\config\relationshipTypes.js ---
+/**
+ * Canonical relationship types used across the admin system.
+ * Shared by RelationshipManager and NarrativeSuggestionPanel.
+ */
+export const RELATIONSHIP_TYPES = [
+	'member_of',
+	'leadership_relation',
+	'part_of',
+	'affiliated_with',
+	'family_relation',
+	'romantic_relation',
+	'professional_relation',
+	'located_in',
+	'parent_location',
+	'residence_relation',
+	'workplace_relation',
+	'ownership_relation',
+	'quest_giver',
+	'quest_objective',
+	'quest_update',
+	'quest_participant',
+	'quest_location',
+	'hostile_to',
+	'knowledge_of',
+	'encountered',
+];
+
+--- END OF features\admin\config\relationshipTypes.js ---
 
 --- FILE: features\admin\layouts\AdminLayout.jsx ---
 import React from 'react';
@@ -10714,4 +11614,75 @@ export const extractAvailableFields = (type, data = []) => {
 };
 
 --- END OF features\admin\utils\filterUtils.js ---
+
+--- FILE: features\admin\utils\narrativeScanner.js ---
+/**
+ * Scans narrative text against the entity index and returns mention suggestions.
+ * Reuses the same matching logic as the smart-text system.
+ */
+import { findEntityMatches } from '@/features/smart-text/useSmartText';
+
+/**
+ * Scan text and return unique entity mentions not already linked.
+ * @param {string} text - Narrative or event description text
+ * @param {Array} searchTokens - From useEntityIndex
+ * @param {Map} entityMap - From useEntityIndex
+ * @param {Set} existingEntityIds - IDs already linked to this session/event
+ * @returns {Array<{ entityId, entityName, entityType, snippet }>}
+ */
+export function scanForMentions(text, searchTokens, entityMap, existingEntityIds = new Set()) {
+	if (!text || !searchTokens?.length) return [];
+
+	const matches = findEntityMatches(text, searchTokens, entityMap);
+	const seen = new Set();
+
+	return matches
+		.filter((m) => {
+			if (seen.has(m.entity.id) || existingEntityIds.has(m.entity.id)) return false;
+			seen.add(m.entity.id);
+			return true;
+		})
+		.map((m) => {
+			// Extract a snippet of surrounding text for context
+			const snippetStart = Math.max(0, m.start - 40);
+			const snippetEnd = Math.min(text.length, m.end + 40);
+			const prefix = snippetStart > 0 ? '...' : '';
+			const suffix = snippetEnd < text.length ? '...' : '';
+			const snippet = prefix + text.slice(snippetStart, snippetEnd) + suffix;
+
+			return {
+				entityId: m.entity.id,
+				entityName: m.entity.name,
+				entityType: m.entity.type,
+				snippet,
+			};
+		});
+}
+
+/**
+ * Scan session narrative + all event descriptions, diff against existing relationships.
+ * @param {string} narrative - Session narrative text
+ * @param {Array} events - Session events with { id, description, relationships }
+ * @param {Array} searchTokens - From useEntityIndex
+ * @param {Map} entityMap - From useEntityIndex
+ * @param {Array} existingSessionRels - Existing session-level relationships
+ * @returns {{ sessionMentions: Array, eventMentions: Array<{ eventId, eventTitle, mentions: Array }> }}
+ */
+export function scanSession(narrative, events, searchTokens, entityMap, existingSessionRels = []) {
+	const existingSessionIds = new Set(existingSessionRels.map((r) => r.target?.id || r.to_entity_id));
+
+	const sessionMentions = scanForMentions(narrative, searchTokens, entityMap, existingSessionIds);
+
+	const eventMentions = (events || [])
+		.map((evt) => {
+			const existingEventIds = new Set((evt.relationships || []).map((r) => r.target?.id));
+			const mentions = scanForMentions(evt.description || '', searchTokens, entityMap, existingEventIds);
+			return mentions.length > 0 ? { eventId: evt.id, eventTitle: evt.title, mentions } : null;
+		})
+		.filter(Boolean);
+
+	return { sessionMentions, eventMentions };
+}
+
+--- END OF features\admin\utils\narrativeScanner.js ---
 

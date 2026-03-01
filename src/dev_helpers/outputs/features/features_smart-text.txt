@@ -37,16 +37,20 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ PARTIAL BUNDLE: FEATURES SMART-TEXT
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx
@@ -513,7 +524,7 @@ import { useEntityIndex } from './useEntityIndex';
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const findEntityMatches = (text, searchTokens, entityMap) => {
+export const findEntityMatches = (text, searchTokens, entityMap) => {
 	const matches = [];
 	const processedRanges = [];
 

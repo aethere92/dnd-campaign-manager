@@ -37,16 +37,20 @@ SPLIT BUNDLE: FEATURES_TIMELINE - API
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ SPLIT BUNDLE: FEATURES_TIMELINE - API
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ SPLIT BUNDLE: FEATURES_TIMELINE - API
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ SPLIT BUNDLE: FEATURES_TIMELINE - API
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ SPLIT BUNDLE: FEATURES_TIMELINE - API
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ SPLIT BUNDLE: FEATURES_TIMELINE - API
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx

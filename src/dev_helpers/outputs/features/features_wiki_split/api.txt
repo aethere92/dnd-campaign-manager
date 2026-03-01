@@ -37,16 +37,20 @@ SPLIT BUNDLE: FEATURES_WIKI - API
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ SPLIT BUNDLE: FEATURES_WIKI - API
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ SPLIT BUNDLE: FEATURES_WIKI - API
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ SPLIT BUNDLE: FEATURES_WIKI - API
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ SPLIT BUNDLE: FEATURES_WIKI - API
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ SPLIT BUNDLE: FEATURES_WIKI - API
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx
@@ -435,6 +446,7 @@ export const getWikiEntry = async (id, type) => {
 	// STRATEGY: Encounter Actions
 	// Uses the hydrated view to avoid N+1 attribute lookups
 	if (type === 'encounter') {
+		// 1. Fetch Legacy Actions
 		const { data: actions } = await supabase
 			.from('view_encounter_actions_hydrated')
 			.select('*')
@@ -442,7 +454,16 @@ export const getWikiEntry = async (id, type) => {
 			.order('round_number', { ascending: true })
 			.order('action_order', { ascending: true });
 
-		additional.encounterActions = actions || [];
+		additional.encounterActions = actions ||[];
+
+		// 2. Fetch New Timeline (in case entity_complete_view doesn't include it yet)
+		const { data: encData } = await supabase
+			.from('encounters')
+			.select('timeline')
+			.eq('id', id)
+			.single();
+		
+		additional.timeline = encData?.timeline ||[];
 	}
 
 	// STRATEGY: Event Session Resolution

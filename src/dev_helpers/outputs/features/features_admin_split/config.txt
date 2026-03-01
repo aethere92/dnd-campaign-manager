@@ -37,16 +37,20 @@ SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ SPLIT BUNDLE: FEATURES_ADMIN - CONFIG
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx
@@ -495,9 +506,15 @@ export const ADMIN_STRATEGIES = {
 		label: 'Encounter',
 		type: 'encounter',
 		primaryTable: 'encounters',
-		colMapping: { name: 'name', description: 'description' },
+		colMapping: { name: 'name', description: 'description', timeline: 'timeline' },
 		hasNarrative: true,
 		defaultAttributes: [
+			{
+				key: 'timeline_mode',
+				label: 'Public Display Mode',
+				type: 'select',
+				options: ['Legacy Combat Log', 'Narrative Timeline'],
+			},
 			{
 				key: 'status',
 				label: 'Status',
@@ -565,6 +582,54 @@ export const getStrategy = (type) => {
 };
 
 --- END OF features\admin\config\adminStrategies.js ---
+
+--- FILE: features\admin\config\adminTabs.js ---
+import { FileText, Calendar, Target, BookOpen, Swords, LinkIcon, Map, Scan } from 'lucide-react';
+
+/**
+ * Defines which tabs are available per entity type.
+ * Every type gets 'details'. Additional tabs are type-specific.
+ * Tabs with `requiresId: true` only show when editing an existing entity.
+ */
+
+const DETAILS_TAB = { id: 'details', label: 'Details', icon: FileText };
+const RELATIONSHIPS_TAB = { id: 'relationships', label: 'Links', icon: LinkIcon, requiresId: true };
+
+const TYPE_TABS = {
+	session: [
+		DETAILS_TAB,
+		{ id: 'events', label: 'Events', icon: Calendar, requiresId: true },
+		{ id: 'scanner', label: 'Scanner', icon: Scan, requiresId: true },
+		RELATIONSHIPS_TAB,
+	],
+	quest: [
+		DETAILS_TAB,
+		{ id: 'objectives', label: 'Objectives', icon: Target, requiresId: true },
+		RELATIONSHIPS_TAB,
+	],
+	encounter: [
+		DETAILS_TAB,
+		{ id: 'narrative', label: 'Narrative', icon: BookOpen, requiresId: true },
+		{ id: 'combat', label: 'Combat Log', icon: Swords, requiresId: true },
+		RELATIONSHIPS_TAB,
+	],
+};
+
+// Default tabs for any type not explicitly configured
+const DEFAULT_TABS = [DETAILS_TAB, RELATIONSHIPS_TAB];
+
+/**
+ * Returns the tab definitions for a given entity type, filtered by context.
+ * @param {string} type - Entity type
+ * @param {string|null} id - Entity ID (null for create mode)
+ * @returns {Array} Filtered tab definitions
+ */
+export function getTabsForType(type, id) {
+	const tabs = TYPE_TABS[type] || DEFAULT_TABS;
+	return tabs.filter((tab) => !tab.requiresId || !!id);
+}
+
+--- END OF features\admin\config\adminTabs.js ---
 
 --- FILE: features\admin\config\imageManifest.json ---
 [
@@ -769,4 +834,34 @@ export const getStrategy = (type) => {
   }
 ]
 --- END OF features\admin\config\imageManifest.json ---
+
+--- FILE: features\admin\config\relationshipTypes.js ---
+/**
+ * Canonical relationship types used across the admin system.
+ * Shared by RelationshipManager and NarrativeSuggestionPanel.
+ */
+export const RELATIONSHIP_TYPES = [
+	'member_of',
+	'leadership_relation',
+	'part_of',
+	'affiliated_with',
+	'family_relation',
+	'romantic_relation',
+	'professional_relation',
+	'located_in',
+	'parent_location',
+	'residence_relation',
+	'workplace_relation',
+	'ownership_relation',
+	'quest_giver',
+	'quest_objective',
+	'quest_update',
+	'quest_participant',
+	'quest_location',
+	'hostile_to',
+	'knowledge_of',
+	'encountered',
+];
+
+--- END OF features\admin\config\relationshipTypes.js ---
 

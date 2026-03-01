@@ -1,6 +1,6 @@
 ================================================================
 DEPENDENCY GRAPH
-Generated: 2026-02-25 20:37:22
+Generated: 2026-03-01 17:41:08
 ================================================================
 
 ### IMPORT RELATIONSHIPS
@@ -88,7 +88,10 @@ features\admin\api\adminService.js:
 
 features\admin\components\AdminForm.jsx:
   → ./AdminFormStyles
+  → ./AdminTabBar
   → ./EncounterManager
+  → ./EncounterNarrativeManager
+  → ./NarrativeSuggestionPanel
   → ./SessionEventManager
   → ./TacticalMapManager
   → ./inputs/AttributeValueInput
@@ -100,6 +103,7 @@ features\admin\components\AdminForm.jsx:
   → @/features/admin/components/RelationshipManager
   → @/features/admin/components/SmartImageInput
   → @/features/admin/config/adminStrategies
+  → @/features/admin/config/adminTabs
   → @/features/campaign/CampaignContext
   → @/shared/components/ui/Button
   → @tanstack/react-query
@@ -107,6 +111,10 @@ features\admin\components\AdminForm.jsx:
   → react
   → react-hook-form
   → react-router-dom
+
+features\admin\components\AdminTabBar.jsx:
+  → clsx
+  → react
 
 features\admin\components\AdvancedFilter.jsx:
   → @/features/admin/utils/filterUtils
@@ -118,6 +126,13 @@ features\admin\components\EncounterManager.jsx:
   → ./AdminFormStyles
   → ./EntitySearch
   → @/features/admin/api/adminService
+  → @/shared/components/ui/Button
+  → lucide-react
+  → react
+
+features\admin\components\EncounterNarrativeManager.jsx:
+  → ./AdminFormStyles
+  → ./MarkdownEditor
   → @/shared/components/ui/Button
   → lucide-react
   → react
@@ -157,6 +172,16 @@ features\admin\components\MarkdownEditorImpl.jsx:
   → react
   → tiptap-markdown
 
+features\admin\components\NarrativeSuggestionPanel.jsx:
+  → ./AdminFormStyles
+  → @/domain/entity/config/entityConfig
+  → @/features/admin/api/llmService
+  → @/features/admin/config/relationshipTypes
+  → @/features/admin/utils/narrativeScanner
+  → @/features/smart-text/useEntityIndex
+  → @/shared/components/ui/Button
+  → react
+
 features\admin\components\QuestObjectiveManager.jsx:
   → ./AdminFormStyles
   → @/features/admin/api/adminService
@@ -168,6 +193,7 @@ features\admin\components\QuestObjectiveManager.jsx:
 features\admin\components\RelationshipManager.jsx:
   → ./AdminFormStyles
   → @/features/admin/components/EntitySearch
+  → @/features/admin/config/relationshipTypes
   → @/shared/components/ui/Button
   → react
 
@@ -412,6 +438,9 @@ features\admin\components\inputs\StoragePathInput.jsx:
   → lucide-react
   → react
 
+features\admin\config\adminTabs.js:
+  → lucide-react
+
 features\admin\layouts\AdminLayout.jsx:
   → @/features/campaign/CampaignContext
   → @/shared/hooks/useTheme
@@ -475,6 +504,9 @@ features\admin\pages\SplitPaneManager.jsx:
 
 features\admin\utils\filterUtils.js:
   → @/features/admin/config/adminStrategies
+
+features\admin\utils\narrativeScanner.js:
+  → @/features/smart-text/useSmartText
 
 features\atlas\MapPage.jsx:
   → ./components/AtlasSidebar
@@ -647,13 +679,12 @@ features\campaign\useCampaignSelection.js:
   → react-router-dom
 
 features\dashboard\DashboardPage.jsx:
-  → ./components/ActiveThreads
   → ./components/ArchiveTree
   → ./components/CampaignHeader
   → ./components/CurrentArcMetadata
   → ./components/CurrentStoryStack
-  → ./components/InsightsGrid
   → ./components/PartyWidget
+  → ./components/QuestJournal
   → @/features/campaign/CampaignContext
   → @/features/dashboard/api/dashboardService
   → @/shared/components/ui/LoadingSpinner
@@ -697,6 +728,13 @@ features\dashboard\components\PartyWidget.jsx:
   → @/features/smart-text/SmartMarkdown
   → clsx
   → lucide-react
+  → react-router-dom
+
+features\dashboard\components\QuestJournal.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → clsx
+  → lucide-react
+  → react
   → react-router-dom
 
 features\dashboard\components\QuickInsights.jsx:
@@ -781,12 +819,23 @@ features\search\GlobalSearch.jsx:
 features\search\SearchContext.jsx:
   → react
 
+features\search\api\aiSearchService.js:
+  → @/shared/api/supabaseClient
+
 features\search\api\searchService.js:
   → @/shared/api/supabaseClient
+
+features\search\components\AiAnswer.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → lucide-react
+
+features\search\components\SearchFooter.jsx:
+  → lucide-react
 
 features\search\components\SearchModal.jsx:
   → ./SearchFooter
   → ./SearchResults
+  → clsx
   → lucide-react
   → react-dom
 
@@ -794,8 +843,8 @@ features\search\components\SearchResultItem.jsx:
   → clsx
 
 features\search\components\SearchResults.jsx:
+  → ./AiAnswer
   → ./SearchResultItem
-  → clsx
   → lucide-react
 
 features\search\components\SearchTrigger.jsx:
@@ -806,6 +855,7 @@ features\search\useGlobalSearch.js:
   → ./SearchContext
   → @/domain/entity/config/entityConfig
   → @/features/campaign/CampaignContext
+  → @/features/search/api/aiSearchService
   → @/features/search/api/searchService
   → @/features/search/utils/searchMapper
   → @tanstack/react-query
@@ -948,6 +998,12 @@ features\wiki\WikiLayout.jsx:
 features\wiki\api\wikiService.js:
   → @/shared/api/supabaseClient
 
+features\wiki\components\EncounterNarrativeTimeline.jsx:
+  → @/features/smart-text/SmartMarkdown
+  → clsx
+  → lucide-react
+  → react
+
 features\wiki\components\EncounterTimeline.jsx:
   → @/domain/entity/components/EntityIcon
   → @/domain/entity/components/EntityLink
@@ -957,6 +1013,7 @@ features\wiki\components\EncounterTimeline.jsx:
   → react
 
 features\wiki\components\EntityBody.jsx:
+  → ./EncounterNarrativeTimeline
   → ./EncounterTimeline
   → ./EntityHistory
   → ./QuestObjectives
@@ -1343,7 +1400,7 @@ shared\utils\markdownUtils.js:
 
 Most imported files (relative imports):
   ../AtlasEditorContext: 11 imports
-  ./AdminFormStyles: 8 imports
+  ./AdminFormStyles: 10 imports
   ./entityTypes: 4 imports
   ./EntitySearch: 3 imports
   ../components/VisualIconPicker: 2 imports
@@ -1357,23 +1414,23 @@ Most imported files (relative imports):
   ./entityIcons: 1 imports
   ./entityColors: 1 imports
   ./entityStyles: 1 imports
+  ./AdminTabBar: 1 imports
   ./inputs/AttributeValueInput: 1 imports
   ./inputs/StoragePathInput: 1 imports
   ./SessionEventManager: 1 imports
   ./EncounterManager: 1 imports
-  ./TacticalMapManager: 1 imports
 
 
 Files with most outgoing dependencies:
-  features\admin\components\AdminForm.jsx: 20 imports
+  features\admin\components\AdminForm.jsx: 24 imports
   app\AppRoutes.jsx: 18 imports
   features\admin\components\TacticalMapManager.jsx: 18 imports
   features\admin\components\atlas\AtlasEditor.jsx: 18 imports
   features\wiki\components\EntityMiniMap.jsx: 15 imports
   features\atlas\components\MapCanvas.jsx: 13 imports
   features\admin\components\atlas\components\EditorSidebar.jsx: 12 imports
-  features\dashboard\DashboardPage.jsx: 12 imports
   features\admin\pages\SplitPaneManager.jsx: 11 imports
+  features\dashboard\DashboardPage.jsx: 11 imports
   features\wiki\layouts\CharacterLayout.jsx: 11 imports
   features\wiki\pages\WikiLandingPage.jsx: 11 imports
   features\atlas\components\layers\MapMarkers.jsx: 10 imports
@@ -1381,7 +1438,7 @@ Files with most outgoing dependencies:
   features\wiki\layouts\SessionLayout.jsx: 10 imports
   features\admin\components\atlas\forms\MarkerForm.jsx: 9 imports
   features\admin\pages\EntityListPage.jsx: 9 imports
+  features\search\useGlobalSearch.js: 9 imports
+  features\wiki\components\EntityBody.jsx: 9 imports
   features\wiki\components\EntityLocalGraph.jsx: 9 imports
   features\wiki\components\landing\Swimlane.jsx: 9 imports
-  features\admin\components\MarkdownEditorImpl.jsx: 8 imports
-  features\admin\components\atlas\layers\EditAreasLayer.jsx: 8 imports

@@ -37,16 +37,20 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx
@@ -345,25 +356,69 @@ SPLIT BUNDLE: FEATURES_SEARCH - COMPONENTS
 ### SOURCE CODE
 ================================================================
 
+--- FILE: features\search\components\AiAnswer.jsx ---
+import { Sparkles } from 'lucide-react';
+import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
+
+export const AiAnswer = ({ answer }) => {
+	return (
+		<div className='mx-4 mt-3 mb-2'>
+			<div className='flex items-center gap-2 mb-2'>
+				<Sparkles size={13} className='text-purple-400' />
+				<span className='text-[10px] font-bold uppercase tracking-widest text-purple-400'>AI Answer</span>
+			</div>
+			<div className='rounded-lg border border-purple-500/20 bg-purple-500/5 p-4'>
+				<div className='prose prose-sm prose-invert max-w-none text-sm leading-relaxed
+					prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5
+					prose-strong:text-foreground prose-strong:font-semibold
+					text-muted-foreground'>
+					<SmartMarkdown>{answer}</SmartMarkdown>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+--- END OF features\search\components\AiAnswer.jsx ---
+
 --- FILE: features\search\components\SearchFooter.jsx ---
-export const SearchFooter = () => {
+import { Sparkles } from 'lucide-react';
+
+export const SearchFooter = ({ aiMode }) => {
 	return (
 		<div className='flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/30 text-[10px] text-muted-foreground'>
 			<div className='flex items-center gap-4'>
+				{aiMode ? (
+					<span className='flex items-center gap-1.5'>
+						<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↵</kbd>
+						<span>ask AI</span>
+					</span>
+				) : (
+					<>
+						<span className='flex items-center gap-1.5'>
+							<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↑</kbd>
+							<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↓</kbd>
+							<span>navigate</span>
+						</span>
+						<span className='flex items-center gap-1.5'>
+							<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↵</kbd>
+							<span>select</span>
+						</span>
+					</>
+				)}
+			</div>
+			<div className='flex items-center gap-4'>
+				{aiMode && (
+					<span className='flex items-center gap-1.5 text-purple-400'>
+						<Sparkles size={10} />
+						<span>Gemini Flash</span>
+					</span>
+				)}
 				<span className='flex items-center gap-1.5'>
-					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↑</kbd>
-					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↓</kbd>
-					<span>navigate</span>
-				</span>
-				<span className='flex items-center gap-1.5'>
-					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>↵</kbd>
-					<span>select</span>
+					<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>ESC</kbd>
+					<span>close</span>
 				</span>
 			</div>
-			<span className='flex items-center gap-1.5'>
-				<kbd className='px-1.5 py-0.5 bg-background border border-border rounded font-semibold'>ESC</kbd>
-				<span>close</span>
-			</span>
 		</div>
 	);
 };
@@ -372,13 +427,22 @@ export const SearchFooter = () => {
 
 --- FILE: features\search\components\SearchModal.jsx ---
 import { createPortal } from 'react-dom';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import { clsx } from 'clsx';
 import { SearchResults } from './SearchResults';
 import { SearchFooter } from './SearchFooter';
 
 export const SearchModal = ({ vm, inputRef }) => {
+	const hasApiKey = !!import.meta.env.VITE_GEMINI_API_KEY;
+
+	const handleSubmit = (e) => {
+		e.preventDefault();
+		if (vm.aiMode && vm.query.trim().length >= 2) {
+			vm.submitAiSearch();
+		}
+	};
+
 	return createPortal(
-		// Fixed inset-0 for full screen coverage on mobile
 		<div className='fixed inset-0 z-[100] flex flex-col lg:items-center lg:pt-[15vh] px-0 lg:px-4'>
 			{/* Backdrop */}
 			<div
@@ -389,8 +453,8 @@ export const SearchModal = ({ vm, inputRef }) => {
 			{/* Search Panel */}
 			<div className='relative w-full lg:max-w-2xl bg-background lg:rounded-xl shadow-2xl border-b lg:border border-border overflow-hidden flex flex-col h-full lg:h-auto lg:max-h-[70vh] animate-in fade-in slide-in-from-bottom-2 lg:slide-in-from-top-4 duration-200'>
 				{/* Search Input Area */}
-				<div className='flex items-center gap-3 p-4 border-b border-border bg-background shrink-0'>
-					<button onClick={vm.closeSearch} className='lg:hidden p-1 -ml-1 text-muted-foreground'>
+				<form onSubmit={handleSubmit} className='flex items-center gap-3 p-4 border-b border-border bg-background shrink-0'>
+					<button type='button' onClick={vm.closeSearch} className='lg:hidden p-1 -ml-1 text-muted-foreground'>
 						<X size={20} />
 					</button>
 					<Search size={18} className='text-muted-foreground/70 shrink-0 hidden lg:block' />
@@ -403,14 +467,17 @@ export const SearchModal = ({ vm, inputRef }) => {
 							vm.setQuery(e.target.value);
 							vm.setSelectedIndex(0);
 						}}
-						placeholder='Search sessions, entities, lore...'
+						placeholder={vm.aiMode ? 'Ask anything about your campaign...' : 'Search sessions, entities, lore...'}
 						className='flex-1 bg-transparent text-base lg:text-sm text-foreground placeholder:text-muted-foreground/70 outline-none h-10 lg:h-auto'
 					/>
 
-					{vm.isLoading && <Loader2 size={16} className='animate-spin text-amber-600' />}
+					{vm.aiLoading && <Loader2 size={16} className='animate-spin text-purple-400' />}
 
-					{vm.query && !vm.isLoading && (
+					{!vm.aiMode && vm.isLoading && <Loader2 size={16} className='animate-spin text-amber-600' />}
+
+					{vm.query && !vm.isLoading && !vm.aiLoading && (
 						<button
+							type='button'
 							onClick={() => {
 								vm.setQuery('');
 								inputRef.current?.focus();
@@ -419,19 +486,47 @@ export const SearchModal = ({ vm, inputRef }) => {
 							<X size={16} />
 						</button>
 					)}
+
+					{/* AI Submit Button */}
+					{vm.aiMode && vm.query.trim().length >= 2 && !vm.aiLoading && (
+						<button
+							type='submit'
+							className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 transition-all'>
+							<ArrowRight size={13} />
+							<span className='hidden lg:inline'>Ask</span>
+						</button>
+					)}
+
+					{/* AI Toggle */}
+					{hasApiKey && (
+						<button
+							type='button'
+							onClick={vm.toggleAiMode}
+							title={vm.aiMode ? 'Switch to keyword search' : 'Switch to AI search'}
+							className={clsx(
+								'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all border',
+								vm.aiMode
+									? 'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:bg-purple-500/25'
+									: 'bg-muted/50 text-muted-foreground/70 border-border hover:bg-muted hover:text-foreground'
+							)}>
+							<Sparkles size={13} />
+							<span className='hidden lg:inline'>AI</span>
+						</button>
+					)}
+
 					<kbd className='hidden lg:inline-block px-2 py-1 text-[10px] font-semibold text-muted-foreground/70 bg-muted border border-border rounded'>
 						ESC
 					</kbd>
-				</div>
+				</form>
 
-				{/* Results Area - Flex 1 for mobile scrolling */}
+				{/* Results Area */}
 				<div className='flex-1 overflow-y-auto bg-muted/10 custom-scrollbar'>
 					<SearchResults vm={vm} />
 				</div>
 
 				{/* Footer (Desktop Only) */}
 				<div className='hidden lg:block'>
-					<SearchFooter />
+					<SearchFooter aiMode={vm.aiMode} />
 				</div>
 			</div>
 		</div>,
@@ -483,9 +578,9 @@ export const SearchResultItem = ({ item, isSelected, onSelect, onHover }) => {
 --- END OF features\search\components\SearchResultItem.jsx ---
 
 --- FILE: features\search\components\SearchResults.jsx ---
-import { Search, Clock, Calendar, Database } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Search, Clock, Calendar, Database, Sparkles, AlertTriangle } from 'lucide-react';
 import { SearchResultItem } from './SearchResultItem';
+import { AiAnswer } from './AiAnswer';
 
 const GroupHeader = ({ label, icon: Icon }) => (
 	<div className='px-4 py-2 mt-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 bg-muted/50 border-y border-border/50 sticky top-0 z-10 backdrop-blur-sm'>
@@ -495,9 +590,10 @@ const GroupHeader = ({ label, icon: Icon }) => (
 );
 
 export const SearchResults = ({ vm }) => {
-	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent } = vm;
+	const { query, results, isLoading, recentSearches, selectedIndex, setSelectedIndex, handleSelect, clearRecent,
+		aiMode, aiAnswer, aiLoading, aiError, showAiAnswer, showKeywordResults } = vm;
 
-	// GROUPING LOGIC
+	// Grouping logic for keyword results
 	const groupedResults = results.reduce(
 		(acc, item) => {
 			const group = item.type === 'session' ? 'sessions' : 'entities';
@@ -538,58 +634,100 @@ export const SearchResults = ({ vm }) => {
 					) : (
 						<div className='text-center py-12 opacity-60'>
 							<Search size={40} className='mx-auto text-gray-300 mb-3' />
-							<p className='text-sm font-medium text-foreground mb-1'>Global Search</p>
-							<p className='text-xs text-muted-foreground'>Find anything in your campaign</p>
-						</div>
-					)}
-				</div>
-			) : results.length > 0 ? (
-				// Grouped Search Results
-				<div>
-					{groupedResults.sessions.length > 0 && (
-						<div className='mb-2'>
-							<GroupHeader label='Sessions' icon={Calendar} />
-							{groupedResults.sessions.map((item) => {
-								const idx = results.indexOf(item);
-								return (
-									<SearchResultItem
-										key={item.id}
-										item={item}
-										isSelected={idx === selectedIndex}
-										onSelect={() => handleSelect(item)}
-										onHover={() => setSelectedIndex(idx)}
-									/>
-								);
-							})}
-						</div>
-					)}
-
-					{groupedResults.entities.length > 0 && (
-						<div>
-							<GroupHeader label='Entities' icon={Database} />
-							{groupedResults.entities.map((item) => {
-								const idx = results.indexOf(item);
-								return (
-									<SearchResultItem
-										key={item.id}
-										item={item}
-										isSelected={idx === selectedIndex}
-										onSelect={() => handleSelect(item)}
-										onHover={() => setSelectedIndex(idx)}
-									/>
-								);
-							})}
+							<p className='text-sm font-medium text-foreground mb-1'>
+								{aiMode ? 'AI Campaign Search' : 'Global Search'}
+							</p>
+							<p className='text-xs text-muted-foreground'>
+								{aiMode ? 'Ask anything about your campaign' : 'Find anything in your campaign'}
+							</p>
 						</div>
 					)}
 				</div>
 			) : (
-				// No Results
-				!isLoading && (
-					<div className='text-center py-12 px-4'>
-						<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
-						<p className='text-xs text-muted-foreground'>Try checking your spelling</p>
-					</div>
-				)
+				<>
+					{/* AI Error Notice */}
+					{aiError && (
+						<div className='mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs'>
+							<AlertTriangle size={13} className='shrink-0' />
+							{aiError}
+						</div>
+					)}
+
+					{/* AI Answer */}
+					{showAiAnswer && aiAnswer && (
+						<AiAnswer answer={aiAnswer.answer} />
+					)}
+
+					{/* AI Loading */}
+					{aiMode && aiLoading && !showAiAnswer && (
+						<div className='p-6 text-center'>
+							<Sparkles size={24} className='mx-auto text-purple-400 animate-pulse mb-2' />
+							<p className='text-xs text-muted-foreground'>Searching campaign with AI...</p>
+						</div>
+					)}
+
+					{/* Keyword Results (primary or fallback) */}
+					{showKeywordResults && results.length > 0 && (
+						<div>
+							{aiMode && aiError && (
+								<GroupHeader label='Keyword Results' icon={Search} />
+							)}
+							{groupedResults.sessions.length > 0 && (
+								<div className='mb-2'>
+									{!aiMode || !aiError ? <GroupHeader label='Sessions' icon={Calendar} /> : null}
+									{groupedResults.sessions.map((item) => {
+										const idx = results.indexOf(item);
+										return (
+											<SearchResultItem
+												key={item.id}
+												item={item}
+												isSelected={idx === selectedIndex}
+												onSelect={() => handleSelect(item)}
+												onHover={() => setSelectedIndex(idx)}
+											/>
+										);
+									})}
+								</div>
+							)}
+
+							{groupedResults.entities.length > 0 && (
+								<div>
+									{!aiMode || !aiError ? <GroupHeader label='Entities' icon={Database} /> : null}
+									{groupedResults.entities.map((item) => {
+										const idx = results.indexOf(item);
+										return (
+											<SearchResultItem
+												key={item.id}
+												item={item}
+												isSelected={idx === selectedIndex}
+												onSelect={() => handleSelect(item)}
+												onHover={() => setSelectedIndex(idx)}
+											/>
+										);
+									})}
+								</div>
+							)}
+						</div>
+					)}
+
+					{/* No Results at all */}
+					{!isLoading && !aiLoading && !showAiAnswer && results.length === 0 && (
+						<div className='text-center py-12 px-4'>
+							{aiMode && !aiAnswer ? (
+								<>
+									<Sparkles size={28} className='mx-auto text-purple-400/50 mb-3' />
+									<p className='text-sm font-medium text-foreground mb-1'>Press Enter or click Ask</p>
+									<p className='text-xs text-muted-foreground'>to search with AI</p>
+								</>
+							) : (
+								<>
+									<p className='text-sm font-medium text-foreground mb-1'>No matches for "{query}"</p>
+									<p className='text-xs text-muted-foreground'>Try checking your spelling</p>
+								</>
+							)}
+						</div>
+					)}
+				</>
 			)}
 		</div>
 	);

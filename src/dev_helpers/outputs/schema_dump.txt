@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 2/28/2026, 10:16:04 AM
+   Generated: 3/1/2026, 5:42:05 PM
 =========================================
 
 -----------------------------------------
@@ -107,21 +107,22 @@ TABLE: characters [⚠️ RLS DISABLED]
     }
   },
   {
-    "id": "a87b1f4d-421d-4064-827f-470a6e6d0574",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "name": "Loraine",
-    "created_at": "2025-12-07T20:22:47.251Z",
-    "updated_at": "2026-01-18T20:13:39.249Z",
-    "description": "Work in progress, will be available later.",
+    "id": "6e7b19f2-d755-4c8e-858c-ec998ff1382f",
+    "campaign_id": "d147179e-fe98-47e4-84ea-b3bb2e4bc238",
+    "name": "Nora",
+    "created_at": "2025-12-10T17:18:35.168Z",
+    "updated_at": "2026-01-07T18:51:01.921Z",
+    "description": null,
     "attributes": {
-      "race": "Vampire",
-      "class": "Fighter Battlemaster",
+      "icon": "images/c01/chars/nora_portrait.webp",
+      "race": "Half-Elf",
+      "class": "Ranger",
       "level": "8",
-      "speed": "30ft.",
-      "gender": "Female",
-      "is_active": false,
-      "hit points": "N/A",
-      "armor class": "N/A"
+      "speed": "35ft.",
+      "is_active": "true",
+      "languages": "Common, Deep Speech, Draconic, Dwarvish, Elvish, Giant, Sylvan",
+      "hit points": "95",
+      "armor class": "16"
     }
   }
 ]
@@ -679,6 +680,19 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
   -- EXAMPLE DATA (2 rows) --
 [
   {
+    "id": "761b8691-c9a3-4a81-bd7b-1500200ad444",
+    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+    "title": "Thunder and Ash",
+    "description": "With the enemy army mere days from Drellin's Ferry, the party makes a desperate gambit: allying with Dreshi, a zealous goblin follower of Lamashtu, to destroy the only bridge across the gorge. The sabotage succeeds spectacularly, buying precious time for the town's evacuation. As refugees flee westward, the party encounters Loraine Martinique, a vampire noble investigating fey portals, and receives troubling news of an alliance between the Archlich of Pahuax and the approaching horde. The arc closes with Drellin's Ferry emptied, its people scattered, and new mysteries beckoning the heroes toward darker conspiracies.",
+    "created_at": "2026-01-01T08:15:08.410Z",
+    "updated_at": "2026-01-01T08:15:08.410Z",
+    "order": 5,
+    "attributes": {
+      "type": "Primary",
+      "order": 5
+    }
+  },
+  {
     "id": "a9f6e2ea-3fbd-44d4-abc0-c62f94405406",
     "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
     "title": "Shadows of the Witchwood",
@@ -689,19 +703,6 @@ TABLE: narrative_arcs [⚠️ RLS DISABLED]
     "attributes": {
       "type": "Primary",
       "order": 2
-    }
-  },
-  {
-    "id": "c8ae0ed1-edba-4330-8853-a59cc6ea416d",
-    "campaign_id": "415036c7-08cc-4832-bfec-6daca13e3f8a",
-    "title": "The Pirate Bargain",
-    "description": "Escaping the subterranean hell of the caves, the party is rescued - or perhaps captured - by the pirate warship Leviathan's Hull. Commander Bianca, the exiled Queen of Pelagos, and her towering companion Turiados command a crew bound by blood oaths and dreams of vengeance against the necromancer Sandro. Stranded far from home, the pirates negotiate passage and speak of a mysterious General Lee. This chance encounter opens a window to conflicts brewing across distant seas, planting seeds for future entanglements with pirate queens and resurrected gods.",
-    "created_at": "2026-01-01T08:14:50.735Z",
-    "updated_at": "2026-01-01T08:14:50.735Z",
-    "order": 3,
-    "attributes": {
-      "type": "Secondary",
-      "order": 3
     }
   }
 ]
@@ -914,7 +915,7 @@ TABLE: sessions [⚠️ RLS DISABLED]
     "title": "01 - To Drellin's Ferry",
     "narrative": "### First encounter We begin on the fourth day of travel. Afternoon has settled in, the sun still burning, the air hot and still. The lands of Elsir Vale have blurred by now - every town looks the same, and our heroes can no longer tell one from the next. Drellin's Ferry lies just a few miles ahead - both their destination and their long-awaited respite from the arduous road. Conversation has grown scarce. After four days on the road, there's little left to say, and even less to want beyond a soft bed and a hot meal. A small... [TRUNCATED AT 100 WORDS]",
     "created_at": "2025-11-19T20:57:25.759Z",
-    "updated_at": "2026-01-24T06:54:13.591Z",
+    "updated_at": "2026-02-28T10:34:00.756Z",
     "attributes": {
       "synopsis": "The party is ambushed by hobgoblins at a ruined farmhouse. Fighting together likely for the first time, they combine lightning, fire, and coordinated strikes to defeat the raiders. A captive reveals Wyrmlord Koth is gathering tribes for the Day of Ruin before Olek honors his oath of swift death. They find bodies bearing a red hand symbol. After burning the dead and accidentally terrifying a farmer's family, they reach Drellin's Ferry and split up to investigate.",
       "session_date": "2025-04-12",
@@ -1423,29 +1424,6 @@ VIEW: view_session_events_admin
    FUNCTIONS
 =========================================
 
-FUNCTION: api_search_entities(p_campaign_id uuid, p_search_term text)
------------------------------------------
-
-BEGIN
-  RETURN QUERY
-  -- Search generic Entities
-  SELECT e.id, e.name, e.type, e.description
-  FROM entities e
-  WHERE e.campaign_id = p_campaign_id
-    AND (e.name ILIKE '%' || p_search_term || '%')
-  
-  UNION ALL
-  
-  -- Search Sessions (normalized)
-  SELECT s.id, s.title as name, 'session' as type, s.narrative as description
-  FROM sessions s
-  WHERE s.campaign_id = p_campaign_id
-    AND (s.title ILIKE '%' || p_search_term || '%')
-  
-  LIMIT 20;
-END;
-
-
 FUNCTION: sync_event_to_entity()
 -----------------------------------------
 
@@ -1516,40 +1494,120 @@ FUNCTION: create_reverse_relationship()
 -----------------------------------------
 
 BEGIN
-  -- Only proceed if is_bidirectional is true
-  IF NEW.is_bidirectional = true THEN
-    -- Check if reverse relationship already exists to avoid infinite loop
-    IF NOT EXISTS (
-      SELECT 1 FROM entity_relationships
-      WHERE from_entity_id = NEW.to_entity_id
-        AND to_entity_id = NEW.from_entity_id
-        AND relationship_type = NEW.relationship_type
-    ) THEN
-      -- Insert the reverse relationship
-      INSERT INTO entity_relationships (
-        from_entity_id,
-        to_entity_id,
-        relationship_type,
-        description,
-        is_bidirectional,
-        is_hidden
-      ) VALUES (
-        NEW.to_entity_id,           -- Swap: to becomes from
-        NEW.from_entity_id,          -- Swap: from becomes to
-        NEW.relationship_type,
-        NEW.description,
-        NEW.is_bidirectional,
-        NEW.is_hidden
-      );
-    END IF;
+  -- Recursion guard for UPDATE and DELETE
+  IF current_setting('app.syncing_relationship', true) = 'true' THEN
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
   END IF;
-  
+
+  -- === DELETE ===
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.is_bidirectional = true THEN
+      PERFORM set_config('app.syncing_relationship', 'true', true);
+      DELETE FROM entity_relationships
+      WHERE from_entity_id = OLD.to_entity_id
+        AND to_entity_id = OLD.from_entity_id
+        AND is_bidirectional = true;
+      PERFORM set_config('app.syncing_relationship', 'false', true);
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- === INSERT (original logic preserved) ===
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.is_bidirectional = true THEN
+      IF NOT EXISTS (
+        SELECT 1 FROM entity_relationships
+        WHERE from_entity_id = NEW.to_entity_id
+          AND to_entity_id = NEW.from_entity_id
+          AND relationship_type = NEW.relationship_type
+      ) THEN
+        INSERT INTO entity_relationships (
+          from_entity_id, to_entity_id, relationship_type,
+          description, is_bidirectional, is_hidden
+        ) VALUES (
+          NEW.to_entity_id, NEW.from_entity_id, NEW.relationship_type,
+          NEW.description, NEW.is_bidirectional, NEW.is_hidden
+        );
+      END IF;
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  -- === UPDATE ===
+  IF TG_OP = 'UPDATE' THEN
+    PERFORM set_config('app.syncing_relationship', 'true', true);
+
+    -- Was bidirectional, still bidirectional → sync the mirror
+    IF OLD.is_bidirectional = true AND NEW.is_bidirectional = true THEN
+      UPDATE entity_relationships
+      SET relationship_type = NEW.relationship_type,
+          is_hidden = NEW.is_hidden,
+          description = NEW.description
+      WHERE from_entity_id = OLD.to_entity_id
+        AND to_entity_id = OLD.from_entity_id
+        AND is_bidirectional = true;
+
+    -- Was bidirectional, now unidirectional → delete the mirror
+    ELSIF OLD.is_bidirectional = true AND NEW.is_bidirectional = false THEN
+      DELETE FROM entity_relationships
+      WHERE from_entity_id = OLD.to_entity_id
+        AND to_entity_id = OLD.from_entity_id
+        AND is_bidirectional = true;
+
+    -- Was unidirectional, now bidirectional → create the mirror
+    ELSIF OLD.is_bidirectional = false AND NEW.is_bidirectional = true THEN
+      IF NOT EXISTS (
+        SELECT 1 FROM entity_relationships
+        WHERE from_entity_id = NEW.to_entity_id
+          AND to_entity_id = NEW.from_entity_id
+          AND relationship_type = NEW.relationship_type
+      ) THEN
+        INSERT INTO entity_relationships (
+          from_entity_id, to_entity_id, relationship_type,
+          description, is_bidirectional, is_hidden
+        ) VALUES (
+          NEW.to_entity_id, NEW.from_entity_id, NEW.relationship_type,
+          NEW.description, true, NEW.is_hidden
+        );
+      END IF;
+    END IF;
+
+    PERFORM set_config('app.syncing_relationship', 'false', true);
+    RETURN NEW;
+  END IF;
+
   RETURN NEW;
+END;
+
+
+FUNCTION: api_search_entities(p_campaign_id uuid, p_search_term text)
+-----------------------------------------
+
+BEGIN
+  RETURN QUERY
+  -- Search generic Entities (exclude sessions, they come from the sessions query below)
+  SELECT e.id, e.name, e.type, e.description
+  FROM entities e
+  WHERE e.campaign_id = p_campaign_id
+    AND e.type != 'session'
+    AND (e.name ILIKE '%' || p_search_term || '%')
+
+  UNION ALL
+
+  -- Search Sessions (normalized)
+  SELECT s.id, s.title as name, 'session'::text as type, s.narrative as description
+  FROM sessions s
+  WHERE s.campaign_id = p_campaign_id
+    AND (s.title ILIKE '%' || p_search_term || '%')
+
+  LIMIT 20;
 END;
 
 
 FUNCTION: sync_to_entities()
 -----------------------------------------
+
 DECLARE
   entity_type text := TG_ARGV[0];
   entity_name text;
@@ -1566,7 +1624,7 @@ BEGIN
     entity_name := NEW.title;
     entity_desc := null;
   ELSE
-    entity_name := NEW.name;          -- NPCs, Factions, Locations use 'name'
+    entity_name := NEW.name;
     entity_desc := NEW.description;  
   END IF;
 
@@ -1587,11 +1645,19 @@ BEGIN
     WHERE id = NEW.id;
     
   ELSIF (TG_OP = 'DELETE') THEN
+    -- Clean up all relationships involving this entity.
+    -- The bidirectional trigger (create_reverse_relationship) will
+    -- automatically delete mirror rows for any bidirectional relationships.
+    DELETE FROM public.entity_relationships
+    WHERE from_entity_id = OLD.id OR to_entity_id = OLD.id;
+
+    -- Then remove from entities table
     DELETE FROM public.entities WHERE id = OLD.id;
   END IF;
   
   RETURN NULL;
 END;
+
 
 FUNCTION: update_updated_at()
 -----------------------------------------
@@ -1627,11 +1693,11 @@ BEFORE UPDATE
 EXECUTE: EXECUTE FUNCTION update_updated_at()
 
 TRIGGER: tr_sync_factions_to_entities ON encounters
-AFTER INSERT
+AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('encounter')
 
 TRIGGER: tr_sync_factions_to_entities ON encounters
-AFTER DELETE
+AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('encounter')
 
 TRIGGER: tr_sync_factions_to_entities ON encounters
@@ -1639,7 +1705,15 @@ AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('encounter')
 
 TRIGGER: create_bidirectional_relationship ON entity_relationships
+AFTER DELETE
+EXECUTE: EXECUTE FUNCTION create_reverse_relationship()
+
+TRIGGER: create_bidirectional_relationship ON entity_relationships
 AFTER INSERT
+EXECUTE: EXECUTE FUNCTION create_reverse_relationship()
+
+TRIGGER: create_bidirectional_relationship ON entity_relationships
+AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION create_reverse_relationship()
 
 TRIGGER: factions_updated_at ON factions
@@ -1647,7 +1721,7 @@ BEFORE UPDATE
 EXECUTE: EXECUTE FUNCTION update_updated_at()
 
 TRIGGER: tr_sync_factions_to_entities ON factions
-AFTER UPDATE
+AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('faction')
 
 TRIGGER: tr_sync_factions_to_entities ON factions
@@ -1655,8 +1729,12 @@ AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('faction')
 
 TRIGGER: tr_sync_factions_to_entities ON factions
-AFTER INSERT
+AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('faction')
+
+TRIGGER: sync_to_entities ON items
+AFTER UPDATE
+EXECUTE: EXECUTE FUNCTION sync_to_entities('item')
 
 TRIGGER: sync_to_entities ON items
 AFTER DELETE
@@ -1664,10 +1742,6 @@ EXECUTE: EXECUTE FUNCTION sync_to_entities('item')
 
 TRIGGER: sync_to_entities ON items
 AFTER INSERT
-EXECUTE: EXECUTE FUNCTION sync_to_entities('item')
-
-TRIGGER: sync_to_entities ON items
-AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('item')
 
 TRIGGER: locations_updated_at ON locations
@@ -1675,10 +1749,6 @@ BEFORE UPDATE
 EXECUTE: EXECUTE FUNCTION update_updated_at()
 
 TRIGGER: tr_sync_locations_to_entities ON locations
-AFTER DELETE
-EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
-
-TRIGGER: tr_sync_locations_to_entities ON locations
 AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
 
@@ -1686,8 +1756,12 @@ TRIGGER: tr_sync_locations_to_entities ON locations
 AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
 
-TRIGGER: sync_to_entities ON narrative_arcs
+TRIGGER: tr_sync_locations_to_entities ON locations
 AFTER DELETE
+EXECUTE: EXECUTE FUNCTION sync_to_entities('location')
+
+TRIGGER: sync_to_entities ON narrative_arcs
+AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
 
 TRIGGER: sync_to_entities ON narrative_arcs
@@ -1695,7 +1769,7 @@ AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
 
 TRIGGER: sync_to_entities ON narrative_arcs
-AFTER UPDATE
+AFTER DELETE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('narrative_arc')
 
 TRIGGER: npcs_updated_at ON npcs
@@ -1735,15 +1809,15 @@ AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_to_entities('quest')
 
 TRIGGER: trigger_sync_event_entity ON session_events
-AFTER UPDATE
-EXECUTE: EXECUTE FUNCTION sync_event_to_entity()
-
-TRIGGER: trigger_sync_event_entity ON session_events
 AFTER INSERT
 EXECUTE: EXECUTE FUNCTION sync_event_to_entity()
 
 TRIGGER: trigger_sync_event_entity ON session_events
 AFTER DELETE
+EXECUTE: EXECUTE FUNCTION sync_event_to_entity()
+
+TRIGGER: trigger_sync_event_entity ON session_events
+AFTER UPDATE
 EXECUTE: EXECUTE FUNCTION sync_event_to_entity()
 
 TRIGGER: sessions_updated_at ON sessions

@@ -37,16 +37,20 @@ SPLIT BUNDLE: FEATURES_WIKI - UTILS
     admin/
       api/
         adminService.js
+        llmService.js
       components/
         AdminForm.jsx
         AdminFormStyles.js
+        AdminTabBar.jsx
         AdvancedFilter.jsx
         EncounterManager.jsx
+        EncounterNarrativeManager.jsx
         EntitySearch.jsx
         EventTagger.jsx
         ImageLibraryModal.jsx
         MarkdownEditor.jsx
         MarkdownEditorImpl.jsx
+        NarrativeSuggestionPanel.jsx
         QuestObjectiveManager.jsx
         RelationshipManager.jsx
         SessionEventManager.jsx
@@ -99,7 +103,9 @@ SPLIT BUNDLE: FEATURES_WIKI - UTILS
         ui/
       config/
         adminStrategies.js
+        adminTabs.js
         imageManifest.json
+        relationshipTypes.js
       hooks/
       layouts/
         AdminLayout.jsx
@@ -116,6 +122,7 @@ SPLIT BUNDLE: FEATURES_WIKI - UTILS
       styles/
       utils/
         filterUtils.js
+        narrativeScanner.js
     atlas/
       MapPage.jsx
       useMapData.js
@@ -176,6 +183,7 @@ SPLIT BUNDLE: FEATURES_WIKI - UTILS
         CurrentStoryStack.jsx
         InsightsGrid.jsx
         PartyWidget.jsx
+        QuestJournal.jsx
         QuickInsights.jsx
     graph/
       GraphPage.jsx
@@ -205,8 +213,10 @@ SPLIT BUNDLE: FEATURES_WIKI - UTILS
       SearchContext.jsx
       useGlobalSearch.js
       api/
+        aiSearchService.js
         searchService.js
       components/
+        AiAnswer.jsx
         SearchFooter.jsx
         SearchModal.jsx
         SearchResultItem.jsx
@@ -256,6 +266,7 @@ SPLIT BUNDLE: FEATURES_WIKI - UTILS
       api/
         wikiService.js
       components/
+        EncounterNarrativeTimeline.jsx
         EncounterTimeline.jsx
         EntityBody.jsx
         EntityHeader.jsx
@@ -718,46 +729,63 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 	}
 
 	// Encounter Actions
-	if (type === 'encounter' && additionalData.encounterActions) {
-		const actions = additionalData.encounterActions.map((action) => {
-			const actorAttrs = action.actor?.attributes || {};
-			const targetAttrs = action.target?.attributes || {};
+if (type === 'encounter') {
+		// 1. Map Legacy Actions
+		if (additionalData.encounterActions) {
+			const actions = additionalData.encounterActions.map((action) => {
+				const actorAttrs = action.actor?.attributes || {};
+				const targetAttrs = action.target?.attributes || {};
 
-			return {
-				id: action.id,
-				round: action.round_number,
-				order: action.action_order,
-				type: action.action_type,
-				isFriendly: action.result === 'SUCCESS',
-				description: action.action_description,
-				result: action.result,
-				effect: action.effect,
-				actor: {
-					id: action.actor?.id,
-					name: action.actor?.name || 'Unknown',
-					type: action.actor?.type || 'default',
-					iconUrl: resolveImageUrl(actorAttrs, 'icon'),
-				},
-				// CHANGED: Allow target if it has ID OR Name (fixes manual/ad-hoc targets)
-				target:
-					action.target && (action.target.id || action.target.name)
-						? {
-								id: action.target.id,
-								name: action.target.name || 'Unknown Target',
-								type: action.target.type || 'default',
-								iconUrl: resolveImageUrl(targetAttrs, 'icon'),
-						  }
-						: null,
-			};
-		});
+				return {
+					id: action.id,
+					round: action.round_number,
+					order: action.action_order,
+					type: action.action_type,
+					isFriendly: action.result === 'SUCCESS',
+					description: action.action_description,
+					result: action.result,
+					effect: action.effect,
+					actor: {
+						id: action.actor?.id,
+						name: action.actor?.name || 'Unknown',
+						type: action.actor?.type || 'default',
+						iconUrl: resolveImageUrl(actorAttrs, 'icon'),
+					},
+					target:
+						action.target && (action.target.id || action.target.name)
+							? {
+									id: action.target.id,
+									name: action.target.name || 'Unknown Target',
+									type: action.target.type || 'default',
+									iconUrl: resolveImageUrl(targetAttrs, 'icon'),
+							  }
+							: null,
+				};
+			});
 
-		const rounds = {};
-		actions.forEach((action) => {
-			if (!rounds[action.round]) rounds[action.round] = [];
-			rounds[action.round].push(action);
-		});
+			const rounds = {};
+			actions.forEach((action) => {
+				if (!rounds[action.round]) rounds[action.round] = [];
+				rounds[action.round].push(action);
+			});
+			entity.combatRounds = rounds;
+		}
 
-		entity.combatRounds = rounds;
+		// 2. Map New Narrative Timeline
+		if (additionalData.timeline) {
+			const narrativeTimeline = {};
+			additionalData.timeline.forEach((item) => {
+				const round = item.round || 1;
+				if (!narrativeTimeline[round]) narrativeTimeline[round] = [];
+				narrativeTimeline[round].push(item);
+			});
+			
+			// Sort items inside each round mapped dictionary
+			Object.keys(narrativeTimeline).forEach((round) => {
+				narrativeTimeline[round].sort((a, b) => (a.order || 0) - (b.order || 0));
+			});
+			entity.narrativeTimeline = narrativeTimeline;
+		}
 	}
 
 	// Event Session Mapping
