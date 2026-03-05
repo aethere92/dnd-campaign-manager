@@ -27,3 +27,12 @@ jobs:
             -X GET "https://yffukfulnggfhlgoyowg.supabase.co/rest/v1/campaigns?select=id&limit=1" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+      - name: Debug secret
+        run: |
+          if [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
+            echo "SECRET IS EMPTY"
+          else
+            echo "SECRET IS SET (length: ${#ANON_KEY})"
+          fi
+        env:
+          ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
