@@ -1,6 +1,6 @@
 =========================================
    SUPABASE FULL DIAGNOSTIC DUMP (V3)
-   Generated: 3/1/2026, 5:42:05 PM
+   Generated: 3/8/2026, 3:11:40 PM
 =========================================
 
 -----------------------------------------
@@ -485,6 +485,20 @@ TABLE: items [⚠️ RLS DISABLED]
 ]
 
 -----------------------------------------
+TABLE: keepalive [🔒 RLS ENABLED]
+-----------------------------------------
+  id                        integer         NOT NULL 
+  pinged_at                 timestamp with time zone  
+
+  -- EXAMPLE DATA (1 rows) --
+[
+  {
+    "id": 1,
+    "pinged_at": "2026-03-06T02:10:12.000Z"
+  }
+]
+
+-----------------------------------------
 TABLE: locations [⚠️ RLS DISABLED]
 -----------------------------------------
   id                        uuid            NOT NULL DEFAULT gen_random_uuid()
@@ -503,7 +517,7 @@ TABLE: locations [⚠️ RLS DISABLED]
     "name": "Pahuax",
     "description": "A prosperous trade city located southeast of Drellin's Ferry near the Gorgona Badlands. Bisected by a river and frequenting ships from as far as Luskan, Pahuax is currently in a state of political paralysis following the suspicious death of its king. The nobility is sequestered in the Citadel to elect a successor, but the \"election\" is actually a combat tournament—noble houses settle succession with blood, hiring mercenaries including the Iron Wolves, barbarians from the Spine of the World, pirates, and even undead fighters. The city is alive with festival energy: red lanterns sway from every archway, fireworks bloom overhead, and... [TRUNCATED AT 100 WORDS]",
     "created_at": "2025-12-24T12:41:09.565Z",
-    "updated_at": "2026-02-24T17:41:44.787Z",
+    "updated_at": "2026-03-01T16:58:28.481Z",
     "attributes": {
       "type": "city",
       "background_image": "images/c02/locs/pahuax_header.webp"
@@ -989,6 +1003,9 @@ TABLE: factions
 TABLE: items
   CREATE UNIQUE INDEX items_pkey ON public.items USING btree (id)
 
+TABLE: keepalive
+  CREATE UNIQUE INDEX keepalive_pkey ON public.keepalive USING btree (id)
+
 TABLE: locations
   CREATE INDEX idx_locations_campaign ON public.locations USING btree (campaign_id)
 
@@ -1062,7 +1079,19 @@ TABLE: sessions
    SECURITY POLICIES (RLS)
 =========================================
 
-No RLS Policies found.
+TABLE: keepalive | POLICY: Allow anon insert
+  COMMAND: INSERT
+  USING: null
+  WITH CHECK: true
+
+TABLE: keepalive | POLICY: Allow anon select
+  COMMAND: SELECT
+  USING: true
+
+TABLE: keepalive | POLICY: Allow anon update
+  COMMAND: UPDATE
+  USING: true
+  WITH CHECK: true
 
 =========================================
    VIEWS
