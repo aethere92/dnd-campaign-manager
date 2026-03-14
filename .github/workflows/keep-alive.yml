@@ -3,7 +3,7 @@ name: Supabase Keep Alive
 on:
   schedule:
     # Every 5 days to stay well within the 7-day window
-    - cron: '0 0 */5 * *'
+    - cron: '0 */12 * * *'
   workflow_dispatch:
 
 jobs:
