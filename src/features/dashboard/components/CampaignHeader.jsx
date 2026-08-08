@@ -7,7 +7,6 @@ export const CampaignHeader = ({ campaign, counts }) => {
 
 	return (
 		<div className='relative w-full mb-6 flex flex-col items-center text-center'>
-			
 			{/* --- Subtle Watermark Background Layer --- */}
 			{bgImage && (
 				<div className='absolute -top-6 -left-6 -right-6 bottom-0 z-0 pointer-events-none flex justify-center'>
@@ -15,13 +14,12 @@ export const CampaignHeader = ({ campaign, counts }) => {
 					  CSS mask-image forces the actual image pixels to turn transparent at the bottom.
 					  This guarantees a flawless fade into the background without spilling into the cards below.
 					*/}
-					<div 
+					<div
 						className='w-full max-w-[1400px] h-full relative'
 						style={{
 							maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-							WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)'
-						}}
-					>
+							WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
+						}}>
 						<img
 							src={bgImage}
 							alt=''
@@ -35,7 +33,6 @@ export const CampaignHeader = ({ campaign, counts }) => {
 
 			{/* --- Content Layer (Original Clean Aesthetic) --- */}
 			<div className='relative z-10 max-w-4xl mx-auto flex flex-col items-center gap-4 pt-8 pb-4'>
-				
 				{/* 1. Meta Label */}
 				<div className='flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-primary/80'>
 					<Crown size={12} />

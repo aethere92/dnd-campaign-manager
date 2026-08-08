@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import EntityIcon from '@/domain/entity/components/EntityIcon';
-import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
-import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { useEntityIndex } from '@/features/smart-text/hooks/useEntityIndex';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { parseAttributes } from '@/domain/entity/utils/attributeParser';
 
 // Utility to calculate brightness from an image
 const getImageBrightness = (imageUrl) => {
@@ -57,10 +59,9 @@ const getImageBrightness = (imageUrl) => {
 
 export const EntityEmbed = ({ id, type, label }) => {
 	const navigate = useNavigate();
-	// FIX: Destructure the 'map' from the new hook signature
+	const routes = useCampaignRoutes();
 	const { map: entityMap } = useEntityIndex();
 
-	// FIX: Use .get() (O(1) speed) instead of .find()
 	const entity = entityMap.get(id);
 	const resolvedLabel = label || entity?.name || 'Unknown Entity';
 
@@ -69,24 +70,28 @@ export const EntityEmbed = ({ id, type, label }) => {
 	const customIcon = entity?.iconUrl || resolveImageUrl(attributes, 'icon');
 	const bgImage = resolveImageUrl(attributes, 'background_image');
 
-	// State for brightness detection
-	const [isDarkBackground, setIsDarkBackground] = useState(false);
-	const [isAnalyzing, setIsAnalyzing] = useState(!!bgImage);
+	// Brightness detection. The result is stored together with the image it was
+	// measured from, so "still analyzing" is derived rather than tracked as a
+	// second state that has to be cleared in the effect's guard branch (what
+	// react-hooks/set-state-in-effect flagged). Keying also fixes a race: a slow
+	// analysis for a previous image can no longer land on the current one.
+	const [analysis, setAnalysis] = useState(null);
 
-	// Analyze background image brightness
 	useEffect(() => {
-		if (!bgImage) {
-			setIsAnalyzing(false);
-			return;
-		}
+		if (!bgImage) return;
 
-		setIsAnalyzing(true);
-
+		let cancelled = false;
 		getImageBrightness(bgImage).then((brightness) => {
-			setIsDarkBackground(brightness < 127.5);
-			setIsAnalyzing(false);
+			if (!cancelled) setAnalysis({ url: bgImage, isDark: brightness < 127.5 });
 		});
+
+		return () => {
+			cancelled = true;
+		};
 	}, [bgImage]);
+
+	const isAnalyzing = !!bgImage && analysis?.url !== bgImage;
+	const isDarkBackground = analysis?.url === bgImage && analysis.isDark;
 
 	// Border Color Logic (Left Side Only)
 	const getBorderColor = () => {
@@ -120,7 +125,7 @@ export const EntityEmbed = ({ id, type, label }) => {
 			role='button'
 			onClick={(e) => {
 				e.preventDefault();
-				navigate(`/wiki/${type}/${id}`);
+				navigate(routes.wikiEntity(type, id));
 			}}
 			className={clsx(
 				// Layout & Base (Changed to flex to behave like block context within span)

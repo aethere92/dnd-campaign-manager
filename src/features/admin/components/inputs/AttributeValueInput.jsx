@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { X, Plus } from 'lucide-react';
 import { ADMIN_INPUT_CLASS } from '../AdminFormStyles';
 
 // --- 1. AUTO-EXPANDING STRING INPUT ---
@@ -138,24 +138,32 @@ const ListInput = ({ value, onChange }) => {
 	});
 	const [draft, setDraft] = useState('');
 
-	useEffect(() => {
-		onChange(JSON.stringify(items));
-	}, [items]);
+	// Notify the parent from the handlers that actually change the list, rather
+	// than from an effect on `items`.
+	//
+	// The effect version could not list `onChange` as a dependency without looping,
+	// because callers pass an inline arrow. It also fired on mount, reporting a
+	// change before the user had edited anything — which marks a pristine form
+	// dirty and can rewrite a stored value purely as a side effect of rendering.
+	const commit = (nextItems) => {
+		setItems(nextItems);
+		onChange(JSON.stringify(nextItems));
+	};
 
 	const addItem = () => {
 		if (!draft.trim()) return;
-		setItems([...items, draft.trim()]);
+		commit([...items, draft.trim()]);
 		setDraft('');
 	};
 
 	const updateItem = (index, newVal) => {
 		const newItems = [...items];
 		newItems[index] = newVal;
-		setItems(newItems);
+		commit(newItems);
 	};
 
 	const deleteItem = (index) => {
-		setItems(items.filter((_, i) => i !== index));
+		commit(items.filter((_, i) => i !== index));
 	};
 
 	const handleKeyDown = (e) => {
@@ -210,25 +218,37 @@ const MapInput = ({ value, onChange }) => {
 		}
 	});
 
-	useEffect(() => {
-		const newObj = {};
-		rows.forEach((r) => {
+	// Serialise the rows back to an object, skipping blank keys and coercing
+	// numeric-looking values.
+	const serialise = (currentRows) => {
+		const obj = {};
+		currentRows.forEach((r) => {
 			if (r.key.trim()) {
 				const isNum = !isNaN(r.val) && r.val !== '' && String(r.val).trim() !== '';
-				newObj[r.key] = isNum ? Number(r.val) : r.val;
+				obj[r.key] = isNum ? Number(r.val) : r.val;
 			}
 		});
-		onChange(JSON.stringify(newObj));
-	}, [rows]);
-
-	const updateRow = (index, field, newVal) => {
-		const newRows = [...rows];
-		newRows[index][field] = newVal;
-		setRows(newRows);
+		return JSON.stringify(obj);
 	};
 
-	const addRow = () => setRows([...rows, { id: Math.random(), key: '', val: '' }]);
-	const removeRow = (index) => setRows(rows.filter((_, i) => i !== index));
+	// Notified from the handlers, not an effect — see the note in ListInput above:
+	// `onChange` is an inline arrow at the call site, so it cannot be a dependency,
+	// and the effect version also fired on mount before any user edit.
+	const commit = (nextRows) => {
+		setRows(nextRows);
+		onChange(serialise(nextRows));
+	};
+
+	const updateRow = (index, field, newVal) => {
+		// Copy the row being edited instead of mutating it in place; the old code
+		// wrote through to the existing object, so `rows` was modified even when the
+		// re-render was skipped.
+		const newRows = rows.map((r, i) => (i === index ? { ...r, [field]: newVal } : r));
+		commit(newRows);
+	};
+
+	const addRow = () => commit([...rows, { id: Math.random(), key: '', val: '' }]);
+	const removeRow = (index) => commit(rows.filter((_, i) => i !== index));
 
 	return (
 		<div className='space-y-2 border border-border rounded-md p-3 bg-muted/20'>

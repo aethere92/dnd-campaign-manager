@@ -1,19 +1,9 @@
 import React, { useState } from 'react';
 import { Polygon, Marker } from 'react-leaflet';
 import { createLabelIcon } from '@/features/atlas/utils/markerUtils';
-import { getRoundedPath } from '@/features/atlas/utils/pathUtils';
-import { PatternDefs } from '@/features/admin/components/atlas/components/PatternDefs';
-
-const getCentroid = (points) => {
-	if (!points || points.length === 0) return [0, 0];
-	let lat = 0,
-		lng = 0;
-	points.forEach((p) => {
-		lat += Array.isArray(p) ? p[0] : p.coordinates[0];
-		lng += Array.isArray(p) ? p[1] : p.coordinates[1];
-	});
-	return [lat / points.length, lng / points.length];
-};
+import { getRoundedPath, getCentroid } from '@/features/atlas/utils/pathUtils';
+import { PatternDefs } from '@/features/atlas/components/layers/PatternDefs';
+import { getAreaPatternId, isPatternFill } from '@/features/atlas/utils/areaPattern';
 
 const MapAreaItem = ({ area }) => {
 	const [isHovered, setIsHovered] = useState(false);
@@ -30,20 +20,17 @@ const MapAreaItem = ({ area }) => {
 	let fillColor = area.interiorColor || '#ff0000';
 	let fillOpacity = area.fillOpacity ?? 0.3;
 
-	if (area.fillType === 'hatch' || area.fillType === 'dots') {
-		const cleanColor = (area.interiorColor || '#d97706').replace('#', '');
-		const safeOpacity = Math.round(fillOpacity * 100);
-
-		// FIX: Must match PatternDefs logic exactly (including defaults)
-		const spacing = area.fillSpacing || (area.fillType === 'hatch' ? 10 : 16);
-		const weight = area.fillWeight || (area.fillType === 'hatch' ? 2 : 1.5);
-
-		fillColor = `url(#pattern-${area.fillType}-${cleanColor}-${safeOpacity}-${spacing}-${weight})`;
+	// The pattern id must match the one PatternDefs registers, so both derive it
+	// from getAreaPatternId — see the note there. (This used to inline the id with a
+	// different opacity default, so unfilled-opacity hatch/dot areas referenced a
+	// pattern that was never registered and rendered with no fill.)
+	if (isPatternFill(area)) {
+		fillColor = `url(#${getAreaPatternId(area).id})`;
 		fillOpacity = 1;
 	}
 
 	// Label Visibility Logic
-	// FIX: Default to 'always' if undefined to prevent invisible text
+	// Default to 'always' when undefined; otherwise labels render invisible.
 	const displayMode = area.labelDisplay || 'always';
 	let labelOpacity = 0;
 	if (displayMode === 'always') labelOpacity = 1;
@@ -79,7 +66,6 @@ const MapAreaItem = ({ area }) => {
 						hasBorder: area.labelHasBorder,
 						borderRadius: area.labelRadius,
 						borderColor: area.labelBorderColor,
-						// NEW: Pass Padding
 						paddingX: area.paddingX,
 						paddingY: area.paddingY,
 						isSelected: false,

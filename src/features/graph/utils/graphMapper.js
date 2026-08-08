@@ -20,7 +20,6 @@ export const transformGraphData = (rawEntities) => {
 	const entityIds = new Set(entities.map((e) => e.id));
 	const uniqueEdgeTracker = new Set();
 
-	// FIX: Re-introduce client-side degree calculation
 	// We must count ONLY the edges that actually appear in the graph
 	// to ensure the layout physics work correctly.
 	const visualDegreeMap = new Map();
@@ -89,7 +88,8 @@ export const transformGraphData = (rawEntities) => {
 				color: config.color,
 				image: finalIconUrl,
 				type: entity.type,
-				// FIX: Pass the VISUAL degree, not the DB degree
+				// Visual degree (edges actually rendered), not the DB degree — the layout
+				// physics depend on what's actually on screen.
 				degree: degree,
 			},
 		});

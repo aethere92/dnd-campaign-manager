@@ -1,6 +1,5 @@
-import { Drawer } from 'vaul';
-import { Info, X } from 'lucide-react';
 import { EntitySidebar } from '@/features/wiki/components/EntitySidebar';
+import MobileInfoSheet from '@/shared/components/layout/MobileInfoSheet';
 import { EntityBody } from '@/features/wiki/components/EntityBody';
 
 export default function StandardLayout({ viewModel }) {
@@ -27,7 +26,7 @@ export default function StandardLayout({ viewModel }) {
 							objectives={viewModel.content.objectives}
 							combatRounds={viewModel.content.combatRounds}
 							narrativeTimeline={viewModel.content.narrativeTimeline} // <-- ADDED THIS
-							timelineMode={viewModel.content.timelineMode}           // <-- ADDED THIS
+							timelineMode={viewModel.content.timelineMode} // <-- ADDED THIS
 							mapImageUrl={viewModel.content.mapImageUrl}
 							mapMarkers={viewModel.content.mapMarkers}
 						/>
@@ -35,42 +34,13 @@ export default function StandardLayout({ viewModel }) {
 				</div>
 			</div>
 
-			{/* --- MOBILE BOTTOM SHEET --- */}
-			<div className='lg:hidden'>
-				<Drawer.Root shouldScaleBackground>
-					<Drawer.Trigger asChild>
-						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform'>
-							<Info size={18} />
-							<span>Info</span>
-						</button>
-					</Drawer.Trigger>
-
-					<Drawer.Portal>
-						<Drawer.Overlay className='fixed inset-0 bg-black/40 z-50 backdrop-blur-[2px]' />
-						<Drawer.Content className='bg-background flex flex-col rounded-t-[10px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-50 focus:outline-none border-t border-border'>
-							{/* Drag Handle */}
-							<div className='p-4 bg-muted/50 rounded-t-[10px] flex-shrink-0'>
-								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-4' />
-								<div className='flex justify-between items-center'>
-									<Drawer.Title className='font-serif font-bold text-xl'>Details & Stats</Drawer.Title>
-									<Drawer.Close className='p-2 bg-muted rounded-full text-muted-foreground'>
-										<X size={16} />
-									</Drawer.Close>
-								</div>
-							</div>
-
-							{/* Content */}
-							<div className='p-4 bg-background flex-1 overflow-y-auto custom-scrollbar'>
-								<EntitySidebar
-									entity={viewModel.raw}
-									traits={viewModel.sidebar.traits}
-									connections={viewModel.sidebar.connections}
-								/>
-							</div>
-						</Drawer.Content>
-					</Drawer.Portal>
-				</Drawer.Root>
-			</div>
+			<MobileInfoSheet title='Details & Stats'>
+				<EntitySidebar
+					entity={viewModel.raw}
+					traits={viewModel.sidebar.traits}
+					connections={viewModel.sidebar.connections}
+				/>
+			</MobileInfoSheet>
 		</div>
 	);
 }

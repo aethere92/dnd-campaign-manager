@@ -1,5 +1,3 @@
-import { MapPin, Flag, Circle, Swords, Users, Archive, LayoutGrid, Folder } from 'lucide-react';
-
 export const VIEW_STRATEGIES = {
 	location: { mode: 'geo' },
 	encounter: { mode: 'geo' },
@@ -26,7 +24,10 @@ const flattenGeoTree = (nodes, targetType, parentName = 'Uncharted', visitedIds)
 					id: node.id,
 					title: node.name,
 					parentTitle: parentName,
-					link: `/wiki/${node.type}/${node.id}`,
+					// An entity reference, not a path: this is a pure config module and
+					// cannot build a campaign-scoped URL. The rendering component (which
+					// has the campaign context) turns this into a link.
+					link: { type: node.type, id: node.id },
 					items: myContent.items,
 					description: node.fullDescription || node.description,
 				});

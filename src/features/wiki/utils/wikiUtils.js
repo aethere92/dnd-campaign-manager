@@ -1,22 +1,10 @@
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import { getAffinityRank } from '@/domain/entity/utils/statusUtils';
-import { getParentId } from '@/domain/entity/utils/entityUtils';
-
-// Helper: Strip Markdown
-const stripMarkdown = (text) => {
-	if (!text) return '';
-	return text
-		.replace(/^#+\s+/gm, '')
-		.replace(/(\*\*|__)(.*?)\1/g, '$2')
-		.replace(/(\*|_)(.*?)\1/g, '$2')
-		.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-		.replace(/`{1,3}[^`]+`{1,3}/g, '')
-		.replace(/\n/g, ' ')
-		.trim();
-};
+import { getParentId, normalizeTypeParam } from '@/domain/entity/utils/entityUtils';
+import { stripMarkdown } from '@/shared/utils/textUtils';
 
 export function transformEntityToViewModel(entity, type) {
-	const contextType = type === 'sessions' ? 'session' : type;
+	const contextType = normalizeTypeParam(type);
 	const actualType = entity.type || contextType;
 	const attributes = entity.attributes || {};
 
@@ -47,13 +35,13 @@ export function transformEntityToViewModel(entity, type) {
 			getAttributeValue(attributes, ['synopsis', 'summary', 'short_description', 'hook']) || entity.description;
 	}
 
-	// Version A: For Grid Cards (Stripped & Truncated)
+	// Version A: For Grid Cards (single-line, stripped & truncated)
 	const description = rawDescription
-		? stripMarkdown(rawDescription).substring(0, 140) + (rawDescription.length > 140 ? '...' : '')
+		? stripMarkdown(rawDescription, { collapseWhitespace: true }).substring(0, 140) +
+			(rawDescription.length > 140 ? '...' : '')
 		: null;
 
-	// Version B: For Hero Headers (Full & Rich)
-	// FIX: Passing the raw string so Swimlane.jsx can handle the truncation logic itself
+	// Version B: For Hero Headers — raw string, so Swimlane owns the truncation
 	const fullDescription = rawDescription || null;
 
 	// 4. Resolve Footer Label
@@ -91,7 +79,10 @@ export function transformEntityToViewModel(entity, type) {
 	return {
 		id: entity.id,
 		name: entity.name,
-		path: `/wiki/${contextType}/${entity.id}`,
+		// No `path` here: it was an unscoped `/wiki/...` string, and now that links
+		// are campaign-scoped the two sidebar consumers build the path themselves
+		// from type + id via useCampaignRoutes. Emitting a stale path would just
+		// invite a future miswire.
 		type: actualType,
 
 		// UI Props

@@ -1,4 +1,4 @@
-import { useTimelineViewModel } from './useTimelineView';
+import { useTimeline } from '@/features/timeline/hooks/useTimeline';
 import { TimelineSession } from './components/TimelineSession';
 import { TimelineArcHeader } from './components/TimelineArcHeader';
 import { TableOfContents } from '@/features/table-of-contents/TableOfContents';
@@ -6,9 +6,9 @@ import { useMemo } from 'react';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { Search, ChevronsUp, ChevronsDown, X } from 'lucide-react';
 
-export default function TimelineView() {
+export default function TimelinePage() {
 	const { timelineItems, isLoading, searchQuery, setSearchQuery, toggleSession, expandAll, collapseAll } =
-		useTimelineViewModel();
+		useTimeline();
 
 	const tocItems = useMemo(() => {
 		if (!timelineItems) return [];

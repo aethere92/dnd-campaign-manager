@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { User, Network, History as HistoryIcon, BookOpen, Info, X } from 'lucide-react';
-import { Drawer } from 'vaul';
+import { User, Network, History as HistoryIcon, BookOpen } from 'lucide-react';
 import TabContainer from '@/shared/components/layout/TabContainer';
+import MobileInfoSheet from '@/shared/components/layout/MobileInfoSheet';
 import { EntityBody, EntityHistory } from '@/features/wiki/components/EntityBody';
 import { CharacterSidebar } from '@/features/wiki/components/character/CharacterSidebar';
 import { CharacterStats } from '@/features/wiki/components/character/CharacterStats';
@@ -122,40 +122,9 @@ export default function CharacterLayout({ viewModel }) {
 				onChange={setActiveTab}
 			/>
 
-			{/* MOBILE INFO DRAWER */}
-			<div className='lg:hidden'>
-				<Drawer.Root shouldScaleBackground>
-					<Drawer.Trigger asChild>
-						<button className='fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-background text-foreground border border-border rounded-full shadow-2xl font-bold text-xs uppercase tracking-wider active:scale-95 transition-transform hover:border-primary/50'>
-							<Info size={18} />
-							<span>Info</span>
-						</button>
-					</Drawer.Trigger>
-
-					<Drawer.Portal>
-						<Drawer.Overlay className='fixed inset-0 bg-black/60 z-[60] backdrop-blur-[2px]' />
-						<Drawer.Content className='bg-background flex flex-col rounded-t-[10px] h-[85vh] mt-24 fixed bottom-0 left-0 right-0 z-[60] focus:outline-none border-t border-border'>
-							{/* Drag Handle & Header */}
-							<div className='p-4 bg-muted/30 rounded-t-[10px] flex-shrink-0 border-b border-border'>
-								<div className='mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mb-4' />
-								<div className='flex justify-between items-center'>
-									<Drawer.Title className='font-serif font-bold text-xl text-foreground'>
-										Character Details
-									</Drawer.Title>
-									<Drawer.Close className='p-2 bg-muted/50 hover:bg-muted rounded-full text-muted-foreground transition-colors'>
-										<X size={18} />
-									</Drawer.Close>
-								</div>
-							</div>
-
-							{/* Content */}
-							<div className='p-4 overflow-y-auto custom-scrollbar flex-1'>
-								<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
-							</div>
-						</Drawer.Content>
-					</Drawer.Portal>
-				</Drawer.Root>
-			</div>
+			<MobileInfoSheet title='Character Details'>
+				<CharacterSidebar attributes={raw.attributes} gear={gear} quests={personalQuests} />
+			</MobileInfoSheet>
 		</div>
 	);
 }

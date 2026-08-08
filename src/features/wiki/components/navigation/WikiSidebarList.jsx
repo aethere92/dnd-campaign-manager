@@ -25,7 +25,6 @@ export const WikiSidebarList = ({ groups, isLoading, hasItems, config, onItemCli
 	const isGrouped = !groups[0].isTree && (groups.length > 1 || (groups.length === 1 && groups[0].title !== null));
 
 	return (
-		// FIX: Removed 'pb-10'. The parent flex container handles the scroll bounds now.
 		// Added 'pb-2' just for a tiny bit of visual breathing room at the very end.
 		<div className='bg-muted py-1 pb-2'>
 			{/* MODE 1: TREE (Recursive) */}

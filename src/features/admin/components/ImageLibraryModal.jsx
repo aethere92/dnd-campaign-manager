@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Image as ImageIcon, FolderOpen, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Image as ImageIcon, FolderOpen } from 'lucide-react';
 import { Drawer } from '@/shared/components/ui/Drawer';
 import { ADMIN_INPUT_CLASS } from './AdminFormStyles';
 import imageLibraryData from '../config/imageManifest.json';
@@ -7,12 +7,17 @@ import imageLibraryData from '../config/imageManifest.json';
 export default function ImageLibraryModal({ isOpen, onClose, onSelect, initialSearch = '' }) {
 	const [searchTerm, setSearchTerm] = useState(initialSearch);
 
-	// Reset search when modal opens with a new suggestion
-	useEffect(() => {
-		if (isOpen && initialSearch) {
-			setSearchTerm(initialSearch);
-		}
-	}, [isOpen, initialSearch]);
+	// Reset search when the modal opens with a new suggestion. Keyed on the
+	// open+suggestion pair and adjusted during render: an effect here caused an
+	// extra render after paint (flagged by react-hooks/set-state-in-effect), and
+	// keying on the pair keeps the user's typing from being overwritten while the
+	// modal stays open.
+	const searchKey = isOpen && initialSearch ? initialSearch : null;
+	const [lastSearchKey, setLastSearchKey] = useState(searchKey);
+	if (searchKey !== lastSearchKey) {
+		setLastSearchKey(searchKey);
+		if (searchKey) setSearchTerm(searchKey);
+	}
 
 	const filteredLibrary = imageLibraryData
 		.map((cat) => ({

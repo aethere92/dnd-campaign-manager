@@ -48,7 +48,7 @@ export const EntityHeader = ({ data }) => {
 	const noImageStyle = !imageUrl
 		? {
 				background: `radial-gradient(80% 100% at 50% -20%, var(--muted) 0%, var(--background) 100%)`,
-		  }
+			}
 		: {};
 
 	return (

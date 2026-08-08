@@ -7,6 +7,7 @@ inclusion: manual
 ## Core Tables
 
 ### entities
+
 Primary table for all campaign content.
 
 ```sql
@@ -27,6 +28,7 @@ CREATE INDEX idx_entities_name ON entities(name);
 ```
 
 ### sessions
+
 Session data (separate from entities table).
 
 ```sql
@@ -41,6 +43,7 @@ sessions (
 ```
 
 ### entity_relationships
+
 Tracks connections between entities.
 
 ```sql
@@ -61,7 +64,9 @@ CREATE INDEX idx_relationships_to ON entity_relationships(to_entity_id);
 ```
 
 #### Bidirectional Relationship Triggers
+
 Function `create_reverse_relationship()` handles mirror row lifecycle on all operations:
+
 - INSERT with `is_bidirectional: true` → creates B→A mirror (existence check prevents dupes)
 - DELETE of bidirectional row → auto-deletes the mirror
 - UPDATE:
@@ -74,7 +79,9 @@ Function `create_reverse_relationship()` handles mirror row lifecycle on all ope
 **Trigger SQL source**: `src/dev_helpers/sql/fix_bidirectional_triggers.sql`
 
 #### Cascade Delete via sync_to_entities()
+
 When any entity source table row is deleted (characters, npcs, locations, etc.), the `sync_to_entities()` trigger:
+
 1. Deletes ALL `entity_relationships` rows where `from_entity_id = OLD.id OR to_entity_id = OLD.id`
 2. The bidirectional trigger (`create_reverse_relationship`) fires for each deleted row, cleaning up mirrors
 3. Then deletes the row from `entities` table
@@ -84,12 +91,14 @@ This means entity deletion automatically cascades to relationship cleanup at the
 **Trigger SQL source**: `src/dev_helpers/sql/fix_cascade_delete.sql`
 
 #### Relationship Data Model Rules
+
 - Always check BOTH code and DB (triggers, views, functions) before making assumptions about data behavior
 - The public-facing views (`entity_complete_view`, `view_campaign_graph`) resolve bidirectional relationships at the SQL level
 - Client code should remain simple — the DB handles mirror row management
 - Prefer fixing DB triggers/functions over adding compensating logic in client code
 
 ### campaigns
+
 Campaign metadata and configuration.
 
 ```sql
@@ -104,6 +113,7 @@ CREATE TABLE campaigns (
 ```
 
 ### maps
+
 Map configuration per campaign.
 
 ```sql
@@ -118,6 +128,7 @@ CREATE TABLE maps (
 ```
 
 ### quest_objectives
+
 Quest objective tracking.
 
 ```sql
@@ -133,6 +144,7 @@ quest_objectives (
 ```
 
 ### encounter_actions
+
 Combat encounter round actions.
 
 ```sql
@@ -150,32 +162,45 @@ encounter_actions (
 ## Optimized Views
 
 ### view_entity_index
+
 Lightweight view for smart-text matching and search:
+
 - `id`, `name`, `type`, `description`, `campaign_id`
 - `icon_url`, `status`, `affinity`, `background_image`, `aliases`
 
 ### entity_complete_view
+
 Full entity data with pre-joined relationships:
+
 - All entity columns + `relationships` as JSON array
 
 ### view_campaign_timeline
+
 Pre-aggregated session data:
+
 - `session_id`, `session_title`, `session_narrative`, `session_number`, `session_date`
 - `events` as JSON array (each with `tags` containing linked entity info)
 
 ### view_campaign_graph
+
 Graph-optimized view:
+
 - Node data with adjacency list for Cytoscape rendering
 
 ### view_narrative_arc_summary
+
 Arc metadata:
+
 - `id`, `name`, `campaign_id`, `order`, `description`
 
 ### view_encounter_actions_hydrated
+
 Encounter details:
+
 - Action data with resolved actor names and metadata
 
 ## Attributes Field (JSONB)
+
 Entity attributes are stored as JSONB and vary by type:
 
 **Character/NPC**: race, class, level, alignment, status, affinity, personality, hit points, armor class, movement, gender, role, aliases

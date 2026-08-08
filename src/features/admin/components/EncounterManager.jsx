@@ -1,63 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Edit2, Save, X, Swords, Skull, Target, Zap, HeartHandshake } from 'lucide-react'; // Added HeartHandshake
-import { fetchEncounterActions, upsertEncounterAction, deleteRow } from '@/features/admin/api/adminService';
+import { Plus, Trash2, Edit2, Save, X, Swords, Target, Zap, HeartHandshake } from 'lucide-react'; // Added HeartHandshake
+import { fetchEncounterActions, upsertEncounterAction } from '@/features/admin/api/adminService';
 import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 import EntitySearch from './EntitySearch';
+import { useChildRowManager } from '@/features/admin/hooks/useChildRowManager';
 import Button from '@/shared/components/ui/Button';
 
-export default function EncounterActionManager({ encounterId }) {
-	const [actions, setActions] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const [editingId, setEditingId] = useState(null);
-	const [formData, setFormData] = useState({});
-
-	useEffect(() => {
-		if (encounterId) loadActions();
-	}, [encounterId]);
-
-	const loadActions = async () => {
-		setLoading(true);
-		try {
-			const data = await fetchEncounterActions(encounterId);
-			setActions(data);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleAddNew = () => {
-		const lastAction = actions[actions.length - 1];
-		const nextRound = lastAction ? lastAction.round_number : 1;
-		const nextOrder = lastAction ? lastAction.action_order + 1 : 1;
-
-		const newAction = {
-			id: `new-${Date.now()}`,
-			encounter_id: encounterId,
-			round_number: nextRound,
-			action_order: nextOrder,
-			actor_name: '',
-			action_description: '',
-			action_type: 'attack',
-			result: '',
-			effect: '',
-			is_friendly: false, // Default to hostile
-		};
-		setActions([...actions, newAction]);
-		handleEdit(newAction);
-	};
-
-	const handleEdit = (action) => {
-		setEditingId(action.id);
-		setFormData({ ...action });
-	};
+export default function EncounterManager({ encounterId }) {
+	// Shared inline-CRUD plumbing (fetch / draft / edit / save / delete).
+	const {
+		rows: actions,
+		loading,
+		editingId,
+		formData,
+		setFormData,
+		addNew,
+		startEdit,
+		cancelEdit,
+		save,
+		remove,
+	} = useChildRowManager({
+		queryKey: ['admin-encounter-actions', encounterId],
+		fetchFn: () => fetchEncounterActions(encounterId),
+		upsertFn: upsertEncounterAction,
+		deleteTable: 'encounter_actions',
+		enabled: !!encounterId,
+		makeDraft: (rows) => {
+			const last = rows[rows.length - 1];
+			return {
+				encounter_id: encounterId,
+				round_number: last ? last.round_number : 1,
+				action_order: last ? last.action_order + 1 : 1,
+				actor_name: '',
+				action_description: '',
+				action_type: 'attack',
+				result: '',
+				effect: '',
+				is_friendly: false, // Default to hostile
+			};
+		},
+	});
 
 	const handleSave = async () => {
 		try {
-			await upsertEncounterAction(formData);
-			setEditingId(null);
-			loadActions();
+			await save();
 		} catch (e) {
 			alert('Error saving action: ' + e.message);
 		}
@@ -65,13 +50,8 @@ export default function EncounterActionManager({ encounterId }) {
 
 	const handleDelete = async (id) => {
 		if (!confirm('Delete this turn?')) return;
-		if (String(id).startsWith('new')) {
-			setActions(actions.filter((a) => a.id !== id));
-			return;
-		}
 		try {
-			await deleteRow('encounter_actions', id);
-			loadActions();
+			await remove(id);
 		} catch (e) {
 			alert(e.message);
 		}
@@ -88,7 +68,7 @@ export default function EncounterActionManager({ encounterId }) {
 				<span className='flex items-center gap-2'>
 					<Swords size={18} className='text-red-600' /> Combat Tracker
 				</span>
-				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+				<Button onClick={addNew} size='sm' variant='secondary' icon={Plus}>
 					Add Turn
 				</Button>
 			</div>
@@ -102,13 +82,13 @@ export default function EncounterActionManager({ encounterId }) {
 								bg: 'bg-background',
 								accentText: 'text-emerald-700',
 								badge: 'bg-emerald-100 text-emerald-700 border-emerald-500',
-						  }
+							}
 						: {
 								border: 'border-red-800 hover:border-red-500',
 								bg: 'bg-background',
 								accentText: 'text-red-700',
 								badge: 'bg-red-500/10 text-red-500 border-red-700',
-						  };
+							};
 
 					return (
 						<div key={action.id} className='group'>
@@ -264,14 +244,7 @@ export default function EncounterActionManager({ encounterId }) {
 									</div>
 
 									<div className='flex justify-end gap-3 pt-2'>
-										<Button
-											onClick={() => {
-												setEditingId(null);
-												loadActions();
-											}}
-											variant='ghost'
-											size='sm'
-											icon={X}>
+										<Button onClick={cancelEdit} variant='ghost' size='sm' icon={X}>
 											Cancel
 										</Button>
 										<Button onClick={handleSave} variant='primary' size='sm' icon={Save}>
@@ -328,7 +301,7 @@ export default function EncounterActionManager({ encounterId }) {
 
 									<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
 										<button
-											onClick={() => handleEdit(action)}
+											onClick={() => startEdit(action)}
 											className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
 											<Edit2 size={16} />
 										</button>

@@ -1,12 +1,14 @@
-import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { Network, Maximize, Minimize } from 'lucide-react';
 import { clsx } from 'clsx';
 import { CytoscapeCanvas } from '@/features/graph/components/CytoscapeCanvas';
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { useTheme } from '@/shared/hooks/useTheme';
-import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { useEntityIndex } from '@/features/smart-text/hooks/useEntityIndex';
+import { useFullscreen } from '@/shared/hooks/useFullscreen';
 
 // --- LOCAL GRAPH CONFIGURATION ---
 const LOCAL_LAYOUT = {
@@ -94,55 +96,17 @@ const getLocalStyles = (isDark) => {
 
 export const EntityLocalGraph = ({ entity, relationships, className, height = 'h-64', headerShown = true }) => {
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
 	const { theme } = useTheme();
 	const { map: entityIndex } = useEntityIndex();
 	const isDark = theme === 'dark';
 
-	// FULLSCREEN STATE
 	const containerRef = useRef(null);
-	const [isFullscreen, setIsFullscreen] = useState(false);
-	const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
-
-	// Combine native and pseudo states
-	const activeFullscreen = isFullscreen || isPseudoFullscreen;
-
-	// Handle Native Fullscreen Changes
-	useEffect(() => {
-		const handler = () => setIsFullscreen(!!document.fullscreenElement);
-		document.addEventListener('fullscreenchange', handler);
-		return () => document.removeEventListener('fullscreenchange', handler);
-	}, []);
-
-	// Handle Escape Key for Pseudo Fullscreen
-	useEffect(() => {
-		const handleEsc = (e) => {
-			if (e.key === 'Escape' && isPseudoFullscreen) setIsPseudoFullscreen(false);
-		};
-		window.addEventListener('keydown', handleEsc);
-		return () => window.removeEventListener('keydown', handleEsc);
-	}, [isPseudoFullscreen]);
-
-	// Toggle Function
-	const toggleFullscreen = useCallback(
-		(e) => {
-			e.stopPropagation();
-			if (!containerRef.current) return;
-
-			const supportsNative = document.fullscreenEnabled || containerRef.current.requestFullscreen;
-
-			// Prefer native, fallback to pseudo (iOS)
-			if (supportsNative) {
-				if (!document.fullscreenElement) {
-					containerRef.current.requestFullscreen().catch(() => setIsPseudoFullscreen(true));
-				} else {
-					document.exitFullscreen();
-				}
-			} else {
-				setIsPseudoFullscreen(!isPseudoFullscreen);
-			}
-		},
-		[isPseudoFullscreen]
-	);
+	const {
+		isFullscreen: activeFullscreen,
+		toggle: toggleFullscreen,
+		exit: exitFullscreen,
+	} = useFullscreen(containerRef);
 
 	// --- DATA TRANSFORMATION ---
 	const elements = useMemo(() => {
@@ -233,16 +197,14 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 
 	const handleNodeClick = useCallback(
 		(data) => {
-			if (activeFullscreen && document.fullscreenElement) {
-				document.exitFullscreen();
-			}
-			if (isPseudoFullscreen) setIsPseudoFullscreen(false);
+			// Leave fullscreen before navigating, or the new page renders inside it.
+			if (activeFullscreen) exitFullscreen();
 
 			if (data.id && data.type && data.id !== entity.id) {
-				navigate(`/wiki/${data.type}/${data.id}`);
+				navigate(routes.wikiEntity(data.type, data.id));
 			}
 		},
-		[navigate, entity.id, activeFullscreen, isPseudoFullscreen]
+		[navigate, routes, entity.id, activeFullscreen, exitFullscreen]
 	);
 
 	if (elements.length <= 1) return null;
@@ -263,14 +225,7 @@ export const EntityLocalGraph = ({ entity, relationships, className, height = 'h
 					activeFullscreen ? 'fixed inset-0 z-[9999] h-screen w-screen m-0 rounded-none bg-background' : height
 				)}>
 				{/* Graph Background */}
-				<div
-					className='absolute inset-0 z-0 opacity-50'
-					style={{
-						backgroundImage: 'radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
-						backgroundSize: '20px 20px',
-						backgroundPosition: '10px 10px',
-					}}
-				/>
+				<div className='absolute inset-0 z-0 opacity-50 bg-dot-grid-sm' />
 
 				{/* Fullscreen Toggle Button */}
 				<button

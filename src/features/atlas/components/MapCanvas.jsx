@@ -34,7 +34,8 @@ const MapController = ({ config, flyToTarget }) => {
 		if (prevMapId.current !== uniqueMapId) {
 			let viewSet = false;
 
-			// FIX: Force Leaflet to recognize container size before setting view
+			// Leaflet must know the real container size before setView, or the
+			// initial view is computed against a zero-size viewport.
 			map.invalidateSize();
 
 			const urlLat = searchParams.get('lat');
@@ -60,7 +61,7 @@ const MapController = ({ config, flyToTarget }) => {
 
 	useEffect(() => {
 		if (flyToTarget) {
-			// FIX: Invalidate size before flying to ensure target is centered visually
+			// Invalidate before flying, so the target lands visually centred.
 			map.invalidateSize();
 			map.flyTo(flyToTarget, config.sizes.maxZoom, { animate: true, duration: 1.5 });
 		}
@@ -100,16 +101,7 @@ export const MapCanvas = () => {
 	const showFog = fog && fog.enabled === true && visibility['fog'] === true;
 
 	return (
-		<div
-			ref={wrapperRef}
-			className='flex-1 relative h-full'
-			style={{
-				backgroundColor: 'var(--background)',
-				backgroundImage:
-					'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
-				backgroundSize: '40px 40px, 20px 20px',
-				backgroundPosition: '0 0, 20px 20px',
-			}}>
+		<div ref={wrapperRef} className='flex-1 relative h-full bg-dot-grid'>
 			<MapContainer
 				center={[0, 0]}
 				zoom={Math.ceil(config.sizes.maxZoom / 2)}
@@ -131,7 +123,7 @@ export const MapCanvas = () => {
 				<Pane name='fogPane' style={{ zIndex: 620, pointerEvents: 'none' }}>
 					{showFog && <MapFogLayer fogConfig={fog} bounds={bounds} />}
 				</Pane>
-				<MapTools containerRef={wrapperRef} />
+				<MapTools bounds={bounds} containerRef={wrapperRef} />
 			</MapContainer>
 		</div>
 	);

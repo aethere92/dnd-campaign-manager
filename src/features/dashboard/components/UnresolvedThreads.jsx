@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { BookOpen, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
@@ -11,6 +12,7 @@ const PRIORITY_COLORS = {
 
 export const UnresolvedThreads = ({ threads }) => {
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
 
 	if (!threads || threads.length === 0) {
 		return (
@@ -31,9 +33,9 @@ export const UnresolvedThreads = ({ threads }) => {
 				{threads.slice(0, 5).map((thread) => {
 					const priority = (thread.attributes?.priority || 'normal').toLowerCase();
 					const prioColor = PRIORITY_COLORS[priority] || 'text-muted-foreground';
-					
+
 					// Find the latest active narrative hook
-					const activeObj = thread.objectives?.find(o => o.status === 'active');
+					const activeObj = thread.objectives?.find((o) => o.status === 'active');
 					const narrativeText = activeObj?.objective_update || activeObj?.description || thread.description;
 
 					return (
@@ -41,10 +43,9 @@ export const UnresolvedThreads = ({ threads }) => {
 							key={thread.id}
 							onClick={(e) => {
 								if (e.target.closest('a')) return;
-								navigate(`/wiki/quest/${thread.id}`);
+								navigate(routes.wikiEntity('quest', thread.id));
 							}}
 							className='group relative bg-card border border-border rounded-lg p-4 hover:shadow-sm hover:border-primary/40 transition-all cursor-pointer'>
-							
 							<div className='flex items-start justify-between gap-4 mb-2'>
 								<h3 className='font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-tight text-base'>
 									<SmartMarkdown>{thread.title || thread.name}</SmartMarkdown>

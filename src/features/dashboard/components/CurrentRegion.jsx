@@ -1,8 +1,12 @@
 import { MapPin, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const CurrentRegion = ({ location }) => {
+	// Above the early return: hooks must run unconditionally on every render.
+	const routes = useCampaignRoutes();
+
 	if (!location) return null;
 
 	const bgImage = location.attributes?.background_image || location.attributes?.header_image;
@@ -15,7 +19,6 @@ export const CurrentRegion = ({ location }) => {
 			</h4>
 
 			<div className='relative overflow-hidden bg-card border border-border rounded-xl group hover:shadow-md transition-all duration-500 flex flex-col md:flex-row min-h-[220px]'>
-				
 				{/* Image Section (Right on desktop, Top on mobile) */}
 				<div className='w-full md:w-2/5 md:absolute md:right-0 md:top-0 md:bottom-0 h-48 md:h-full relative overflow-hidden shrink-0'>
 					{bgImage ? (
@@ -37,9 +40,7 @@ export const CurrentRegion = ({ location }) => {
 				<div className='relative z-10 w-full md:w-3/5 p-6 md:p-8 flex flex-col justify-center'>
 					<div className='flex items-center gap-2 mb-2'>
 						<MapPin size={14} className='text-emerald-500' />
-						<span className='text-[10px] uppercase font-bold tracking-widest text-emerald-500/80'>
-							{type}
-						</span>
+						<span className='text-[10px] uppercase font-bold tracking-widest text-emerald-500/80'>{type}</span>
 					</div>
 
 					<h3 className='text-3xl font-serif font-bold text-foreground mb-3 leading-tight group-hover:text-primary transition-colors'>
@@ -53,7 +54,7 @@ export const CurrentRegion = ({ location }) => {
 					</div>
 
 					<Link
-						to={`/wiki/location/${location.id}`}
+						to={routes.wikiEntity('location', location.id)}
 						className='inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors w-fit'>
 						View Location <ArrowRight size={14} />
 					</Link>

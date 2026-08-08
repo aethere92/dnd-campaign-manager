@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Filter, Plus, X, Trash2, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Filter, Plus, X, Trash2 } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 import { OPERATORS, extractAvailableFields } from '@/features/admin/utils/filterUtils';
 
@@ -11,10 +11,12 @@ export default function AdvancedFilter({ type, data, onFilterChange }) {
 	// Calculate available fields based on the actual data passed in
 	const availableFields = useMemo(() => extractAvailableFields(type, data), [type, data]);
 
-	// Notify parent whenever rules change
+	// Notify parent whenever rules change.
+	// Callers must pass a stable callback (a useState setter or a useCallback);
+	// an inline arrow would give this effect a new identity every render and loop.
 	useEffect(() => {
 		onFilterChange(rules);
-	}, [rules]);
+	}, [rules, onFilterChange]);
 
 	// Close on click outside
 	useEffect(() => {

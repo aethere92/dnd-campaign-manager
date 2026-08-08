@@ -1,4 +1,28 @@
 /**
+ * Average position of a set of points — used to place an area's label at its
+ * geometric centre when no explicit labelPosition is set.
+ *
+ * Accepts both point shapes the atlas uses: raw `[lat, lng]` arrays and
+ * `{ coordinates: [lat, lng] }` objects. This was duplicated verbatim in the admin
+ * editor (EditAreasLayer) and the public renderer (MapAreas); this is the single
+ * copy both now import.
+ *
+ * @param {Array} points
+ * @returns {[number, number]} [lat, lng], or [0, 0] for empty input
+ */
+export const getCentroid = (points) => {
+	if (!points || points.length === 0) return [0, 0];
+	let lat = 0;
+	let lng = 0;
+	points.forEach((p) => {
+		const c = Array.isArray(p) ? p : p.coordinates;
+		lat += c[0];
+		lng += c[1];
+	});
+	return [lat / points.length, lng / points.length];
+};
+
+/**
  * Calculates a smooth path using Cardinal Splines.
  * @param {Array} points - Array of [lat, lng] arrays
  * @param {number} tension - 0.0 (loose) to 1.0 (tight/straight)

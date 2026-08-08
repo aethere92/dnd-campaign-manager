@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
 	Trash2,
 	Link as LinkIcon,
@@ -58,8 +59,18 @@ const REL_STYLES = {
 };
 
 export default function RelationshipManager({ entityId }) {
-	const [relationships, setRelationships] = useState([]);
-	const [loading, setLoading] = useState(false);
+	// The relationship list is server state — held in the query cache, keyed by
+	// entity. `refetch` replaces the old manual loadRelationships() re-fetch after
+	// each mutation below.
+	const {
+		data: relationships = [],
+		isLoading: loading,
+		refetch,
+	} = useQuery({
+		queryKey: ['admin-relationships', entityId],
+		queryFn: () => fetchRelationships(entityId),
+		enabled: !!entityId,
+	});
 
 	// BULK ADD STATE
 	const [pendingTargets, setPendingTargets] = useState([]);
@@ -71,22 +82,6 @@ export default function RelationshipManager({ entityId }) {
 	// EDIT STATE
 	const [editingId, setEditingId] = useState(null);
 	const [editForm, setEditForm] = useState({});
-
-	useEffect(() => {
-		if (entityId) loadRelationships();
-	}, [entityId]);
-
-	const loadRelationships = async () => {
-		setLoading(true);
-		try {
-			const data = await fetchRelationships(entityId);
-			setRelationships(data);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	// --- GROUPING LOGIC (By Entity Type) ---
 	const grouped = useMemo(() => {
@@ -127,7 +122,7 @@ export default function RelationshipManager({ entityId }) {
 			);
 			setPendingTargets([]);
 			setType('Generic');
-			loadRelationships();
+			refetch();
 		} catch (e) {
 			alert('Error: ' + e.message);
 		} finally {
@@ -143,7 +138,7 @@ export default function RelationshipManager({ entityId }) {
 				is_hidden: editForm.is_hidden,
 			});
 			setEditingId(null);
-			loadRelationships();
+			refetch();
 		} catch (e) {
 			alert(e.message);
 		}
@@ -153,7 +148,7 @@ export default function RelationshipManager({ entityId }) {
 		if (!confirm('Remove link?')) return;
 		try {
 			await deleteRelationship(id);
-			loadRelationships();
+			refetch();
 		} catch (e) {
 			alert(e.message);
 		}
@@ -241,9 +236,12 @@ export default function RelationshipManager({ entityId }) {
 
 			{/* --- LIST SECTION (GROUPED BY ENTITY TYPE) --- */}
 			<div className='space-y-3'>
+				{/* Distinguish "still fetching" from "genuinely none": the loading flag
+				    was tracked but never read, so an in-flight load looked like an
+				    entity with no relationships at all. */}
 				{relationships.length === 0 && (
 					<div className='p-3 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
-						No relationships connected.
+						{loading ? 'Loading relationships…' : 'No relationships connected.'}
 					</div>
 				)}
 
@@ -339,7 +337,11 @@ export default function RelationshipManager({ entityId }) {
 													</span>
 
 													{rel.is_bidirectional && (
-														<ArrowRightLeft size={11} className='text-muted-foreground/50 shrink-0' title='Bidirectional' />
+														<ArrowRightLeft
+															size={11}
+															className='text-muted-foreground/50 shrink-0'
+															title='Bidirectional'
+														/>
 													)}
 													{rel.is_hidden && (
 														<EyeOff size={11} className='text-muted-foreground/50 shrink-0' title='Hidden' />

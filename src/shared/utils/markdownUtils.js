@@ -3,7 +3,7 @@
  * Header extraction, ToC generation, etc.
  */
 
-import { generateId } from '@/shared/utils/textUtils';
+import { generateId, stripMarkdown } from '@/shared/utils/textUtils';
 
 /**
  * Extract headers from markdown text and normalize their depth.
@@ -59,24 +59,13 @@ export const generateToC = (markdown, maxDepth = 3) => {
 };
 
 /**
- * Convert markdown to plain text (strips formatting)
+ * Convert markdown to plain text (strips formatting).
+ * Thin alias over the shared implementation in textUtils — kept because
+ * "markdownToText" reads better at call sites dealing with documents.
  * @param {string} markdown - Markdown text
  * @returns {string}
  */
-export const markdownToText = (markdown) => {
-	if (!markdown) return '';
-
-	return markdown
-		.replace(/#{1,6}\s+/g, '') // Headers
-		.replace(/\*\*(.+?)\*\*/g, '$1') // Bold
-		.replace(/\*(.+?)\*/g, '$1') // Italic
-		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Links
-		.replace(/`(.+?)`/g, '$1') // Code
-		.replace(/^>\s+/gm, '') // Blockquotes
-		.replace(/^[-*+]\s+/gm, '') // Lists
-		.replace(/^\d+\.\s+/gm, '') // Ordered lists
-		.trim();
-};
+export const markdownToText = (markdown) => stripMarkdown(markdown);
 
 /**
  * Extract excerpt from markdown (first paragraph)

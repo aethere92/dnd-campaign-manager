@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/shared/api/supabaseClient';
 import { Folder, ChevronRight, CornerLeftUp, Check, Loader2, Search } from 'lucide-react';
 import { Drawer } from '@/shared/components/ui/Drawer'; // Re-using your existing Drawer
@@ -9,43 +10,34 @@ const BUCKET_NAME = 'atlas'; // Hardcoded based on your URLs
 const BASE_URL_PREFIX = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/`;
 
 // --- THE MODAL CONTENT ---
-const StorageBrowser = ({ onSelect, onClose }) => {
+// No onClose prop: the drawer is dismissed either by its own header button or by
+// onSelect, which closes it as part of committing the choice.
+const StorageBrowser = ({ onSelect }) => {
 	const [path, setPath] = useState(''); // Current folder path (e.g. 'maps/khorinis/')
-	const [items, setItems] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
 
-	// Load items whenever path changes
-	useEffect(() => {
-		const fetchItems = async () => {
-			setLoading(true);
-			setError(null);
-			try {
-				const { data, error } = await supabase.storage.from(BUCKET_NAME).list(path, {
-					limit: 100,
-					sortBy: { column: 'name', order: 'asc' },
-				});
+	// Storage listings are server state keyed by folder path. Caching them means
+	// navigating back up to a folder is instant instead of re-listing every time.
+	const {
+		data: items = { folders: [], files: [] },
+		isLoading: loading,
+		error,
+	} = useQuery({
+		queryKey: ['storage-listing', BUCKET_NAME, path],
+		queryFn: async () => {
+			const { data, error } = await supabase.storage.from(BUCKET_NAME).list(path, {
+				limit: 100,
+				sortBy: { column: 'name', order: 'asc' },
+			});
+			if (error) throw error;
 
-				if (error) throw error;
-
-				// Separate Folders vs Files
-				// In Supabase Storage, "Folders" usually don't have an ID, or we check structure
-				// But mostly we just want to let you navigate.
-				// Tiles usually have extensions (.webp). Folders don't.
-				const folders = data.filter((item) => !item.metadata); // Items without metadata are usually folders
-				const files = data.filter((item) => item.metadata);
-
-				setItems({ folders, files });
-			} catch (err) {
-				console.error(err);
-				setError(err.message);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchItems();
-	}, [path]);
+			// In Supabase Storage, "folders" have no metadata; files do. This split is
+			// just for navigation vs. selection.
+			return {
+				folders: data.filter((item) => !item.metadata),
+				files: data.filter((item) => item.metadata),
+			};
+		},
+	});
 
 	const handleNavigate = (folderName) => {
 		setPath((prev) => (prev ? `${prev}/${folderName}` : folderName));
@@ -89,7 +81,7 @@ const StorageBrowser = ({ onSelect, onClose }) => {
 						<Loader2 className='animate-spin' size={20} /> Loading...
 					</div>
 				) : error ? (
-					<div className='p-4 text-red-500 text-xs'>{error}</div>
+					<div className='p-4 text-red-500 text-xs'>{error.message}</div>
 				) : items.folders?.length === 0 && items.files?.length === 0 ? (
 					<div className='p-8 text-center text-muted-foreground text-xs italic'>Empty Folder</div>
 				) : (
@@ -161,7 +153,6 @@ export default function StoragePathInput({ value, onChange, placeholder }) {
 							onChange(url);
 							setIsOpen(false);
 						}}
-						onClose={() => setIsOpen(false)}
 					/>
 				</div>
 			</Drawer>

@@ -2,12 +2,13 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getWikiEntry } from '@/features/wiki/api/wikiService';
 import { transformWikiEntry } from '@/features/wiki/utils/wikiEntryMapper'; // Import transform
-import WikiEntityView from '@/features/wiki/components/WikiEntryView';
+import WikiEntryView from '@/features/wiki/components/WikiEntryView';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { normalizeTypeParam } from '@/domain/entity/utils/entityUtils';
 
-export default function WikiEntryPage() {
+export default function WikiDetailPage() {
 	const { type, entityId } = useParams();
-	const normalizedType = type === 'sessions' ? 'session' : type;
+	const normalizedType = normalizeTypeParam(type);
 
 	const {
 		data: entity,
@@ -29,5 +30,5 @@ export default function WikiEntryPage() {
 			</div>
 		);
 
-	return <WikiEntityView entity={entity} />;
+	return <WikiEntryView entity={entity} />;
 }

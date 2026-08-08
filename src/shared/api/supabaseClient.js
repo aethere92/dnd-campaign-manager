@@ -1,11 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { getDmPassword } from '@/shared/api/dmSession';
 
 // 1. Load variables from .env
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// NEW: Load the DM Password (this will only exist on your local machine)
-const DM_PASSWORD = import.meta.env.VITE_DM_PASSWORD;
 
 // 2. Safety Check (Helps debug if .env is missing)
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -15,12 +13,28 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 	);
 }
 
-// NEW: Set up custom headers. If the password exists, attach it. If not, send nothing.
-const customHeaders = DM_PASSWORD ? { 'x-dm-password': DM_PASSWORD } : {};
+/**
+ * Attach the DM password header per-request, read fresh from the session each time.
+ *
+ * The password used to be baked into the client's headers at creation from a
+ * build-time env var — which meant it shipped in the public bundle, and the header
+ * was fixed for the client's whole life. Now there is no build-time copy: the DM
+ * signs in at runtime (see DmLogin), the value lives in sessionStorage, and this
+ * wrapper reads it on every call. Requests made before sign-in simply carry no
+ * DM header, so RLS treats them as read-only — exactly what we want for visitors.
+ */
+const dmFetch = (input, init = {}) => {
+	const password = getDmPassword();
+	if (!password) return fetch(input, init);
 
-// 3. Initialize and Export the Client (now with the custom headers attached)
+	const headers = new Headers(init.headers || {});
+	headers.set('x-dm-password', password);
+	return fetch(input, { ...init, headers });
+};
+
+// 3. Initialize and export the client with the DM-aware fetch.
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 	global: {
-		headers: customHeaders
-	}
+		fetch: dmFetch,
+	},
 });

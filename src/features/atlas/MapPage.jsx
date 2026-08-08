@@ -1,5 +1,4 @@
 // features/atlas/MapPage.jsx
-import React from 'react';
 import { AtlasProvider } from './context/AtlasContext';
 import { MapCanvas } from './components/MapCanvas';
 import { AtlasSidebar } from './components/AtlasSidebar';

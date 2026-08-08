@@ -1,11 +1,11 @@
-import { useEntityViewModel } from '@/features/wiki/useEntityView';
+import { useEntityView } from '@/features/wiki/hooks/useEntityView';
 import { EntityHeader } from '@/features/wiki/components/EntityHeader';
 import StandardLayout from '@/features/wiki/layouts/StandardLayout';
 import SessionLayout from '@/features/wiki/layouts/SessionLayout';
 import CharacterLayout from '@/features/wiki/layouts/CharacterLayout'; // Import New Layout
 
-export default function WikiEntityView({ entity }) {
-	const viewModel = useEntityViewModel(entity);
+export default function WikiEntryView({ entity }) {
+	const viewModel = useEntityView(entity);
 
 	if (!viewModel) return null;
 

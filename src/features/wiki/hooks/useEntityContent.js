@@ -26,29 +26,28 @@ export const useEntityContent = (entity, attributes, sections) => {
 			entityIsSession && entity.relationships
 				? entity.relationships.reduce((acc, rel) => {
 						const type = rel.entity_type?.toLowerCase() || 'other';
-						if (!acc[type]) acc[type] =[];
+						if (!acc[type]) acc[type] = [];
 						acc[type].push({
 							id: rel.entity_id,
 							name: rel.entity_name,
 							type: rel.entity_type,
 						});
 						return acc;
-				  }, {})
+					}, {})
 				: null;
 
-		const levelUp = getAttributeValue(attributes,['level_up', 'Level Up']);
-		
-		// NEW: Extract Admin Preference
-		const timelineMode = getAttributeValue(attributes,['timeline_mode', 'Public Display Mode']);
+		const levelUp = getAttributeValue(attributes, ['level_up', 'Level Up']);
+
+		const timelineMode = getAttributeValue(attributes, ['timeline_mode', 'Public Display Mode']);
 
 		return {
-			objectives: entityIsQuest ? entity.objectives ||[] : null,
+			objectives: entityIsQuest ? entity.objectives || [] : null,
 			combatRounds: entityIsEncounter ? entity.combatRounds : null,
 			narrativeTimeline: entityIsEncounter ? entity.narrativeTimeline : null, // Pass down mapped timeline
 			timelineMode, // Pass down preference
 			narrative: entityIsSession ? entity.description || '' : null,
 			summary: mainSummary || '',
-			sections: sections ||[],
+			sections: sections || [],
 			history: events,
 			mentions,
 			levelUp,

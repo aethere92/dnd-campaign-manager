@@ -1,9 +1,22 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { clsx } from 'clsx';
 import { List, ChevronRight, ChevronDown } from 'lucide-react';
 import { useTocObserver } from './hooks/useTocObserver';
 import { useTocScroll } from './hooks/useTocScroll';
 import { TocMobileDrawer } from './components/TocMobileDrawer';
+
+// Stable identity so a collapsed TOC doesn't produce a new Set every render.
+const NOTHING_EXPANDED = new Set();
+
+// Which depth-2 heading owns `id`? Returns `id` itself if it is a parent.
+function findParentId(parents, id) {
+	if (!id) return null;
+	if (parents.has(id)) return id;
+	for (const [parentId, children] of parents.entries()) {
+		if (children.includes(id)) return parentId;
+	}
+	return null;
+}
 
 export const TableOfContents = ({
 	items,
@@ -12,10 +25,19 @@ export const TableOfContents = ({
 	mobileToggleClass = 'xl:hidden',
 }) => {
 	const [isOpen, setIsOpen] = useState(false);
-	const [expandedIds, setExpandedIds] = useState(new Set());
 
-	// NAV LOCK
-	const isNavigating = useRef(false);
+	// Expansion is derived from the active heading, with two overrides layered on
+	// top. Previously this was one `expandedIds` state kept in sync by an effect,
+	// which is what react-hooks/set-state-in-effect flagged: the effect ran after
+	// paint, so the sidebar showed the previous section expanded for a frame.
+	//
+	// `pinnedParentId` is the old `isNavigating` ref turned into real state. Its job
+	// is to hold the clicked section open while the smooth scroll animates past
+	// intermediate headings — as a ref it could not affect rendering, so the auto
+	// expansion had to be suppressed from inside the effect.
+	const [pinnedParentId, setPinnedParentId] = useState(null);
+	// A manual chevron click wins until the reader scrolls to a different section.
+	const [manualExpanded, setManualExpanded] = useState(null);
 	const scrollTimeout = useRef(null);
 
 	const itemIds = useMemo(() => items?.map((i) => i.id) || [], [items]);
@@ -42,63 +64,42 @@ export const TableOfContents = ({
 
 	// 2. Scroll Handler
 	const handleScrollTo = (id) => {
-		isNavigating.current = true;
 		if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
 
-		let targetParentId = null;
-		if (parents.has(id)) targetParentId = id;
-		else {
-			for (const [pId, children] of parents.entries()) {
-				if (children.includes(id)) {
-					targetParentId = pId;
-					break;
-				}
-			}
-		}
+		const targetParentId = findParentId(parents, id);
 
-		if (targetParentId) setExpandedIds(new Set([targetParentId]));
+		// Pin the target open for the duration of the smooth scroll, so the
+		// headings the viewport passes through on the way don't collapse it.
+		setPinnedParentId(targetParentId);
+		setManualExpanded(null);
 		originalScrollTo(id);
 
-		scrollTimeout.current = setTimeout(() => {
-			isNavigating.current = false;
-		}, 1000);
+		scrollTimeout.current = setTimeout(() => setPinnedParentId(null), 1000);
 	};
 
-	// 3. Auto-Expand
-	useEffect(() => {
-		if (isNavigating.current || !activeId) return;
+	// 3. Auto-Expand — derived, not synced.
+	const activeParentId = findParentId(parents, activeId);
+	const autoParentId = pinnedParentId ?? activeParentId;
 
-		let activeParentId = null;
-		if (parents.has(activeId)) activeParentId = activeId;
-		else {
-			for (const [pId, children] of parents.entries()) {
-				if (children.includes(activeId)) {
-					activeParentId = pId;
-					break;
-				}
-			}
-		}
+	// Memoised so the Set keeps a stable identity between renders of the same
+	// section (a fresh Set every render would defeat memoisation downstream).
+	const autoExpanded = useMemo(() => (autoParentId ? new Set([autoParentId]) : NOTHING_EXPANDED), [autoParentId]);
 
-		setExpandedIds((prev) => {
-			if (activeParentId) {
-				if (prev.size === 1 && prev.has(activeParentId)) return prev;
-				return new Set([activeParentId]);
-			}
-			if (prev.size === 0) return prev;
-			return new Set();
-		});
-	}, [activeId, parents]);
+	// A manual toggle applies only while the reader is still in the section it was
+	// made in; scrolling elsewhere hands control back to the active heading.
+	const manualApplies = manualExpanded && manualExpanded.forParentId === autoParentId;
+	const expandedIds = manualApplies ? manualExpanded.ids : autoExpanded;
 
 	// Toggle Handler
 	const toggleExpand = (e, id) => {
 		e.preventDefault();
 		e.stopPropagation();
-		setExpandedIds((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(id)) newSet.delete(id);
-			else newSet.add(id);
-			return newSet;
-		});
+
+		const next = new Set(expandedIds);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+
+		setManualExpanded({ forParentId: autoParentId, ids: next });
 	};
 
 	if (!items || items.length === 0) return null;

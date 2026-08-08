@@ -81,9 +81,6 @@ function parseVisualAttributes(attributes) {
 		appearance: [],
 	};
 
-	// Common attribute keys to check
-	const attrStr = JSON.stringify(attributes).toLowerCase();
-
 	// Extract race
 	if (attributes.race) visual.race = attributes.race;
 
@@ -463,7 +460,6 @@ async function processTable(tableName, folderPath) {
 		console.log(`   └─ [MODE] ${isCharacter ? 'Character Portrait' : 'Location/Environment'}`);
 
 		const attrString = formatAttributes(attrs);
-		const visualAttrs = parseVisualAttributes(attrs);
 		let visualKeywords;
 
 		try {

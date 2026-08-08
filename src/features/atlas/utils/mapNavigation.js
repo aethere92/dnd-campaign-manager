@@ -1,7 +1,6 @@
 import { campaign_001_map_data } from '@/features/atlas/data/campaign_01/index';
 import { campaign_002_map_data } from '@/features/atlas/data/campaign_02/index'; // Ensure path is correct
 
-// FIX: Keys updated to match Database "map_data" attribute values
 export const CAMPAIGN_REGISTRY = {
 	campaign_001_map_data: campaign_001_map_data,
 	campaign_002_map_data: campaign_002_map_data,

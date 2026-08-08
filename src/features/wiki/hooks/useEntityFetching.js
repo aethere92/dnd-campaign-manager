@@ -3,17 +3,19 @@ import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getEntities, getCampaignArcs } from '@/domain/entity/api/entityService';
 import { supabase } from '@/shared/api/supabaseClient'; // Import Supabase directly
 import { useMemo } from 'react';
+import { normalizeTypeParam } from '@/domain/entity/utils/entityUtils';
 
 export function useEntityFetching(type) {
 	const { campaignId } = useCampaign();
-	const normalizedType = type === 'sessions' ? 'session' : type;
+	const normalizedType = normalizeTypeParam(type);
 
 	// 1. Primary Query
 	const mainQuery = useQuery({
 		queryKey: ['entities', campaignId, normalizedType],
 		queryFn: async () => {
-			// FIX: If fetching sessions, query the sessions table directly
 			// to ensure we get the 'narrative' (mapped to description)
+			// Sessions are queried directly rather than through the entity service,
+			// because only the sessions table carries `narrative`.
 			if (normalizedType === 'session') {
 				const { data, error } = await supabase
 					.from('sessions')

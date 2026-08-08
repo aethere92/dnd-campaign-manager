@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Search, Folder, LayoutGrid, List } from 'lucide-react';
+import { Search, LayoutGrid, List } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useEntityFetching } from '@/features/wiki/hooks/useEntityFetching';
 import { useEntityGrouping } from '@/features/wiki/hooks/useEntityGrouping';
@@ -9,10 +9,11 @@ import { Swimlane } from '../components/landing/Swimlane';
 import { EntityTableGroup } from '../components/landing/EntityTableGroup';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { clsx } from 'clsx';
+import { normalizeTypeParam } from '@/domain/entity/utils/entityUtils';
 
 export default function WikiLandingPage() {
 	const { type } = useParams();
-	const normalizedType = type === 'sessions' ? 'session' : type;
+	const normalizedType = normalizeTypeParam(type);
 
 	// 1. Fetch Entities & Context (Arcs)
 	const { entities, context, isLoading } = useEntityFetching(normalizedType);

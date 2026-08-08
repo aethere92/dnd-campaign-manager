@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useId, useEffect } from 'react';
 import { SVGOverlay, useMap } from 'react-leaflet';
 
 // Conservative Ramer-Douglas-Peucker simplification
@@ -83,22 +83,33 @@ const useZoomLevel = () => {
 };
 
 export const MapFogLayer = ({ fogConfig, bounds }) => {
-	if (!fogConfig || !fogConfig.enabled || !bounds) return null;
+	// The early return used to sit ABOVE these hooks, which violates the Rules of
+	// Hooks: toggling fog off while mounted would render fewer hooks than the
+	// previous pass and throw. It only ever "worked" because MapCanvas guards with
+	// `showFog` so this never mounted with a falsy config. Hooks run
+	// unconditionally now; the guard moved below them.
+	const isActive = !!(fogConfig && fogConfig.enabled && bounds);
 
 	const zoom = useZoomLevel();
-	const height = Math.abs(bounds[0][0] - bounds[1][0]);
-	const width = Math.abs(bounds[1][1] - bounds[0][1]);
+	const height = isActive ? Math.abs(bounds[0][0] - bounds[1][0]) : 0;
+	const width = isActive ? Math.abs(bounds[1][1] - bounds[0][1]) : 0;
+
+	const shapes = fogConfig?.shapes;
+	const edgeSoftness = fogConfig?.edgeSoftness;
 
 	const processedData = useMemo(() => {
+		if (!shapes) {
+			return { paths: [], stats: null, renderStrategy: { useCSS: false, skipBlur: true, useLayerPromotion: false } };
+		}
 		// MUCH more conservative tolerance
 		// Only simplify at very low zoom levels, and minimally
 		const baseTolerance = width / 2000; // Very conservative base
 		const zoomFactor = Math.max(0, 10 - zoom); // Only simplify at zoom < 10
 		const tolerance = baseTolerance * Math.pow(1.5, zoomFactor);
 
-		const blurAmount = fogConfig.edgeSoftness || 0;
+		const blurAmount = edgeSoftness || 0;
 
-		const paths = fogConfig.shapes.map((shape) => {
+		const paths = shapes.map((shape) => {
 			if (!shape.points || shape.points.length === 0) return { path: '', pointCount: 0 };
 
 			// Only simplify if we have excessive points AND are zoomed out
@@ -132,15 +143,25 @@ export const MapFogLayer = ({ fogConfig, bounds }) => {
 				useLayerPromotion: totalPoints > 2000 || (paths.length > 30 && blurAmount > 5),
 			},
 		};
-	}, [fogConfig.shapes, fogConfig.edgeSoftness, zoom, width]);
+	}, [shapes, edgeSoftness, zoom, width]);
+
+	const { paths, renderStrategy } = processedData;
+	// useId, not Math.random(): a random value in a render body is impure and can
+	// change between renders. useId is stable per component instance and SSR-safe.
+	// Colons are stripped because the value goes into an SVG id and a url(#...) ref.
+	const uid = useId().replace(/:/g, '');
+	const filterId = `fog-blur-${uid}`;
+	// Also unique: a hardcoded 'fog-mask' would collide if two fog layers ever
+	// rendered on the same page (e.g. atlas plus an EntityMiniMap).
+	const maskId = `fog-mask-${uid}`;
+
+	// All hooks have run. Safe to bail out now.
+	if (!isActive) return null;
 
 	const isCloudMode = fogConfig.invert;
 	const blurStdDev = fogConfig.edgeSoftness || 0;
 	const fogColor = fogConfig.color || '#1a1d21';
 	const fogOpacity = fogConfig.opacity || 0.9;
-
-	const { paths, renderStrategy } = processedData;
-	const filterId = useRef(`fog-blur-${Math.random().toString(36).substr(2, 9)}`).current;
 
 	// Blur strategy
 	let blurStyle = {};
@@ -181,7 +202,7 @@ export const MapFogLayer = ({ fogConfig, bounds }) => {
 					</filter>
 				)}
 
-				<mask id='fog-mask'>
+				<mask id={maskId}>
 					<rect x='0' y='0' width='100%' height='100%' fill='white' />
 					{paths.map((d, i) => (
 						<path key={i} d={d} fill='black' filter={svgFilter} style={blurStyle} />
@@ -197,7 +218,7 @@ export const MapFogLayer = ({ fogConfig, bounds }) => {
 					height='100%'
 					fill={fogColor}
 					fillOpacity={fogOpacity}
-					mask='url(#fog-mask)'
+					mask={`url(#${maskId})`}
 					style={baseStyle}
 				/>
 			) : (

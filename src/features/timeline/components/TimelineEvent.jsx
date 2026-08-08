@@ -18,7 +18,6 @@ export const TimelineEvent = memo(({ event, id }) => {
 	}, [event.tags]);
 
 	return (
-		// FIX: Reduced gap on mobile (gap-2.5) to gap-4 on desktop
 		<div className='relative flex gap-2.5 md:gap-4 group'>
 			{/* Icon Bubble - Slightly smaller on mobile (w-7) */}
 			<div

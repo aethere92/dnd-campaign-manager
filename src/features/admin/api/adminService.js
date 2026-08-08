@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/api/supabaseClient';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
+import { escapeRegex } from '@/shared/utils/textUtils';
 
 /**
  * Helper to determine which column stores JSON attributes.
@@ -8,13 +9,6 @@ const getAttrColumn = (type) => {
 	const strategy = getStrategy(type);
 	return strategy.jsonField || 'attributes';
 };
-
-/**
- * Escape Regex characters for JS processing
- */
-function escapeRegExp(string) {
-	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 /**
  * Escape SQL Like wildcards (% and _) for RPC calls
@@ -71,7 +65,7 @@ export const createEntity = async (type, data) => {
 
 	const rawAttributes =
 		data.attributesList ||
-		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) :[]);
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
 
 	const jsonStorage = {};
 	rawAttributes.forEach((attr) => {
@@ -118,7 +112,7 @@ export const updateEntity = async (type, id, data) => {
 
 	const rawAttributes =
 		data.attributesList ||
-		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) :[]);
+		(data.attributes ? Object.entries(data.attributes).map(([k, v]) => ({ name: k, value: v })) : []);
 
 	const jsonStorage = {};
 	rawAttributes.forEach((attr) => {
@@ -163,7 +157,7 @@ export const fetchRawEntity = async (type, id) => {
 		});
 	}
 
-	const attributesList =[];
+	const attributesList = [];
 	const jsonSource = coreData[attrCol] || {};
 
 	if (type === 'map') {
@@ -198,7 +192,7 @@ export const fetchRelationships = async (id) => {
             is_bidirectional,
             is_hidden,
             target:entities!to_entity_id ( id, name, type )
-        `,
+        `
 		)
 		.eq('from_entity_id', id);
 
@@ -309,7 +303,7 @@ export const fetchSessionEventsWithRelationships = async (sessionId) => {
             id,
             from_entity_id,
             target:entities!to_entity_id ( id, name, type )
-        `,
+        `
 		)
 		.in('from_entity_id', eventIds);
 
@@ -335,7 +329,7 @@ export const fetchEncounterActions = async (encounterId) => {
 			*,
 			actor:entities!actor_entity_id(name, type),
 			target:entities!target_entity_id(name, type)
-		`,
+		`
 		)
 		.eq('encounter_id', encounterId)
 		.order('round_number', { ascending: true })
@@ -374,7 +368,7 @@ export const getBulkReplacePreview = async (campaignId, findTerm, replaceTerm) =
 		throw error;
 	}
 
-	const escapedTerm = escapeRegExp(findTerm.trim());
+	const escapedTerm = escapeRegex(findTerm.trim());
 	const regex = new RegExp(escapedTerm, 'gi');
 
 	return data.map((row) => ({

@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import EntityLink from '@/domain/entity/components/EntityLink';
-import EntityIcon from '@/domain/entity/components/EntityIcon';
+import MasonryGrid from '@/shared/components/layout/MasonryGrid';
 
 const NetworkGroup = ({ type, items }) => {
 	if (!items || items.length === 0) return null;
@@ -27,26 +27,16 @@ const NetworkGroup = ({ type, items }) => {
 				{items.map((rel) => (
 					<EntityLink
 						key={rel.entity_id}
+						variant='row'
 						id={rel.entity_id}
 						type={rel.entity_type}
-						inline={true}
-						showIcon={true}
-						className={clsx(
-							'!flex !w-full !items-center !justify-between !p-2 !rounded-md !border !bg-card !transition-all !cursor-pointer !no-underline',
-							'!border-border hover:!border-primary/50 hover:!shadow-sm hover:!bg-muted/20 group'
-						)}>
-						{/* Left: Icon + Name */}
-						<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-							{/* <EntityIcon type={rel.entity_type} size={18} className='opacity-80 group-hover:opacity-100 shrink-0' /> */}
-							<span className='text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors'>
-								{rel.entity_name}
+						showIcon={false}
+						trailing={
+							<span className='shrink-0 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded ml-2 max-w-[40%] truncate'>
+								{rel.type ? rel.type.replace(/_/g, ' ') : 'Related'}
 							</span>
-						</div>
-
-						{/* Right: Relationship Label */}
-						<span className='shrink-0 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded ml-2 max-w-[40%] truncate'>
-							{rel.type ? rel.type.replace(/_/g, ' ') : 'Related'}
-						</span>
+						}>
+						{rel.entity_name}
 					</EntityLink>
 				))}
 			</div>
@@ -77,10 +67,10 @@ export const RelationshipNetwork = ({ relationships }) => {
 
 	// 3. Render Masonry Layout
 	return (
-		<div className='columns-1 md:columns-2 xl:columns-3 gap-6 animate-in fade-in duration-500'>
+		<MasonryGrid columns={3} gap='lg' className='animate-in fade-in duration-500'>
 			{orderedKeys.map((type) => (
 				<NetworkGroup key={type} type={type} items={groups[type]} />
 			))}
-		</div>
+		</MasonryGrid>
 	);
 };

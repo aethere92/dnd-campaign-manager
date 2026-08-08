@@ -2,7 +2,7 @@
  * Scans narrative text against the entity index and returns mention suggestions.
  * Reuses the same matching logic as the smart-text system.
  */
-import { findEntityMatches } from '@/features/smart-text/useSmartText';
+import { findEntityMatches } from '@/features/smart-text/hooks/useSmartText';
 
 /**
  * Scan text and return unique entity mentions not already linked.

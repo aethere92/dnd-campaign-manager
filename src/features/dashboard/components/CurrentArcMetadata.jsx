@@ -1,4 +1,4 @@
-import { Map, Crown } from 'lucide-react'; // Swapped icons
+import { Map } from 'lucide-react'; // Swapped icons
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 export const CurrentArcMetadata = ({ arc }) => {

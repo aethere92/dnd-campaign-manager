@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { useWikiNavigation } from './useWikiNavigation';
+import { useWikiNavigation } from '@/features/wiki/hooks/useWikiNavigation';
 import { WikiSidebar } from '@/features/wiki/components/navigation/WikiSidebar';
 
 export default function WikiLayout() {

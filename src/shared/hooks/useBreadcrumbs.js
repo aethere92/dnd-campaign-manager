@@ -1,8 +1,10 @@
 import { useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
-import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { useEntityIndex } from '@/features/smart-text/hooks/useEntityIndex';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
 import { capitalize } from '@/shared/utils/textUtils';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
+import { CAMPAIGN_SEGMENT } from '@/app/routes';
 
 const ROUTE_LABELS = {
 	dm: 'DM Console',
@@ -16,21 +18,33 @@ const ROUTE_LABELS = {
 export function useBreadcrumbs() {
 	const location = useLocation();
 	const { map: entityMap } = useEntityIndex(); // DESTRUCTURED: Use Map
+	const routes = useCampaignRoutes();
 
 	const breadcrumbs = useMemo(() => {
-		const pathnames = location.pathname.split('/').filter((x) => x);
+		let pathnames = location.pathname.split('/').filter((x) => x);
+
+		// Strip the campaign scope prefix ('c' + id) before interpreting segments:
+		// the crumbs describe position *within* a campaign, and the id is not a
+		// meaningful crumb. Everything below then works on unscoped segments, and
+		// paths are rebuilt through the scoped route builders.
+		if (pathnames[0] === CAMPAIGN_SEGMENT) {
+			pathnames = pathnames.slice(2);
+		}
+
 		const crumbs = [];
 
 		crumbs.push({
 			label: 'Home',
-			path: '/',
+			path: routes.dashboard(),
 			isCurrent: pathnames.length === 0,
 		});
 
 		const isWiki = pathnames[0] === 'wiki';
 		const SKIP_SEGMENTS = ['manage', 'wiki'];
 
-		let currentPath = '';
+		// Seed with the campaign root so every accumulated crumb path stays scoped.
+		// routes.dashboard() is '/c/:id'; segments are appended below.
+		let currentPath = routes.dashboard();
 
 		for (let i = 0; i < pathnames.length; i++) {
 			const segment = pathnames[i];
@@ -42,7 +56,6 @@ export function useBreadcrumbs() {
 			const isUUID = /^[0-9a-fA-F-]{36}$/.test(segment);
 
 			if (isWiki && isUUID) {
-				// OPTIMIZATION: O(1) Lookup
 				const targetEntity = entityMap.get(segment);
 
 				if (targetEntity) {
@@ -63,7 +76,7 @@ export function useBreadcrumbs() {
 					hierarchyStack.forEach((ancestor) => {
 						crumbs.push({
 							label: ancestor.name,
-							path: `/wiki/${ancestor.type}/${ancestor.id}`,
+							path: routes.wikiEntity(ancestor.type, ancestor.id),
 							isCurrent: false,
 							icon: null,
 						});
@@ -71,7 +84,7 @@ export function useBreadcrumbs() {
 
 					crumbs.push({
 						label: targetEntity.name,
-						path: currentPath,
+						path: routes.wikiEntity(targetEntity.type, targetEntity.id),
 						isCurrent: isLast,
 					});
 				} else {
@@ -94,7 +107,7 @@ export function useBreadcrumbs() {
 		}
 
 		return crumbs;
-	}, [location.pathname, entityMap]);
+	}, [location.pathname, entityMap, routes]);
 
 	return breadcrumbs;
 }

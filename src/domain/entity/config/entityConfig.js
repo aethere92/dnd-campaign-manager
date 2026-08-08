@@ -7,7 +7,9 @@
 import { ENTITY_TYPES, getEntityLabel } from './entityTypes';
 import { getEntityIcon } from './entityIcons';
 import { getEntityColor, getEntityPalette } from './entityColors';
-import { getEntityStyles, getEntityPreset, buildEntityClassName } from './entityStyles';
+// Only getEntityStyles is used in this module's body; the other two are
+// re-exported below straight from entityStyles.
+import { getEntityStyles } from './entityStyles';
 
 /**
  * Get complete configuration for an entity type

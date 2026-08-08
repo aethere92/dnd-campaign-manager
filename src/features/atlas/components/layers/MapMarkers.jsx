@@ -1,16 +1,19 @@
 import { Marker, Popup } from 'react-leaflet';
 import { ArrowRight, BookOpen, Map as MapIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { clsx } from 'clsx';
 import { useAtlas } from '../../context/AtlasContext'; // Import the new Context
 import { resolveMarkerIcon } from '@/features/atlas/utils/markerUtils';
-import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { useEntityIndex } from '@/features/smart-text/hooks/useEntityIndex';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
-import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { parseAttributes } from '@/domain/entity/utils/attributeParser';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 export const MapMarkers = ({ markers }) => {
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
 	const { map: entityMap } = useEntityIndex();
 
 	// Get navigation function directly from context
@@ -26,7 +29,7 @@ export const MapMarkers = ({ markers }) => {
 
 				// Attempt to link Marker -> Entity (by Name)
 				const entityMatch = Array.from(entityMap.values()).find(
-					(e) => e.name.toLowerCase() === marker.label.toLowerCase(),
+					(e) => e.name.toLowerCase() === marker.label.toLowerCase()
 				);
 
 				const entityAttrs = entityMatch ? parseAttributes(entityMatch.attributes) : {};
@@ -55,7 +58,7 @@ export const MapMarkers = ({ markers }) => {
 				const handleWikiNav = (e) => {
 					e.stopPropagation();
 					if (entityMatch) {
-						navigate(`/wiki/${entityMatch.type}/${entityMatch.id}`);
+						navigate(routes.wikiEntity(entityMatch.type, entityMatch.id));
 					}
 				};
 
@@ -94,7 +97,7 @@ export const MapMarkers = ({ markers }) => {
 											<span
 												className={clsx(
 													'text-[10px] font-bold uppercase tracking-wider block mb-0.5',
-													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground',
+													entityConfig ? entityConfig.tailwind.text : 'text-muted-foreground'
 												)}>
 												{displayData.category}
 											</span>
@@ -107,7 +110,7 @@ export const MapMarkers = ({ markers }) => {
 												className={clsx(
 													'p-1.5 rounded-md border shrink-0 bg-background/80 backdrop-blur-sm',
 													entityConfig.tailwind.border,
-													entityConfig.tailwind.text,
+													entityConfig.tailwind.text
 												)}>
 												<entityConfig.icon size={14} />
 											</div>

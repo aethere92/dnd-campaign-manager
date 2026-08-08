@@ -11,13 +11,17 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
-import EntityLink from '@/domain/entity/components/EntityLink';
+import { getStatusColors } from '@/domain/entity/utils/statusUtils';
 
 const QuestObjectiveItem = ({ obj }) => {
 	const [isOpen, setIsOpen] = useState(false);
 
 	const isCompleted = obj.status === 'completed';
 	const isFailed = obj.status === 'failed';
+
+	// Row tint from the shared palette; only completed/failed rows are tinted, so
+	// pending stays neutral exactly as before.
+	const rowTint = isCompleted || isFailed ? getStatusColors(obj.status).bg : 'hover:bg-muted/30';
 
 	const hasUpdate = !!obj.objective_update;
 	const hasSession = isCompleted && obj.completed_session_number;
@@ -26,11 +30,7 @@ const QuestObjectiveItem = ({ obj }) => {
 	const toggle = () => hasContent && setIsOpen(!isOpen);
 
 	return (
-		<div
-			className={clsx(
-				'transition-colors border-b border-border/40 last:border-0',
-				isCompleted ? 'bg-emerald-500/10/10' : isFailed ? 'bg-red-500/10/10' : 'hover:bg-muted/30'
-			)}>
+		<div className={clsx('transition-colors border-b border-border/40 last:border-0', rowTint)}>
 			{/* --- MAIN ROW --- */}
 			<div
 				className={clsx(
@@ -114,7 +114,7 @@ export const QuestObjectives = ({ objectives }) => {
 	if (!objectives || objectives.length === 0) return null;
 
 	return (
-		<div className='mb-8 not-prose border border-border rounded-lg overflow-hidden bg-muted/30/20'>
+		<div className='mb-8 not-prose border border-border rounded-lg overflow-hidden bg-muted/20'>
 			<div className='px-3 py-2 border-b border-border bg-muted/50 flex items-center gap-2'>
 				<h3 className='text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 m-0'>
 					<Target size={12} className='text-primary' /> Quest Objectives

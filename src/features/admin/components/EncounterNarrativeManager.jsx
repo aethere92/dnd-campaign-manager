@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, BookOpen } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 import MarkdownEditor from './MarkdownEditor';
 import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 
-export default function EncounterNarrativeManager({ timeline =[], onChange }) {
+export default function EncounterNarrativeManager({ timeline = [], onChange }) {
 	const [editingIndex, setEditingIndex] = useState(null);
 	const [formData, setFormData] = useState({});
 
@@ -63,9 +63,7 @@ export default function EncounterNarrativeManager({ timeline =[], onChange }) {
 
 			<div className='space-y-6'>
 				{Object.keys(grouped).length === 0 && (
-					<div className='text-center py-6 text-muted-foreground text-sm italic'>
-						No narrative events recorded yet.
-					</div>
+					<div className='text-center py-6 text-muted-foreground text-sm italic'>No narrative events recorded yet.</div>
 				)}
 
 				{Object.entries(grouped).map(([roundNum, events]) => (
@@ -73,7 +71,7 @@ export default function EncounterNarrativeManager({ timeline =[], onChange }) {
 						<h4 className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border pb-1'>
 							Round {roundNum}
 						</h4>
-						
+
 						{events.map((evt) => (
 							<div key={evt.originalIndex} className='group'>
 								{editingIndex === evt.originalIndex ? (
@@ -128,14 +126,12 @@ export default function EncounterNarrativeManager({ timeline =[], onChange }) {
 										<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0'>
 											<button
 												onClick={() => handleEdit(evt.originalIndex)}
-												className='p-1.5 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'
-											>
+												className='p-1.5 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
 												<Edit2 size={16} />
 											</button>
 											<button
 												onClick={() => handleDelete(evt.originalIndex)}
-												className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'
-											>
+												className='p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors'>
 												<Trash2 size={16} />
 											</button>
 										</div>

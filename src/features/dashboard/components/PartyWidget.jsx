@@ -1,16 +1,18 @@
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { Shield, Heart, Footprints, User } from 'lucide-react';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { clsx } from 'clsx';
 
 export const PartyWidget = ({ party }) => {
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
 
 	if (!party || party.length === 0) return null;
 
 	const handleCardClick = (id, e) => {
 		if (e.target.closest('a')) return;
-		navigate(`/wiki/character/${id}`);
+		navigate(routes.wikiEntity('character', id));
 	};
 
 	return (

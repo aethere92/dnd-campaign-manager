@@ -1,4 +1,4 @@
-import { ArrowRight, Users, Map, BookOpen } from 'lucide-react';
+import { ArrowRight, Users, Map } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 import { clsx } from 'clsx';
 
@@ -74,7 +74,10 @@ export const CampaignCard = ({ campaign, onSelect }) => {
 					</div>
 				</div>
 
-				{/* Action Button */}
+				{/* Action Button.
+				    Selects by `id` (the UUID primary key), which is what entity rows'
+				    campaign_id column references and what appears in the URL. The
+				    separate integer `campaign_id` column is only a display number. */}
 				<Button
 					onClick={() => onSelect(campaign.id)}
 					fullWidth

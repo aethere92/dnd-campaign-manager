@@ -1,5 +1,4 @@
 import { History, Diamond } from 'lucide-react';
-import { clsx } from 'clsx';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { EntityHistory } from './EntityHistory';
 import { QuestObjectives } from './QuestObjectives';
@@ -16,7 +15,7 @@ const LevelUpBanner = ({ level }) => {
 	return (
 		<div className='mt-4 mb-6 w-full'>
 			<div className='flex items-center h-16 bg-muted/60 border-y border-r border-border border-l-2 border-l-primary rounded-lg shadow-sm w-full overflow-hidden'>
-				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10/50 border-r border-border/40'>
+				<div className='shrink-0 h-full flex items-center px-5 bg-amber-500/10 border-r border-border/40'>
 					<img src={logoPath} alt='Campaign Logo' className='h-12 w-auto object-contain opacity-80 drop-shadow-sm' />
 				</div>
 				<div className='flex-1 flex flex-col justify-center px-4'>
@@ -47,11 +46,11 @@ export const EntityBody = ({
 	// Determine which timeline to show based on Admin Setting
 	const hasNarrative = narrativeTimeline && Object.keys(narrativeTimeline).length > 0;
 	const hasLegacy = combatRounds && Object.keys(combatRounds).length > 0;
-	
+
 	// If "Narrative Timeline" is strictly set, show it. Otherwise, show it ONLY if legacy is empty.
-	const showNarrative = timelineMode === 'Narrative Timeline' ? hasNarrative : (!hasLegacy && hasNarrative);
+	const showNarrative = timelineMode === 'Narrative Timeline' ? hasNarrative : !hasLegacy && hasNarrative;
 	// Vice versa for Legacy
-	const showLegacy = timelineMode !== 'Narrative Timeline' ? hasLegacy : (!hasNarrative && hasLegacy);
+	const showLegacy = timelineMode !== 'Narrative Timeline' ? hasLegacy : !hasNarrative && hasLegacy;
 
 	return (
 		<div className='prose max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-foreground prose-p:text-[11pt] prose-p:leading-relaxed prose-p:my-2 prose-strong:text-foreground prose-strong:font-bold prose-li:marker:text-amber-600 prose-li:text-sm prose-li:my-0.5 prose-p:text-justify'>
@@ -60,14 +59,14 @@ export const EntityBody = ({
 					<SmartMarkdown>{summary}</SmartMarkdown>
 				</div>
 			)}
-			
+
 			{objectives && objectives.length > 0 && (
 				<>
 					<SectionDivider />
 					<QuestObjectives objectives={objectives} />
 				</>
 			)}
-			
+
 			{mapImageUrl && mapImageUrl.length > 0 && (
 				<>
 					<SectionDivider />
@@ -124,7 +123,7 @@ export const EntityBody = ({
 					</div>
 				);
 			})}
-			
+
 			{history && history.length > 0 && (
 				<div className='mt-2'>
 					<SectionDivider />
@@ -134,7 +133,7 @@ export const EntityBody = ({
 					<EntityHistory events={history} fullHeight />
 				</div>
 			)}
-			
+
 			{levelUp && <LevelUpBanner level={levelUp} />}
 		</div>
 	);

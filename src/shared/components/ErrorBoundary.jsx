@@ -30,8 +30,13 @@ class ErrorBoundary extends Component {
 							<AlertTriangle className='w-8 h-8 text-red-600' />
 						</div>
 						<h1 className='text-2xl font-serif font-bold text-foreground mb-3'>Something went wrong</h1>
-						<p className='text-muted-foreground mb-6'>Don't worry, your data is safe. Try refreshing the page to continue.</p>
-						{process.env.NODE_ENV === 'development' && this.state.error && (
+						<p className='text-muted-foreground mb-6'>
+							Don't worry, your data is safe. Try refreshing the page to continue.
+						</p>
+						{/* import.meta.env, not process.env: Vite does not define `process` in the
+						    browser, so the old check threw *inside the error boundary's own render* —
+						    turning any handled error into a blank page. */}
+						{import.meta.env.DEV && this.state.error && (
 							<details className='mb-6 text-left bg-red-500/10 border border-red-200 rounded-lg p-4'>
 								<summary className='cursor-pointer font-semibold text-red-900 mb-2'>Error Details</summary>
 								<pre className='text-xs text-red-800 overflow-auto'>{this.state.error.toString()}</pre>

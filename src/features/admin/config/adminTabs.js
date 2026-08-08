@@ -1,4 +1,4 @@
-import { FileText, Calendar, Target, BookOpen, Swords, LinkIcon, Map, Scan } from 'lucide-react';
+import { FileText, Calendar, Target, BookOpen, Swords, LinkIcon, Scan } from 'lucide-react';
 
 /**
  * Defines which tabs are available per entity type.
@@ -16,11 +16,7 @@ const TYPE_TABS = {
 		{ id: 'scanner', label: 'Scanner', icon: Scan, requiresId: true },
 		RELATIONSHIPS_TAB,
 	],
-	quest: [
-		DETAILS_TAB,
-		{ id: 'objectives', label: 'Objectives', icon: Target, requiresId: true },
-		RELATIONSHIPS_TAB,
-	],
+	quest: [DETAILS_TAB, { id: 'objectives', label: 'Objectives', icon: Target, requiresId: true }, RELATIONSHIPS_TAB],
 	encounter: [
 		DETAILS_TAB,
 		{ id: 'narrative', label: 'Narrative', icon: BookOpen, requiresId: true },

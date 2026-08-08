@@ -1,7 +1,5 @@
-import { Tag, Shield, Gem, Scroll, Save, Eye, Swords, Activity } from 'lucide-react';
+import { Tag, Gem, Scroll, Save, Eye, Swords, Activity } from 'lucide-react';
 import EntityLink from '@/domain/entity/components/EntityLink';
-import EntityIcon from '@/domain/entity/components/EntityIcon';
-import { clsx } from 'clsx';
 
 // Helper: Split string by comma and trim
 const parseTags = (str) => {
@@ -47,21 +45,8 @@ const SkillItem = ({ text }) => {
 };
 
 const SidebarLink = ({ entity }) => (
-	<EntityLink
-		id={entity.entity_id}
-		type={entity.entity_type}
-		inline={true}
-		showIcon={false}
-		className={clsx(
-			'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline !mb-2',
-			'!border-border hover:!border-primary/40 hover:!shadow-sm hover:!bg-card'
-		)}>
-		<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-			<EntityIcon type={entity.entity_type} size={16} className='opacity-80 group-hover:opacity-100' />
-			<span className='text-xs font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
-				{entity.entity_name}
-			</span>
-		</div>
+	<EntityLink variant='row' id={entity.entity_id} type={entity.entity_type} className='mb-2'>
+		{entity.entity_name}
 	</EntityLink>
 );
 
@@ -169,7 +154,22 @@ export const CharacterSidebar = ({ attributes, gear, quests }) => {
 				</div>
 			)}
 
-			{/* 5. Languages */}
+			{/* 5. Proficiencies & Tools
+			     `proficiencies`/`tools` were parsed and added to ignoredKeys — which
+			     excludes them from the dynamic attribute dump below — but never
+			     rendered, so the values disappeared from the sheet entirely. */}
+			{proficiencies.length > 0 && (
+				<div>
+					<SidebarHeader title='Proficiencies & Tools' icon={Tag} />
+					<div className='flex flex-wrap gap-1.5'>
+						{proficiencies.map((prof, i) => (
+							<TagPill key={i} text={prof} />
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 6. Languages */}
 			{languages.length > 0 && (
 				<div>
 					<SidebarHeader title='Languages' icon={Tag} />
@@ -181,7 +181,7 @@ export const CharacterSidebar = ({ attributes, gear, quests }) => {
 				</div>
 			)}
 
-			{/* 6. Dynamic Attributes */}
+			{/* 7. Dynamic Attributes */}
 			{otherAttributes.map(([key, val]) => {
 				const tags = parseTags(val);
 				return (

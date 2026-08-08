@@ -59,7 +59,7 @@ export const transformWikiEntry = (data, type, additionalData = {}) => {
 	}
 
 	// Encounter Actions
-if (type === 'encounter') {
+	if (type === 'encounter') {
 		// 1. Map Legacy Actions
 		if (additionalData.encounterActions) {
 			const actions = additionalData.encounterActions.map((action) => {
@@ -88,7 +88,7 @@ if (type === 'encounter') {
 									name: action.target.name || 'Unknown Target',
 									type: action.target.type || 'default',
 									iconUrl: resolveImageUrl(targetAttrs, 'icon'),
-							  }
+								}
 							: null,
 				};
 			});
@@ -109,7 +109,7 @@ if (type === 'encounter') {
 				if (!narrativeTimeline[round]) narrativeTimeline[round] = [];
 				narrativeTimeline[round].push(item);
 			});
-			
+
 			// Sort items inside each round mapped dictionary
 			Object.keys(narrativeTimeline).forEach((round) => {
 				narrativeTimeline[round].sort((a, b) => (a.order || 0) - (b.order || 0));

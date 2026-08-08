@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Menu, Search } from 'lucide-react';
-import { useMainLayout } from '@/features/navigation/useNavigation';
+import { useMainLayout } from '@/features/navigation/hooks/useMainLayout';
 import { Sidebar } from './components/Sidebar';
 import DevAdminButton from '@/shared/components/ui/DevAdminButton';
 import Breadcrumbs from '@/shared/components/ui/Breadcrumbs';
@@ -11,7 +11,6 @@ const MobileHeaderActions = ({ vm }) => {
 	const { openSearch } = useSearch();
 
 	return (
-		// CHANGED: Added pt-safe for notch support and min-h for touch targets
 		<div className='lg:hidden flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] border-b border-border bg-background/95 backdrop-blur-md shrink-0 sticky top-0 z-40 transition-all'>
 			<button
 				onClick={() => vm.setSidebarOpen(true)}

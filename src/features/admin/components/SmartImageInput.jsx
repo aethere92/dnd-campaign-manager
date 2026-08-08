@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Image as ImageIcon, Link, X, AlertCircle, FolderOpen } from 'lucide-react';
 import clsx from 'clsx';
 // Import the library modal (assuming it exists in the same directory based on file structure)
@@ -10,10 +10,16 @@ export default function SmartImageInput({ value, onChange, placeholder, classNam
 	const [isValid, setIsValid] = useState(true);
 	const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
-	// 2. Sync with parent value
-	useEffect(() => {
+	// 2. Sync with parent value.
+	// The last prop value is tracked alongside the local edit buffer so an
+	// externally-changed `value` overwrites local state, while the user's own
+	// keystrokes do not get clobbered. Adjusting during render (instead of in an
+	// effect) means the input never paints one frame of stale text.
+	const [lastValue, setLastValue] = useState(value);
+	if (value !== lastValue) {
+		setLastValue(value);
 		setInputValue(value || '');
-	}, [value]);
+	}
 
 	const handleChange = (e) => {
 		const val = e.target.value;

@@ -1,28 +1,66 @@
 name: Supabase Keep Alive
 
+# ---------------------------------------------------------------------------
+# This workflow is NOT sufficient on its own.
+#
+# GitHub disables scheduled workflows after 60 days of repository inactivity:
+#   "This scheduled workflow is disabled because there hasn't been activity in
+#    this repository for at least 60 days."
+#
+# A keep-alive that needs repo activity in order to keep running is
+# self-defeating — which is how the project came to be paused in the first place.
+#
+# PRIMARY protection should be an EXTERNAL cron service (cron-job.org,
+# UptimeRobot, etc.) hitting the same REST endpoint every ~6 hours. That has no
+# dependency on this repo. Treat this workflow as a backup only.
+#
+# The anon key is fine to use here: it is already public in the deployed bundle
+# and is constrained by RLS.
+# ---------------------------------------------------------------------------
+
 on:
   schedule:
-    # Every 5 days to stay well within the 7-day window
-    - cron: '0 */12 * * *'
+    # Every 3 days at 04:00 UTC — comfortably inside Supabase's 7-day window.
+    # (The previous value was '0 */12 * * *' — every 12 hours — despite a comment
+    # claiming every 5 days.)
+    - cron: '0 4 */3 * *'
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase to prevent pausing
+      - name: Ping Supabase REST API
         env:
+          SUPABASE_URL: https://yffukfulnggfhlgoyowg.supabase.co
           SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          curl -s -o /dev/null -w "%{http_code}" \
-            -X POST "https://yffukfulnggfhlgoyowg.supabase.co/rest/v1/keepalive" \
-            -H "apikey: ${SUPABASE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_KEY}" \
-            -H "Content-Type: application/json" \
-            -H "Prefer: resolution=merge-duplicates" \
-            -d '{"id": 1, "pinged_at": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+          set -euo pipefail
 
-          curl -s -o /dev/null -w "%{http_code}" \
-            -X GET "https://yffukfulnggfhlgoyowg.supabase.co/rest/v1/campaigns?select=id&limit=1" \
+          if [ -z "${SUPABASE_KEY}" ]; then
+            echo "::error::VITE_SUPABASE_ANON_KEY secret is not set."
+            exit 1
+          fi
+
+          # An authenticated READ is what registers as inbound API activity, and it
+          # needs no extra table or write permission. The previous version also
+          # POSTed to a 'keepalive' table but discarded the status code, so a 404 or
+          # an RLS rejection was indistinguishable from success.
+          echo "GET /rest/v1/campaigns"
+          code=$(curl -sS -o response.txt -w '%{http_code}' \
+            --max-time 30 --retry 3 --retry-delay 5 \
+            "${SUPABASE_URL}/rest/v1/campaigns?select=id&limit=1" \
             -H "apikey: ${SUPABASE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_KEY}"
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+
+          echo "HTTP ${code}"
+          echo "body: $(head -c 300 response.txt)"
+
+          # Fail loudly. A silent failure is worse than no workflow at all, because
+          # it stays green while the project drifts toward being paused.
+          if [ "${code}" -lt 200 ] || [ "${code}" -ge 300 ]; then
+            echo "::error::Supabase ping failed with HTTP ${code}. Project may be paused, or the key/RLS policy changed."
+            exit 1
+          fi
+
+          echo "Supabase reachable."

@@ -7,11 +7,18 @@ import { useEffect, useState } from 'react';
  * Reusable Mobile Drawer with 60fps hardware-accelerated transitions
  */
 export const Drawer = ({ isOpen, onClose, title, children, position = 'right', className }) => {
-	const [isVisible, setIsVisible] = useState(false);
+	const [isVisible, setIsVisible] = useState(isOpen);
+
+	// Adjusted during render rather than in an effect. React explicitly supports
+	// setting state while rendering to derive one piece of state from another
+	// ("adjusting state when a prop changes"); it re-renders immediately, before
+	// the browser paints, so the drawer is mounted in the same commit that opens
+	// it. Doing this in an effect meant an extra render after paint, which is what
+	// react-hooks/set-state-in-effect flags.
+	if (isOpen && !isVisible) setIsVisible(true);
 
 	useEffect(() => {
 		if (isOpen) {
-			setIsVisible(true);
 			document.body.classList.add('drawer-open');
 		} else {
 			// Wait for animation to finish before unmounting DOM

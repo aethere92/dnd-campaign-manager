@@ -1,0 +1,100 @@
+/*
+ * Dashboard redesign — scoped visual helpers.
+ *
+ * Only things that don't express cleanly as Tailwind utilities live here:
+ * the reveal transition, per-section colour "biomes", and image scrims that
+ * need multi-stop gradients. Everything is theme-token driven so it holds in
+ * light / dark / dnd (parchment). Prefixed `dash-` to avoid collisions.
+ */
+
+/* ---- reveal on scroll (paired with useReveal) ---- */
+.dash-reveal {
+	opacity: 0;
+	transform: translateY(26px);
+	transition:
+		opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+		transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+	will-change: opacity, transform;
+}
+.dash-reveal.is-shown {
+	opacity: 1;
+	transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.dash-reveal {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
+}
+
+/* ---- per-section colour biomes ----
+   A full-bleed radial glow that gives each section its own "world" and lets it
+   span the whole content area, with the tint bleeding to the edges. Colour is
+   supplied by --dash-biome on the section; --dash-biome-2 optionally adds a
+   second corner glow. Strength is deliberately higher on dark than parchment. */
+.dash-biome {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background:
+		radial-gradient(75% 70% at 50% -12%, color-mix(in srgb, var(--dash-biome, var(--primary)) 32%, transparent), transparent 60%),
+		radial-gradient(60% 55% at 88% 108%, color-mix(in srgb, var(--dash-biome-2, var(--dash-biome, var(--primary))) 18%, transparent), transparent 62%);
+}
+[data-theme='dnd'] .dash-biome {
+	background:
+		radial-gradient(75% 70% at 50% -12%, color-mix(in srgb, var(--dash-biome, var(--primary)) 18%, transparent), transparent 60%),
+		radial-gradient(60% 55% at 88% 108%, color-mix(in srgb, var(--dash-biome-2, var(--dash-biome, var(--primary))) 10%, transparent), transparent 62%);
+}
+[data-theme='light'] .dash-biome {
+	background:
+		radial-gradient(75% 70% at 50% -12%, color-mix(in srgb, var(--dash-biome, var(--primary)) 12%, transparent), transparent 60%);
+}
+/* fade the biome's own top/bottom edges into the page so adjacent sections blend */
+.dash-biome::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, var(--background), transparent 22%, transparent 78%, var(--background));
+}
+
+/* ---- hero key-art: full-bleed image that melts into the page ---- */
+.dash-hero-art {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background-size: cover;
+	background-position: center 28%;
+	opacity: 0.8;
+	-webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 48%, transparent 92%);
+	mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 48%, transparent 92%);
+}
+[data-theme='dnd'] .dash-hero-art {
+	opacity: 0.6;
+}
+
+/* ---- portrait card scrim ----
+   Always fades to (near-)black at the bottom, in EVERY theme, because the card's
+   name/stats are white and sit on top of it — fading to a light --card would make
+   them unreadable in light/parchment mode. The tint is a subtle top wash only. */
+.dash-portrait-scrim {
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(to top, rgba(0, 0, 0, 0.92) 4%, rgba(0, 0, 0, 0.62) 26%, rgba(0, 0, 0, 0) 56%),
+		linear-gradient(to top, color-mix(in srgb, var(--pc, var(--primary)) 26%, transparent), transparent 42%);
+}
+
+/* ---- glowing timeline thread (story ley-line) ---- */
+.dash-ley::before {
+	content: '';
+	position: absolute;
+	left: 7px;
+	top: 6px;
+	bottom: 6px;
+	width: 2px;
+	background: linear-gradient(to bottom, var(--primary), color-mix(in srgb, var(--primary) 8%, transparent));
+	box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 60%, transparent);
+	border-radius: 2px;
+}

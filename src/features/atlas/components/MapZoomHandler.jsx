@@ -1,10 +1,13 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useMap, useMapEvents } from 'react-leaflet';
 
 export const MapZoomHandler = ({ referenceZoom = 3 }) => {
 	const map = useMap();
 
-	const updateScale = () => {
+	// useCallback so the effect below can list it as a dependency. It also means a
+	// changed `referenceZoom` now recomputes the label scale — previously the effect
+	// depended on [map] alone, so the prop was ignored until the next zoom event.
+	const updateScale = useCallback(() => {
 		const zoom = map.getZoom();
 
 		// 1. Calculate Geographic Scale (Standard map math: 2^diff)
@@ -20,7 +23,7 @@ export const MapZoomHandler = ({ referenceZoom = 3 }) => {
 
 		// Inverse scale (if we ever need elements to grow while map shrinks)
 		map.getContainer().style.setProperty('--inv-label-scale', 1 / scale);
-	};
+	}, [map, referenceZoom]);
 
 	useMapEvents({
 		zoom: updateScale,
@@ -29,7 +32,7 @@ export const MapZoomHandler = ({ referenceZoom = 3 }) => {
 
 	useEffect(() => {
 		updateScale();
-	}, [map]);
+	}, [updateScale]);
 
 	return null;
 };

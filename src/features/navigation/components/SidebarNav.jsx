@@ -10,8 +10,7 @@ export const SidebarNav = ({ structure, currentPath, onNavigate }) => {
 					</h3>
 					<div className='space-y-0.5'>
 						{group.items.map((item) => {
-							const isWiki = item.path.startsWith('/wiki/');
-							const active = isWiki ? currentPath.startsWith(item.path) : currentPath === item.path;
+							const active = item.matchByPrefix ? currentPath.startsWith(item.path) : currentPath === item.path;
 							const Icon = item.Icon;
 							return (
 								<button

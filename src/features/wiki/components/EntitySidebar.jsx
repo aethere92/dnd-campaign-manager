@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import { Tag, Network, Shield, Activity } from 'lucide-react';
 import { clsx } from 'clsx';
-import EntityIcon from '@/domain/entity/components/EntityIcon';
 import EntityLink from '@/domain/entity/components/EntityLink';
-import { capitalize, toTitleCase } from '@/shared/utils/textUtils';
+import { toTitleCase } from '@/shared/utils/textUtils';
 import { EntityLocalGraph } from './EntityLocalGraph'; // Import new component
 
 // --- SUB-COMPONENTS ---
@@ -50,11 +49,10 @@ const StandardTrait = ({ label, value, index }) => (
 	</div>
 );
 
-// --- HELPER: Connection Badge Colors ---
-const getRoleStyle = (roleStr) => {
-	// FIX: Standardized to generic style for all roles to ensure readability
-	return 'bg-muted text-muted-foreground border-border/60';
-};
+// Connection badge styling. Deliberately uniform for every role — per-role
+// colours were tried and hurt readability, so the parameter is ignored rather
+// than the call sites all being changed.
+const ROLE_BADGE_CLASS = 'bg-muted text-muted-foreground border-border/60';
 
 // --- NEW COMPONENT: Type Divider ---
 const TypeDivider = ({ label }) => (
@@ -105,7 +103,7 @@ export const EntitySidebar = ({ entity, traits, connections }) => {
 		<div className='space-y-6 font-sans'>
 			{/* 1. Standard Traits Table */}
 			{textTraits.length > 0 && (
-				<div className='bg-muted/30/50 border border-border/70 rounded-lg overflow-hidden'>
+				<div className='bg-muted/30 border border-border/70 rounded-lg overflow-hidden'>
 					{/* Header */}
 					<div className='px-3 py-2 border-b border-border bg-muted/40 flex items-center gap-2'>
 						<Tag size={12} className='text-primary-muted' />
@@ -165,36 +163,27 @@ export const EntitySidebar = ({ entity, traits, connections }) => {
 					)}
 
 					<div className='space-y-1'>
-						{groupedConnections.map((group, gIdx) => (
+						{groupedConnections.map((group) => (
 							<div key={group.type}>
 								<TypeDivider label={group.type} />
 
 								<div className='space-y-2'>
-									{group.items.map((rel, i) => (
+									{group.items.map((rel) => (
 										<EntityLink
 											key={rel.id}
+											variant='row'
 											id={rel.id}
 											type={rel.typeLabel}
-											inline={true}
-											showIcon={false}
-											className={clsx(
-												'!flex !w-full !items-center !justify-between !p-2 !rounded-lg !border !bg-card/60 !transition-all !cursor-pointer !no-underline',
-												'!border-border hover:!border-amber-300 hover:!shadow-sm hover:!bg-card',
-												rel.theme.hover
-											)}>
-											<div className='flex items-center gap-2.5 flex-1 min-w-0'>
-												<EntityIcon type={rel.typeLabel} size={14} className='opacity-80 group-hover:opacity-100' />
-												<span className='text-sm font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
-													{rel.name}
+											trailing={
+												<span
+													className={clsx(
+														'shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-2 max-w-[45%] truncate',
+														ROLE_BADGE_CLASS
+													)}>
+													{rel.role}
 												</span>
-											</div>
-											<span
-												className={clsx(
-													'shrink-0 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ml-2 max-w-[45%] truncate',
-													getRoleStyle(rel.role)
-												)}>
-												{rel.role}
-											</span>
+											}>
+											{rel.name}
 										</EntityLink>
 									))}
 								</div>

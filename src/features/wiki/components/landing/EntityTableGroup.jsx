@@ -1,24 +1,30 @@
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { ArrowRight, CornerDownRight, Activity } from 'lucide-react';
+import { ArrowRight, CornerDownRight } from 'lucide-react';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
-import { parseAttributes } from '@/shared/utils/imageUtils';
+import { parseAttributes } from '@/domain/entity/utils/attributeParser';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 /**
  * CONFIGURATION: Table Definitions
  * Defines columns, widths, and RENDER logic in one place.
+ *
+ * `render(entity, attributes, routes)` receives the campaign-scoped path builders
+ * as its third argument. These definitions live at module scope so they are not
+ * rebuilt per render, which means they cannot call useCampaignRoutes() themselves —
+ * the component passes it down at the single call site instead.
  */
 const TABLE_DEFINITIONS = {
 	session: [
 		{
 			header: 'Session Title',
 			width: '45%',
-			render: (e, attr) => (
+			render: (e, attr, routes) => (
 				<Link
-					to={`/wiki/session/${e.id}`}
+					to={routes.wikiEntity('session', e.id)}
 					className='font-serif font-bold text-foreground hover:text-primary transition-colors text-sm'>
 					{e.name}
 				</Link>
@@ -34,9 +40,9 @@ const TABLE_DEFINITIONS = {
 		{
 			header: 'Quest',
 			width: '40%',
-			render: (e) => (
+			render: (e, attr, routes) => (
 				<Link
-					to={`/wiki/quest/${e.id}`}
+					to={routes.wikiEntity('quest', e.id)}
 					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
 					{e.name}
 				</Link>
@@ -55,8 +61,8 @@ const TABLE_DEFINITIONS = {
 							s.isCompleted
 								? 'bg-emerald-500/10 text-emerald-600'
 								: s.isFailed
-								? 'bg-red-500/10 text-red-600'
-								: 'bg-amber-500/10 text-amber-600'
+									? 'bg-red-500/10 text-red-600'
+									: 'bg-amber-500/10 text-amber-600'
 						)}>
 						{s.display}
 					</span>
@@ -73,9 +79,9 @@ const TABLE_DEFINITIONS = {
 		{
 			header: 'Location',
 			width: '40%',
-			render: (e) => (
+			render: (e, attr, routes) => (
 				<Link
-					to={`/wiki/location/${e.id}`}
+					to={routes.wikiEntity('location', e.id)}
 					className='font-serif font-bold text-sm text-foreground hover:text-primary transition-colors'>
 					{e.name}
 				</Link>
@@ -92,9 +98,9 @@ const TABLE_DEFINITIONS = {
 		{
 			header: 'Name',
 			width: '40%',
-			render: (e) => (
+			render: (e, attr, routes) => (
 				<Link
-					to={`/wiki/npc/${e.id}`}
+					to={routes.wikiEntity('npc', e.id)}
 					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
 					{e.name}
 				</Link>
@@ -113,8 +119,8 @@ const TABLE_DEFINITIONS = {
 							s.rank === 1
 								? 'bg-emerald-500/10 text-emerald-600'
 								: s.rank === 3
-								? 'bg-red-500/10 text-red-600'
-								: 'bg-muted text-muted-foreground'
+									? 'bg-red-500/10 text-red-600'
+									: 'bg-muted text-muted-foreground'
 						)}>
 						{s.display}
 					</span>
@@ -137,9 +143,9 @@ const TABLE_DEFINITIONS = {
 		{
 			header: 'Item Name',
 			width: '45%',
-			render: (e) => (
+			render: (e, attr, routes) => (
 				<Link
-					to={`/wiki/item/${e.id}`}
+					to={routes.wikiEntity('item', e.id)}
 					className='font-serif text-sm font-bold text-foreground hover:text-primary transition-colors'>
 					{e.name}
 				</Link>
@@ -168,8 +174,8 @@ const TABLE_DEFINITIONS = {
 		{
 			header: 'Name',
 			width: '60%',
-			render: (e) => (
-				<Link to={`/wiki/${e.type}/${e.id}`} className='font-serif font-bold text-sm text-foreground'>
+			render: (e, attr, routes) => (
+				<Link to={routes.wikiEntity(e.type, e.id)} className='font-serif font-bold text-sm text-foreground'>
 					{e.name}
 				</Link>
 			),
@@ -185,6 +191,8 @@ const TABLE_DEFINITIONS = {
 const getColumns = (type) => TABLE_DEFINITIONS[type] || TABLE_DEFINITIONS[type === 'faction' ? 'npc' : 'default'];
 
 export const EntityTableGroup = ({ title, description, parentTitle, link, items }) => {
+	const routes = useCampaignRoutes();
+
 	if (!items || items.length === 0) return null;
 
 	const type = items[0].type;
@@ -204,7 +212,9 @@ export const EntityTableGroup = ({ title, description, parentTitle, link, items 
 					<h2 className='text-lg font-bold font-serif text-foreground flex items-center gap-2'>
 						{title}
 						{link && (
-							<Link to={link} className='text-muted-foreground/50 hover:text-primary transition-colors'>
+							<Link
+								to={routes.wikiEntity(link.type, link.id)}
+								className='text-muted-foreground/50 hover:text-primary transition-colors'>
 								<ArrowRight size={14} />
 							</Link>
 						)}
@@ -252,7 +262,7 @@ export const EntityTableGroup = ({ title, description, parentTitle, link, items 
 												col.hiddenOnMobile && 'hidden md:table-cell',
 												col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
 											)}>
-											{col.render(entity, attributes)}
+											{col.render(entity, attributes, routes)}
 										</td>
 									))}
 								</tr>

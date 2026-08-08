@@ -1,4 +1,3 @@
-import React from 'react';
 import { BookOpen, Diamond } from 'lucide-react';
 import { clsx } from 'clsx';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';

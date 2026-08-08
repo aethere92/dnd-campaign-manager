@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { upsertMap } from '@/features/atlas/api/mapService';
 import Button from '@/shared/components/ui/Button';

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { searchEntitiesByName } from '@/features/admin/api/adminService'; // <--- NEW IMPORT
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { Search, X, Loader2 } from 'lucide-react';
 
-export default function EntitySearch({ onSelect }) {
+export default function EntitySearch({ onSelect, disabled = false }) {
 	const { campaignId } = useCampaign();
 	const [query, setQuery] = useState('');
 	const [results, setResults] = useState([]);
@@ -87,12 +87,13 @@ export default function EntitySearch({ onSelect }) {
 					autoFocus
 					type='text'
 					value={query}
+					disabled={disabled}
 					onChange={(e) => {
 						setQuery(e.target.value);
 						if (!isOpen) setIsOpen(true);
 					}}
 					placeholder='Search by name...'
-					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-shadow'
+					className='w-full pl-9 pr-8 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-shadow disabled:opacity-50 disabled:cursor-not-allowed'
 				/>
 				<Search className='absolute left-3 top-2.5 text-muted-foreground/60' size={14} />
 

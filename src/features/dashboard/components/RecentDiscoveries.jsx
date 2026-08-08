@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { Compass, Sparkles } from 'lucide-react';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { getEntityConfig } from '@/domain/entity/config/entityConfig';
@@ -6,6 +7,7 @@ import { formatDate } from '@/shared/utils/textUtils';
 
 export const RecentDiscoveries = ({ entities }) => {
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
 
 	if (!entities || entities.length === 0) return null;
 
@@ -25,12 +27,13 @@ export const RecentDiscoveries = ({ entities }) => {
 							key={entity.id}
 							onClick={(e) => {
 								if (e.target.closest('a')) return;
-								navigate(`/wiki/${entity.type}/${entity.id}`);
+								navigate(routes.wikiEntity(entity.type, entity.id));
 							}}
 							className='group flex items-start gap-3 p-3 bg-muted/20 hover:bg-card border border-transparent hover:border-border rounded-lg transition-all cursor-pointer'>
-							
 							{/* Icon Badge */}
-							<div className='shrink-0 p-2 rounded-md bg-background border border-border group-hover:border-primary/30 transition-colors' style={{ color: config?.color }}>
+							<div
+								className='shrink-0 p-2 rounded-md bg-background border border-border group-hover:border-primary/30 transition-colors'
+								style={{ color: config?.color }}>
 								<Icon size={16} />
 							</div>
 
@@ -44,7 +47,7 @@ export const RecentDiscoveries = ({ entities }) => {
 										{formatDate(entity.created_at)}
 									</span>
 								</div>
-								
+
 								<div className='flex items-center gap-2'>
 									<span className='text-[9px] uppercase font-bold tracking-wider text-muted-foreground/80'>
 										{config?.label || entity.type}
@@ -53,7 +56,9 @@ export const RecentDiscoveries = ({ entities }) => {
 										<>
 											<span className='text-muted-foreground/30'>•</span>
 											<span className='text-xs text-muted-foreground truncate flex-1'>
-												<SmartMarkdown inline disableTooltips>{entity.description}</SmartMarkdown>
+												<SmartMarkdown inline disableTooltips>
+													{entity.description}
+												</SmartMarkdown>
 											</span>
 										</>
 									)}

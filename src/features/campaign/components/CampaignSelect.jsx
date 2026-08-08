@@ -1,4 +1,4 @@
-import { useCampaignSelection } from '@/features/campaign/useCampaignSelection';
+import { useCampaignSelection } from '@/features/campaign/hooks/useCampaignSelection';
 import { CampaignCard } from './CampaignCard';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { useTheme } from '@/shared/hooks/useTheme';

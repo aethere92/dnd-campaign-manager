@@ -1,9 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { SearchModal } from './components/SearchModal';
-import { useGlobalSearchViewModel } from './useGlobalSearch';
+import { useGlobalSearch } from '@/features/search/hooks/useGlobalSearch';
 
 export default function GlobalSearch() {
-	const vm = useGlobalSearchViewModel();
+	const vm = useGlobalSearch();
 	const inputRef = useRef(null);
 
 	// Focus input when opened

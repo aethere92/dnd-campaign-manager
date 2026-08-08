@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { getBulkReplacePreview, executeBulkReplace } from '@/features/admin/api/adminService';
+import { invalidateEntityData } from '@/features/admin/api/invalidateEntityData';
 import {
 	ADMIN_SECTION_CLASS,
 	ADMIN_HEADER_CLASS,
@@ -8,7 +9,7 @@ import {
 	ADMIN_LABEL_CLASS,
 } from '@/features/admin/components/AdminFormStyles';
 import Button from '@/shared/components/ui/Button';
-import { Replace, Eye, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Replace, Eye, ArrowRight, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function BulkReplaceTool() {
@@ -30,7 +31,7 @@ export default function BulkReplaceTool() {
 		if (!confirm(`Apply all ${preview.length} changes?`)) return;
 		setIsProcessing(true);
 		await executeBulkReplace(preview);
-		queryClient.invalidateQueries();
+		await invalidateEntityData(queryClient);
 		alert('Archive successfully patched.');
 		setPreview(null);
 		setFind('');

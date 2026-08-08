@@ -131,7 +131,7 @@ export const LAYOUT_CONFIG = {
 		const maxDegree = Math.max(d1, d2);
 		return 150 + maxDegree * 30;
 	},
-	edgeElasticity: (edge) => 0.1,
+	edgeElasticity: () => 0.1,
 	gravity: 0.25,
 	gravityRange: 3.8,
 	numIter: 2500,

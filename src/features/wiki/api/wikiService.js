@@ -95,16 +95,12 @@ export const getWikiEntry = async (id, type) => {
 			.order('round_number', { ascending: true })
 			.order('action_order', { ascending: true });
 
-		additional.encounterActions = actions ||[];
+		additional.encounterActions = actions || [];
 
 		// 2. Fetch New Timeline (in case entity_complete_view doesn't include it yet)
-		const { data: encData } = await supabase
-			.from('encounters')
-			.select('timeline')
-			.eq('id', id)
-			.single();
-		
-		additional.timeline = encData?.timeline ||[];
+		const { data: encData } = await supabase.from('encounters').select('timeline').eq('id', id).single();
+
+		additional.timeline = encData?.timeline || [];
 	}
 
 	// STRATEGY: Event Session Resolution

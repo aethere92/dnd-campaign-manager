@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { clsx } from 'clsx';
 import { ArrowRight, Heart, Crown, Shield, Wind } from 'lucide-react';
-import { useSmartPosition } from '@/features/smart-tooltip/useSmartPosition';
-import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { useSmartPosition } from '@/features/smart-tooltip/hooks/useSmartPosition';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { parseAttributes } from '@/domain/entity/utils/attributeParser';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 
 // SINGLE SOURCE OF TRUTH IMPORTS
@@ -63,6 +65,7 @@ const TagText = ({ value, type }) => {
 
 export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter, onMouseLeave }) => {
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
 
 	// 1. Get Domain Configuration
 	const config = getEntityConfig(type);
@@ -76,7 +79,7 @@ export const TooltipCard = ({ data, type, id, position, isLoading, onMouseEnter,
 
 	const handleClick = (e) => {
 		e.stopPropagation();
-		navigate(`/wiki/${type}/${id}`);
+		navigate(routes.wikiEntity(type, id));
 		onMouseLeave && onMouseLeave();
 	};
 

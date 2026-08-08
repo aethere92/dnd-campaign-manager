@@ -1,5 +1,5 @@
 /* --- FILE: features/wiki/components/EntityMiniMap.jsx --- */
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { MapContainer, ImageOverlay, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,11 +7,12 @@ import { Map as MapIcon, Maximize, Minimize, PanelLeftOpen, PanelLeftClose } fro
 import { clsx } from 'clsx';
 import { AtlasProvider } from '@/features/atlas/context/AtlasContext';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useFullscreen } from '@/shared/hooks/useFullscreen';
 
 // REUSED ATLAS LOGIC
-import { useMapCanvasViewModel } from '@/features/atlas/components/useMapCanvasViewModel';
+import { useMapCanvas } from '@/features/atlas/hooks/useMapCanvas';
 import { MapZoomHandler } from '@/features/atlas/components/MapZoomHandler';
-import { normalizeMapData } from '@/features/admin/components/atlas/services/atlasMapper';
+import { normalizeMapData, parseMapData } from '@/features/atlas/utils/atlasMapper';
 
 // REUSED ATLAS COMPONENTS
 import { SidebarGroup } from '@/features/atlas/components/sidebar/SidebarGroup';
@@ -102,7 +103,6 @@ const MiniMapContent = ({ data, bounds, imageUrl }) => {
 	const viewModelData = useMemo(() => {
 		if (!data) return null;
 
-		// FIX: Ensure paths have names so ID generation (session-${name}) is stable
 		const safePaths = (data.paths || []).map((p, idx) => ({
 			...p,
 			name: p.name || `Path ${idx + 1}`,
@@ -116,7 +116,7 @@ const MiniMapContent = ({ data, bounds, imageUrl }) => {
 
 	// 2. Use Standard Atlas Hook
 	// This hook initializes sessions to FALSE by default.
-	const vm = useMapCanvasViewModel(viewModelData);
+	const vm = useMapCanvas(viewModelData);
 
 	if (!viewModelData) return null;
 
@@ -155,56 +155,50 @@ const MiniMapContent = ({ data, bounds, imageUrl }) => {
 // MAIN COMPONENT
 // ----------------------------------------------------------------------
 export const EntityMiniMap = ({ imageUrl, mapData }) => {
-	const [dimensions, setDimensions] = useState(null);
-	const [loading, setLoading] = useState(true);
-	const [isFullscreen, setIsFullscreen] = useState(false);
+	// The measured bounds are stored together with the URL they came from, so
+	// "still loading" is derived instead of being a second state that has to be
+	// flipped from the effect's guard branch (react-hooks/set-state-in-effect).
+	// This also removes a stale-image bug: if `imageUrl` changed while a previous
+	// image was still decoding, the old dimensions could be applied to the new map.
+	const [loaded, setLoaded] = useState(null);
+	const [failedUrl, setFailedUrl] = useState(null);
 	const containerRef = useRef(null);
+	const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(containerRef);
 
-	// Normalize Data
-	const normalizedData = useMemo(() => {
-		let raw = mapData;
-		if (typeof raw === 'string') {
-			try {
-				raw = JSON.parse(raw);
-			} catch {
-				raw = {};
-			}
-		}
-		return normalizeMapData(raw);
-	}, [mapData]);
+	// Normalize Data (parse string-or-object, then map to the render shape).
+	const normalizedData = useMemo(() => normalizeMapData(parseMapData(mapData)), [mapData]);
 
 	// Load Image
 	useEffect(() => {
 		if (!imageUrl) return;
-		setLoading(true);
+
+		let cancelled = false;
 		const img = new Image();
-		img.src = imageUrl;
 		img.onload = () => {
-			setDimensions([
-				[-img.height, 0],
-				[0, img.width],
-			]);
-			setLoading(false);
+			if (cancelled) return;
+			setLoaded({
+				url: imageUrl,
+				bounds: [
+					[-img.height, 0],
+					[0, img.width],
+				],
+			});
 		};
-		img.onerror = () => setLoading(false);
+		img.onerror = () => {
+			if (!cancelled) setFailedUrl(imageUrl);
+		};
+		img.src = imageUrl;
+
+		return () => {
+			cancelled = true;
+		};
 	}, [imageUrl]);
 
-	const toggleFullscreen = () => {
-		if (!document.fullscreenElement) {
-			containerRef.current?.requestFullscreen().catch((err) => console.error(err));
-		} else {
-			document.exitFullscreen();
-		}
-	};
-
-	useEffect(() => {
-		const handler = () => setIsFullscreen(!!document.fullscreenElement);
-		document.addEventListener('fullscreenchange', handler);
-		return () => document.removeEventListener('fullscreenchange', handler);
-	}, []);
-
 	if (!imageUrl) return null;
-	const isReady = !loading && dimensions;
+
+	const dimensions = loaded?.url === imageUrl ? loaded.bounds : null;
+	const isReady = !!dimensions;
+	const loading = !isReady && failedUrl !== imageUrl;
 
 	return (
 		<div
@@ -226,16 +220,9 @@ export const EntityMiniMap = ({ imageUrl, mapData }) => {
 
 			<div
 				className={clsx(
-					'relative overflow-hidden border border-border',
+					'relative overflow-hidden border border-border bg-dot-grid',
 					isFullscreen ? 'h-full w-full rounded-none' : 'h-[500px] rounded-xl shadow-sm'
-				)}
-				style={{
-					backgroundColor: 'var(--background)',
-					backgroundImage:
-						'radial-gradient(circle at center, var(--border) 1px, transparent 1px), radial-gradient(circle at center, var(--border) 1px, transparent 1px)',
-					backgroundSize: '40px 40px, 20px 20px',
-					backgroundPosition: '0 0, 20px 20px',
-				}}>
+				)}>
 				{isReady ? (
 					<AtlasProvider>
 						<MapContainer

@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
-import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { parseAttributes } from '@/domain/entity/utils/attributeParser';
 import EntityBadge from '@/domain/entity/components/EntityBadge';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser'; // Added missing import
 
 export const EntityPosterCard = ({ entity, config }) => {
+	const routes = useCampaignRoutes();
 	const attributes = parseAttributes(entity.attributes);
 
 	const imageUrl =
@@ -29,12 +32,14 @@ export const EntityPosterCard = ({ entity, config }) => {
 		subtitle = `Level ${level}`;
 	}
 
-	// FIX: Changed outer wrapper from <Link> to <div> to prevent <a> nesting errors
+	// Outer wrapper is a div, not a Link: the description renders markdown that
+	// may contain links, and nesting <a> inside <a> is invalid. A stretched
+	// absolute-positioned Link inside provides the click target instead.
 	return (
 		<div className='group relative flex flex-col bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 h-[380px]'>
 			{/* FIX: Stretched Link - This makes the whole card clickable without nesting tags */}
 			<Link
-				to={`/wiki/${entity.type}/${entity.id}`}
+				to={routes.wikiEntity(entity.type, entity.id)}
 				className='absolute inset-0 z-0'
 				aria-label={`View ${entity.name}`}
 			/>

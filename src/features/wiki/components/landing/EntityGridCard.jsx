@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
-import { resolveImageUrl, parseAttributes } from '@/shared/utils/imageUtils';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
+import { resolveImageUrl } from '@/shared/utils/imageUtils';
+import { parseAttributes } from '@/domain/entity/utils/attributeParser';
 import { getStatusInfo } from '@/domain/entity/utils/statusUtils';
 
 export const EntityGridCard = ({ entity, config }) => {
+	const routes = useCampaignRoutes();
 	const attributes = parseAttributes(entity.attributes);
 	const imageUrl = resolveImageUrl(attributes, 'background') || resolveImageUrl(attributes, 'icon');
 	const status = getStatusInfo(entity);
@@ -21,7 +24,7 @@ export const EntityGridCard = ({ entity, config }) => {
 
 	return (
 		<Link
-			to={`/wiki/${entity.type}/${entity.id}`}
+			to={routes.wikiEntity(entity.type, entity.id)}
 			className={clsx(
 				'group flex bg-background border border-border rounded-lg overflow-hidden transition-all duration-200',
 				entity.footerLabel ? 'h-28' : 'h-24',
@@ -50,7 +53,6 @@ export const EntityGridCard = ({ entity, config }) => {
 			<div
 				className={clsx(
 					'flex-1 px-3 py-2 flex flex-col min-w-0',
-					// FIX: If footer exists, space between. If not, center vertically.
 					entity.footerLabel ? 'justify-between' : 'justify-center'
 				)}>
 				<div>

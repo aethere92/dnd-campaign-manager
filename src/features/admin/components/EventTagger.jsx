@@ -1,31 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { X, Loader2 } from 'lucide-react';
 import EntitySearch from './EntitySearch';
 import { fetchRelationships, addRelationship, deleteRelationship } from '@/features/admin/api/adminService';
 
 export default function EventTagger({ eventId }) {
-	const [tags, setTags] = useState([]);
-	const [loading, setLoading] = useState(false);
 	const [isAdding, setIsAdding] = useState(false);
 
 	// If it's a temporary event (unsaved), we can't tag yet
 	const isTemp = String(eventId).startsWith('new-');
 
-	useEffect(() => {
-		if (!isTemp) loadTags();
-	}, [eventId]);
-
-	const loadTags = async () => {
-		setLoading(true);
-		try {
-			const data = await fetchRelationships(eventId);
-			setTags(data);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
+	// Tags are server state. Disabled for unsaved (temp) events, which have no row
+	// to relate to yet. `refetch` replaces the old manual reloads after mutations.
+	const {
+		data: tags = [],
+		isLoading: loading,
+		refetch,
+	} = useQuery({
+		queryKey: ['admin-event-tags', eventId],
+		queryFn: () => fetchRelationships(eventId),
+		enabled: !isTemp && !!eventId,
+	});
 
 	const handleAdd = async (target) => {
 		if (tags.find((t) => t.target?.id === target.id)) return;
@@ -38,7 +33,7 @@ export default function EventTagger({ eventId }) {
 				relationship_type: 'mention', // Standard type for events
 				is_bidirectional: false,
 			});
-			loadTags();
+			refetch();
 		} catch (e) {
 			alert(e.message);
 		} finally {
@@ -49,7 +44,7 @@ export default function EventTagger({ eventId }) {
 	const handleRemove = async (relId) => {
 		try {
 			await deleteRelationship(relId);
-			setTags(tags.filter((t) => t.id !== relId));
+			refetch();
 		} catch (e) {
 			alert(e.message);
 		}
@@ -79,9 +74,10 @@ export default function EventTagger({ eventId }) {
 				{loading && <Loader2 size={14} className='animate-spin text-muted-foreground' />}
 			</div>
 
-			{/* Search Input */}
-			<div className='max-w-xs'>
-				<EntitySearch onSelect={handleAdd} />
+			{/* Search Input — disabled mid-add so a second pick can't race the first */}
+			<div className='max-w-xs flex items-center gap-2'>
+				<EntitySearch onSelect={handleAdd} disabled={isAdding} />
+				{isAdding && <Loader2 size={14} className='animate-spin text-muted-foreground shrink-0' />}
 			</div>
 		</div>
 	);

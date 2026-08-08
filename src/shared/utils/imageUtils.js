@@ -49,15 +49,7 @@ export const resolveImageUrl = (attributes, type = 'any') => {
 	return null;
 };
 
-/**
- * Safe attribute parser
- */
-export const parseAttributes = (attrs) => {
-	if (!attrs) return {};
-	if (typeof attrs === 'object') return attrs;
-	try {
-		return JSON.parse(attrs);
-	} catch {
-		return {};
-	}
-};
+// NOTE: parseAttributes used to live here as a second, weaker implementation
+// that returned {} for array-shaped attributes — silently dropping DB rows of
+// the form [{ name, value }]. The canonical version lives in
+// @/domain/entity/utils/attributeParser and handles that shape correctly.

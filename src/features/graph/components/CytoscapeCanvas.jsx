@@ -1,5 +1,6 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import { useTheme } from '@/shared/hooks/useTheme';
@@ -22,6 +23,11 @@ export const CytoscapeCanvas = ({
 	onNodeClickRef.current = onNodeClick;
 
 	const navigate = useNavigate();
+	const routes = useCampaignRoutes();
+	// Same ref trick as onNodeClick: the init effect reads the current builders at
+	// tap time, so it never needs to re-run just because the campaign changed.
+	const routesRef = useRef(routes);
+	routesRef.current = routes;
 	const { theme } = useTheme();
 
 	const styles = useMemo(() => {
@@ -105,7 +111,7 @@ export const CytoscapeCanvas = ({
 
 			cy.on('dblclick', 'node', (evt) => {
 				const { id, type } = evt.target.data();
-				if (id && type) navigate(`/wiki/${type}/${id}`);
+				if (id && type) navigate(routesRef.current.wikiEntity(type, id));
 			});
 		}
 
@@ -116,7 +122,17 @@ export const CytoscapeCanvas = ({
 				cyRef.current = null;
 			}
 		};
-		// CRITICAL: Dependencies list is small. interactive/navigate shouldn't change often.
+
+		// This effect builds the Cytoscape instance and must NOT re-run on every
+		// render — its cleanup destroys the graph, losing zoom, pan and layout.
+		//
+		// `styles` is deliberately omitted: it is only the initial stylesheet here, and
+		// the "Style Update" effect above pushes later changes into the live instance
+		// without a rebuild. `onNodeClick` is omitted because it is read through
+		// onNodeClickRef at event time; only the *presence* of a handler is used here,
+		// to decide which default behaviours to attach, and that does not change over
+		// a mounted graph's life.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [interactive, navigate]);
 
 	// Data & Layout Updates

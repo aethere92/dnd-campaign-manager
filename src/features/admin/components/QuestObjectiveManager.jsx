@@ -1,73 +1,55 @@
-import React, { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2, Edit2, Save, X, Target, CheckCircle2, Circle, Calendar } from 'lucide-react';
-import { fetchChildRows, upsertQuestObjective, deleteRow, getSessionList } from '@/features/admin/api/adminService'; // Import getSessionList
+import { fetchChildRows, upsertQuestObjective, getSessionList } from '@/features/admin/api/adminService';
 import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 import { useCampaign } from '@/features/campaign/CampaignContext';
+import { useChildRowManager } from '@/features/admin/hooks/useChildRowManager';
 import Button from '@/shared/components/ui/Button';
 
 export default function QuestObjectiveManager({ questId }) {
 	const { campaignId } = useCampaign();
-	const [objectives, setObjectives] = useState([]);
-	const [sessions, setSessions] = useState([]); // Store session options
-	const [loading, setLoading] = useState(false);
-	const [editingId, setEditingId] = useState(null);
-	const [formData, setFormData] = useState({});
 
-	useEffect(() => {
-		if (questId) {
-			loadObjectives();
-			loadSessions();
-		}
-	}, [questId]);
-
-	const loadObjectives = async () => {
-		setLoading(true);
-		try {
-			const data = await fetchChildRows('quest_objectives', 'quest_id', questId, 'order_index');
-			setObjectives(data);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const loadSessions = async () => {
-		if (!campaignId) return;
-		try {
-			const data = await getSessionList(campaignId);
-			setSessions(data);
-		} catch (e) {
-			console.error('Failed to load sessions', e);
-		}
-	};
-
-	const handleAddNew = () => {
-		const nextOrder = objectives.length > 0 ? Math.max(...objectives.map((o) => o.order_index || 0)) + 1 : 1;
-		const newObj = {
-			id: `new-${Date.now()}`,
+	// Shared inline-CRUD plumbing (fetch / draft / edit / save / delete).
+	const {
+		rows: objectives,
+		loading,
+		editingId,
+		formData,
+		setFormData,
+		addNew,
+		startEdit,
+		cancelEdit,
+		save,
+		remove,
+	} = useChildRowManager({
+		queryKey: ['admin-quest-objectives', questId],
+		fetchFn: () => fetchChildRows('quest_objectives', 'quest_id', questId, 'order_index'),
+		upsertFn: upsertQuestObjective,
+		deleteTable: 'quest_objectives',
+		enabled: !!questId,
+		makeDraft: (rows) => ({
 			quest_id: questId,
 			objective_name: '', // Title
 			description: '',
 			objective_update: '', // Resolution text
 			status: 'pending',
-			order_index: nextOrder,
+			order_index: rows.length > 0 ? Math.max(...rows.map((o) => o.order_index || 0)) + 1 : 1,
 			completed_session_id: null,
-		};
-		setObjectives([...objectives, newObj]);
-		handleEdit(newObj);
-	};
+		}),
+	});
 
-	const handleEdit = (obj) => {
-		setEditingId(obj.id);
-		setFormData({ ...obj });
-	};
+	// The session dropdown is separate reference data, not child-row CRUD.
+	// Keyed by campaign so switching campaign refreshes it (the previous stale-data
+	// bug where old sessions lingered in the dropdown).
+	const { data: sessions = [] } = useQuery({
+		queryKey: ['admin-session-list', campaignId],
+		queryFn: () => getSessionList(campaignId),
+		enabled: !!campaignId,
+	});
 
 	const handleSave = async () => {
 		try {
-			await upsertQuestObjective(formData);
-			setEditingId(null);
-			loadObjectives();
+			await save();
 		} catch (e) {
 			alert(e.message);
 		}
@@ -75,13 +57,8 @@ export default function QuestObjectiveManager({ questId }) {
 
 	const handleDelete = async (id) => {
 		if (!confirm('Delete?')) return;
-		if (String(id).startsWith('new')) {
-			setObjectives(objectives.filter((o) => o.id !== id));
-			return;
-		}
 		try {
-			await deleteRow('quest_objectives', id);
-			loadObjectives();
+			await remove(id);
 		} catch (e) {
 			alert(e.message);
 		}
@@ -93,7 +70,7 @@ export default function QuestObjectiveManager({ questId }) {
 				<span className='flex items-center gap-2'>
 					<Target size={18} className='text-blue-600' /> Objectives
 				</span>
-				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+				<Button onClick={addNew} size='sm' variant='secondary' icon={Plus}>
 					Add Objective
 				</Button>
 			</div>
@@ -180,14 +157,7 @@ export default function QuestObjectiveManager({ questId }) {
 								</div>
 
 								<div className='flex justify-end gap-2 pt-2'>
-									<Button
-										onClick={() => {
-											setEditingId(null);
-											loadObjectives();
-										}}
-										variant='ghost'
-										size='sm'
-										icon={X}>
+									<Button onClick={cancelEdit} variant='ghost' size='sm' icon={X}>
 										Cancel
 									</Button>
 									<Button onClick={handleSave} variant='primary' size='sm' icon={Save}>
@@ -200,7 +170,7 @@ export default function QuestObjectiveManager({ questId }) {
 							<div
 								className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
 									obj.status === 'completed'
-										? 'bg-emerald-500/10/50 border-emerald-200'
+										? 'bg-emerald-500/10 border-emerald-200'
 										: 'bg-background border-border hover:border-blue-300'
 								}`}>
 								<span className='font-mono text-xs font-bold opacity-40 w-5 mt-1'>#{obj.order_index}</span>
@@ -242,7 +212,7 @@ export default function QuestObjectiveManager({ questId }) {
 
 								<div className='flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
 									<button
-										onClick={() => handleEdit(obj)}
+										onClick={() => startEdit(obj)}
 										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'
 										title='Edit Event'>
 										<Edit2 size={18} />

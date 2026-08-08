@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom'; // Added useLocation
 import { ChevronRight, Home } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -8,9 +7,13 @@ export default function Breadcrumbs({ className }) {
 	const crumbs = useBreadcrumbs();
 	const location = useLocation();
 
-	// 1. Explicitly exclude full-screen "World" views where overlays distract
-	const BLACKLISTED_ROUTES = ['/timeline', '/relationships', '/atlas'];
-	const isBlacklisted = BLACKLISTED_ROUTES.some((route) => location.pathname.startsWith(route));
+	// 1. Explicitly exclude full-screen "World" views where overlays distract.
+	// Matches on a path *segment* rather than a prefix, because paths are now
+	// campaign-scoped ('/c/2/timeline'), so a startsWith('/timeline') check never
+	// fired anymore.
+	const BLACKLISTED_SEGMENTS = ['timeline', 'relationships', 'atlas'];
+	const segments = location.pathname.split('/').filter(Boolean);
+	const isBlacklisted = segments.some((seg) => BLACKLISTED_SEGMENTS.includes(seg));
 
 	if (isBlacklisted) return null;
 

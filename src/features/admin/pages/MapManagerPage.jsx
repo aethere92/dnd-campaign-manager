@@ -1,37 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useCampaign } from '@/features/campaign/CampaignContext';
 import { fetchCampaignMaps, fetchMapByKey } from '@/features/atlas/api/mapService';
 import { Map as MapIcon, Loader2, Edit3, ArrowLeft } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
-import AtlasEditor from '@/features/admin/components/atlas/AtlasEditor'; // We will create this next
+import AtlasEditor from '@/features/admin/atlas-editor/AtlasEditor'; // We will create this next
 import { ADMIN_HEADER_CLASS } from '@/features/admin/components/AdminFormStyles';
 
 export default function MapManagerPage() {
 	const { campaignId } = useCampaign();
-	const [maps, setMaps] = useState([]);
 	const [selectedMap, setSelectedMap] = useState(null);
-	const [loading, setLoading] = useState(false);
+	// Opening a map fetches its full data on demand; that one-off load keeps its own
+	// flag, separate from the list query below.
+	const [isOpening, setIsOpening] = useState(false);
 
-	// Load list on mount
-	useEffect(() => {
-		if (campaignId) loadList();
-	}, [campaignId]);
+	// The map list is server state, so it lives in the query cache rather than in a
+	// hand-rolled effect. Keyed by campaign; disabled until one is selected.
+	const { data: maps = [], isLoading } = useQuery({
+		queryKey: ['admin-maps', campaignId],
+		queryFn: () => fetchCampaignMaps(campaignId),
+		enabled: !!campaignId,
+	});
 
-	const loadList = async () => {
-		setLoading(true);
-		try {
-			const data = await fetchCampaignMaps(campaignId);
-			setMaps(data || []);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	// Load full map details when selected
+	// Load full map details when selected. Left imperative: it is triggered by a
+	// click on a specific row, not derived from render state.
 	const handleSelect = async (mapSummary) => {
-		setLoading(true);
+		setIsOpening(true);
 		try {
 			const fullData = await fetchMapByKey(campaignId, mapSummary.key);
 			// Merge the ID back in since fetchMapByKey flattens it
@@ -39,7 +33,7 @@ export default function MapManagerPage() {
 		} catch (e) {
 			alert(e.message);
 		} finally {
-			setLoading(false);
+			setIsOpening(false);
 		}
 	};
 
@@ -69,14 +63,14 @@ export default function MapManagerPage() {
 				</span>
 			</h1>
 
-			{loading && (
+			{(isLoading || isOpening) && (
 				<div className='text-center py-10'>
 					<Loader2 className='animate-spin mx-auto' />
 				</div>
 			)}
 
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-				{!loading &&
+				{!isLoading &&
 					maps.map((m) => (
 						<button
 							key={m.id}
@@ -93,7 +87,7 @@ export default function MapManagerPage() {
 					))}
 			</div>
 
-			{!loading && maps.length === 0 && (
+			{!isLoading && maps.length === 0 && (
 				<div className='text-center py-20 text-muted-foreground italic border-2 border-dashed border-border rounded-xl'>
 					No maps found in database. Run the migration tool first.
 				</div>

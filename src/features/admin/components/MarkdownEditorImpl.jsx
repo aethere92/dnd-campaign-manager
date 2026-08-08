@@ -25,24 +25,26 @@ import EntitySearch from './EntitySearch';
 import { ADMIN_LABEL_CLASS } from './AdminFormStyles';
 import clsx from 'clsx';
 
+// Hoisted out of MenuBar's render body. It closes over nothing (all inputs are
+// props), so a component declared there would be a new type every render — forcing
+// React to remount all 11 toolbar buttons on each keystroke.
+const Btn = ({ icon: Icon, onClick, isActive, disabled, title }) => (
+	<button
+		type='button'
+		onClick={onClick}
+		disabled={disabled}
+		title={title}
+		className={clsx(
+			'p-1.5 rounded transition-colors flex items-center justify-center h-7 w-7',
+			isActive ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+			disabled && 'opacity-30 cursor-not-allowed'
+		)}>
+		<Icon size={14} strokeWidth={2.5} />
+	</button>
+);
+
 // --- TOOLBAR COMPONENT ---
 const MenuBar = ({ editor, mode, setMode, onMentionClick }) => {
-	// Helper for buttons
-	const Btn = ({ icon: Icon, onClick, isActive, disabled, title }) => (
-		<button
-			type='button'
-			onClick={onClick}
-			disabled={disabled}
-			title={title}
-			className={clsx(
-				'p-1.5 rounded transition-colors flex items-center justify-center h-7 w-7',
-				isActive ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-				disabled && 'opacity-30 cursor-not-allowed'
-			)}>
-			<Icon size={14} strokeWidth={2.5} />
-		</button>
-	);
-
 	return (
 		<div className='flex items-center gap-1 p-1.5 border-b border-border bg-muted/20 select-none flex-wrap'>
 			{/* Standard Formatting Tools - Only active in Visual Mode */}
@@ -305,7 +307,7 @@ export default function MarkdownEditorImpl({ label, value, onChange, placeholder
 							value={value}
 							onChange={onChange}
 							className='w-full h-full min-h-[180px] p-4 font-mono text-sm resize-y outline-none bg-transparent'
-							placeholder='Type raw markdown here...'
+							placeholder={placeholder || 'Type raw markdown here...'}
 							onKeyDown={(e) => {
 								if (e.key === '@') {
 									// Naive source mode positioning (bottom of textarea)

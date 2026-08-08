@@ -1,4 +1,3 @@
-import React from 'react';
 import {
 	Swords,
 	Shield,
@@ -8,7 +7,6 @@ import {
 	MessageSquare,
 	Hand,
 	Dices,
-	Target,
 	Activity,
 	ArrowRight,
 	CornerDownRight,
@@ -48,7 +46,6 @@ const CombatLogEntry = ({ action }) => {
 	const ActionIcon = getActionIcon(type);
 	const { theme } = useTheme(); // FIX: Use app theme state
 
-	// FIX: Logic based on explicit App Theme, ignoring System Preference
 	const isDark = theme === 'dark';
 
 	// Background:
@@ -66,8 +63,8 @@ const CombatLogEntry = ({ action }) => {
 			? 'text-emerald-400'
 			: 'text-emerald-700'
 		: isDark
-		? 'text-red-400'
-		: 'text-red-700';
+			? 'text-red-400'
+			: 'text-red-700';
 
 	const effectIconColor = isDark ? 'text-amber-500' : 'text-amber-600';
 

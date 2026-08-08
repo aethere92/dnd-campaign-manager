@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { useTooltipState } from './useTooltipState';
+import { useTooltipState } from '@/features/smart-tooltip/hooks/useTooltipState';
 import { TooltipContainer } from './TooltipContainer';
 
 const TooltipContext = createContext(null);
@@ -20,7 +20,8 @@ export const TooltipProvider = ({ children }) => {
 export const useTooltip = () => {
 	const context = useContext(TooltipContext);
 
-	// CHANGED: Graceful degradation instead of hard crash
+	// Degrade gracefully rather than throwing: entity links render in contexts
+	// (e.g. tooltip previews) that intentionally sit outside the provider.
 	if (!context) {
 		// Return dummy functions so components don't break
 		return {

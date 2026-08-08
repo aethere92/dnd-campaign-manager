@@ -15,14 +15,15 @@ const validateEnv = () => {
 };
 validateEnv();
 
-// CHANGED: Aggressive Caching Configuration
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			// Data is considered fresh for 1 hour
 			staleTime: 1000 * 60 * 60,
-			// Keep unused data in memory for 24 hours
-			cacheTime: 1000 * 60 * 60 * 24,
+			// Keep unused data in memory for 24 hours.
+			// gcTime, not cacheTime — the latter is the TanStack Query v4 name and is
+			// silently ignored in v5, so this was falling back to the 5-minute default.
+			gcTime: 1000 * 60 * 60 * 24,
 			refetchOnWindowFocus: false,
 			refetchOnMount: false, // Don't refetch just because component remounted
 			retry: 1,

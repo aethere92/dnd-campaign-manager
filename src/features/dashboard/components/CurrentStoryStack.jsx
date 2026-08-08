@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, BookOpen, Clock, History } from 'lucide-react';
+import { ArrowRight, Calendar, BookOpen, History } from 'lucide-react';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { formatDate } from '@/shared/utils/textUtils';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
-import { clsx } from 'clsx';
 
 export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
+	// Above the early return: hooks must run unconditionally.
+	const routes = useCampaignRoutes();
+
 	if (!latestSession) return null;
 
 	const bgImage = latestSession.image;
@@ -64,7 +67,7 @@ export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
 						</div>
 
 						<Link
-							to={`/wiki/session/${latestSession.id}`}
+							to={routes.wikiEntity('session', latestSession.id)}
 							className='inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20'>
 							Read Full Log <ArrowRight size={14} />
 						</Link>
@@ -84,7 +87,7 @@ export const CurrentStoryStack = ({ latestSession, previousSessions }) => {
 						{previousSessions.map((session) => (
 							<Link
 								key={session.id}
-								to={`/wiki/session/${session.id}`}
+								to={routes.wikiEntity('session', session.id)}
 								className='flex items-center gap-3 p-2 rounded hover:bg-background/80 hover:shadow-sm border border-transparent hover:border-border transition-all group/item'>
 								<span className='text-xs font-bold text-muted-foreground group-hover/item:text-primary w-8 text-center shrink-0 bg-background border border-border rounded px-1 py-0.5'>
 									#{session.session_number}

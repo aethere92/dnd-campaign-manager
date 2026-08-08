@@ -1,4 +1,4 @@
-import { Sword, Shield, Circle, HelpCircle, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Sword, Shield, Circle, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { getAttributeValue } from '@/domain/entity/utils/attributeParser';
 
 /**
@@ -84,6 +84,33 @@ export const getStatusIcon = (status, type) => {
 	}
 	// Neutral / Unknown
 	return { Icon: Circle, className: 'text-muted-foreground/70' };
+};
+
+/**
+ * Semantic colour tokens for a status, so the "emerald = good / amber = pending /
+ * red = bad" palette lives in one place instead of being inlined per component.
+ *
+ * Returns the three tints components actually reach for: a soft `bg` for row/card
+ * fills, a stronger `text`/`icon` for glyphs, and a `border`. `tone` is the
+ * coarse category if a caller wants to branch on it.
+ */
+export const getStatusColors = (status) => {
+	const s = (status || '').toLowerCase();
+
+	const isGood = ['completed', 'finished', 'done', 'success', 'ally', 'alive', 'active'].some((k) => s.includes(k));
+	const isBad = ['failed', 'failure', 'dead', 'destroyed', 'enemy', 'hostile'].some((k) => s.includes(k));
+	const isPending = ['pending', 'in progress', 'started', 'paused', 'on-hold', 'abandoned'].some((k) => s.includes(k));
+
+	if (isGood) {
+		return { tone: 'good', bg: 'bg-emerald-500/10', text: 'text-emerald-600', border: 'border-emerald-500/30' };
+	}
+	if (isBad) {
+		return { tone: 'bad', bg: 'bg-red-500/10', text: 'text-red-500', border: 'border-red-500/30' };
+	}
+	if (isPending) {
+		return { tone: 'pending', bg: 'bg-amber-500/10', text: 'text-amber-600', border: 'border-amber-500/30' };
+	}
+	return { tone: 'neutral', bg: 'hover:bg-muted/30', text: 'text-muted-foreground', border: 'border-border' };
 };
 
 export const getStatusInfo = (entity) => {

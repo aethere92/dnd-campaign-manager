@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { getStrategy } from '@/features/admin/config/adminStrategies';
 import { getTabsForType } from '@/features/admin/config/adminTabs';
 import { useCampaign } from '@/features/campaign/CampaignContext';
+import { routes } from '@/app/routes';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
+import { invalidateEntityData } from '@/features/admin/api/invalidateEntityData';
 import Button from '@/shared/components/ui/Button';
 import { Save, RotateCcw, ExternalLink, Plus, Trash2, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -19,7 +21,7 @@ import StoragePathInput from './inputs/StoragePathInput';
 import SessionEventManager from './SessionEventManager';
 import QuestObjectiveManager from '@/features/admin/components/QuestObjectiveManager';
 import RelationshipManager from '@/features/admin/components/RelationshipManager';
-import EncounterActionManager from './EncounterManager';
+import EncounterManager from './EncounterManager';
 import EncounterNarrativeManager from './EncounterNarrativeManager';
 import TacticalMapManager from './TacticalMapManager';
 import NarrativeSuggestionPanel from './NarrativeSuggestionPanel';
@@ -175,7 +177,7 @@ export default function AdminForm({ type, id }) {
 				await createEntity(type, { ...payload, campaign_id: campaignId });
 				if (!id) reset();
 			}
-			queryClient.invalidateQueries();
+			await invalidateEntityData(queryClient);
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		} finally {
@@ -241,7 +243,7 @@ export default function AdminForm({ type, id }) {
 				<div className='flex gap-2'>
 					{id && (
 						<Link
-							to={`/wiki/${type}/${id}`}
+							to={routes.campaign.wikiEntity(campaignId, type, id)}
 							target='_blank'
 							className='flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-card hover:border-primary border border-border rounded-md transition-colors'>
 							<ExternalLink size={14} /> View Live
@@ -448,7 +450,7 @@ export default function AdminForm({ type, id }) {
 			)}
 
 			{/* Encounter Combat Log Tab */}
-			{activeTab === 'combat' && id && type === 'encounter' && <EncounterActionManager encounterId={id} />}
+			{activeTab === 'combat' && id && type === 'encounter' && <EncounterManager encounterId={id} />}
 
 			{/* Scanner Tab */}
 			{activeTab === 'scanner' && id && type === 'session' && (

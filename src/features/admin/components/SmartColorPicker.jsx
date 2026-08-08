@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Pipette, Plus } from 'lucide-react';
+import { ChevronDown, Pipette } from 'lucide-react';
 import clsx from 'clsx';
 
 // Extended Palette matching the requested style (Grayscale + Vibrants + Pastels)
@@ -97,20 +97,30 @@ export default function SmartColorPicker({ value, onChange, className }) {
 	const buttonRef = useRef(null);
 	const [position, setPosition] = useState({ top: 0, left: 0 });
 
-	useEffect(() => {
+	// Mirror the incoming prop into the local swatch. Adjusted during render
+	// rather than in an effect: the extra post-paint render an effect causes is
+	// what react-hooks/set-state-in-effect warns about, and the comparison against
+	// the previous prop keeps the user's in-progress hex edit from being reset.
+	const [lastValue, setLastValue] = useState(value);
+	if (value !== lastValue) {
+		setLastValue(value);
 		setHex(value || '#000000');
-	}, [value]);
+	}
 
-	// Update position when opening
-	useEffect(() => {
-		if (isOpen && buttonRef.current) {
-			const rect = buttonRef.current.getBoundingClientRect();
-			// Position bottom-left of button, clamping to viewport if needed
-			const top = rect.bottom + 8;
-			const left = Math.min(rect.left, window.innerWidth - 320);
-			setPosition({ top, left });
+	// Open and position in one step. The swatch is already laid out when clicked,
+	// so measuring here avoids the render → measure-in-effect → render-again cycle
+	// (and the brief flash of a popup at stale coordinates).
+	const toggleOpen = () => {
+		if (isOpen) {
+			setIsOpen(false);
+			return;
 		}
-	}, [isOpen]);
+		if (!buttonRef.current) return;
+		const rect = buttonRef.current.getBoundingClientRect();
+		// Position bottom-left of button, clamping to viewport if needed
+		setPosition({ top: rect.bottom + 8, left: Math.min(rect.left, window.innerWidth - 320) });
+		setIsOpen(true);
+	};
 
 	// Close on outside click
 	useEffect(() => {
@@ -134,7 +144,7 @@ export default function SmartColorPicker({ value, onChange, className }) {
 		<>
 			<div
 				ref={buttonRef}
-				onClick={() => setIsOpen(!isOpen)}
+				onClick={toggleOpen}
 				className={clsx(
 					'flex items-center gap-2 bg-card border border-border rounded-md px-2 py-1.5 cursor-pointer hover:bg-muted/50 transition-colors h-8 min-w-[100px]',
 					className

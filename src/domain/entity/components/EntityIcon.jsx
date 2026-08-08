@@ -13,13 +13,16 @@ export default function EntityIcon({
 	size = 16,
 	className = '',
 	showBackground = false,
-	inline = false,
+	// Accepted for API compatibility but unused: Container is always a span, since
+	// a <div> descendant of <p> triggers hydration errors (see below).
+	inline: _inline = false,
 	...props
 }) {
 	const Icon = getEntityIcon(type);
 	const styles = getEntityStyles(type);
 
-	// FIX: Always use 'span' to avoid "div descendant of p" hydration errors
+	// Always a span: a <div> descendant of <p> triggers hydration errors, and
+	// these icons render inline inside markdown paragraphs.
 	const Container = 'span';
 
 	// 1. Custom Image Case

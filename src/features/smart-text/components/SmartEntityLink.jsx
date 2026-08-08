@@ -4,13 +4,11 @@
  */
 
 import EntityLink from '@/domain/entity/components/EntityLink';
-import { useEntityIndex } from '@/features/smart-text/useEntityIndex';
+import { useEntityIndex } from '@/features/smart-text/hooks/useEntityIndex';
 
 export const SmartEntityLink = ({ id, type, children }) => {
-	// FIX: Destructure the 'map' from the new hook signature
 	const { map: entityMap } = useEntityIndex();
 
-	// FIX: Use .get() (O(1) speed) instead of .find()
 	const entity = entityMap.get(id);
 	const customIconUrl = entity?.iconUrl;
 

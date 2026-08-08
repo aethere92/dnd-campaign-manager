@@ -6,6 +6,7 @@ import { EntityPosterCard } from './EntityPosterCard';
 import SmartMarkdown from '@/features/smart-text/SmartMarkdown';
 import { SectionDivider } from '@/shared/components/ui/SectionDivider';
 import { HighlightBadge } from '@/shared/components/ui/HighlightBadge';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { clsx } from 'clsx';
 
 // --- SUB-COMPONENT: ARC HERO ---
@@ -78,7 +79,9 @@ const ArcHero = ({ title, description, type, order, stats, isSessionGroup }) => 
 };
 
 // --- SUB-COMPONENT: STANDARD HEADER ---
-const StandardHeader = ({ title, parentTitle, link, count }) => (
+// `linkTo` is a ready-to-use path (or null), resolved by the parent which holds
+// the campaign context.
+const StandardHeader = ({ title, parentTitle, linkTo, count }) => (
 	<div className='mb-4'>
 		<div className='flex items-center gap-2 border-b border-border/60 pb-2'>
 			{parentTitle && (
@@ -90,9 +93,9 @@ const StandardHeader = ({ title, parentTitle, link, count }) => (
 
 			<h2 className='text-lg font-bold font-serif text-foreground flex items-center gap-2'>
 				{title || 'General'}
-				{link && (
+				{linkTo && (
 					<Link
-						to={link}
+						to={linkTo}
 						className='text-muted-foreground/50 hover:text-primary transition-colors'
 						title={`View ${title}`}>
 						<ArrowRight size={14} />
@@ -109,7 +112,12 @@ const StandardHeader = ({ title, parentTitle, link, count }) => (
 
 // --- MAIN COMPONENT ---
 export const Swimlane = ({ title, description, items, config, context, type, stats, order, parentTitle, link }) => {
+	const routes = useCampaignRoutes();
+
 	if (!items || items.length === 0) return null;
+
+	// `link` is an entity ref ({type, id}) or null; resolve it to a scoped path here.
+	const linkTo = link ? routes.wikiEntity(link.type, link.id) : null;
 
 	const visualTypes = ['character'];
 	const usePoster = items.length > 0 && visualTypes.includes(items[0].type);
@@ -132,7 +140,7 @@ export const Swimlane = ({ title, description, items, config, context, type, sta
 					isSessionGroup={isSessionGroup} // Pass flag to control truncation
 				/>
 			) : (
-				<StandardHeader title={title} parentTitle={parentTitle} link={link} count={items.length} />
+				<StandardHeader title={title} parentTitle={parentTitle} linkTo={linkTo} count={items.length} />
 			)}
 
 			{/* CONTENT SECTION */}

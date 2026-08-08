@@ -16,6 +16,18 @@ export const normalizeEntityType = (type) => {
 };
 
 /**
+ * Normalize a `:type` route param, preserving falsy values.
+ *
+ * Differs from normalizeEntityType deliberately: route params can be undefined
+ * on first render, and call sites gate queries on `!!normalizedType`. Coercing
+ * undefined to 'default' here would let those queries fire with a bogus type.
+ *
+ * @param {string|undefined} type - Raw route param
+ * @returns {string|undefined} Normalized type, or the original falsy value
+ */
+export const normalizeTypeParam = (type) => (type === 'sessions' ? 'session' : type);
+
+/**
  * Check if entity type is a specific value
  * @param {Object} entity - Entity object
  * @param {string} type - Type to check

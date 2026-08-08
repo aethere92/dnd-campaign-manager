@@ -1,9 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 import { useTooltip } from '@/features/smart-tooltip/TooltipContext';
 import { getEntityStyles } from '@/domain/entity/config/entityStyles';
 import EntityIcon from './EntityIcon';
 
+/**
+ * EntityLink
+ *
+ * @param {'inline'|'card'|'row'} [variant='card']
+ *   - `inline` — dotted-underline link for use inside running prose
+ *   - `card`   — padded, entity-tinted block
+ *   - `row`    — full-width list row with a slot on the right for a badge.
+ *                Callers pass that badge as `trailing`.
+ *
+ * The `row` variant exists because four call sites (EntitySidebar,
+ * SessionMentions, CharacterSidebar, RelationshipNetwork) were each overriding
+ * the `card` styling with ~10 `!important` utilities to reshape it into a list
+ * row. Declaring it as a variant removes ~40 `!important`s.
+ *
+ * `inline` is still accepted as a boolean prop for backwards compatibility.
+ */
 export default function EntityLink({
 	id,
 	type,
@@ -12,11 +29,18 @@ export default function EntityLink({
 	showIcon = true,
 	className = '',
 	inline = false,
+	variant,
+	trailing = null,
 	...props
 }) {
 	const navigate = useNavigate();
 	const { openTooltip, closeTooltip } = useTooltip();
 	const styles = getEntityStyles(type);
+	const campaignRoutes = useCampaignRoutes();
+	const targetPath = campaignRoutes.wikiEntity(type, id);
+
+	// `inline` boolean takes precedence so existing call sites keep working.
+	const resolvedVariant = inline ? 'inline' : variant || 'card';
 
 	const handleMouseEnter = (e) => {
 		// Desktop only: Hover to open
@@ -25,7 +49,6 @@ export default function EntityLink({
 		}
 	};
 
-	// FIX: Guard closeTooltip so mobile touch emulation doesn't auto-close it
 	const handleMouseLeave = () => {
 		if (window.matchMedia('(hover: hover)').matches) {
 			closeTooltip();
@@ -37,7 +60,7 @@ export default function EntityLink({
 
 		if (window.matchMedia('(hover: hover)').matches) {
 			// Desktop: Click to navigate
-			navigate(`/wiki/${type}/${id}`);
+			navigate(targetPath);
 			closeTooltip();
 		} else {
 			// Mobile: Tap to open tooltip (Sticky mode = true)
@@ -46,14 +69,16 @@ export default function EntityLink({
 	};
 
 	const commonProps = {
-		href: `/wiki/${type}/${id}`,
+		// Hash prefix: the app uses HashRouter, so a bare /c/... path 404s on
+		// ctrl+click / "open in new tab", which bypass onClick.
+		href: `#${targetPath}`,
 		onClick: handleClick,
 		onMouseEnter: handleMouseEnter,
-		onMouseLeave: handleMouseLeave, // Use the guarded handler
+		onMouseLeave: handleMouseLeave,
 		...props,
 	};
 
-	if (inline) {
+	if (resolvedVariant === 'inline') {
 		return (
 			<a
 				className={clsx(
@@ -74,6 +99,34 @@ export default function EntityLink({
 					/>
 				)}
 				{children}
+			</a>
+		);
+	}
+
+	if (resolvedVariant === 'row') {
+		return (
+			<a
+				className={clsx(
+					'group flex w-full items-center justify-between gap-2 p-2 rounded-lg border no-underline',
+					'bg-card/60 border-border cursor-pointer transition-all',
+					'hover:border-primary/40 hover:shadow-sm hover:bg-card',
+					className
+				)}
+				{...commonProps}>
+				<span className='flex items-center gap-2.5 flex-1 min-w-0'>
+					{showIcon && (
+						<EntityIcon
+							type={type}
+							customIconUrl={customIconUrl}
+							size={16}
+							className='opacity-80 group-hover:opacity-100 transition-opacity shrink-0'
+						/>
+					)}
+					<span className='text-xs font-semibold text-card-foreground truncate group-hover:text-foreground transition-colors'>
+						{children}
+					</span>
+				</span>
+				{trailing}
 			</a>
 		);
 	}

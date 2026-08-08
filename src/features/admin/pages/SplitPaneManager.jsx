@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Loader2, Copy, Trash2, Image as ImageIcon } from 'lucide-react';
@@ -11,6 +11,7 @@ import Button from '@/shared/components/ui/Button';
 // NEW IMPORTS
 import AdvancedFilter from '@/features/admin/components/AdvancedFilter';
 import { applyFilterRules } from '@/features/admin/utils/filterUtils';
+import { normalizeTypeParam } from '@/domain/entity/utils/entityUtils';
 
 const resolveImgUrl = (url) => {
 	if (!url) return null;
@@ -22,7 +23,7 @@ export default function SplitPaneManager() {
 	const { type, id } = useParams();
 	const navigate = useNavigate();
 	const { campaignId } = useCampaign();
-	const normalizedType = type === 'sessions' ? 'session' : type;
+	const normalizedType = normalizeTypeParam(type);
 
 	// State
 	const [search, setSearch] = useState('');
@@ -177,7 +178,7 @@ export default function SplitPaneManager() {
 										key={item.id}
 										onClick={() => navigate(`/dm/manage/${normalizedType}/${item.id}`)}
 										className={`group relative flex items-center w-full text-left transition-all cursor-pointer ${
-											isActive ? 'bg-amber-500/10/80' : 'bg-background hover:bg-muted/50'
+											isActive ? 'bg-amber-500/10' : 'bg-background hover:bg-muted/50'
 										}`}>
 										{/* Active Marker */}
 										<div

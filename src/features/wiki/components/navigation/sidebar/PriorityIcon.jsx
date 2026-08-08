@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronsUp, ChevronsDown, Minus, AlertCircle } from 'lucide-react';
+import { ChevronUp, ChevronsUp, ChevronsDown, Minus } from 'lucide-react';
 
 export const PriorityIcon = ({ priority }) => {
 	if (!priority) return null;

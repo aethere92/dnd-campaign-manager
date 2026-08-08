@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, Folder } from 'lucide-react';
 import { useState } from 'react';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 
 export const ArchiveTree = ({ arcs }) => {
 	return (
@@ -24,8 +25,8 @@ export const ArchiveTree = ({ arcs }) => {
 };
 
 const ArchiveArcItem = ({ arc }) => {
-	// MODIFICATION: Default to true
 	const [isOpen, setIsOpen] = useState(true);
+	const routes = useCampaignRoutes();
 
 	return (
 		<div>
@@ -46,7 +47,7 @@ const ArchiveArcItem = ({ arc }) => {
 					{arc.sessions.map((session) => (
 						<Link
 							key={session.id}
-							to={`/wiki/session/${session.id}`}
+							to={routes.wikiEntity('session', session.id)}
 							className='block text-xs py-1.5 px-2 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50 truncate transition-colors'>
 							<span className='font-bold mr-2 opacity-50'>#{session.session_number}</span>
 							{session.title}

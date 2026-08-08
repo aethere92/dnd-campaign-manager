@@ -47,7 +47,6 @@ export const WikiSidebar = ({ navigation, className }) => {
 					renderDesktopToggle={() => (
 						<button
 							onClick={(e) => {
-								// FIX: Stop propagation to prevent header click logic
 								e.stopPropagation();
 								setDesktopCollapsed(true);
 							}}

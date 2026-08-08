@@ -1,0 +1,735 @@
+{
+	"campaignId": "415036c7-08cc-4832-bfec-6daca13e3f8a",
+	"sessionTitle": "01 - To Drellin's Ferry",
+	"entities": [
+		{
+			"ref": "location_location",
+			"type": "location",
+			"name": "location",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a long and perilous journey. They encounter a fierce hobgoblin ambush near an abandoned farmhouse, leading to a hard-fought battle where teamwork prevails. After interrogating a captured hobgoblin, they learn of Wyrmlord Koth's plans for 'the Day of Ruin' but are left with more questions than answers about the location of this impending threat.",
+			"attributes": {
+				"type": "town"
+			},
+			"_evidence": "Drellin's Ferry"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Bonnie, a named individual who is not a player character, warns the party about an ambush at an abandoned farmhouse. During a subsequent battle with hobgoblins, Bonnie interrogates a captured enemy but fails to extract information due to a Zone of Truth spell. The hobgoblin only answers under the condition that Olek, the Paladin, promises a swift death.",
+			"attributes": {
+				"class": "npc (npc)",
+				"affinity": "Unknown",
+				"status": "alive"
+			},
+			"_evidence": "Bonnie"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes have arrived in Drellin's Ferry after a perilous journey. They encountered and defeated a group of hobgoblin warriors led by Norr near an abandoned farmhouse. After interrogating a captured hobgoblin named Norr, they learned about Wyrmlord Koth's plans for 'the Day of Ruin' but received little concrete information on the location of this event or how to stop it. Meanwhile, Olek and Bonnie attempted to warn a nearby family about an approaching danger, inadvertently causing panic with Olek's radiant appearance. Kaedin sought out Wizard Sertieren in his mansion overlooking the river, where he was greeted by a speaking fountain and engaged in conversation about mysterious happenings and magical sites within the Witchwood.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Norr"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin who provides limited information about Wyrmlord Koth and a mysterious 'Day of Ruin.' After burning the dead, they split up to pursue individual tasks within the town.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Soshi"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes have encountered a series of events in Drellin's Ferry. They fought and defeated a group of hobgoblin warriors led by Kaedin, interrogated a captive hobgoblin who provided limited information about Wyrmlord Koth and an impending 'Day of Ruin,' and explored the town seeking answers from various NPCs. Olek and Bonnie approached the tollhouse, Norr and Soshi visited the Shrine of Pelor, and Kaedin sought out the wizard Sertieren in a magically infused manor.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Kaedin"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Olek is a hobgoblin captive who was interrogated by Bonnie after a fierce battle with his fellow warriors near an abandoned farmhouse. Despite being bound within a Zone of Truth and subjected to pain and threats, Olek remained silent until the Paladin promised him a swift death in exchange for three answers about Wyrmlord Koth's plans and location.",
+			"attributes": {
+				"race": "hobgoblin",
+				"affinity": "Enemy",
+				"status": "captured"
+			},
+			"_evidence": "Olek"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin named Sergeant Hersk, who provides limited information about Wyrmlord Koth and his plans for 'the Day of Ruin.' The group decides to burn the dead bodies and continue toward Drellin's Ferry, splitting up upon arrival to pursue individual tasks.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Sergeant Hersk"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes have arrived in Drellin's Ferry after a harrowing encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin named Soranna for information about Wyrmlord Koth and his plans for 'the Day of Ruin.' The hobgoblin provides limited details, leading the party to seek further assistance from local authorities and a wizard's manor.",
+			"attributes": {},
+			"_evidence": "Soranna"
+		},
+		{
+			"ref": "npc_player_character",
+			"type": "npc",
+			"name": "player_character",
+			"aliases": ["Norr"],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblin raiders. They interrogate a captured hobgoblin named Norr, who provides limited information about Wyrmlord Koth and a mysterious 'Day of Ruin.' Meanwhile, Olek and Bonnie assist a frightened child and his mother in the town, while Norr and Soshi seek guidance at the Shrine of Pelor regarding a lake rumored to hold treasure. Kaedin visits the haunted manor of Wizard Sertieren for insights into recent disappearances.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Norr"
+		},
+		{
+			"ref": "npc_player_character",
+			"type": "npc",
+			"name": "player_character",
+			"aliases": ["Soshi"],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin named Soshi, who provides limited information about Wyrmlord Koth and his plans for 'the Day of Ruin.' The group also seeks out Soranna at the tollhouse and Norr and Soshi visit the Shrine of Pelor to inquire about a lake rumored to hold treasure. Kaedin meets with the eccentric wizard Sertieren in his haunted manor, learning vague details about magical disturbances and disappearances within the Witchwood.",
+			"attributes": {},
+			"_evidence": "Soshi"
+		},
+		{
+			"ref": "npc_player_character",
+			"type": "npc",
+			"name": "player_character",
+			"aliases": ["Kaedin"],
+			"description": "In Drellin's Ferry, a hobgoblin captive is interrogated by Bonnie under a Zone of Truth. The hobgoblin, named Kaedin, refuses to answer without a promise of a swift death from Paladin Olek in exchange for three answers about his warlord, plans, and location. Despite the interrogation, only partial information is obtained, leading the party to decide on burning the dead bodies and proceeding toward Drellin's Ferry.",
+			"attributes": {
+				"race": "hobgoblin",
+				"affinity": "Enemy",
+				"status": "alive"
+			},
+			"_evidence": "Kaedin"
+		},
+		{
+			"ref": "npc_player_character",
+			"type": "npc",
+			"name": "player_character",
+			"aliases": ["Olek"],
+			"description": "Olek is a hobgoblin captive who was interrogated by Bonnie after a fierce battle with his fellow warriors near an abandoned farmhouse. Despite being bound within a Zone of Truth and subjected to pain and threats, Olek remained silent until the Paladin, Olek, promised him a swift death in exchange for three answers about Wyrmlord Koth's plans and location.",
+			"attributes": {
+				"race": "hobgoblin",
+				"affinity": "Enemy",
+				"status": "captured"
+			},
+			"_evidence": "Olek"
+		},
+		{
+			"ref": "npc_player_character",
+			"type": "npc",
+			"name": "player_character",
+			"aliases": ["Bonnie"],
+			"description": "Bonnie, a player character NPC, warns her companions about an ambush at an abandoned farmhouse. During a subsequent battle against hobgoblins, Bonnie interrogates a captured enemy but is unable to extract information due to a Zone of Truth spell. The hobgoblin only agrees to answer questions if the Paladin promises a swift death in exchange for three pieces of information regarding Wyrmlord Koth's plans.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Bonnie"
+		},
+		{
+			"ref": "faction_npc",
+			"type": "faction",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblin warriors near an abandoned farmhouse. They interrogate a captured hobgoblin named Wormlord Koth, who reveals plans orchestrated by Wyrmlord Koth for 'the Day of Ruin' and the gathering of tribes, but remains evasive about their exact location.",
+			"attributes": {
+				"leader": "Wormlord Koth",
+				"affinity": "Enemy"
+			},
+			"_evidence": "Wormlord Koth"
+		},
+		{
+			"ref": "encounter_npc",
+			"type": "encounter",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes have encountered a group of hobgoblins led by an unnamed captain near an abandoned farmhouse. After a fierce battle, they capture one hobgoblin and interrogate him about Wyrmlord Koth's plans for 'the Day of Ruin.' The captive provides limited information before being executed per Olek's promise.",
+			"attributes": {
+				"status": "ongoing"
+			},
+			"_evidence": "hobgoblin"
+		},
+		{
+			"ref": "item_item",
+			"type": "item",
+			"name": "item",
+			"aliases": [],
+			"description": "Olek and Bonnie encounter a hobgoblin ambush near an abandoned farmhouse while traveling toward Drellin's Ferry. After defeating the attackers, they capture one enemy who refuses to answer questions without a promise of a swift death from Olek. The group interrogates the captive within a Zone of Truth, but the hobgoblin remains silent until Olek pledges execution for three answers about Wyrmlord Koth's plans and location.",
+			"attributes": {},
+			"_evidence": "Zone of Truth"
+		},
+		{
+			"ref": "item_item",
+			"type": "item",
+			"name": "item",
+			"aliases": [],
+			"description": "Olek and Bonnie encounter a hobgoblin ambush near an abandoned farmhouse in Elsir Vale. After defeating the attackers, they interrogate a captured hobgoblin who speaks through Bonnie but provides limited information about Wyrmlord Koth's plans for 'the Day of Ruin.' Olek honors a promise to execute the hobgoblin and then burns the bodies before continuing toward Drellin's Ferry.",
+			"attributes": {
+				"type": "wondrous item"
+			},
+			"_evidence": "Dead Man's Boots"
+		},
+		{
+			"ref": "location_location",
+			"type": "location",
+			"name": "location",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a perilous encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin who provides limited information about Wyrmlord Koth and the 'Day of Ruin,' but refuses to reveal the location of Vraath Keep without a promise of execution from Paladin Olek.",
+			"attributes": {
+				"type": "town"
+			},
+			"_evidence": "Vraath Keep"
+		},
+		{
+			"ref": "location_location",
+			"type": "location",
+			"name": "location",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblins near an abandoned farmhouse in the Witchwood. They interrogate a captured hobgoblin who reveals plans orchestrated by Wyrmlord Koth for 'the Day of Ruin,' but remains vague about the location.",
+			"attributes": {
+				"type": "town"
+			},
+			"_evidence": "Witchwood"
+		},
+		{
+			"ref": "location_location",
+			"type": "location",
+			"name": "location",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a perilous encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin who provides cryptic information about Wyrmlord Koth and the 'Day of Ruin,' but refuses to reveal his location without a promise of a swift death from Paladin Olek.",
+			"attributes": {
+				"type": "town"
+			},
+			"_evidence": "Shrine of Pellor"
+		},
+		{
+			"ref": "location_location",
+			"type": "location",
+			"name": "location",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a perilous encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin who provides cryptic information about Wyrmlord Koth and the 'Day of Ruin,' but refuses to reveal his location without a promise of a swift death from Paladin Olek.",
+			"attributes": {
+				"type": "town"
+			},
+			"_evidence": "tollhouse"
+		},
+		{
+			"ref": "npc_npc",
+			"type": "npc",
+			"name": "npc",
+			"aliases": [],
+			"description": "Our heroes approach Drellin's Ferry after a harrowing encounter with hobgoblins near an abandoned farmhouse. They interrogate a captured hobgoblin who speaks through Bonnie but remains tight-lipped about crucial details regarding Wyrmlord Koth and the 'Day of Ruin.' After burning the dead, they continue toward the town, where Olek inadvertently frightens a family with his celestial appearance, leading to comedic chaos.",
+			"attributes": {
+				"status": "alive"
+			},
+			"_evidence": "Sertieren"
+		}
+	],
+	"updates": [],
+	"relationships": [
+		{
+			"from": "event_01",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Crossing the Witchwood",
+			"_names": "[Crossing the Witchwood] -> player_character"
+		},
+		{
+			"from": "event_01",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Crossing the Witchwood",
+			"_names": "[Crossing the Witchwood] -> player_character"
+		},
+		{
+			"from": "event_01",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Crossing the Witchwood",
+			"_names": "[Crossing the Witchwood] -> player_character"
+		},
+		{
+			"from": "event_01",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Crossing the Witchwood",
+			"_names": "[Crossing the Witchwood] -> player_character"
+		},
+		{
+			"from": "event_01",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Crossing the Witchwood",
+			"_names": "[Crossing the Witchwood] -> npc"
+		},
+		{
+			"from": "event_02",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Abandoned Farmhouse Encounter",
+			"_names": "[Abandoned Farmhouse Encounter] -> player_character"
+		},
+		{
+			"from": "event_02",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Abandoned Farmhouse Encounter",
+			"_names": "[Abandoned Farmhouse Encounter] -> npc"
+		},
+		{
+			"from": "event_03",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Hobgoblin Ambush",
+			"_names": "[Hobgoblin Ambush] -> player_character"
+		},
+		{
+			"from": "event_03",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Hobgoblin Ambush",
+			"_names": "[Hobgoblin Ambush] -> npc"
+		},
+		{
+			"from": "event_03",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Hobgoblin Ambush",
+			"_names": "[Hobgoblin Ambush] -> npc"
+		},
+		{
+			"from": "event_03",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Hobgoblin Ambush",
+			"_names": "[Hobgoblin Ambush] -> npc"
+		},
+		{
+			"from": "event_04",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Battle Displayed Teamwork",
+			"_names": "[Battle Displayed Teamwork] -> player_character"
+		},
+		{
+			"from": "event_04",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Battle Displayed Teamwork",
+			"_names": "[Battle Displayed Teamwork] -> npc"
+		},
+		{
+			"from": "event_04",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Battle Displayed Teamwork",
+			"_names": "[Battle Displayed Teamwork] -> npc"
+		},
+		{
+			"from": "event_04",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Battle Displayed Teamwork",
+			"_names": "[Battle Displayed Teamwork] -> npc"
+		},
+		{
+			"from": "event_04",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Battle Displayed Teamwork",
+			"_names": "[Battle Displayed Teamwork] -> npc"
+		},
+		{
+			"from": "event_05",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Interrogation of Hobgoblin Captive",
+			"_names": "[Interrogation of Hobgoblin Captive] -> player_character"
+		},
+		{
+			"from": "event_05",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Interrogation of Hobgoblin Captive",
+			"_names": "[Interrogation of Hobgoblin Captive] -> npc"
+		},
+		{
+			"from": "event_06",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Zone of Truth Interrogation",
+			"_names": "[Zone of Truth Interrogation] -> player_character"
+		},
+		{
+			"from": "event_06",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Zone of Truth Interrogation",
+			"_names": "[Zone of Truth Interrogation] -> npc"
+		},
+		{
+			"from": "event_07",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Promise and Retaliation",
+			"_names": "[Promise and Retaliation] -> player_character"
+		},
+		{
+			"from": "event_07",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Promise and Retaliation",
+			"_names": "[Promise and Retaliation] -> npc"
+		},
+		{
+			"from": "event_08",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Burning the Dead",
+			"_names": "[Burning the Dead] -> player_character"
+		},
+		{
+			"from": "event_08",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Burning the Dead",
+			"_names": "[Burning the Dead] -> npc"
+		},
+		{
+			"from": "event_09",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Townsfolk Encounter",
+			"_names": "[Townsfolk Encounter] -> player_character"
+		},
+		{
+			"from": "event_09",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Townsfolk Encounter",
+			"_names": "[Townsfolk Encounter] -> npc"
+		},
+		{
+			"from": "event_09",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Townsfolk Encounter",
+			"_names": "[Townsfolk Encounter] -> npc"
+		},
+		{
+			"from": "event_09",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Townsfolk Encounter",
+			"_names": "[Townsfolk Encounter] -> npc"
+		},
+		{
+			"from": "event_10",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Child's Plea for Help",
+			"_names": "[Child's Plea for Help] -> player_character"
+		},
+		{
+			"from": "event_10",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Child's Plea for Help",
+			"_names": "[Child's Plea for Help] -> npc"
+		},
+		{
+			"from": "event_10",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Child's Plea for Help",
+			"_names": "[Child's Plea for Help] -> npc"
+		},
+		{
+			"from": "event_11",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Meeting Soranna at Tollhouse",
+			"_names": "[Meeting Soranna at Tollhouse] -> player_character"
+		},
+		{
+			"from": "event_11",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Meeting Soranna at Tollhouse",
+			"_names": "[Meeting Soranna at Tollhouse] -> npc"
+		},
+		{
+			"from": "event_12",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Market Kindness",
+			"_names": "[Market Kindness] -> player_character"
+		},
+		{
+			"from": "event_12",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Market Kindness",
+			"_names": "[Market Kindness] -> npc"
+		},
+		{
+			"from": "event_13",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Shrine Interaction",
+			"_names": "[Shrine Interaction] -> player_character"
+		},
+		{
+			"from": "event_13",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Shrine Interaction",
+			"_names": "[Shrine Interaction] -> npc"
+		},
+		{
+			"from": "event_14",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Druid Avarthel Consultation",
+			"_names": "[Druid Avarthel Consultation] -> player_character"
+		},
+		{
+			"from": "event_14",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Druid Avarthel Consultation",
+			"_names": "[Druid Avarthel Consultation] -> npc"
+		},
+		{
+			"from": "event_15",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Mansion Encounter",
+			"_names": "[Mansion Encounter] -> player_character"
+		},
+		{
+			"from": "event_15",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Mansion Encounter",
+			"_names": "[Mansion Encounter] -> npc"
+		},
+		{
+			"from": "event_16",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Wizard Sertieren's Rumblings",
+			"_names": "[Wizard Sertieren's Rumblings] -> player_character"
+		},
+		{
+			"from": "event_16",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Wizard Sertieren's Rumblings",
+			"_names": "[Wizard Sertieren's Rumblings] -> npc"
+		},
+		{
+			"from": "event_17",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in event: Reunion at Meeting Point",
+			"_names": "[Reunion at Meeting Point] -> player_character"
+		},
+		{
+			"from": "event_17",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in event: Reunion at Meeting Point",
+			"_names": "[Reunion at Meeting Point] -> npc"
+		},
+		{
+			"from": "npc_player_character",
+			"to": "npc_player_character",
+			"type": "professional_relation",
+			"because": "Combos fly. Tactics form. Help is given before it's asked for.",
+			"_names": "player_character -> player_character"
+		},
+		{
+			"from": "npc_player_character",
+			"to": "item_item",
+			"type": "ownership_relation",
+			"because": "Bonnie handed over the envelope, inside it the leather-wrapped and strange artifact. The item, Dead Man's Boots, was last known to be in the possession of a necromancer named Nels Huto, who had left two weeks ago toward a fortress deep inside the Witchwood, and never returned.",
+			"_names": "player_character -> item"
+		},
+		{
+			"from": "SESSION",
+			"to": "npc_player_character",
+			"type": "mention",
+			"because": "appears in this session",
+			"_names": "[session] -> player_character"
+		},
+		{
+			"from": "SESSION",
+			"to": "npc_npc",
+			"type": "mention",
+			"because": "appears in this session",
+			"_names": "[session] -> npc"
+		}
+	],
+	"events": [
+		{
+			"ref": "event_01",
+			"order": 1,
+			"title": "Crossing the Witchwood",
+			"description": "The party travels through a dense forest, feeling an unsettling presence.",
+			"event_type": "travel",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_02",
+			"order": 2,
+			"title": "Abandoned Farmhouse Encounter",
+			"description": "They discover an abandoned farmhouse and sense danger nearby, prompting Bonnie's warning.",
+			"event_type": "location_discovered",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_03",
+			"order": 3,
+			"title": "Hobgoblin Ambush",
+			"description": "A group of hobgoblins attacks the party in a surprise encounter on the road.",
+			"event_type": "combat",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_04",
+			"order": 4,
+			"title": "Battle Displayed Teamwork",
+			"description": "The party fights off the hobgoblins, showcasing coordinated tactics and powerful magic.",
+			"event_type": "combat",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_05",
+			"order": 5,
+			"title": "Interrogation of Hobgoblin Captive",
+			"description": "Bonnie attempts to interrogate a hobgoblin captive, but only receives cryptic answers about Wyrmlord Koth and the Day of Ruin.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_06",
+			"order": 6,
+			"title": "Zone of Truth Interrogation",
+			"description": "Olek casts a Zone of Truth to compel truthful answers, yet the hobgoblin remains silent until promising execution.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_07",
+			"order": 7,
+			"title": "Promise and Retaliation",
+			"description": "Olek agrees to execute the hobgoblin for three answers, but receives only vague information about Wyrmlord Koth.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_08",
+			"order": 8,
+			"title": "Burning the Dead",
+			"description": "Bonnie insists on burning the dead hobgoblins and any potential reanimated bodies to prevent future threats.",
+			"event_type": "special_event",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_09",
+			"order": 9,
+			"title": "Townsfolk Encounter",
+			"description": "Olek tries to warn a passing farmer's family about danger, but his divine appearance terrifies them into fleeing.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_10",
+			"order": 10,
+			"title": "Child's Plea for Help",
+			"description": "Olek and Bonnie encounter a child seeking help for his mother being hurt by her husband, leading to a moment of compassion.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_11",
+			"order": 11,
+			"title": "Meeting Soranna at Tollhouse",
+			"description": "Bonnie discreetly delivers an artifact to Soranna, who reveals information about a necromancer and the Dead Man's Boots.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_12",
+			"order": 12,
+			"title": "Market Kindness",
+			"description": "Norr and Soshi engage in small acts of kindness, purchasing goods from a few vendors despite being swindled by clever merchants.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_13",
+			"order": 13,
+			"title": "Shrine Interaction",
+			"description": "Norr and Soshi visit the Shrine of Pelor, where Brother Derny's enthusiastic but misguided offering attempt leads to a humorous exchange.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_14",
+			"order": 14,
+			"title": "Druid Avarthel Consultation",
+			"description": "Norr and Soshi consult with Druid Avarthel about the lake's location and associated dangers, learning of Vraath Keep within the Witchwood.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_15",
+			"order": 15,
+			"title": "Mansion Encounter",
+			"description": "Kaedin enters Sertieren's mansion, where a speaking fountain and halfling wizard engage him in conversation about his quest.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_16",
+			"order": 16,
+			"title": "Wizard Sertieren's Rumblings",
+			"description": "Kaedin learns from Sertieren about mysterious vanishings, Chronomancers of Kryn, and a magical nexus within the Witchwood.",
+			"event_type": "social",
+			"_unmatched": []
+		},
+		{
+			"ref": "event_17",
+			"order": 17,
+			"title": "Reunion at Meeting Point",
+			"description": "All party members converge at the designated meeting point in Drellin's Ferry, ready to continue their quest with newfound information.",
+			"event_type": "quest_started",
+			"_unmatched": []
+		}
+	]
+}

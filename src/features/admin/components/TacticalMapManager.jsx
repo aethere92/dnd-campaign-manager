@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { MapContainer, ImageOverlay, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useAtlasEditor, AtlasEditorProvider } from './atlas/AtlasEditorContext';
-import { serializeMapData } from './atlas/services/atlasMapper';
+import { useAtlasEditor, AtlasEditorProvider } from '@/features/admin/atlas-editor/AtlasEditorContext';
+import { serializeMapData, parseMapData } from '@/features/atlas/utils/atlasMapper';
 
 // Editor UI
-import EditorToolbar from './atlas/components/EditorToolbar';
-import EditorSidebar from './atlas/components/EditorSidebar';
-import EditorLayerList from './atlas/components/EditorLayerList';
-import EditorMapEvents from './atlas/components/EditorMapEvents';
-import AtlasContextMenu from './atlas/components/EditorContextMenu';
-import { MapZoomHandler } from './atlas/components/MapZoomHandler';
+import EditorToolbar from '@/features/admin/atlas-editor/components/EditorToolbar';
+import EditorSidebar from '@/features/admin/atlas-editor/components/EditorSidebar';
+import EditorLayerList from '@/features/admin/atlas-editor/components/EditorLayerList';
+import EditorMapEvents from '@/features/admin/atlas-editor/components/EditorMapEvents';
+import AtlasContextMenu from '@/features/admin/atlas-editor/components/EditorContextMenu';
+import { MapZoomHandler } from '@/features/admin/atlas-editor/components/MapZoomHandler';
 
 // Layers
-import EditMarkersLayer from './atlas/layers/EditMarkersLayer';
-import EditPathsLayer from './atlas/layers/EditPathsLayer';
-import EditAreasLayer from './atlas/layers/EditAreasLayer';
-import EditOverlaysLayer from './atlas/layers/EditOverlaysLayer';
+import EditMarkersLayer from '@/features/admin/atlas-editor/layers/EditMarkersLayer';
+import EditPathsLayer from '@/features/admin/atlas-editor/layers/EditPathsLayer';
+import EditAreasLayer from '@/features/admin/atlas-editor/layers/EditAreasLayer';
+import EditOverlaysLayer from '@/features/admin/atlas-editor/layers/EditOverlaysLayer';
 
 import { Target, Maximize, Minimize } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -148,16 +148,16 @@ export default function TacticalMapManager({ imageUrl, value, onChange }) {
 		};
 	}, [imageUrl]);
 
+	// Deliberately seeded once, from the value as it was on mount.
+	//
+	// `value` is intentionally omitted: the editor below is what *produces* new
+	// values (via StateSyncer -> onChange), so recomputing this when `value` changes
+	// would feed the editor's own output back in as fresh initial data and reset the
+	// canvas mid-edit. The name says it — initial data, not current data.
 	const initialData = useMemo(() => {
-		let raw = value;
-		if (typeof raw === 'string') {
-			try {
-				raw = JSON.parse(raw);
-			} catch {
-				raw = {};
-			}
-		}
-		return raw || {};
+		return parseMapData(value);
+		// The rule reports at the dependency array, so the directive belongs here.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	if (!imageUrl) return null;

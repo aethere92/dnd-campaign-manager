@@ -1,26 +1,10 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
-const STORAGE_KEY_AI_MODE = 'search-ai-mode';
 const SearchContext = createContext(null);
 
 export const SearchProvider = ({ children }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [query, setQuery] = useState('');
-	const [aiMode, setAiMode] = useState(() => {
-		try {
-			return localStorage.getItem(STORAGE_KEY_AI_MODE) === 'true';
-		} catch {
-			return false;
-		}
-	});
-
-	const toggleAiMode = useCallback(() => {
-		setAiMode((prev) => {
-			const next = !prev;
-			try { localStorage.setItem(STORAGE_KEY_AI_MODE, String(next)); } catch {}
-			return next;
-		});
-	}, []);
 
 	// Keyboard shortcut listener (CMD+K)
 	useEffect(() => {
@@ -45,7 +29,7 @@ export const SearchProvider = ({ children }) => {
 	}, []);
 
 	return (
-		<SearchContext.Provider value={{ isOpen, query, setQuery, openSearch, closeSearch, aiMode, toggleAiMode }}>
+		<SearchContext.Provider value={{ isOpen, query, setQuery, openSearch, closeSearch }}>
 			{children}
 		</SearchContext.Provider>
 	);

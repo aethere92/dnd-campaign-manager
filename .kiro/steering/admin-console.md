@@ -1,14 +1,16 @@
 ---
 inclusion: fileMatch
-fileMatchPattern: "**/admin/**"
+fileMatchPattern: '**/admin/**'
 ---
 
 # Admin Console Guide
 
 ## Overview
+
 The admin console (`/dm/*` routes) provides a comprehensive interface for managing campaign content. Only available in development mode (`import.meta.env.DEV`).
 
 ## Structure
+
 ```
 src/features/admin/
 ├── api/
@@ -26,6 +28,7 @@ src/features/admin/
 ```
 
 ## Routes
+
 - `/dm` → Redirects to `/dm/manage/campaign`
 - `/dm/manage/:type/:id?` → Entity CRUD (split-pane editor)
 - `/dm/tools/replace` → Bulk text find & replace
@@ -33,6 +36,7 @@ src/features/admin/
 - `/dm/tools/atlas` → Visual map manager
 
 ## Sidebar Navigation
+
 The admin sidebar organizes management into sections:
 
 **System**: Campaigns, Find & Replace
@@ -47,15 +51,18 @@ Includes theme toggle (Dark/D&D/Light cycle).
 ## Entity Management (`/dm/manage/:type/:id?`)
 
 ### Supported Types
+
 campaign, session, character, npc, location, quest, faction, encounter, item, map, narrative_arc
 
 ### Split Pane Interface
+
 - Left: Entity list with search
 - Right: Entity editor form
 
 ## Admin Service API
 
 ### Entity CRUD
+
 ```javascript
 import { createEntity, updateEntity, deleteEntity, fetchRawEntity } from '@/features/admin/api/adminService';
 
@@ -73,8 +80,14 @@ await fetchRawEntity(type, id);
 ```
 
 ### Relationship Management
+
 ```javascript
-import { addRelationship, deleteRelationship, updateRelationship, fetchRelationships } from '@/features/admin/api/adminService';
+import {
+	addRelationship,
+	deleteRelationship,
+	updateRelationship,
+	fetchRelationships,
+} from '@/features/admin/api/adminService';
 
 await addRelationship({ from_entity_id, to_entity_id, relationship_type, campaign_id });
 await fetchRelationships(entityId);
@@ -83,8 +96,15 @@ await deleteRelationship(relId);
 ```
 
 ### Child Row Operations
+
 ```javascript
-import { upsertSessionEvent, upsertQuestObjective, upsertEncounterAction, fetchChildRows, deleteRow } from '@/features/admin/api/adminService';
+import {
+	upsertSessionEvent,
+	upsertQuestObjective,
+	upsertEncounterAction,
+	fetchChildRows,
+	deleteRow,
+} from '@/features/admin/api/adminService';
 
 // Session events
 await upsertSessionEvent(eventData);
@@ -103,6 +123,7 @@ await deleteRow(table, id);
 ```
 
 ### Bulk Replace
+
 ```javascript
 import { getBulkReplacePreview, executeBulkReplace } from '@/features/admin/api/adminService';
 
@@ -114,6 +135,7 @@ await executeBulkReplace(changeList);
 ```
 
 ### Search
+
 ```javascript
 import { searchEntitiesByName } from '@/features/admin/api/adminService';
 
@@ -123,25 +145,31 @@ const results = await searchEntitiesByName(campaignId, query);
 ## Development Scripts
 
 ### Schema Fetching
+
 ```bash
 node src/dev_helpers/fetch-schema.js
 ```
+
 Dumps complete DB schema to `src/dev_helpers/outputs/schema_dump.txt`.
 
 ### Encounter Narrative Generation
+
 ```bash
 node src/dev_helpers/generate-all-encounter-narratives.js
 ```
+
 Generates AI narratives for encounters with batch processing.
 
 ## Best Practices
 
 ### Data Safety
+
 - Test changes on a single entity first
 - Use bulk replace preview before executing
 - Verify changes in the public app after editing
 
 ### Content Editing
+
 - Use markdown for rich formatting
 - Entity names are auto-linked by the smart-text system
 - Preview content before saving

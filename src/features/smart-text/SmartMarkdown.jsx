@@ -1,12 +1,14 @@
 import ReactMarkdown from 'react-markdown';
-import { useSmartText } from './useSmartText';
+import { useSmartText } from '@/features/smart-text/hooks/useSmartText';
 import { SmartEntityLink } from './components/SmartEntityLink';
 import { EntityEmbed } from './components/EntityEmbed';
 import { generateId, extractText } from '@/shared/utils/textUtils';
 import { Link } from 'react-router-dom';
 import { getEntityStyles } from '@/domain/entity/config/entityStyles';
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 
 export default function SmartMarkdown({ children, inline = false, disableTooltips = false, ...props }) {
+	const routes = useCampaignRoutes();
 	let safeText = children;
 	if (Array.isArray(children)) {
 		safeText = children.join('');
@@ -53,7 +55,7 @@ export default function SmartMarkdown({ children, inline = false, disableTooltip
 							const styles = getEntityStyles(type);
 							return (
 								<Link
-									to={`/wiki/${type}/${id}`}
+									to={routes.wikiEntity(type, id)}
 									className={`${styles.text} font-semibold hover:underline cursor-pointer`}
 									onClick={(e) => e.stopPropagation()} // Prevent card click
 								>

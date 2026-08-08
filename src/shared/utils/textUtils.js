@@ -128,21 +128,42 @@ export const escapeRegex = (str) => {
 };
 
 /**
- * Strip markdown formatting (basic)
+ * Strip markdown formatting, returning plain text.
+ *
+ * Single implementation replacing three prior variants (textUtils.stripMarkdown,
+ * wikiUtils' local copy, markdownUtils.markdownToText) that had drifted apart.
+ * Two bugs from the wiki copy are fixed here:
+ *   - `code` was deleted entirely instead of unwrapped (missing capture group)
+ *   - snake_case words were mangled ("Snake_case" -> "Snakecase"), because the
+ *     italic rule matched bare underscores mid-word
+ *
  * @param {string} text - Markdown text
+ * @param {Object} [options]
+ * @param {boolean} [options.collapseWhitespace=false] - Flatten newlines to
+ *   single spaces. Use for one-line contexts (card excerpts, tooltips).
  * @returns {string} Plain text
  */
-export const stripMarkdown = (text) => {
+export const stripMarkdown = (text, { collapseWhitespace = false } = {}) => {
 	if (!text) return '';
 
-	return text
-		.replace(/#{1,6}\s+/g, '') // Headers
-		.replace(/\*\*(.+?)\*\*/g, '$1') // Bold
-		.replace(/\*(.+?)\*/g, '$1') // Italic
-		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Links
-		.replace(/`(.+?)`/g, '$1') // Code
+	let out = text
+		.replace(/^#{1,6}\s+/gm, '') // Headers
+		.replace(/(\*\*|__)(.+?)\1/g, '$2') // Bold
+		.replace(/\*(.+?)\*/g, '$1') // Italic (asterisk)
+		.replace(/\b_(.+?)_\b/g, '$1') // Italic (underscore, word-bounded)
+		.replace(/```[\s\S]*?```/g, '') // Fenced code blocks
+		.replace(/`(.+?)`/g, '$1') // Inline code -> keep content
+		.replace(/!\[.*?\]\(.*?\)/g, '') // Images
+		.replace(/\[(.+?)\]\(.+?\)/g, '$1') // Links -> keep label
 		.replace(/^>\s+/gm, '') // Blockquotes
-		.trim();
+		.replace(/^\s*[-*+]\s+/gm, '') // Unordered lists
+		.replace(/^\s*\d+\.\s+/gm, ''); // Ordered lists
+
+	if (collapseWhitespace) {
+		out = out.replace(/\s+/g, ' ');
+	}
+
+	return out.trim();
 };
 
 /**

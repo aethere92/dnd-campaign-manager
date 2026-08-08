@@ -1,13 +1,12 @@
-import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
+import { useQuery } from '@tanstack/react-query';
 import {
 	Database,
 	Users,
 	MapPin,
 	BookOpen,
 	Scroll,
-	ArrowLeft,
 	Shield,
 	Gem,
 	LogOut,
@@ -20,7 +19,10 @@ import {
 	Dice5, // Icon for D&D mode
 } from 'lucide-react';
 import { useCampaign } from '@/features/campaign/CampaignContext';
+import { getCampaigns } from '@/features/campaign/api/campaignService';
 import { useTheme, THEMES } from '@/shared/hooks/useTheme'; // Import constant too
+import { clearDmPassword } from '@/shared/api/dmSession';
+import { routes } from '@/app/routes';
 
 const NavItem = ({ to, icon: Icon, label }) => {
 	const location = useLocation();
@@ -33,7 +35,7 @@ const NavItem = ({ to, icon: Icon, label }) => {
 				'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
 				isActive
 					? 'bg-card text-primary shadow-sm ring-1 ring-amber'
-					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+					: 'text-muted-foreground hover:bg-muted/80 hover:text-foreground'
 			)}>
 			<Icon size={15} className={isActive ? 'text-primary' : 'opacity-70'} />
 			{label}
@@ -46,19 +48,27 @@ export default function AdminLayout() {
 	const { theme, cycleTheme } = useTheme(); // Use cycleTheme
 	const navigate = useNavigate();
 
-	const handleSwitch = () => {
-		if (confirm('Go to Campaign Selection screen?')) {
-			setCampaignId(null);
-			navigate('/select-campaign');
-		}
+	// Campaign list for the in-console switcher. Same cache key as everywhere else.
+	const { data: campaigns = [] } = useQuery({ queryKey: ['campaigns'], queryFn: getCampaigns });
+
+	// Switch campaign without leaving the console: every manager reads campaignId
+	// from context and refetches, so setting it here is enough.
+	const handleCampaignChange = (e) => {
+		const value = e.target.value;
+		setCampaignId(value || null);
 	};
 
-	// Helper to render current theme icon
-	const ThemeIcon = () => {
-		if (theme === THEMES.DARK) return <Moon size={16} />;
-		if (theme === THEMES.DND) return <Dice5 size={16} />;
-		return <Sun size={16} />;
+	// Sign out clears the DM password from the session (the header stops being
+	// sent, so writes revert to being rejected) and returns to the login screen.
+	const handleSignOut = () => {
+		clearDmPassword();
+		setCampaignId(null);
+		navigate(routes.admin.login());
 	};
+
+	// A lookup, not a component. Declaring a component inside a render body makes
+	// it a new type every render, which forces React to remount it.
+	const ThemeIcon = theme === THEMES.DARK ? Moon : theme === THEMES.DND ? Dice5 : Sun;
 
 	return (
 		<div className='flex h-screen bg-muted/30 text-foreground overflow-hidden font-sans '>
@@ -77,8 +87,24 @@ export default function AdminLayout() {
 						onClick={cycleTheme}
 						className='p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors hover:text-foreground'
 						title={`Current Theme: ${theme}`}>
-						<ThemeIcon />
+						<ThemeIcon size={16} />
 					</button>
+				</div>
+
+				{/* CAMPAIGN SWITCHER — change the active campaign without leaving the console */}
+				<div className='px-3 py-2 border-b border-border bg-muted/10'>
+					<label className='text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60'>Campaign</label>
+					<select
+						value={campaignId || ''}
+						onChange={handleCampaignChange}
+						className='mt-1 w-full text-xs bg-background border border-border rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary'>
+						<option value=''>— Select campaign —</option>
+						{campaigns.map((c) => (
+							<option key={c.id} value={c.id}>
+								{c.name}
+							</option>
+						))}
+					</select>
 				</div>
 
 				<nav className='flex-1 p-3 space-y-0.5 overflow-y-auto'>
@@ -116,7 +142,7 @@ export default function AdminLayout() {
 				<div className='p-3 border-t border-border space-y-1'>
 					{campaignId && (
 						<Link
-							to='/'
+							to={routes.campaign.root(campaignId)}
 							className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-emerald-700 hover:bg-emerald-500/10 rounded-md transition-colors dark:text-emerald-400 dark:hover:bg-emerald-900/20'
 							title={`Return to Campaign ID: ${campaignId}`}>
 							<Play size={14} /> Enter Campaign
@@ -124,9 +150,9 @@ export default function AdminLayout() {
 					)}
 
 					<button
-						onClick={handleSwitch}
+						onClick={handleSignOut}
 						className='flex items-center gap-2 w-full px-3 py-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-red-600 hover:bg-red-500/10 rounded-md transition-colors text-left dark:hover:text-red-400 dark:hover:bg-red-900/20'>
-						<LogOut size={14} /> Campaign Select
+						<LogOut size={14} /> Sign Out
 					</button>
 				</div>
 			</aside>

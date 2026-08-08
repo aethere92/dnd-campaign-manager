@@ -6,8 +6,10 @@ import EntityIcon from '@/domain/entity/components/EntityIcon';
 import { StatusIcon } from './StatusIcon';
 import { resolveImageUrl } from '@/shared/utils/imageUtils';
 import { resolveEntityIcon } from '@/domain/entity/config/entityIcons'; // Import
+import { useCampaignRoutes } from '@/app/hooks/useCampaignRoutes';
 
 export const SidebarTreeItem = ({ item, onItemClick }) => {
+	const routes = useCampaignRoutes();
 	const [isExpanded, setIsExpanded] = useState(true);
 	const hasChildren = item.children && item.children.length > 0;
 	const showStatus = ['npc', 'faction', 'quest'].includes(item.type);
@@ -35,7 +37,7 @@ export const SidebarTreeItem = ({ item, onItemClick }) => {
 				</button>
 
 				<NavLink
-					to={item.path}
+					to={routes.wikiEntity(item.type, item.id)}
 					onClick={onItemClick}
 					className={({ isActive }) =>
 						clsx(

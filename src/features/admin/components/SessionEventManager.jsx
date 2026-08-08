@@ -1,12 +1,7 @@
-import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, Calendar } from 'lucide-react';
-import {
-	fetchChildRows,
-	upsertSessionEvent,
-	deleteRow,
-	fetchSessionEventsWithRelationships,
-} from '@/features/admin/api/adminService';
+import { upsertSessionEvent, fetchSessionEventsWithRelationships } from '@/features/admin/api/adminService';
 import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
+import { useChildRowManager } from '@/features/admin/hooks/useChildRowManager';
 import Button from '@/shared/components/ui/Button';
 import EventTagger from './EventTagger';
 
@@ -29,52 +24,38 @@ const EVENT_TYPES = [
 ];
 
 export default function SessionEventManager({ sessionId }) {
-	const [events, setEvents] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const [editingId, setEditingId] = useState(null);
-	const [formData, setFormData] = useState({});
-
-	useEffect(() => {
-		if (sessionId) loadEvents();
-	}, [sessionId]);
-
-	const loadEvents = async () => {
-		setLoading(true);
-		try {
-			const data = await fetchSessionEventsWithRelationships(sessionId);
-			setEvents(data);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleAddNew = () => {
-		const nextOrder = events.length > 0 ? Math.max(...events.map((e) => e.event_order || 0)) + 1 : 1;
-		const newEvent = {
-			id: `new-${Date.now()}`,
+	// Shared inline-CRUD plumbing (fetch / draft / edit / save / delete).
+	const {
+		rows: events,
+		loading,
+		editingId,
+		formData,
+		setFormData,
+		addNew,
+		startEdit,
+		cancelEdit,
+		save,
+		remove,
+	} = useChildRowManager({
+		queryKey: ['admin-session-events', sessionId],
+		fetchFn: () => fetchSessionEventsWithRelationships(sessionId),
+		// Strip the joined `relationships` field before upsert — it's read-only view
+		// data, not a column on session_events.
+		upsertFn: ({ relationships, ...payload }) => upsertSessionEvent(payload),
+		deleteTable: 'session_events',
+		enabled: !!sessionId,
+		makeDraft: (rows) => ({
 			session_id: sessionId,
 			title: '',
 			description: '',
 			event_type: 'travel',
-			event_order: nextOrder,
-		};
-		setEvents([...events, newEvent]);
-		handleEdit(newEvent);
-	};
-
-	const handleEdit = (event) => {
-		setEditingId(event.id);
-		setFormData({ ...event });
-	};
+			event_order: rows.length > 0 ? Math.max(...rows.map((e) => e.event_order || 0)) + 1 : 1,
+		}),
+	});
 
 	const handleSave = async () => {
 		try {
-			const { relationships, ...payload } = formData;
-			await upsertSessionEvent(payload);
-			setEditingId(null);
-			loadEvents();
+			await save();
 		} catch (e) {
 			alert('Error saving event: ' + e.message);
 		}
@@ -82,13 +63,8 @@ export default function SessionEventManager({ sessionId }) {
 
 	const handleDelete = async (id) => {
 		if (!confirm('Delete this event?')) return;
-		if (String(id).startsWith('new')) {
-			setEvents(events.filter((e) => e.id !== id));
-			return;
-		}
 		try {
-			await deleteRow('session_events', id);
-			loadEvents();
+			await remove(id);
 		} catch (e) {
 			alert(e.message);
 		}
@@ -100,12 +76,20 @@ export default function SessionEventManager({ sessionId }) {
 				<span className='flex items-center gap-2'>
 					<Calendar size={18} className='text-primary' /> Session Timeline
 				</span>
-				<Button onClick={handleAddNew} size='sm' variant='secondary' icon={Plus}>
+				<Button onClick={addNew} size='sm' variant='secondary' icon={Plus}>
 					Add Event
 				</Button>
 			</div>
 
 			<div className='space-y-3'>
+				{/* The loading flag was tracked but never rendered, so a session with an
+				    in-flight fetch and a session with no events both showed an empty panel. */}
+				{events.length === 0 && (
+					<div className='p-3 text-center text-xs text-muted-foreground italic border border-dashed border-border rounded-lg'>
+						{loading ? 'Loading events…' : 'No events yet. Use “Add Event” to start the timeline.'}
+					</div>
+				)}
+
 				{events.map((evt) => (
 					<div key={evt.id} className='group'>
 						{editingId === evt.id ? (
@@ -159,13 +143,7 @@ export default function SessionEventManager({ sessionId }) {
 								<EventTagger eventId={evt.id} />
 
 								<div className='flex justify-end gap-3 border-t border-border/50 pt-3'>
-									<Button
-										onClick={() => {
-											setEditingId(null);
-											loadEvents();
-										}}
-										variant='ghost'
-										icon={X}>
+									<Button onClick={cancelEdit} variant='ghost' icon={X}>
 										Cancel
 									</Button>
 									<Button onClick={handleSave} variant='primary' icon={Save}>
@@ -203,7 +181,7 @@ export default function SessionEventManager({ sessionId }) {
 
 								<div className='flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
 									<button
-										onClick={() => handleEdit(evt)}
+										onClick={() => startEdit(evt)}
 										className='p-2 text-muted-foreground hover:text-blue-600 hover:bg-blue-500/10 rounded-md transition-colors'>
 										<Edit2 size={18} />
 									</button>

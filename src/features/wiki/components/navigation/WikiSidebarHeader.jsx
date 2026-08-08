@@ -8,13 +8,8 @@ export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, is
 		<div className='p-3 lg:p-4 bg-muted border-b border-border/50'>
 			{/* Title Row */}
 			<div
-				className={clsx(
-					'flex items-center justify-between h-8 select-none',
-					// FIX: Pointer cursor only on mobile. Default on desktop to indicate non-clickable.
-					'cursor-pointer lg:cursor-default'
-				)}
-				onClick={(e) => {
-					// FIX: Only allow toggle on mobile (width < 1024px)
+				className={clsx('flex items-center justify-between h-8 select-none', 'cursor-pointer lg:cursor-default')}
+				onClick={() => {
 					if (window.innerWidth < 1024) {
 						onToggle();
 					}
@@ -24,10 +19,7 @@ export const WikiSidebarHeader = ({ config, search, onSearchChange, onToggle, is
 					<h1 className='text-sm font-serif font-bold text-foreground capitalize tracking-wide truncate'>{label}</h1>
 					{/* Desktop Toggle Button */}
 					{renderDesktopToggle && (
-						<div
-							className='hidden lg:block shrink-0 ml-auto'
-							// FIX: Stop propagation to prevent any parent click handlers
-							onClick={(e) => e.stopPropagation()}>
+						<div className='hidden lg:block shrink-0 ml-auto' onClick={(e) => e.stopPropagation()}>
 							{renderDesktopToggle()}
 						</div>
 					)}

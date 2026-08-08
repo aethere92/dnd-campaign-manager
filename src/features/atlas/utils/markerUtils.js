@@ -250,7 +250,7 @@ export const resolveMarkerIcon = (marker) => {
 				color: color,
 				fill: 'currentColor',
 				fillOpacity: 0.2,
-			}),
+			})
 		);
 		return L.divIcon({
 			className: 'marker-icon-only',
@@ -269,7 +269,7 @@ export const resolveMarkerIcon = (marker) => {
 			size: 14,
 			strokeWidth: 2.5,
 			color: contrastColor,
-		}),
+		})
 	);
 
 	let svgContent = '';
@@ -399,7 +399,7 @@ export const createPathPointIcon = (iconName, color = '#ffffff') => {
 			size: 14,
 			strokeWidth: 2.5,
 			color: '#ffffff', // Always white icon for contrast
-		}),
+		})
 	);
 
 	return L.divIcon({

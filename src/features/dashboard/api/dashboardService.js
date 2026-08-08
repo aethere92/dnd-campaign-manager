@@ -1,14 +1,14 @@
 import { supabase } from '@/shared/api/supabaseClient';
 
 export const getDashboardData = async (campaignId) => {
-	const[
+	const [
 		{ data: campaign },
 		{ data: stats },
 		{ data: activeParty },
 		{ data: activeThreads },
 		{ data: sessions },
 		{ data: latestLocations },
-		{ data: recentEntities }
+		{ data: recentEntities },
 	] = await Promise.all([
 		supabase.from('campaigns').select('*').eq('id', campaignId).single(),
 		supabase.from('view_dashboard_stats').select('*').eq('campaign_id', campaignId).single(),
@@ -20,27 +20,25 @@ export const getDashboardData = async (campaignId) => {
 			.select('*')
 			.eq('campaign_id', campaignId)
 			.order('session_number', { ascending: false }),
-		// NEW: Get the most recently active location (The Stage)
 		supabase
 			.from('locations')
 			.select('*')
 			.eq('campaign_id', campaignId)
 			.order('updated_at', { ascending: false })
 			.limit(1),
-		// NEW: Get recently added/updated lore (Recent Discoveries)
 		supabase
 			.from('entity_complete_view')
 			.select('id, name, type, description, attributes, created_at')
 			.eq('campaign_id', campaignId)
 			.not('type', 'in', '("session","event","session_event","narrative_arc","map")')
 			.order('created_at', { ascending: false })
-			.limit(6)
+			.limit(6),
 	]);
 
 	// Enrich quests with descriptions (view_active_quests omits description)
 	const enrichedThreads = await enrichQuestDescriptions(activeThreads || []);
 
-	const allSessions = sessions ||[];
+	const allSessions = sessions || [];
 	const latestSession = allSessions[0];
 
 	// 1. Sort Threads (Quests)
@@ -62,7 +60,7 @@ export const getDashboardData = async (campaignId) => {
 				description: session.arc_description,
 				order: session.arc_order,
 				attributes: session.arc_attributes,
-				sessions:[],
+				sessions: [],
 			});
 		}
 		arcMap.get(session.arc_id).sessions.push(session);
@@ -85,14 +83,14 @@ export const getDashboardData = async (campaignId) => {
 	return {
 		campaign,
 		stats,
-		activeParty: activeParty ||[],
-		activeThreads: sortedThreads, 
+		activeParty: activeParty || [],
+		activeThreads: sortedThreads,
 		currentRegion: latestLocations?.[0] || null, // Export the region
-		recentEntities: recentEntities ||[],        // Export the ledger
+		recentEntities: recentEntities || [], // Export the ledger
 		currentArc: {
 			data: currentArcData,
 			latestSession,
-			sessions: currentArcData?.sessions ||[],
+			sessions: currentArcData?.sessions || [],
 		},
 		otherArcs,
 		progression: allSessions,
@@ -140,10 +138,7 @@ async function enrichQuestDescriptions(quests) {
 	if (quests.length === 0) return quests;
 
 	const ids = quests.map((q) => q.id);
-	const { data: descriptions } = await supabase
-		.from('quests')
-		.select('id, description')
-		.in('id', ids);
+	const { data: descriptions } = await supabase.from('quests').select('id, description').in('id', ids);
 
 	if (!descriptions) return quests;
 

@@ -1,0 +1,9 @@
+dist
+node_modules
+package-lock.json
+public
+src/dev_helpers
+scripts/legacy
+# Generated map coordinate data — large, machine-written
+src/features/atlas/data/campaign_01
+src/features/atlas/data/campaign_02
