@@ -132,7 +132,7 @@ function LedgerColumn({ entities }) {
 							</div>
 							<div className='flex-1 min-w-0'>
 								<div className='flex items-baseline justify-between gap-3'>
-									<h4 className='font-display font-bold text-[16px] truncate group-hover:text-primary transition-colors'>
+									<h4 className='font-bold text-[16px] truncate group-hover:text-primary transition-colors'>
 										<SmartMarkdown inline disableTooltips>
 											{entity.name}
 										</SmartMarkdown>

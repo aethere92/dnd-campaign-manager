@@ -46,7 +46,7 @@ export function HeroChronicle({ campaign, counts, latestArc, currentRegion }) {
 				</h1>
 
 				{campaign?.description && (
-					<div className='mt-5 max-w-xl text-base sm:text-lg text-muted-foreground font-serif italic leading-relaxed'>
+					<div className='mt-5 max-w-4xl text-base sm:text-lg text-muted-foreground font-serif italic leading-relaxed'>
 						<SmartMarkdown components={{ p: 'span' }} disableTooltips>
 							{campaign.description}
 						</SmartMarkdown>

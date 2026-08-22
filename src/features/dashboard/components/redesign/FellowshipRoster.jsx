@@ -47,7 +47,7 @@ export function FellowshipRoster({ party = [] }) {
 		<>
 			<SectionHeading icon={Users} eyebrow='The Fellowship' title={`${party.length} heroes at your side`} />
 
-			<div className='mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 max-w-5xl mx-auto'>
+			<div className='mt-10 flex flex-wrap justify-center gap-3 sm:gap-4 max-w-6xl mx-auto'>
 				{party.map((char, i) => (
 					<CharacterCard key={char.id} char={char} tint={ROSTER_TINTS[i % ROSTER_TINTS.length]} />
 				))}
@@ -99,7 +99,8 @@ function CharacterCard({ char, tint }) {
 			className={clsx(
 				'group relative flex flex-col justify-end overflow-hidden rounded-xl',
 				'border transition-all duration-300 hover:-translate-y-1.5',
-				'aspect-[3/4.4]'
+				'aspect-[3/4.4]',
+				'w-[140px] sm:w-[155px] lg:w-[165px]'
 			)}
 			data-fellow>
 			{/* art layer — <img> so we can catch load errors and fall through */}
