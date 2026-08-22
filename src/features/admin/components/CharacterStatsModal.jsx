@@ -4,9 +4,24 @@ import Button from '@/shared/components/ui/Button';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS } from './AdminFormStyles';
 
 const STANDARD_SKILLS = [
-	'Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception', 'History',
-	'Insight', 'Intimidation', 'Investigation', 'Medicine', 'Nature', 'Perception',
-	'Performance', 'Persuasion', 'Religion', 'Sleight of Hand', 'Stealth', 'Survival',
+	'Acrobatics',
+	'Animal Handling',
+	'Arcana',
+	'Athletics',
+	'Deception',
+	'History',
+	'Insight',
+	'Intimidation',
+	'Investigation',
+	'Medicine',
+	'Nature',
+	'Perception',
+	'Performance',
+	'Persuasion',
+	'Religion',
+	'Sleight of Hand',
+	'Stealth',
+	'Survival',
 ];
 
 const ABILITIES = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
@@ -18,8 +33,22 @@ const SPECIAL_SENSES = ['Blindsight', 'Darkvision', 'Tremorsense', 'Truesight'];
 const PASSIVE_SENSES = ['Passive Perception', 'Passive Investigation', 'Passive Insight'];
 
 const STANDARD_LANGUAGES = [
-	'Common', 'Dwarvish', 'Elvish', 'Giant', 'Gnomish', 'Goblin', 'Halfling', 'Orc',
-	'Abyssal', 'Celestial', 'Draconic', 'Deep Speech', 'Infernal', 'Primordial', 'Sylvan', 'Undercommon',
+	'Common',
+	'Dwarvish',
+	'Elvish',
+	'Giant',
+	'Gnomish',
+	'Goblin',
+	'Halfling',
+	'Orc',
+	'Abyssal',
+	'Celestial',
+	'Draconic',
+	'Deep Speech',
+	'Infernal',
+	'Primordial',
+	'Sylvan',
+	'Undercommon',
 ];
 
 // Parse a stored attribute value (JSON string or array) into an array
@@ -151,7 +180,13 @@ function StatGrid({ names, values, onChange, mode }) {
 					</span>
 					{mode === 'score' ? (
 						<>
-							<ScrollNumberInput className='w-16' value={getScore(name)} onChange={(n) => setScore(name, n)} min={1} max={30} />
+							<ScrollNumberInput
+								className='w-16'
+								value={getScore(name)}
+								onChange={(n) => setScore(name, n)}
+								min={1}
+								max={30}
+							/>
 							<span className='text-[10px] font-mono text-primary w-8 text-right'>
 								{(() => {
 									const m = scoreToModifier(getScore(name));
@@ -160,7 +195,13 @@ function StatGrid({ names, values, onChange, mode }) {
 							</span>
 						</>
 					) : (
-						<ScrollNumberInput className='w-16' value={getModifier(name)} onChange={(n) => setModifier(name, n)} min={-5} max={15} />
+						<ScrollNumberInput
+							className='w-16'
+							value={getModifier(name)}
+							onChange={(n) => setModifier(name, n)}
+							min={-5}
+							max={15}
+						/>
 					)}
 				</div>
 			))}
@@ -394,7 +435,9 @@ export default function CharacterStatsModal({ open, onClose, initialAttributes =
 						<div className='space-y-2'>
 							<div className='grid grid-cols-3 gap-2'>
 								{PASSIVE_SENSES.map((name) => (
-									<div key={name} className='flex items-center gap-2 bg-muted/20 border border-border rounded-md px-2 py-1.5'>
+									<div
+										key={name}
+										className='flex items-center gap-2 bg-muted/20 border border-border rounded-md px-2 py-1.5'>
 										<span className='text-xs font-bold text-muted-foreground flex-1 truncate' title={name}>
 											{name}
 										</span>
@@ -412,7 +455,9 @@ export default function CharacterStatsModal({ open, onClose, initialAttributes =
 								{SPECIAL_SENSES.map((name) => {
 									const s = specialSenses[name] || { enabled: false, range: '' };
 									return (
-										<div key={name} className='flex items-center gap-2 bg-muted/20 border border-border rounded-md px-2 py-1.5'>
+										<div
+											key={name}
+											className='flex items-center gap-2 bg-muted/20 border border-border rounded-md px-2 py-1.5'>
 											<button
 												type='button'
 												onClick={() => setSpecialSenses((p) => ({ ...p, [name]: { ...s, enabled: !s.enabled } }))}
@@ -428,7 +473,8 @@ export default function CharacterStatsModal({ open, onClose, initialAttributes =
 													}`}
 												/>
 											</button>
-											<span className={`text-xs font-bold flex-1 truncate ${s.enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
+											<span
+												className={`text-xs font-bold flex-1 truncate ${s.enabled ? 'text-foreground' : 'text-muted-foreground'}`}>
 												{name}
 											</span>
 											{s.enabled && (

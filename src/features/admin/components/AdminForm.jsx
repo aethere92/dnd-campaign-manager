@@ -204,12 +204,21 @@ export default function AdminForm({ type, id }) {
 
 	// Apply values from CharacterStatsModal: update matching rows, append missing ones
 	const handleApplyStats = (values) => {
-		const STAT_KEYS = ['initiative', 'proficiency', 'skills', 'languages', 'saving throw', 'ability score', 'additional senses'];
+		const STAT_KEYS = [
+			'initiative',
+			'proficiency',
+			'skills',
+			'languages',
+			'saving throw',
+			'ability score',
+			'additional senses',
+		];
 		const current = watch('customAttributes') || [];
 		const next = [...current];
 
 		STAT_KEYS.forEach((key) => {
-			if (values[key] === '' || values[key] === null || (Array.isArray(values[key]) && values[key].length === 0)) return;
+			if (values[key] === '' || values[key] === null || (Array.isArray(values[key]) && values[key].length === 0))
+				return;
 			const isList = Array.isArray(values[key]);
 			const value = isList ? JSON.stringify(values[key]) : String(values[key]);
 			const idx = next.findIndex((a) => a.key === key);
