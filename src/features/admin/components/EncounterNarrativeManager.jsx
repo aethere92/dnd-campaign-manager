@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Edit2, Save, X, BookOpen } from 'lucide-react';
 import Button from '@/shared/components/ui/Button';
 import MarkdownEditor from './MarkdownEditor';
@@ -7,6 +7,14 @@ import { ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS, ADMIN_INPUT_CLASS, ADMIN_LABEL
 export default function EncounterNarrativeManager({ timeline = [], onChange }) {
 	const [editingIndex, setEditingIndex] = useState(null);
 	const [formData, setFormData] = useState({});
+	const editorRef = useRef(null);
+
+	// Scroll the editing form into view whenever it opens
+	useEffect(() => {
+		if (editingIndex !== null && editorRef.current) {
+			editorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}, [editingIndex]);
 
 	const handleAddNew = () => {
 		const lastEvent = timeline[timeline.length - 1];
@@ -52,7 +60,8 @@ export default function EncounterNarrativeManager({ timeline = [], onChange }) {
 
 	return (
 		<div className={ADMIN_SECTION_CLASS}>
-			<div className={`${ADMIN_HEADER_CLASS} flex justify-between`}>
+			<div
+				className={`${ADMIN_HEADER_CLASS} sticky top-[60px] z-30 bg-card rounded-t-lg -mx-5 px-5 pt-4 -mt-5 mb-4 flex justify-between shadow-sm`}>
 				<span className='flex items-center gap-2'>
 					<BookOpen size={18} className='text-primary' /> Narrative Timeline
 				</span>
@@ -75,7 +84,9 @@ export default function EncounterNarrativeManager({ timeline = [], onChange }) {
 						{events.map((evt) => (
 							<div key={evt.originalIndex} className='group'>
 								{editingIndex === evt.originalIndex ? (
-									<div className='bg-muted/30 border border-primary/30 rounded-lg p-4 space-y-4 animate-in fade-in shadow-sm'>
+									<div
+										ref={editorRef}
+										className='bg-muted/30 border border-primary/30 rounded-lg p-4 space-y-4 animate-in fade-in shadow-sm'>
 										<div className='flex gap-4'>
 											<div className='w-20'>
 												<label className={ADMIN_LABEL_CLASS}>Round</label>
