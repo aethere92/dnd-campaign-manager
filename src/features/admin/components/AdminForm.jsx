@@ -8,7 +8,7 @@ import { routes } from '@/app/routes';
 import { createEntity, fetchRawEntity, updateEntity } from '@/features/admin/api/adminService';
 import { invalidateEntityData } from '@/features/admin/api/invalidateEntityData';
 import Button from '@/shared/components/ui/Button';
-import { Save, RotateCcw, ExternalLink, Plus, Trash2, Braces, AlignLeft, Hash, Copy } from 'lucide-react';
+import { Save, RotateCcw, ExternalLink, Plus, Trash2, Braces, AlignLeft, Hash, Copy, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ADMIN_INPUT_CLASS, ADMIN_LABEL_CLASS, ADMIN_SECTION_CLASS, ADMIN_HEADER_CLASS } from './AdminFormStyles';
 
@@ -25,6 +25,7 @@ import EncounterManager from './EncounterManager';
 import EncounterNarrativeManager from './EncounterNarrativeManager';
 import TacticalMapManager from './TacticalMapManager';
 import NarrativeSuggestionPanel from './NarrativeSuggestionPanel';
+import CharacterStatsModal from './CharacterStatsModal';
 
 export default function AdminForm({ type, id }) {
 	const strategy = getStrategy(type);
@@ -34,6 +35,7 @@ export default function AdminForm({ type, id }) {
 	const [isSaving, setIsSaving] = useState(false);
 	const [mapKeys, setMapKeys] = useState([]);
 	const [activeTab, setActiveTab] = useState('details');
+	const [showStatsModal, setShowStatsModal] = useState(false);
 
 	const tabs = getTabsForType(type, id);
 
@@ -199,6 +201,31 @@ export default function AdminForm({ type, id }) {
 
 	const mapImageUrl = watch('attributes.map_image') || watch('attributes.map');
 	const customAttrs = watch('customAttributes') || [];
+
+	// Apply values from CharacterStatsModal: update matching rows, append missing ones
+	const handleApplyStats = (values) => {
+		const STAT_KEYS = ['initiative', 'proficiency', 'skills', 'languages', 'saving throw', 'ability score', 'additional senses'];
+		const current = watch('customAttributes') || [];
+		const next = [...current];
+
+		STAT_KEYS.forEach((key) => {
+			if (values[key] === '' || values[key] === null || (Array.isArray(values[key]) && values[key].length === 0)) return;
+			const isList = Array.isArray(values[key]);
+			const value = isList ? JSON.stringify(values[key]) : String(values[key]);
+			const idx = next.findIndex((a) => a.key === key);
+			if (idx !== -1) {
+				setValue(`customAttributes.${idx}.value`, value, { shouldDirty: true });
+				if (isList) setValue(`customAttributes.${idx}.type`, 'list', { shouldDirty: true });
+			} else {
+				next.push({ key, type: isList ? 'list' : 'string', value });
+			}
+		});
+
+		// Append any newly added rows
+		if (next.length > current.length) {
+			next.slice(current.length).forEach((row) => append(row));
+		}
+	};
 	const standardMarkers = watch('attributes.map_markers');
 	const customMarkers = customAttrs.find((a) => a.key === 'map_markers')?.value;
 	const activeMarkersValue = standardMarkers || customMarkers || '[]';
@@ -356,14 +383,26 @@ export default function AdminForm({ type, id }) {
 					<div className={ADMIN_SECTION_CLASS}>
 						<div className={ADMIN_HEADER_CLASS}>
 							<span>Custom Attributes</span>
-							<Button
-								type='button'
-								onClick={() => append({ key: '', value: '', type: 'string' })}
-								size='sm'
-								variant='secondary'
-								icon={Plus}>
-								Add New
-							</Button>
+							<div className='flex gap-2'>
+								{type === 'character' && (
+									<Button
+										type='button'
+										onClick={() => setShowStatsModal(true)}
+										size='sm'
+										variant='secondary'
+										icon={Zap}>
+										Quick Fill
+									</Button>
+								)}
+								<Button
+									type='button'
+									onClick={() => append({ key: '', value: '', type: 'string' })}
+									size='sm'
+									variant='secondary'
+									icon={Plus}>
+									Add New
+								</Button>
+							</div>
 						</div>
 						<div className='space-y-3'>
 							{fields.map((field, index) => {
@@ -437,6 +476,16 @@ export default function AdminForm({ type, id }) {
 
 			{/* Session Events Tab */}
 			{activeTab === 'events' && id && type === 'session' && <SessionEventManager sessionId={id} />}
+
+			{/* Character Quick Fill Stats Modal */}
+			{type === 'character' && (
+				<CharacterStatsModal
+					open={showStatsModal}
+					onClose={() => setShowStatsModal(false)}
+					initialAttributes={Object.fromEntries(customAttrs.map((a) => [a.key, a.value]))}
+					onApply={handleApplyStats}
+				/>
+			)}
 
 			{/* Quest Objectives Tab */}
 			{activeTab === 'objectives' && id && type === 'quest' && <QuestObjectiveManager questId={id} />}
